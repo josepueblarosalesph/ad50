@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Plan extends Model
 {
     protected $table = 'planes';
+
     protected $guarded = [];
+
     protected $casts = [
-        'features'  => 'array',
+        'features' => 'array',
         'destacado' => 'bool',
     ];
 }

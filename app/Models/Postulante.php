@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Postulante extends Model
 {
     protected $guarded = [];
+
     protected $casts = [
         'visible' => 'bool',
         'suscripcion_hasta' => 'date',
@@ -17,7 +18,13 @@ class Postulante extends Model
         'experiencia_fin' => 'integer',
     ];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    public function matches(): HasMany { return $this->hasMany(BusquedaCandidato::class); }
+    public function matches(): HasMany
+    {
+        return $this->hasMany(BusquedaCandidato::class);
+    }
 }

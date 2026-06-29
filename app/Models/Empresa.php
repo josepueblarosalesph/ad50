@@ -9,9 +9,21 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Empresa extends Model
 {
     protected $guarded = [];
+
     protected $casts = ['plan_hasta' => 'date'];
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-    public function plan(): BelongsTo { return $this->belongsTo(Plan::class); }
-    public function busquedas(): HasMany { return $this->hasMany(Busqueda::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    public function busquedas(): HasMany
+    {
+        return $this->hasMany(Busqueda::class);
+    }
 }

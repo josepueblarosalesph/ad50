@@ -2,7 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\{User, Postulante, Empresa, Plan, Busqueda, BusquedaCandidato};
+use App\Models\Busqueda;
+use App\Models\BusquedaCandidato;
+use App\Models\Empresa;
+use App\Models\Plan;
+use App\Models\Postulante;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -70,10 +75,10 @@ class DatabaseSeeder extends Seeder
             ['Gerente Financiero — Salud',                 3, 3, 'cumple', now()->subDays(14)],
         ] as [$titulo, $cum, $tot, $estado, $when]) {
             $b = Busqueda::create([
-                'empresa_id'   => $emp->id,
-                'titulo'       => $titulo,
+                'empresa_id' => $emp->id,
+                'titulo' => $titulo,
                 'rubro_oculto' => explode(' — ', $titulo)[1] ?? 'Empresa',
-                'criterios'    => ['cargo' => $titulo, 'min_anios' => 10],
+                'criterios' => ['cargo' => $titulo, 'min_anios' => 10],
             ]);
             BusquedaCandidato::create([
                 'busqueda_id' => $b->id,
@@ -81,7 +86,7 @@ class DatabaseSeeder extends Seeder
                 'criterios_cumplidos' => $cum,
                 'criterios_totales' => $tot,
                 'estado_match' => $estado,
-                'match_score' => intval($cum / max($tot,1) * 100),
+                'match_score' => intval($cum / max($tot, 1) * 100),
                 'created_at' => $when, 'updated_at' => $when,
             ]);
         }

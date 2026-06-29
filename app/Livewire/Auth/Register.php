@@ -43,10 +43,10 @@ class Register extends Component
         ]);
 
         $user = User::create([
-            'name'             => trim($this->nombre.' '.$this->apellidos),
-            'email'            => $this->email,
-            'password'         => Hash::make($this->password),
-            'role'             => $this->role,
+            'name' => trim($this->nombre.' '.$this->apellidos),
+            'email' => $this->email,
+            'password' => Hash::make($this->password),
+            'role' => $this->role,
             'acepta_ley_21719' => true,
         ]);
 
