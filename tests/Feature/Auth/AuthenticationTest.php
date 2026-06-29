@@ -6,11 +6,15 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $response->assertOk();
+    $response
+        ->assertOk()
+        ->assertSeeText('Tu experiencia sigue en movimiento.')
+        ->assertSeeText('Ingresar a mi cuenta')
+        ->assertSee('/images/ad50-logo.png', false);
 });
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+test('users are redirected to their role dashboard after authentication', function (string $role, string $dashboardRoute) {
+    $user = User::factory()->create(['role' => $role]);
 
     $response = $this->post(route('login.store'), [
         'email' => $user->email,
@@ -19,10 +23,14 @@ test('users can authenticate using the login screen', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route($dashboardRoute, absolute: false));
 
     $this->assertAuthenticated();
-});
+})->with([
+    'postulante' => ['postulante', 'postulante.panel'],
+    'empresa' => ['empresa', 'empresa.panel'],
+    'admin' => ['admin', 'admin.panel'],
+]);
 
 test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();

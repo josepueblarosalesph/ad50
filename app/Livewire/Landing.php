@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class Landing extends Component
 {
-    #[Title('AD+50 — El talento correcto, filtrado para cada búsqueda')]
+    #[Title('AD+50 — Experiencia lista para entrar en acción')]
     #[Layout('components.layouts.marketing')]
     public function render()
     {

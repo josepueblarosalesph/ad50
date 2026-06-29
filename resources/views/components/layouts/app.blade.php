@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @fluxAppearance
@@ -16,13 +16,13 @@
 <body class="min-h-screen bg-paper text-ink">
 
     {{-- ====== TOPBAR ====== --}}
-    <header class="sticky top-0 z-30 bg-white border-b border-line">
+    <header class="sticky top-0 z-30 bg-white/95 border-b border-line backdrop-blur">
         <div class="flex items-center gap-4 px-4 py-3 md:gap-6 md:px-6">
             <div class="flex items-center gap-3">
-                <div class="inline-flex items-center bg-ink rounded-[11px] px-3 py-2">
-                    <span class="text-white font-extrabold text-[15px] tracking-wide">AD+50</span>
+                <div class="ad-logo">
+                    <span class="text-[15px]">AD<span class="ad-logo-plus">+</span>50</span>
                 </div>
-                <span class="text-[11px] font-bold tracking-[0.13em] uppercase text-gray-500
+                <span class="text-[12px] font-bold tracking-[0.13em] uppercase text-gray-500
                              border-l border-line-2 pl-3">
                     {{ $context ?? 'Postulante' }}
                 </span>

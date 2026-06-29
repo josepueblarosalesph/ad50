@@ -10,6 +10,15 @@ use App\Models\Postulante;
 use App\Models\User;
 use Livewire\Livewire;
 
+test('the landing page presents the experience-led visual direction', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSeeText('La experiencia no se archiva. Se activa.')
+        ->assertSee('Una tarjeta que explica el match.')
+        ->assertSee('/images/ad50-logo.png', false)
+        ->assertSee('/images/ad50-hero-experiencia.webp', false);
+});
+
 test('the plans page can be viewed', function () {
     Plan::query()->create([
         'codigo' => 'empresa_basic',
