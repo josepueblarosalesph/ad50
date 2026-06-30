@@ -32,11 +32,6 @@ class LoginResponse implements LoginResponseContract, PasskeyLoginResponseContra
 
     private function destination(Request $request): string
     {
-        return match ($request->user()->role) {
-            'postulante' => route('postulante.panel', absolute: false),
-            'empresa' => route('empresa.panel', absolute: false),
-            'admin' => route('admin.panel', absolute: false),
-            default => route('dashboard', absolute: false),
-        };
+        return route($request->user()->dashboardRouteName(), absolute: false);
     }
 }

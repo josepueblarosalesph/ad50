@@ -13,6 +13,18 @@ test('login screen can be rendered', function () {
         ->assertSee('/images/ad50-logo.png', false);
 });
 
+test('authenticated users are redirected from login to their role dashboard', function (string $role, string $dashboardRoute) {
+    $user = User::factory()->create(['role' => $role]);
+
+    $this->actingAs($user)
+        ->get(route('login'))
+        ->assertRedirect(route($dashboardRoute, absolute: false));
+})->with([
+    'postulante' => ['postulante', 'postulante.panel'],
+    'empresa' => ['empresa', 'empresa.panel'],
+    'admin' => ['admin', 'admin.panel'],
+]);
+
 test('users are redirected to their role dashboard after authentication', function (string $role, string $dashboardRoute) {
     $user = User::factory()->create(['role' => $role]);
 

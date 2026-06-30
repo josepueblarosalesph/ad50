@@ -64,6 +64,16 @@ class User extends Authenticatable implements PasskeyUser
             : $initials;
     }
 
+    public function dashboardRouteName(): string
+    {
+        return match ($this->role) {
+            'postulante' => 'postulante.panel',
+            'empresa' => 'empresa.panel',
+            'admin' => 'admin.panel',
+            default => 'dashboard',
+        };
+    }
+
     public function postulante(): HasOne
     {
         return $this->hasOne(Postulante::class);
