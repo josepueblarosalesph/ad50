@@ -74,6 +74,16 @@ class User extends Authenticatable implements PasskeyUser
         };
     }
 
+    public function dashboardLabel(): string
+    {
+        return match ($this->role) {
+            'postulante' => 'Mi perfil',
+            'empresa' => 'Panel de Admin',
+            'admin' => 'Panel de Admin',
+            default => 'Dashboard',
+        };
+    }
+
     public function postulante(): HasOne
     {
         return $this->hasOne(Postulante::class);

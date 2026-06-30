@@ -19,6 +19,28 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('/images/ad50-hero-experiencia.webp', false);
 });
 
+test('authenticated postulantes see mi perfil on the home page', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee('Mi perfil')
+        ->assertDontSee('Log in')
+        ->assertDontSee('Register');
+});
+
+test('authenticated empresas see panel de admin on the home page', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+
+    $this->actingAs($user)
+        ->get(route('home'))
+        ->assertOk()
+        ->assertSee('Panel de Admin')
+        ->assertDontSee('Log in')
+        ->assertDontSee('Register');
+});
+
 test('the plans page can be viewed', function () {
     Plan::query()->create([
         'codigo' => 'empresa_basic',

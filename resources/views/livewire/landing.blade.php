@@ -15,7 +15,16 @@
                     <a href="#postulantes" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Para postulantes</a>
                 </div>
 
-                <a href="{{ route('registro') }}" class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur">Ingresar</a>
+                @auth
+                    <a
+                        href="{{ route(auth()->user()->dashboardRouteName()) }}"
+                        class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur"
+                    >
+                        {{ auth()->user()->dashboardLabel() }}
+                    </a>
+                @else
+                    <a href="{{ route('registro') }}" class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur">Ingresar</a>
+                @endauth
             </nav>
         </div>
 
