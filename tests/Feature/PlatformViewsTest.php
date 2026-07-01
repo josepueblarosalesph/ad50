@@ -19,6 +19,20 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('/images/ad50-hero-experiencia.webp', false);
 });
 
+test('the interface uses the official brand typography and color tokens', function () {
+    $css = file_get_contents(resource_path('css/app.css'));
+
+    expect($css)
+        ->toContain("--font-sans: 'Nunito'")
+        ->toContain('--color-orange-500: #E87722')
+        ->toContain('--color-gray-400:   #75787B')
+        ->not->toContain("--font-display: 'DM Serif Display'");
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('family=Nunito', false);
+});
+
 test('authenticated postulantes see mi perfil on the home page', function () {
     $user = User::factory()->create(['role' => 'postulante']);
 

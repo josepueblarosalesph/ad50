@@ -8,26 +8,27 @@
    AD+50 — tokens de marca (levantados de adconsulting.cl/ad50)
    ============================================================ */
 @theme {
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Nunito', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --color-orange-50:  #FFF7F0;
-  --color-orange-100: #FDE9D8;
-  --color-orange-200: #F7CBA9;
-  --color-orange-500: #EF761F;   /* primario marca */
-  --color-orange-600: #CD5C10;
+  --color-orange-50:  #FFF7F1;
+  --color-orange-100: #FCE8D8;
+  --color-orange-200: #F7C59E;
+  --color-orange-500: #E87722;   /* Pantone Solid Coated 158c */
+  --color-orange-600: #B94F08;   /* variante accesible para fondos con texto blanco */
+  --color-orange-700: #8F3B04;
 
-  --color-ink:        #1D2A2D;
-  --color-ink-2:      #27373A;
-  --color-gray-700:   #4D5655;
-  --color-gray-500:   #737A78;
-  --color-gray-400:   #9B9E99;
+  --color-ink:        #343638;
+  --color-ink-2:      #4C4F51;
+  --color-gray-700:   #4C4F51;
+  --color-gray-500:   #66696C;
+  --color-gray-400:   #75787B;   /* Pantone Solid Coated Cool Gray 9c */
 
-  --color-paper:      #F8F3EB;
-  --color-line:       #E7DED1;
-  --color-line-2:     #D8CCBC;
-  --color-sage:       #81907B;
-  --color-sage-100:   #E7ECE3;
+  --color-paper:      #F6F6F4;
+  --color-line:       #E6E6E3;
+  --color-line-2:     #D4D5D3;
+  --color-sage:       #75787B;
+  --color-sage-100:   #ECEDEB;
 
   --color-match:      #16A34A;
   --color-match-100:  #E7F6ED;
@@ -35,14 +36,14 @@
   --radius-card:      18px;
   --radius-pill:      999px;
 
-  --shadow-card:      0 1px 1px rgba(29,42,45,.04), 0 14px 36px rgba(70,52,32,.07);
-  --shadow-card-lg:   0 24px 60px rgba(70,52,32,.13);
+  --shadow-card:      0 1px 1px rgba(52,54,56,.04), 0 14px 36px rgba(52,54,56,.07);
+  --shadow-card-lg:   0 24px 60px rgba(52,54,56,.13);
 }
 
 @layer base {
   html, body { font-family: var(--font-sans); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
   body       { background: var(--color-paper); font-size: 17px; line-height: 1.55; }
-  h1,h2,h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: -.015em; line-height: 1.02; }
+  h1,h2,h3 { font-family: var(--font-display); font-weight: 900; letter-spacing: -.025em; line-height: 1.05; }
   h4 { font-weight: 700; letter-spacing: -.01em; line-height: 1.12; }
 }
 
@@ -67,7 +68,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-[12px] font-bold text-[15px]
            px-6 py-3.5 transition duration-200 whitespace-nowrap;
   }
-  .ad-btn-primary { @apply bg-orange-500 text-white shadow-[0_8px_20px_rgba(239,118,31,.24)] hover:bg-orange-600 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(239,118,31,.3)]; }
+  .ad-btn-primary { @apply bg-orange-600 text-white shadow-[0_8px_20px_rgba(185,79,8,.22)] hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(143,59,4,.28)]; }
   .ad-btn-dark    { @apply bg-ink text-white hover:bg-black; }
   .ad-btn-ghost   { @apply bg-transparent text-ink border-[1.5px] border-line-2 hover:border-ink hover:bg-white/60; }
   .ad-btn-light   { @apply bg-white/90 text-ink border-[1.5px] border-white hover:bg-white; }
@@ -95,7 +96,7 @@
   }
 
   .ad-logo {
-    @apply inline-flex items-center bg-ink text-white rounded-[10px] px-3 py-2 font-extrabold tracking-wide;
+    @apply inline-flex items-center bg-white text-gray-400 rounded-[10px] border border-line-2 px-3 py-2 font-black tracking-wide;
   }
 
   .ad-logo-plus {

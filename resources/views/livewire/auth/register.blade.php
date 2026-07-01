@@ -1,9 +1,9 @@
 <div class="grid md:grid-cols-[1fr_1.05fr] min-h-screen">
 
 {{-- ====== Panel marca ====== --}}
-<aside class="relative bg-[#1b1b1b] text-white flex items-center overflow-hidden">
+<aside class="relative bg-ink text-white flex items-center overflow-hidden">
     <div class="absolute inset-0 opacity-40"
-         style="background: linear-gradient(135deg, rgba(58,42,30,.7), rgba(27,27,27,.94));"></div>
+         style="background: linear-gradient(135deg, rgba(117,120,123,.7), rgba(52,54,56,.96));"></div>
     <div class="relative px-12 py-14">
         <div class="inline-flex items-center bg-ink rounded-[11px] px-3 py-2 mb-10">
             <span class="text-white font-extrabold text-xl tracking-wide">AD+50</span>
@@ -18,7 +18,7 @@
                 'Tú controlas la visibilidad y el contacto.',
                 'Datos protegidos bajo AD Consulting. Nunca se comercializan.',
             ] as $l)
-                <li class="flex gap-3 text-[14.5px] text-[#e3dfda] font-medium">
+                <li class="flex gap-3 text-[14.5px] text-white/85 font-medium">
                     <flux:icon.check class="size-5 text-orange-500 flex-none mt-0.5" />
                     <span>{{ $l }}</span>
                 </li>
@@ -26,7 +26,7 @@
         </ul>
         <div class="flex gap-3 mt-10">
             @foreach (['Sence','Icontec','Ley 21.719'] as $c)
-                <span class="text-[10px] font-bold tracking-wider text-[#8a8680]
+                <span class="text-[10px] font-bold tracking-wider text-white/60
                              border border-white/15 rounded-md px-2.5 py-1.5 uppercase">{{ $c }}</span>
             @endforeach
         </div>

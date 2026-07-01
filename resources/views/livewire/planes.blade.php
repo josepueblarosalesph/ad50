@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-paper">
     <header class="border-b border-line bg-white">
         <div class="max-w-[1180px] mx-auto px-6 md:px-11 py-4 flex items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="inline-flex items-center bg-ink rounded-[11px] px-3 py-2 text-white font-extrabold">AD+50</a>
+            <a href="{{ route('home') }}" class="inline-flex items-center rounded-[11px] border border-line-2 bg-white px-3 py-2 font-black text-gray-400">AD<span class="text-orange-500">+</span>50</a>
             <div class="flex items-center gap-3">
                 <a href="{{ route('home') }}" class="text-[13px] font-semibold text-gray-500">Volver al inicio</a>
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary ad-btn-sm">Crear cuenta</a>
@@ -20,7 +20,7 @@
             @foreach ($planes as $plan)
                 <article @class(['ad-card p-7 flex flex-col relative', 'border-2 border-orange-500 shadow-card-lg' => $plan->destacado])>
                     @if ($plan->destacado)
-                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 text-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Más elegido</span>
+                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 text-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Más elegido</span>
                     @endif
                     <h2 class="text-[19px] font-extrabold">{{ Str::after($plan->nombre, '· ') }}</h2>
                     <div class="text-[36px] font-extrabold mt-4">${{ number_format($plan->precio_clp, 0, ',', '.') }} <small class="text-[13px] text-gray-500 font-semibold">CLP</small></div>

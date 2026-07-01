@@ -1,7 +1,7 @@
 <div>
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
     <section class="relative min-h-[760px] overflow-hidden border-b border-line bg-paper lg:min-h-[820px]"
-        style="background-image: linear-gradient(90deg, #F8F3EB 0%, rgba(248,243,235,.98) 38%, rgba(248,243,235,.68) 57%, rgba(248,243,235,.05) 78%), url('/images/ad50-hero-experiencia.webp'); background-position: center, 68% center; background-size: cover;">
+        style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia.webp'); background-position: center, 68% center; background-size: cover;">
         <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/65 to-transparent"></div>
         <div class="absolute inset-x-0 top-0 z-20">
             <nav class="mx-auto flex max-w-[1240px] items-center justify-between px-6 py-6 lg:px-10">
@@ -9,7 +9,7 @@
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto sm:h-16">
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[14px] font-bold text-ink shadow-[0_8px_30px_rgba(70,52,32,.08)] backdrop-blur-md md:flex">
+                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[14px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md md:flex">
                     <a href="#como" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Cómo funciona</a>
                     <a href="#empresas" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Para empresas</a>
                     <a href="#postulantes" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Para postulantes</a>
@@ -126,7 +126,7 @@
             <div class="grid gap-6 lg:grid-cols-2">
                 <article class="rounded-[20px] border border-line-2 bg-paper p-8 sm:p-10">
                     <div class="mb-8 flex items-center justify-between">
-                        <span class="grid size-12 place-items-center rounded-[12px] bg-orange-500 text-white shadow-[0_8px_20px_rgba(239,118,31,.2)]">
+                        <span class="grid size-12 place-items-center rounded-[12px] bg-orange-600 text-white shadow-[0_8px_20px_rgba(185,79,8,.2)]">
                             <flux:icon.building-office-2 class="size-6" />
                         </span>
                         <span class="text-[11px] font-extrabold uppercase tracking-[.16em] text-gray-500">Para empresas</span>
@@ -169,7 +169,7 @@
     </section>
 
     {{-- La tarjeta toma la claridad y estructura de la dirección corporativa elegida en el test. --}}
-    <section class="overflow-hidden bg-[#E9E0D3]">
+    <section class="overflow-hidden bg-[#E7E7E4]">
         <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-6 py-24 lg:grid-cols-[.8fr_1.2fr] lg:px-10 lg:py-28">
             <div>
                 <span class="ad-eyebrow">Decisiones más claras</span>
@@ -180,7 +180,7 @@
                 </p>
             </div>
 
-            <article class="rounded-[18px] border border-[#CDBFAC] bg-white p-6 shadow-[var(--shadow-card-lg)] sm:p-8">
+            <article class="rounded-[18px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card-lg)] sm:p-8">
                 <div class="flex flex-wrap items-start gap-5">
                     <div class="grid size-16 shrink-0 place-items-center rounded-[14px] bg-sage-100 text-[20px] font-extrabold text-ink">MF</div>
                     <div class="min-w-0 flex-1">

@@ -2,7 +2,7 @@
     <main class="grid min-h-screen bg-paper lg:grid-cols-[1.08fr_.92fr]">
         <section
             class="relative hidden min-h-screen overflow-hidden bg-ink text-white lg:flex lg:flex-col lg:justify-between"
-            style="background-image: linear-gradient(180deg, rgba(18,27,29,.5) 0%, rgba(18,27,29,.72) 48%, rgba(18,27,29,.96) 100%), url('/images/ad50-hero-experiencia.webp'); background-position: 66% center; background-size: cover;"
+            style="background-image: linear-gradient(180deg, rgba(52,54,56,.5) 0%, rgba(52,54,56,.76) 48%, rgba(52,54,56,.97) 100%), url('/images/ad50-hero-experiencia.webp'); background-position: 66% center; background-size: cover;"
         >
             <div class="relative z-10 flex items-center justify-between px-10 py-8 xl:px-14 xl:py-10">
                 <a href="{{ route('home') }}" aria-label="Volver al inicio de AD+50">
