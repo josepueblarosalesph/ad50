@@ -94,7 +94,7 @@ test('a postulante can update every section of the professional profile', functi
         ->test(Ficha::class)
         ->set('name', 'María José Fuentes')
         ->set('email', 'maria.fuentes@example.com')
-        ->set('rut', '9.842.115-6')
+        ->set('rut', '98421157')
         ->set('anioNacimiento', 1971)
         ->set('telefono', '+56 9 5555 1234')
         ->set('linkedin', 'https://linkedin.com/in/maria-fuentes')
@@ -126,12 +126,25 @@ test('a postulante can update every section of the professional profile', functi
     ]);
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
-        'rut' => '9.842.115-6',
+        'rut' => '9.842.115-7',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
         'empresa_actual' => 'Empresa de Prueba SpA',
         'completitud' => 100,
     ]);
+});
+
+test('the professional profile formats and validates rut on blur', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id]);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->set('rut', '123456785')
+        ->assertSet('rut', '12.345.678-5')
+        ->assertHasNoErrors('rut')
+        ->set('rut', '123456789')
+        ->assertHasErrors('rut');
 });
 
 test('an empresa can view its pages and create a search', function () {

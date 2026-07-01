@@ -35,7 +35,7 @@
             <div class="ad-card-head"><h2 class="text-[16px] font-bold">Datos personales</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 1 de 4</span></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
                 <flux:input wire:model="name" label="Nombre completo *" />
-                <flux:input wire:model="rut" label="RUT *" placeholder="9.842.115-6" description="Identificador único para evitar perfiles duplicados." />
+                <flux:input wire:model.blur.live="rut" label="RUT *" placeholder="12.345.678-5" description="Puedes escribirlo sin puntos ni guion; lo formatearemos automáticamente." inputmode="text" autocomplete="off" />
                 <flux:input wire:model="anioNacimiento" type="number" min="1900" max="{{ now()->year }}" label="Año de nacimiento *" />
                 <flux:input wire:model="telefono" label="Teléfono" placeholder="+56 9 5555 1234" />
                 <flux:input wire:model="email" type="email" label="Email *" />

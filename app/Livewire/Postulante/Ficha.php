@@ -3,8 +3,10 @@
 namespace App\Livewire\Postulante;
 
 use App\Models\Postulante;
+use App\Rules\RutValido;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
+use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -71,7 +73,7 @@ class Ficha extends Component
 
         $this->name = auth()->user()->name;
         $this->email = auth()->user()->email;
-        $this->rut = $postulante?->rut ?? '';
+        $this->rut = Rut::formatear($postulante?->rut ?? '');
         $this->anioNacimiento = $postulante?->anio_nacimiento;
         $this->telefono = $postulante?->telefono ?? '';
         $this->linkedin = $postulante?->linkedin ?? '';
@@ -106,6 +108,12 @@ class Ficha extends Component
         $this->especialidad = '';
     }
 
+    public function updatedRut(): void
+    {
+        $this->rut = Rut::formatear($this->rut);
+        $this->validateOnly('rut', ['rut' => ['required', 'string', 'max:20', new RutValido]]);
+    }
+
     public function addExperiencia(): void
     {
         if (count($this->experiencias) >= 3) {
@@ -127,10 +135,12 @@ class Ficha extends Component
 
     public function save(MatchingService $matching): void
     {
+        $this->rut = Rut::formatear($this->rut);
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:160'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore(auth()->id())],
-            'rut' => ['required', 'string', 'max:20'],
+            'rut' => ['required', 'string', 'max:20', new RutValido],
             'anioNacimiento' => ['required', 'integer', 'min:1900', 'max:'.now()->year],
             'telefono' => ['nullable', 'string', 'max:30'],
             'linkedin' => ['nullable', 'url:http,https', 'max:255'],
