@@ -20,14 +20,21 @@
             <article class="ad-card relative overflow-hidden p-5 md:p-6">
                 <div class="absolute inset-y-0 left-0 w-1 bg-orange-500"></div>
                 <div class="grid items-center gap-5 md:grid-cols-[auto_1fr_auto]">
-                    <div class="grid size-14 place-items-center rounded-[13px] bg-sage-100 text-lg font-extrabold text-ink">{{ $match->postulante->user->initials() }}</div>
+                    <div class="grid size-14 place-items-center rounded-[13px] bg-sage-100 text-lg font-extrabold text-ink" aria-hidden="true"><flux:icon.user class="size-6" /></div>
                     <div class="min-w-0">
                         <p class="text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">Perfil profesional #{{ $match->postulante->id }}</p>
                         <h2 class="mt-1 text-[22px]">{{ $match->postulante->cargo_actual ?: 'Perfil profesional' }}</h2>
-                        <div class="mt-3 flex flex-wrap gap-2"><span class="ad-chip">{{ $match->postulante->industria ?: 'Industria abierta' }}</span><span class="ad-chip">{{ $match->postulante->anios_experiencia }} años</span><span class="ad-chip">{{ $match->postulante->ciudad ?: 'Chile' }}</span></div>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            @foreach ($match->criterios_detalle ?? [] as $detalle)
+                                <span @class(['ad-chip', 'ad-chip-green' => $detalle['cumple'], 'text-gray-700' => ! $detalle['cumple']])>
+                                    <flux:icon :name="$detalle['cumple'] ? 'check' : 'x-mark'" class="size-4" />
+                                    {{ $detalle['criterio'] }}: {{ $detalle['valor'] }}
+                                </span>
+                            @endforeach
+                        </div>
                     </div>
                     <div class="border-t border-line pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0 md:text-right">
-                        <span class="ad-chip ad-chip-green"><flux:icon.check class="size-4" />Cumple {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
+                        <span @class(['ad-chip', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
                         <p class="mt-2 text-[12.5px] font-semibold text-match">Contacto disponible</p>
                         <a href="{{ route('empresa.candidatos.show', $match) }}" class="ad-btn-primary ad-btn-sm mt-3">Ver ficha</a>
                     </div>

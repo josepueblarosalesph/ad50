@@ -3,6 +3,7 @@
 namespace App\Livewire\Postulante;
 
 use App\Models\BusquedaCandidato;
+use App\Services\MatchingService;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -15,11 +16,12 @@ class Panel extends Component
         abort_unless(auth()->user()->role === 'postulante', 403);
     }
 
-    public function toggleVisibilidad(): void
+    public function toggleVisibilidad(MatchingService $matching): void
     {
         $p = auth()->user()->postulante;
         $p->visible = ! $p->visible;
         $p->save();
+        $matching->sincronizarPostulante($p);
     }
 
     #[Title('Mi panel · AD+50')]

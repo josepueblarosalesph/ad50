@@ -85,19 +85,20 @@ test('a postulante can update every section of the professional profile', functi
         ->set('telefono', '+56 9 5555 1234')
         ->set('linkedin', 'https://linkedin.com/in/maria-fuentes')
         ->set('ciudad', 'Concepción')
-        ->set('carrera', 'Ingeniería Comercial')
+        ->set('carrera', 'Ingeniería Civil / Ingeniería Comercial')
         ->set('universidad', 'Universidad de Concepción')
         ->set('especialidad', 'Finanzas')
         ->set('postgrado', 'MBA')
-        ->set('industria', 'Banca')
-        ->set('industria2', 'Forestal')
-        ->set('industria3', 'Manufactura')
-        ->set('cargoActual', 'Subgerente de Finanzas')
-        ->set('empresaActual', 'Empresa de Prueba SpA')
-        ->set('experienciaArea', 'Finanzas')
-        ->set('experienciaInicio', 2009)
-        ->set('experienciaFin', null)
-        ->set('aniosExperiencia', 17)
+        ->set('industria', 'Banca y servicios financieros')
+        ->set('industria2', 'Forestal / Papelera')
+        ->set('industria3', 'Tecnología de la Información')
+        ->set('experiencias', [[
+            'cargo' => 'Finanzas',
+            'empresa' => 'Empresa de Prueba SpA',
+            'area' => 'Finanzas',
+            'inicio' => now()->year - 17,
+            'fin' => null,
+        ]])
         ->set('resumenProfesional', 'Experiencia liderando equipos financieros.')
         ->set('visible', true)
         ->call('save')
@@ -112,7 +113,7 @@ test('a postulante can update every section of the professional profile', functi
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
         'rut' => '9.842.115-6',
-        'carrera' => 'Ingeniería Comercial',
+        'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
         'empresa_actual' => 'Empresa de Prueba SpA',
         'completitud' => 100,
@@ -153,8 +154,8 @@ test('an empresa can view its pages and create a search', function () {
     Livewire::actingAs($user)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Controller Senior')
-        ->set('cargo', 'Controller')
-        ->set('industria', 'Manufactura')
+        ->set('cargo', 'Control de Gestión')
+        ->set('industria', 'Forestal / Papelera')
         ->set('aniosMinimos', 8)
         ->call('save')
         ->assertHasNoErrors();

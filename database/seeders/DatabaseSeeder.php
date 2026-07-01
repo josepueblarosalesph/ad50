@@ -18,8 +18,8 @@ class DatabaseSeeder extends Seeder
         // Planes
         $planPost = Plan::create([
             'codigo' => 'postulante', 'nombre' => 'Postulante visible',
-            'audiencia' => 'postulante', 'precio_clp' => 9900, 'periodo' => 'anual',
-            'features' => ['Ficha siempre visible', 'Acceso a tus matches', 'Soporte por email'],
+            'audiencia' => 'postulante', 'precio_clp' => 9900, 'periodo' => 'único',
+            'features' => ['Ficha siempre visible', 'Sin renovación', 'Acceso a tus matches', 'Soporte por email'],
         ]);
         Plan::create([
             'codigo' => 'empresa_basic', 'nombre' => 'Empresa · Básico',

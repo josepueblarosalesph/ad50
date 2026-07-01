@@ -7,7 +7,7 @@
         ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
         ['label' => 'Mi ficha', 'href' => route('postulante.ficha')],
         ['label' => 'Búsquedas que me incluyen', 'href' => '#coincidencias'],
-        ['label' => 'Mi suscripción', 'href' => route('planes')],
+        ['label' => 'Mi activación', 'href' => route('planes')],
     ])
     @foreach ($nav as $item)
         <a href="{{ $item['href'] }}"
@@ -32,7 +32,7 @@
     </a>
     <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mt-5 mb-2">Cuenta</div>
     <a href="{{ route('planes') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper hover:text-ink">
-        <flux:icon.credit-card class="size-[18px] text-gray-400" /> Mi suscripción
+        <flux:icon.credit-card class="size-[18px] text-gray-400" /> Mi activación
     </a>
 </x-slot:sidebar>
 
@@ -74,15 +74,13 @@
 
     <div class="ad-card p-5">
         <div class="flex items-center">
-            <span class="text-[12px] text-gray-500 font-semibold">Mi suscripción</span>
+            <span class="text-[12px] text-gray-500 font-semibold">Activación de ficha</span>
             <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
                 <flux:icon.check-circle class="size-4" />
             </span>
         </div>
-        <div class="text-[22px] font-extrabold tracking-[-0.02em] mt-3">Vigente</div>
-        <div class="text-[11.5px] font-semibold text-match mt-1">
-            Hasta el {{ $postulante?->suscripcion_hasta?->translatedFormat('d M Y') ?? '—' }}
-        </div>
+        <div class="text-[22px] font-extrabold tracking-[-0.02em] mt-3">Pago único</div>
+        <div class="text-[11.5px] font-semibold text-match mt-1">Sin renovaciones ni cobros adicionales</div>
     </div>
 </div>
 
@@ -123,18 +121,19 @@
 
     {{-- Lateral suscripción + acciones --}}
     <div>
+        @if ($postulante?->updated_at?->lt(now()->subMonths(6)))
+            <div class="mb-4 rounded-[14px] border border-orange-200 bg-orange-50 p-5"><b class="text-[14px]">¿Cambió tu trayectoria?</b><p class="mt-1 text-[12.5px] text-gray-700">Actualiza tu ficha para seguir apareciendo en búsquedas relevantes.</p><a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-3">Revisar mi ficha</a></div>
+        @endif
         <div class="ad-card ad-card-pad mb-4">
             <div class="flex items-center justify-between gap-3 mb-3.5">
-                <b class="text-[15px]">Mi suscripción</b>
-                <span class="ad-chip ad-chip-green ad-chip-dot">Vigente</span>
+                <b class="text-[15px]">Activación de mi ficha</b>
+                <span class="ad-chip ad-chip-green ad-chip-dot">Activa</span>
             </div>
             <div class="text-[13.5px] text-gray-700 leading-[1.7]">
-                Plan Postulante · visible en búsquedas<br>
-                Vence el <b class="text-ink">{{ $postulante?->suscripcion_hasta?->translatedFormat('d M Y') ?? '—' }}</b>
+                Pago único · visible en búsquedas mientras mantengas tu perfil activo.
             </div>
-            <button class="ad-btn-primary ad-btn-sm ad-btn-block mt-4">Renovar con Flow</button>
             <div class="text-[11.5px] text-gray-500 mt-2.5 text-center">
-                Al vencer hay período de gracia; tus datos no se borran.
+                No hay renovación. Si pausas tu ficha, tus datos no se borran.
             </div>
         </div>
 

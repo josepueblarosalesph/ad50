@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Support;
+
+class CatalogosProfesionales
+{
+    /** @return array<string, array<int, string>> */
+    public static function carreras(): array
+    {
+        return [
+            'Ingeniería Civil / Ingeniería Comercial' => [
+                'Gestión', 'Operaciones', 'Logística / Cadena de suministros', 'Calidad',
+                'Medio Ambiente', 'Proyectos', 'Procesos', 'Mantención', 'Finanzas',
+                'Adquisiciones', 'Innovación / Transformación digital',
+                'Comercial / Ventas / Marketing', 'Recursos Humanos', 'Consultoría',
+                'Construcción', 'Docencia',
+            ],
+            'Abogado' => [
+                'Familia', 'Penal', 'Civil', 'Laboral', 'Comercial y Empresa', 'Tributario',
+                'Administrativo', 'Inmobiliario', 'Ambiental', 'Minero', 'Propiedad Intelectual',
+                'Internacional', 'Constitucional', 'Consumidor', 'Seguros',
+            ],
+            'Psicólogo' => [
+                'Organizacional / Trabajo', 'Clínica', 'Educacional', 'Social / Comunitaria',
+                'Jurídica / Forense', 'Salud', 'Deportiva', 'Gestión',
+                'Investigación / Desarrollo', 'Docencia',
+            ],
+            'Periodista' => ['Comunicaciones corporativas', 'Medios', 'Contenido digital', 'Docencia'],
+            'Arquitecto' => ['Diseño', 'Urbanismo', 'Construcción', 'Gestión de proyectos', 'Docencia'],
+            'Médico' => ['Medicina general', 'Gestión de salud', 'Salud pública', 'Investigación', 'Docencia'],
+            'Otro (salud)' => ['Gestión de salud', 'Atención clínica', 'Salud pública', 'Investigación', 'Docencia'],
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function industrias(): array
+    {
+        return [
+            'Minería', 'Agricultura', 'Frutícola', 'Ganadería', 'Silvicultura / Forestal',
+            'Pesca / Acuicultura', 'Vitivinícola', 'Alimentos', 'Forestal / Papelera', 'Vinos',
+            'Pesquera / Conservas', 'Química', 'Farmacéutica', 'Metalurgia', 'Construcción',
+            'Petróleo', 'Generación de Energía', 'Comercio menor / mayor',
+            'Banca y servicios financieros', 'Seguros', 'Telecomunicaciones',
+            'Transporte / Logística', 'Turismo', 'Salud', 'Educación',
+            'Servicios Profesionales (Auditoría / Consultoría / Legales)',
+            'Tecnología de la Información', 'Inmobiliario', 'Administración Pública',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function ciudades(): array
+    {
+        return [
+            'Arica', 'Iquique', 'Antofagasta', 'Copiapó', 'La Serena / Coquimbo',
+            'Valparaíso / Viña del Mar', 'Santiago', 'Rancagua', 'Talca', 'Chillán',
+            'Concepción', 'Temuco', 'Valdivia', 'Osorno', 'Puerto Montt', 'Coyhaique',
+            'Punta Arenas', 'Otra ciudad de Chile',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function cargosAreas(): array
+    {
+        return [
+            'Gerencia General', 'Administración y Finanzas', 'Finanzas', 'Control de Gestión',
+            'Contabilidad', 'Operaciones', 'Logística / Cadena de suministros', 'Proyectos',
+            'Procesos', 'Mantención', 'Calidad', 'Medio Ambiente', 'Adquisiciones',
+            'Comercial / Ventas / Marketing', 'Recursos Humanos', 'Legal', 'Consultoría',
+            'Construcción', 'Tecnología / Transformación digital', 'Salud', 'Educación / Docencia',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function especialidades(?string $carrera): array
+    {
+        return self::carreras()[$carrera] ?? [];
+    }
+}

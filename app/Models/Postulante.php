@@ -16,6 +16,7 @@ class Postulante extends Model
         'anio_nacimiento' => 'integer',
         'experiencia_inicio' => 'integer',
         'experiencia_fin' => 'integer',
+        'experiencias' => 'array',
     ];
 
     public function user(): BelongsTo

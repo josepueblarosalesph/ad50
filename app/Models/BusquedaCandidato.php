@@ -11,7 +11,10 @@ class BusquedaCandidato extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['contactado_at' => 'datetime'];
+    protected $casts = [
+        'contactado_at' => 'datetime',
+        'criterios_detalle' => 'array',
+    ];
 
     public function busqueda(): BelongsTo
     {

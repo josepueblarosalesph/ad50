@@ -19,12 +19,31 @@
             <div class="p-6 space-y-5">
                 <flux:input wire:model="titulo" label="Nombre interno de la búsqueda *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
-                    <flux:input wire:model="cargo" label="Cargo o especialidad" placeholder="Finanzas, control de gestión" />
-                    <flux:input wire:model="industria" label="Industria" placeholder="Forestal" />
+                    <flux:select wire:model="cargo" label="Cargo o especialidad">
+                        <flux:select.option value="">No filtrar</flux:select.option>
+                        @foreach ($cargosAreas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
+                    <flux:select wire:model.live="carrera" label="Carrera o título">
+                        <flux:select.option value="">No filtrar</flux:select.option>
+                        @foreach ($carreras as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
+                    <flux:select wire:model="especialidad" label="Especialidad o área" :disabled="$carrera === ''">
+                        <flux:select.option value="">No filtrar</flux:select.option>
+                        @foreach ($especialidades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
+                    <flux:select wire:model="industria" label="Industria">
+                        <flux:select.option value="">No filtrar</flux:select.option>
+                        @foreach ($industrias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
+                    <flux:select wire:model="ciudad" label="Ciudad o región">
+                        <flux:select.option value="">No filtrar</flux:select.option>
+                        @foreach ($ciudades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
                     <flux:input wire:model="aniosMinimos" type="number" min="0" max="80" label="Experiencia mínima en años" />
+                    <flux:input class="md:col-span-2" wire:model="palabraClave" label="Palabra clave" placeholder="Ej. SAP, transformación, planificación" description="Busca coincidencias en el cargo y el resumen profesional." />
                 </div>
 
-                <div class="rounded-[12px] border border-orange-200 bg-orange-50 p-4 flex gap-3 text-[13px] text-gray-700"><flux:icon.exclamation-triangle class="size-5 text-orange-600 flex-none" /><p><b class="text-ink">Importante:</b> la plataforma mostrará solo perfiles que coincidan con los criterios definidos. Nunca entrega acceso a la base completa.</p></div>
+                <div class="rounded-[12px] border border-orange-200 bg-orange-50 p-4 flex gap-3 text-[13px] text-gray-700"><flux:icon.information-circle class="size-5 text-orange-600 flex-none" /><p><b class="text-ink">Cómo funciona:</b> los perfiles que cumplen todo aparecen primero. Luego verás coincidencias parciales, siempre anonimizadas.</p></div>
 
                 <div class="pt-2 flex justify-end gap-3"><a href="{{ route('empresa.panel') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a><button type="submit" class="ad-btn-primary ad-btn-sm">Buscar candidatos <flux:icon.arrow-right class="size-4" /></button></div>
             </div>

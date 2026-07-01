@@ -4,7 +4,7 @@
         <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
         <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi ficha</a>
         <a href="{{ route('postulante.panel') }}#coincidencias" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
-        <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi suscripción</a>
+        <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi activación</a>
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
@@ -40,7 +40,10 @@
                 <flux:input wire:model="telefono" label="Teléfono" placeholder="+56 9 5555 1234" />
                 <flux:input wire:model="email" type="email" label="Email *" />
                 <flux:input wire:model="linkedin" type="url" label="LinkedIn" placeholder="https://linkedin.com/in/..." />
-                <flux:input wire:model="ciudad" label="Ciudad" placeholder="Concepción" />
+                <flux:select wire:model="ciudad" label="Ciudad o región *">
+                    <flux:select.option value="">Selecciona una ciudad</flux:select.option>
+                    @foreach ($ciudades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                </flux:select>
             </div>
             <div class="px-6 pb-6 flex gap-2 text-[11.5px] text-gray-500"><flux:icon.lock-closed class="size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
@@ -48,9 +51,15 @@
         <section id="educacion" class="ad-card mt-5 scroll-mt-24">
             <div class="ad-card-head"><h2 class="text-[16px] font-bold">Educación</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 2 de 4</span></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
-                <flux:input wire:model="carrera" label="Título o carrera *" placeholder="Ingeniería Comercial" />
+                <flux:select wire:model.live="carrera" label="Título o carrera *">
+                    <flux:select.option value="">Selecciona una carrera</flux:select.option>
+                    @foreach ($carreras as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                </flux:select>
                 <flux:input wire:model="universidad" label="Universidad o institución *" placeholder="Universidad de Concepción" />
-                <flux:input wire:model="especialidad" label="Especialidad o área *" placeholder="Finanzas" />
+                <flux:select wire:model="especialidad" label="Especialidad o área *" :disabled="$carrera === ''">
+                    <flux:select.option value="">Selecciona una especialidad</flux:select.option>
+                    @foreach ($especialidades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                </flux:select>
                 <flux:input wire:model="postgrado" label="Postgrado" placeholder="MBA" />
             </div>
         </section>
@@ -58,22 +67,32 @@
         <section id="industrias" class="ad-card mt-5 scroll-mt-24">
             <div class="ad-card-head"><h2 class="text-[16px] font-bold">Industrias de interés</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 3 de 4</span></div>
             <div class="p-6 grid md:grid-cols-3 gap-4">
-                <flux:input wire:model="industria" label="Industria 1 *" placeholder="Banca y servicios financieros" />
-                <flux:input wire:model="industria2" label="Industria 2" placeholder="Forestal / Papelera" />
-                <flux:input wire:model="industria3" label="Industria 3" placeholder="Manufactura" />
+                @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
+                    <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
+                        <flux:select.option value="">{{ $modelo === 'industria' ? 'Selecciona una industria' : 'Sin preferencia adicional' }}</flux:select.option>
+                        @foreach ($industrias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                    </flux:select>
+                @endforeach
             </div>
         </section>
 
         <section id="experiencia" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-500">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Experiencia principal</h2><span class="ad-chip ad-chip-orange ad-chip-dot">Más relevante</span></div>
-            <div class="p-6 grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <flux:input class="xl:col-span-2" wire:model="cargoActual" label="Cargo *" placeholder="Subgerente de Administración y Finanzas" />
-                <flux:input wire:model="empresaActual" label="Empresa *" placeholder="Empresa actual o más reciente" />
-                <flux:input wire:model="experienciaArea" label="Área o especialidad *" placeholder="Finanzas" />
-                <flux:input wire:model="experienciaInicio" type="number" min="1950" max="{{ now()->year }}" label="Año de inicio *" />
-                <flux:input wire:model="experienciaFin" type="number" min="1950" max="{{ now()->year }}" label="Año de término" description="Déjalo vacío si es tu cargo actual." />
-                <flux:input wire:model="aniosExperiencia" type="number" min="0" max="80" label="Años totales de experiencia *" />
-                <flux:textarea class="md:col-span-2 xl:col-span-3" wire:model="resumenProfesional" label="Resumen profesional" placeholder="Describe tus principales responsabilidades y logros." rows="5" />
+            <div class="ad-card-head"><div><h2 class="text-[16px] font-bold">Experiencia</h2><p class="mt-1 text-[12px] text-gray-500">Agrega hasta tres experiencias. La primera es obligatoria.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm" @disabled(count($experiencias) >= 3)>+ Agregar experiencia</button></div>
+            <div class="p-6 space-y-5">
+                @foreach ($experiencias as $index => $experiencia)
+                    <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
+                        <div class="mb-4 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if ($index === 0)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="text-[13px] font-bold text-[#A93226]">Quitar</button>@endif</div>
+                        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <flux:select wire:model="experiencias.{{ $index }}.cargo" label="Cargo / especialidad *"><flux:select.option value="">Selecciona</flux:select.option>@foreach ($cargosAreas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach</flux:select>
+                            <flux:input wire:model="experiencias.{{ $index }}.empresa" label="Empresa *" />
+                            <flux:select wire:model="experiencias.{{ $index }}.area" label="Área *"><flux:select.option value="">Selecciona</flux:select.option>@foreach ($cargosAreas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach</flux:select>
+                            <flux:input wire:model="experiencias.{{ $index }}.inicio" type="number" min="1950" max="{{ now()->year }}" label="Año de inicio *" />
+                            <flux:input wire:model="experiencias.{{ $index }}.fin" type="number" min="1950" max="{{ now()->year }}" label="Año de término" description="Vacío si continúa vigente." />
+                        </div>
+                    </fieldset>
+                @endforeach
+                <div class="rounded-[12px] bg-paper px-4 py-3 text-[13px] text-gray-700"><b>Años totales calculados:</b> {{ $aniosExperiencia }}. Se actualizarán al guardar y los períodos superpuestos no se duplican.</div>
+                <flux:textarea wire:model="resumenProfesional" label="Resumen profesional" placeholder="Describe tus principales responsabilidades y logros." rows="5" />
             </div>
         </section>
 

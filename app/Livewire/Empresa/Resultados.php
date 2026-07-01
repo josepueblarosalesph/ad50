@@ -26,8 +26,10 @@ class Resultados extends Component
     {
         return view('livewire.empresa.resultados', [
             'candidatos' => $this->busqueda->candidatos()
+                ->whereHas('postulante', fn ($query) => $query->where('visible', true))
                 ->with('postulante.user')
-                ->orderByDesc('match_score')
+                ->orderByDesc('criterios_cumplidos')
+                ->orderBy('postulante_id')
                 ->get(),
         ]);
     }
