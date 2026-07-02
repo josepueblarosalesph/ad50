@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Empresa\Candidato;
+use App\Livewire\Empresa\Panel;
 use App\Livewire\Empresa\Resultados;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
@@ -73,6 +74,15 @@ test('a company cannot favorite a candidate from another company search', functi
         ->assertNotFound();
 
     expect($foreignMatches[0]->fresh()->favorito)->toBeFalse();
+});
+
+test('candidate totals in the company panel link to their search results', function () {
+    [$empresaUser, $busqueda] = candidateSearchWithMatches();
+
+    Livewire::actingAs($empresaUser)
+        ->test(Panel::class)
+        ->assertSeeHtml('aria-label="Ver los 3 candidatos de Búsqueda de liderazgo"')
+        ->assertSeeHtml('href="'.route('empresa.resultados', $busqueda).'"');
 });
 
 /**
