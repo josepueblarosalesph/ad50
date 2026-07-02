@@ -4,12 +4,11 @@
         <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Búsquedas</a>
         <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Nueva búsqueda</a>
-        <a href="{{ route('planes') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi plan</a>
     </x-slot:nav>
 
     <x-slot:sidebar>
         <div class="mb-2 px-2.5 text-[12px] font-bold uppercase tracking-[0.12em] text-gray-400">Búsquedas</div>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 rounded-[10px] bg-orange-100 px-3 py-2.5 text-[14px] font-semibold text-orange-600"><flux:icon.bars-3 class="size-[18px]" />Todas</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 rounded-[10px] bg-orange-100 px-3 py-2.5 text-[14px] font-semibold text-orange-600"><flux:icon.bars-3 class="size-[18px]" />Todas las búsquedas</a>
         <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[14px] font-semibold text-gray-700 hover:bg-paper"><flux:icon.magnifying-glass class="size-[18px]" />Nueva búsqueda</a>
     </x-slot:sidebar>
 
