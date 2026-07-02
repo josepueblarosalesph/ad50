@@ -34,13 +34,25 @@ class Panel extends Component
         $matches = BusquedaCandidato::with('busqueda')
             ->where('postulante_id', $postulante?->id)
             ->latest()
-            ->take(5)
+            ->take(3)
             ->get();
+
+        $totalMatches = BusquedaCandidato::query()
+            ->where('postulante_id', $postulante?->id)
+            ->count();
+
+        $empresasInteresadas = BusquedaCandidato::query()
+            ->join('busquedas', 'busquedas.id', '=', 'busqueda_candidato.busqueda_id')
+            ->where('busqueda_candidato.postulante_id', $postulante?->id)
+            ->where('busqueda_candidato.favorito', true)
+            ->distinct()
+            ->count('busquedas.empresa_id');
 
         return view('livewire.postulante.panel', [
             'postulante' => $postulante,
             'matches' => $matches,
-            'totalMatches' => $matches->count(),
+            'totalMatches' => $totalMatches,
+            'empresasInteresadas' => $empresasInteresadas,
         ]);
     }
 }

@@ -3,6 +3,7 @@
 use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\Panel;
 use App\Livewire\Empresa\Resultados;
+use App\Livewire\Postulante\Panel as PostulantePanel;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
@@ -85,6 +86,88 @@ test('candidate totals in the company panel link to their search results', funct
         ->assertSeeHtml('href="'.route('empresa.resultados', $busqueda).'"');
 });
 
+test('company panel summarizes at most five recent searches', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Resumen']);
+
+    foreach (range(1, 7) as $index) {
+        $empresa->busquedas()->create(['titulo' => "Búsqueda {$index}", 'criterios' => []]);
+    }
+
+    Livewire::actingAs($empresaUser)
+        ->test(Panel::class)
+        ->assertViewHas('busquedas', fn ($busquedas) => $busquedas->count() === 5)
+        ->assertSee('Ver más')
+        ->assertSee(route('empresa.busquedas.index'), escape: false);
+});
+
+test('postulante panel counts unique companies that favorited the profile', function () {
+    $postulanteUser = User::factory()->create(['role' => 'postulante']);
+    $postulante = Postulante::query()->create([
+        'user_id' => $postulanteUser->id,
+        'visible' => true,
+    ]);
+
+    foreach ([2, 1] as $favoriteSearches) {
+        $empresaUser = User::factory()->create(['role' => 'empresa']);
+        $empresa = Empresa::query()->create([
+            'user_id' => $empresaUser->id,
+            'razon_social' => fake()->unique()->company(),
+        ]);
+
+        foreach (range(1, $favoriteSearches) as $index) {
+            $busqueda = $empresa->busquedas()->create([
+                'titulo' => "Búsqueda {$index}",
+                'criterios' => [],
+            ]);
+            $busqueda->candidatos()->create([
+                'postulante_id' => $postulante->id,
+                'favorito' => true,
+            ]);
+        }
+    }
+
+    Livewire::actingAs($postulanteUser)
+        ->test(PostulantePanel::class)
+        ->assertViewHas('empresasInteresadas', 2)
+        ->assertSee('Te han visto 2 empresas');
+});
+
+test('search criterion tags filter candidates that fulfill every selected criterion', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    addFilterableCriteria($busqueda, $matches);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->call('toggleCriterio', 'ciudad')
+        ->assertSet('criterios', ['ciudad'])
+        ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 2)
+        ->call('toggleCriterio', 'industria')
+        ->assertSet('criterios', ['ciudad', 'industria'])
+        ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 1)
+        ->call('limpiarCriterios')
+        ->assertSet('criterios', [])
+        ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 3);
+});
+
+test('candidate detail navigation respects active criterion filters', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    addFilterableCriteria($busqueda, $matches);
+
+    Livewire::withQueryParams(['criterios' => ['ciudad']])
+        ->actingAs($empresaUser)
+        ->test(Candidato::class, ['match' => $matches[0]])
+        ->assertSet('criterios', ['ciudad'])
+        ->assertSet('anteriorId', null)
+        ->assertSet('siguienteId', $matches[1]->id)
+        ->assertSet('totalCandidatos', 2)
+        ->assertSee('1 filtro activo')
+        ->assertSee('Filtros activos')
+        ->assertSee('Ciudad / región')
+        ->assertSee('Santiago')
+        ->assertSee('Estás navegando solo entre candidatos que cumplen todos estos criterios.');
+});
+
 /**
  * @return array{User, Busqueda, array<int, BusquedaCandidato>}
  */
@@ -112,9 +195,35 @@ function candidateSearchWithMatches(): array
             'postulante_id' => $postulante->id,
             'criterios_cumplidos' => $criterios,
             'criterios_totales' => 3,
-            'estado_match' => $criterios === 3 ? 'cumple' : 'parcial',
+            'estado_match' => 'cumple',
         ]);
     })->all();
 
     return [$empresaUser, $busqueda, $matches];
+}
+
+/**
+ * @param  array<int, BusquedaCandidato>  $matches
+ */
+function addFilterableCriteria(Busqueda $busqueda, array $matches): void
+{
+    $busqueda->update([
+        'criterios' => [
+            'ciudad' => 'Santiago',
+            'industria' => 'Tecnología de la Información',
+        ],
+    ]);
+
+    $matches[0]->update(['criterios_detalle' => [
+        ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => true],
+        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => true],
+    ]]);
+    $matches[1]->update(['criterios_detalle' => [
+        ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => false],
+        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => true],
+    ]]);
+    $matches[2]->update(['criterios_detalle' => [
+        ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => true],
+        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => false],
+    ]]);
 }

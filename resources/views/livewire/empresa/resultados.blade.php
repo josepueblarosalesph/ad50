@@ -2,25 +2,39 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Panel</a>
-        <a href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nueva búsqueda</a>
         <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi plan</a>
     </x-slot:nav>
     <x-slot:sidebar>
-        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Búsqueda actual</div>
-        <a href="{{ route('empresa.resultados', $busqueda) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon.bars-3 class="size-[18px]" />Resultados</a>
-        <a href="{{ route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.cog-6-tooth class="size-[18px]" />Ajustar criterios</a>
+        <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" /></div>
     </x-slot:sidebar>
 
-    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Candidatos ordenados por nivel de coincidencia.</p></div><a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-ghost ad-btn-sm">Ajustar criterios</a></div>
+    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Candidatos ordenados por nivel de coincidencia.</p></div><a href="#filtros-busqueda" class="ad-btn-ghost ad-btn-sm">Editar filtros</a></div>
 
-    <div class="rounded-[16px] bg-ink p-4 text-white md:px-5 mb-5 flex flex-wrap items-center gap-3"><b class="text-[15px]">Encontramos <span class="text-orange-500">{{ $totalCandidatos }} candidatos</span></b><div class="flex flex-wrap gap-2 ml-auto">@foreach (array_filter($busqueda->criterios ?? []) as $key => $value)<span class="ad-chip border-white/15 bg-white/10 text-white">{{ str_replace('_', ' ', ucfirst($key)) }}: {{ $value }}</span>@endforeach</div></div>
+    <div class="rounded-[16px] bg-ink p-4 text-white md:px-5 mb-5">
+        <div class="flex flex-wrap items-center gap-3">
+            <div><b class="text-[15px]">Encontramos <span class="text-orange-500">{{ $totalCandidatos }} candidatos</span></b><p class="mt-1 text-[12px] text-white/60">Selecciona criterios para filtrar quiénes los cumplen.</p></div>
+            <div class="ml-auto flex flex-wrap gap-2">
+                @foreach ($criteriosDisponibles as $key => $criterio)
+                    <button type="button" wire:key="criterio-{{ $key }}" wire:click="toggleCriterio('{{ $key }}')" @class(['ad-chip cursor-pointer transition', 'border-orange-400 bg-orange-500 text-white' => in_array($key, $criterios, true), 'border-white/15 bg-white/10 text-white hover:border-white/40 hover:bg-white/15' => ! in_array($key, $criterios, true)]) aria-pressed="{{ in_array($key, $criterios, true) ? 'true' : 'false' }}">
+                        @if (in_array($key, $criterios, true))<flux:icon.check class="size-4" />@endif
+                        {{ $criterio['etiqueta'] }}: {{ $criterio['valor'] }}
+                    </button>
+                @endforeach
+                @if ($criterios !== [])
+                    <button type="button" wire:click="limpiarCriterios" class="px-2 text-[12px] font-bold text-white/70 underline underline-offset-4 hover:text-white">Limpiar</button>
+                @endif
+            </div>
+        </div>
+    </div>
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div class="inline-flex rounded-xl border border-line-2 bg-white p-1" aria-label="Filtrar candidatos">
             <button type="button" wire:click="mostrar('todos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-ink text-white' => $filtro === 'todos', 'text-gray-500 hover:text-ink' => $filtro !== 'todos'])>Todos <span class="ml-1 opacity-70">{{ $totalCandidatos }}</span></button>
             <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
         </div>
-        <p class="text-[13px] text-gray-500">Marca perfiles para construir tu selección sin salir del listado.</p>
+        <p class="text-[13px] text-gray-500">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
     </div>
 
     <div class="space-y-3">
@@ -48,13 +62,13 @@
                             <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
                                 <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
                             </flux:tooltip>
-                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro]) }}" class="ad-btn-primary ad-btn-sm">Ver ficha</a>
+                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm">Ver ficha</a>
                         </div>
                     </div>
                 </div>
             </article>
         @empty
-            <div class="ad-card p-10 text-center"><flux:icon.magnifying-glass class="size-8 text-gray-400 mx-auto" /><h2 class="font-bold mt-3">Aún no hay coincidencias</h2><p class="text-[13px] text-gray-500 mt-2">Prueba ampliando los criterios de búsqueda.</p></div>
+            <div class="ad-card p-10 text-center"><flux:icon.magnifying-glass class="size-8 text-gray-400 mx-auto" /><h2 class="font-bold mt-3">{{ $criterios !== [] ? 'Ningún candidato cumple esta combinación' : 'Aún no hay coincidencias' }}</h2><p class="text-[13px] text-gray-500 mt-2">{{ $criterios !== [] ? 'Quita uno de los filtros para ampliar los resultados.' : 'Prueba ampliando los criterios de búsqueda.' }}</p>@if ($criterios !== [])<button type="button" wire:click="limpiarCriterios" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>@endif</div>
         @endforelse
     </div>
 

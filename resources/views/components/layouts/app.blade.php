@@ -19,7 +19,7 @@
     <header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur dark:bg-[#1D2022]/95">
         <div class="flex items-center gap-4 px-4 py-3 md:gap-6 md:px-6">
             <div class="flex items-center gap-3">
-                <a href="{{ route('home') }}" class="ad-logo ad-logo-panel" aria-label="AD+50 Talento Senior">
+                <a href="{{ route('home') }}" class="ad-logo shrink-0" aria-label="AD+50 Talento Senior">
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo">
                 </a>
                 <span class="text-[12px] font-bold tracking-[0.13em] uppercase text-gray-500
@@ -54,10 +54,12 @@
     </header>
 
     {{-- ====== SHELL CON SIDEBAR ====== --}}
-    <div class="grid min-h-[calc(100vh-65px)] md:grid-cols-[230px_1fr]">
-        <aside class="hidden border-r border-line bg-white p-4 dark:bg-[#1D2022] md:block">
-            {{ $sidebar ?? '' }}
-        </aside>
+    <div @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[230px_1fr]' => isset($sidebar)])>
+        @isset($sidebar)
+            <aside class="hidden border-r border-line bg-white p-4 dark:bg-[#1D2022] md:block">
+                {{ $sidebar }}
+            </aside>
+        @endisset
 
         <main class="min-w-0 p-4 md:p-8">
             {{ $slot }}

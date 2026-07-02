@@ -8,21 +8,14 @@ use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-class NuevaBusqueda extends Component
+class FiltrosBusqueda extends Component
 {
-    public ?Busqueda $busqueda = null;
-
-    public string $titulo = '';
+    public Busqueda $busqueda;
 
     /** @var list<string> */
     public array $cargo = [];
-
-    /** @var list<string> */
-    public array $industria = [];
 
     /** @var list<string> */
     public array $carrera = [];
@@ -31,25 +24,22 @@ class NuevaBusqueda extends Component
     public array $especialidad = [];
 
     /** @var list<string> */
-    public array $ciudad = [];
+    public array $industria = [];
 
-    public string $palabraClave = '';
+    /** @var list<string> */
+    public array $ciudad = [];
 
     public int $aniosMinimos = 0;
 
-    public function mount(?Busqueda $busqueda = null): void
+    public string $palabraClave = '';
+
+    public function mount(Busqueda $busqueda): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
-
-        if ($busqueda === null) {
-            return;
-        }
-
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;
         $criterios = $busqueda->criterios ?? [];
-        $this->titulo = $busqueda->titulo;
         $this->cargo = $this->normalizarSeleccion($criterios['cargo'] ?? []);
         $this->carrera = $this->normalizarSeleccion($criterios['carrera'] ?? []);
         $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
@@ -64,10 +54,9 @@ class NuevaBusqueda extends Component
         $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
     }
 
-    public function save(MatchingService $matching): void
+    public function guardar(MatchingService $matching): void
     {
         $validated = $this->validate([
-            'titulo' => ['required', 'string', 'max:180'],
             'cargo' => ['array'],
             'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargosAreas())],
             'carrera' => ['array'],
@@ -78,13 +67,12 @@ class NuevaBusqueda extends Component
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
             'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::ciudades())],
-            'palabraClave' => ['nullable', 'string', 'max:100'],
             'aniosMinimos' => ['required', 'integer', 'min:0', 'max:80'],
+            'palabraClave' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $busqueda = DB::transaction(function () use ($validated, $matching): Busqueda {
-            $atributos = [
-                'titulo' => $validated['titulo'],
+        DB::transaction(function () use ($validated, $matching): void {
+            $this->busqueda->update([
                 'rubro_oculto' => $validated['industria'][0] ?? null,
                 'criterios' => [
                     'cargo' => $validated['cargo'],
@@ -95,48 +83,32 @@ class NuevaBusqueda extends Component
                     'min_anios' => $validated['aniosMinimos'],
                     'palabra_clave' => $validated['palabraClave'],
                 ],
-                'estado' => 'activa',
-            ];
+            ]);
 
-            if ($this->busqueda) {
-                $this->busqueda->update($atributos);
-                $busqueda = $this->busqueda->fresh();
-            } else {
-                $busqueda = Busqueda::query()->create([
-                    'empresa_id' => auth()->user()->empresa->id,
-                    ...$atributos,
-                ]);
-            }
-
-            $matching->sincronizar($busqueda);
-
-            return $busqueda;
+            $matching->sincronizar($this->busqueda->fresh());
         });
 
-        $this->redirectRoute('empresa.resultados', ['busqueda' => $busqueda], navigate: true);
+        $this->dispatch('criterios-actualizados');
+        session()->flash('status', 'Filtros actualizados.');
     }
 
-    #[Title('Configurar búsqueda · AD+50')]
-    #[Layout('components.layouts.app')]
     public function render(): View
     {
-        return view('livewire.empresa.nueva-busqueda', [
-            'cargosAreas' => CatalogosProfesionales::cargosAreas(),
-            'carreras' => array_keys(CatalogosProfesionales::carreras()),
-            'especialidades' => $this->especialidadesDisponibles(),
-            'industrias' => CatalogosProfesionales::industrias(),
-            'ciudades' => CatalogosProfesionales::ciudades(),
-            'editando' => $this->busqueda !== null,
+        return view('livewire.empresa.filtros-busqueda', [
+            'grupos' => [
+                ['Cargo', 'cargo', CatalogosProfesionales::cargosAreas()],
+                ['Carrera', 'carrera', array_keys(CatalogosProfesionales::carreras())],
+                ['Especialidad', 'especialidad', $this->especialidadesDisponibles()],
+                ['Industria', 'industria', CatalogosProfesionales::industrias()],
+                ['Ciudad', 'ciudad', CatalogosProfesionales::ciudades()],
+            ],
         ]);
     }
 
     /** @return list<string> */
     private function normalizarSeleccion(mixed $valor): array
     {
-        return collect((array) $valor)
-            ->filter(fn (mixed $item): bool => is_string($item) && filled($item))
-            ->values()
-            ->all();
+        return collect((array) $valor)->filter(fn (mixed $item): bool => is_string($item) && filled($item))->values()->all();
     }
 
     /** @return list<string> */
@@ -144,9 +116,6 @@ class NuevaBusqueda extends Component
     {
         return collect($this->carrera)
             ->flatMap(fn (string $carrera): array => CatalogosProfesionales::especialidades($carrera))
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+            ->unique()->sort()->values()->all();
     }
 }

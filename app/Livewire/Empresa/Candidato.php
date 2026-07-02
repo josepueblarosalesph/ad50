@@ -17,6 +17,10 @@ class Candidato extends Component
     #[Url]
     public string $filtro = 'todos';
 
+    /** @var list<string> */
+    #[Url]
+    public array $criterios = [];
+
     public bool $puedeVerContacto = false;
 
     public ?int $anteriorId = null;
@@ -36,6 +40,7 @@ class Candidato extends Component
         $this->filtro = in_array($this->filtro, ['todos', 'favoritos'], true) ? $this->filtro : 'todos';
 
         $this->match = $match->load('busqueda', 'postulante.user');
+        $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
         $empresa = auth()->user()->empresa;
         $this->puedeVerContacto = $empresa?->plan_id !== null
             && $empresa->plan_hasta !== null
@@ -56,12 +61,19 @@ class Candidato extends Component
 
     private function cargarNavegacion(): void
     {
-        $ids = $this->match->busqueda->candidatos()
+        $matches = $this->match->busqueda->candidatos()
+            ->where('estado_match', 'cumple')
             ->whereHas('postulante', fn ($query) => $query->where('visible', true))
             ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
             ->orderByDesc('criterios_cumplidos')
             ->orderBy('postulante_id')
-            ->pluck('id');
+            ->get(['id', 'criterios_detalle']);
+
+        if ($this->criterios !== []) {
+            $matches = $matches->filter(fn (BusquedaCandidato $match): bool => $this->cumpleCriterios($match));
+        }
+
+        $ids = $matches->pluck('id')->values();
 
         $indice = $ids->search($this->match->id);
 
@@ -73,12 +85,45 @@ class Candidato extends Component
         $this->siguienteId = $indice < $ids->count() - 1 ? $ids[$indice + 1] : null;
     }
 
+    /** @return array<string, array{etiqueta: string, valor: mixed}> */
+    private function criteriosDisponibles(): array
+    {
+        $etiquetas = [
+            'cargo' => 'Cargo / especialidad',
+            'carrera' => 'Carrera o título',
+            'especialidad' => 'Especialidad / área',
+            'industria' => 'Industria',
+            'ciudad' => 'Ciudad / región',
+            'min_anios' => 'Experiencia mínima',
+            'palabra_clave' => 'Palabra clave',
+        ];
+
+        return collect($this->match->busqueda->criterios ?? [])
+            ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! ($clave === 'min_anios' && (int) $valor === 0))
+            ->mapWithKeys(fn (mixed $valor, string $clave): array => isset($etiquetas[$clave]) ? [$clave => [
+                'etiqueta' => $etiquetas[$clave],
+                'valor' => $clave === 'min_anios' ? $valor.' años' : (is_array($valor) ? implode(', ', $valor) : $valor),
+            ]] : [])
+            ->all();
+    }
+
+    private function cumpleCriterios(BusquedaCandidato $match): bool
+    {
+        $disponibles = $this->criteriosDisponibles();
+        $detalles = collect($match->criterios_detalle ?? []);
+
+        return collect($this->criterios)->every(fn (string $clave): bool => isset($disponibles[$clave])
+            && $detalles->contains(fn (array $detalle): bool => ($detalle['criterio'] ?? null) === $disponibles[$clave]['etiqueta']
+                && ($detalle['cumple'] ?? false) === true));
+    }
+
     #[Title('Ficha de candidato · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
     {
         return view('livewire.empresa.candidato', [
             'meses' => CatalogosProfesionales::meses(),
+            'criteriosActivos' => collect($this->criteriosDisponibles())->only($this->criterios),
         ]);
     }
 }

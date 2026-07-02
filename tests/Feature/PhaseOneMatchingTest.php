@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Empresa\FiltrosBusqueda;
 use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Postulante\Ficha;
 use App\Models\Empresa;
@@ -8,7 +9,7 @@ use App\Models\Postulante;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('a structured search ranks complete matches before partial matches and explains every criterion', function () {
+test('a structured search lists only candidates that fulfill every configured criterion', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Uno']);
 
@@ -46,11 +47,11 @@ test('a structured search ranks complete matches before partial matches and expl
     Livewire::actingAs($empresaUser)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Liderazgo financiero')
-        ->set('cargo', 'Finanzas')
-        ->set('carrera', 'Ingeniería Civil / Ingeniería Comercial')
-        ->set('especialidad', 'Finanzas')
-        ->set('industria', 'Banca y servicios financieros')
-        ->set('ciudad', 'Concepción')
+        ->set('cargo', ['Finanzas'])
+        ->set('carrera', ['Ingeniería Civil / Ingeniería Comercial'])
+        ->set('especialidad', ['Finanzas'])
+        ->set('industria', ['Banca y servicios financieros'])
+        ->set('ciudad', ['Concepción'])
         ->set('aniosMinimos', 15)
         ->set('palabraClave', 'transformación')
         ->call('save')
@@ -59,13 +60,12 @@ test('a structured search ranks complete matches before partial matches and expl
     $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
     $matches = $busqueda->candidatos()->orderByDesc('criterios_cumplidos')->get();
 
-    expect($matches)->toHaveCount(2)
+    expect($matches)->toHaveCount(1)
         ->and($matches->first()->postulante_id)->toBe($complete->id)
         ->and($matches->first()->estado_match)->toBe('cumple')
         ->and($matches->first()->criterios_cumplidos)->toBe(7)
         ->and($matches->first()->criterios_detalle)->toHaveCount(7)
-        ->and($matches->last()->postulante_id)->toBe($partial->id)
-        ->and($matches->last()->estado_match)->toBe('parcial');
+        ->and($matches->contains('postulante_id', $partial->id))->toBeFalse();
 });
 
 test('a postulante can add and remove multiple work experiences', function () {
@@ -136,4 +136,128 @@ test('candidate contact details require an active company subscription and acces
         ->assertSee('privado@example.com');
 
     expect($match->fresh()->contactado_at)->not->toBeNull();
+});
+
+test('multiple values in one criterion include candidates matching any selected value', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Exigente']);
+
+    foreach (['Concepción', 'Santiago', 'Valdivia'] as $ciudad) {
+        $user = User::factory()->create(['role' => 'postulante']);
+        Postulante::query()->create([
+            'user_id' => $user->id,
+            'visible' => true,
+            'ciudad' => $ciudad,
+        ]);
+    }
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Centro sur')
+        ->set('ciudad', ['Concepción', 'Santiago'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $busqueda = $empresaUser->empresa->busquedas()->sole();
+
+    expect($busqueda->criterios['ciudad'])->toBe(['Concepción', 'Santiago'])
+        ->and($busqueda->candidatos)->toHaveCount(2)
+        ->and($busqueda->candidatos->pluck('postulante.ciudad')->sort()->values()->all())->toBe(['Concepción', 'Santiago']);
+});
+
+test('a company can edit a search and recalculate its existing results', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Editora']);
+
+    foreach (['Concepción', 'Santiago'] as $ciudad) {
+        $user = User::factory()->create(['role' => 'postulante']);
+        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
+    }
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Búsqueda original')
+        ->call('save');
+
+    $busqueda = $empresa->busquedas()->sole();
+    expect($busqueda->candidatos)->toHaveCount(2);
+    $busqueda->candidatos()
+        ->whereHas('postulante', fn ($query) => $query->where('ciudad', 'Santiago'))
+        ->sole()
+        ->update(['favorito' => true]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class, ['busqueda' => $busqueda])
+        ->assertSet('titulo', 'Búsqueda original')
+        ->set('titulo', 'Búsqueda ajustada')
+        ->set('ciudad', ['Santiago'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($empresa->busquedas()->count())->toBe(1)
+        ->and($busqueda->fresh()->titulo)->toBe('Búsqueda ajustada')
+        ->and($busqueda->fresh()->criterios['ciudad'])->toBe(['Santiago'])
+        ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
+        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Santiago')
+        ->and($busqueda->fresh()->candidatos->sole()->favorito)->toBeTrue();
+});
+
+test('a company can modify search filters from the results sidebar', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Lateral']);
+
+    foreach (['Concepción', 'Santiago'] as $ciudad) {
+        $user = User::factory()->create(['role' => 'postulante']);
+        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
+    }
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Búsqueda editable')
+        ->call('save');
+
+    $busqueda = $empresa->busquedas()->sole();
+
+    $this->actingAs($empresaUser)
+        ->get(route('empresa.resultados', $busqueda))
+        ->assertOk()
+        ->assertSee('Filtros de búsqueda')
+        ->assertSee('Guardar y recalcular');
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('ciudad', ['Santiago'])
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Santiago'])
+        ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
+        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Santiago');
+});
+
+test('criteria without selections are ignored', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Búsqueda amplia')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($empresaUser->empresa->busquedas)->toHaveCount(1)
+        ->and($empresaUser->empresa->busquedas->sole()->criterios['ciudad'])->toBe([]);
+});
+
+test('a company cannot edit another company search', function () {
+    $ownerUser = User::factory()->create(['role' => 'empresa']);
+    $owner = Empresa::query()->create(['user_id' => $ownerUser->id, 'razon_social' => 'Propietaria']);
+    $busqueda = $owner->busquedas()->create(['titulo' => 'Privada', 'criterios' => []]);
+
+    $otherUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $otherUser->id, 'razon_social' => 'Otra']);
+
+    $this->actingAs($otherUser)
+        ->get(route('empresa.busquedas.edit', $busqueda))
+        ->assertForbidden();
 });

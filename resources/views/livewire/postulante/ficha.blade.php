@@ -3,14 +3,23 @@
     <x-slot:nav>
         <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
         <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi ficha</a>
-        <a href="{{ route('postulante.panel') }}#coincidencias" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
-        <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi activación</a>
+        <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
     </x-slot:nav>
     <x-slot:sidebar>
-        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
-        @foreach ([['user','Datos personales', 'datos-personales'], ['academic-cap','Educación', 'educacion'], ['language','Idiomas', 'idiomas'], ['building-office-2','Industrias de interés', 'industrias'], ['briefcase','Experiencia', 'experiencia']] as [$icon, $label, $anchor])
-            <a href="#{{ $anchor }}" @class(['flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px]', 'bg-orange-100 text-orange-600' => $loop->first, 'text-gray-700 hover:bg-paper' => !$loop->first])><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
-        @endforeach
+        <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4">
+            <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
+            <div class="space-y-1.5">
+                @foreach ([
+                    ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'],
+                    ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5]'],
+                    ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7]'],
+                    ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4]'],
+                    ['building-office-2', 'Industrias de interés', 'industrias', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD]'],
+                ] as [$icon, $label, $anchor, $color])
+                    <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
+                @endforeach
+            </div>
+        </div>
     </x-slot:sidebar>
 
     <form wire:submit="save">
@@ -31,8 +40,9 @@
             <div class="ad-toggle-row min-w-64"><div><b class="text-[13.5px] block">Visibilidad del perfil</b><span class="text-[13px] text-gray-500">{{ $visible ? 'Activo — visible para empresas' : 'Perfil pausado' }}</span></div><flux:switch wire:model.live="visible" /></div>
         </div>
 
-        <section id="datos-personales" class="ad-card scroll-mt-24">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Datos personales</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 1 de 5</span></div>
+        <div class="flex flex-col">
+        <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300">
+            <div class="ad-card-head bg-orange-50/60"><h2 class="text-[18px] font-extrabold text-orange-700">Datos personales</h2></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
                 <flux:input wire:model="name" label="Nombre completo *" />
                 <flux:input wire:model.blur.live="rut" label="RUT *" placeholder="12.345.678-5" description="Puedes escribirlo sin puntos ni guion; lo formatearemos automáticamente." inputmode="text" autocomplete="off" />
@@ -48,8 +58,8 @@
             <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
 
-        <section id="educacion" class="ad-card mt-5 scroll-mt-24">
-            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
+        <section id="educacion" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5]"><div><h2 class="text-[20px] font-extrabold text-[#496451]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
             <div class="space-y-5 p-6">
                 @foreach ($educaciones as $index => $educacion)
                     @php($esEscolar = in_array($educacion['nivel'], $nivelesEscolares, true))
@@ -90,8 +100,8 @@
             </div>
         </section>
 
-        <section id="idiomas" class="ad-card mt-5 scroll-mt-24">
-            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
+        <section id="idiomas" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC]"><div><h2 class="text-[20px] font-extrabold text-[#665579]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
             <div class="space-y-4 p-6">
                 @foreach ($idiomas as $index => $idioma)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="idioma-{{ $index }}">
@@ -111,8 +121,8 @@
             </div>
         </section>
 
-        <section id="industrias" class="ad-card mt-5 scroll-mt-24">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Industrias de interés</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 4 de 5</span></div>
+        <section id="industrias" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E]">
+            <div class="ad-card-head bg-[#FCFAF5]"><h2 class="text-[18px] font-extrabold text-[#75603B]">Industrias de interés</h2></div>
             <div class="p-6 grid md:grid-cols-3 gap-4">
                 @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
                     <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
@@ -123,8 +133,8 @@
             </div>
         </section>
 
-        <section id="experiencia" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-500">
-            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+        <section id="experiencia" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB]"><div><h2 class="text-[20px] font-extrabold text-[#45657A]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
@@ -183,6 +193,7 @@
                 <flux:textarea wire:model="resumenProfesional" label="Resumen profesional" placeholder="Resume el valor que aporta el conjunto de tu trayectoria." rows="5" />
             </div>
         </section>
+        </div>
 
         <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm">Guardar toda la ficha</button></div>
     </form>

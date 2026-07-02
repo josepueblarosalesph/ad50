@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Empresa\NuevaBusqueda;
+use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\Ficha;
+use App\Livewire\Postulante\Panel as PostulantePanel;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
@@ -14,10 +16,23 @@ test('the landing page presents the experience-led visual direction', function (
     $this->get(route('home'))
         ->assertOk()
         ->assertSeeText('La experiencia no se archiva. Se activa.')
-        ->assertSee('Una tarjeta que explica el match.')
+        ->assertSee('id="como" class="hidden"', false)
+        ->assertSee('<section class="hidden">', false)
         ->assertSee('ad-welcome-light', false)
         ->assertSee('/images/ad50-logo.png', false)
-        ->assertSee('/images/ad50-hero-experiencia.webp', false);
+        ->assertSee('/images/ad50-hero-experiencia.webp', false)
+        ->assertSee('href="'.route('login').'"', false)
+        ->assertSee('Iniciar sesión')
+        ->assertSee('href="'.route('registro').'"', false)
+        ->assertSee('Registrarse')
+        ->assertSee('href="#empresas"', false)
+        ->assertSee('Cómo funciona');
+
+    $landing = file_get_contents(resource_path('views/livewire/landing.blade.php'));
+
+    expect($landing)
+        ->toContain('gap-y-3 text-[15px]')
+        ->toContain('pt-6 text-[14px]');
 });
 
 test('the interface uses the official brand typography and color tokens', function () {
@@ -26,6 +41,8 @@ test('the interface uses the official brand typography and color tokens', functi
     expect($css)
         ->toContain("--font-sans: 'Nunito'")
         ->toContain('--color-orange-500: #E87722')
+        ->toContain('--color-accent: var(--color-orange-600)')
+        ->toContain('--color-accent-foreground: #FFFFFF')
         ->toContain('--color-gray-400:   #75787B')
         ->toContain('@custom-variant dark')
         ->toContain('border-color: #5A5F64 !important')
@@ -47,7 +64,7 @@ test('authentication and application shells use the official logo without forcin
 
     expect($applicationLayout)
         ->toContain('/images/ad50-logo.png')
-        ->toContain('ad-logo-panel')
+        ->toContain('class="ad-logo shrink-0"')
         ->and($authLayouts)
         ->toContain('/images/ad50-logo.png')
         ->not->toContain('class="dark"');
@@ -103,11 +120,64 @@ test('a postulante can view the panel and professional profile', function () {
 
     $this->actingAs($user)->get(route('postulante.panel'))
         ->assertOk()
-        ->assertSee('Así se ve tu presencia');
+        ->assertSee('Así se ve tu presencia')
+        ->assertSee('Visibilidad del perfil')
+        ->assertSee(route('postulante.busquedas'), false)
+        ->assertDontSee('Solicitar eliminación de mis datos')
+        ->assertDontSee('Mi activación')
+        ->assertDontSee('<aside class="hidden border-r', false);
 
     $this->actingAs($user)->get(route('postulante.ficha'))
         ->assertOk()
-        ->assertSee('Mi ficha profesional');
+        ->assertSee('Mi ficha profesional')
+        ->assertSee('href="'.route('postulante.busquedas').'"', false)
+        ->assertDontSee(route('postulante.panel').'#coincidencias', false)
+        ->assertDontSee('Mi activación')
+        ->assertDontSee('Sección 1 de 5')
+        ->assertDontSee('Sección 5 de 5');
+
+    $ficha = file_get_contents(resource_path('views/livewire/postulante/ficha.blade.php'));
+
+    expect($ficha)
+        ->toContain('sticky top-24')
+        ->toContain('id="datos-personales" class="ad-card order-1')
+        ->toContain('id="experiencia" class="ad-card order-2')
+        ->toContain('id="educacion" class="ad-card order-3')
+        ->toContain('id="idiomas" class="ad-card order-4')
+        ->toContain('id="industrias" class="ad-card order-5')
+        ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
+        ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
+        ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
+        ->and(strpos($ficha, "'Idiomas'"))->toBeLessThan(strpos($ficha, "'Industrias de interés'"));
+});
+
+test('the postulante panel summarizes three searches and the searches page lists them all', function () {
+    $postulanteUser = User::factory()->create(['role' => 'postulante']);
+    $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true]);
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+
+    foreach (range(1, 5) as $index) {
+        $busqueda = $empresa->busquedas()->create(['titulo' => "Búsqueda {$index}", 'criterios' => []]);
+        $busqueda->candidatos()->create([
+            'postulante_id' => $postulante->id,
+            'estado_match' => 'cumple',
+            'criterios_cumplidos' => 1,
+            'criterios_totales' => 1,
+        ]);
+    }
+
+    Livewire::actingAs($postulanteUser)
+        ->test(PostulantePanel::class)
+        ->assertViewHas('matches', fn ($matches) => $matches->count() === 3)
+        ->assertViewHas('totalMatches', 5)
+        ->assertSee('Ver más');
+
+    Livewire::actingAs($postulanteUser)
+        ->test(PostulanteBusquedas::class)
+        ->assertViewHas('matches', fn ($matches) => $matches->total() === 5)
+        ->assertSee('Búsqueda 1')
+        ->assertSee('Búsqueda 5');
 });
 
 test('a postulante can update every section of the professional profile', function () {
@@ -267,7 +337,17 @@ test('an empresa can view its pages and create a search', function () {
         'estado_match' => 'cumple',
     ]);
 
-    $this->actingAs($user)->get(route('empresa.panel'))->assertOk();
+    $this->actingAs($user)->get(route('empresa.panel'))
+        ->assertOk()
+        ->assertSee('href="'.route('empresa.busquedas.index').'"', false)
+        ->assertSee('href="'.route('empresa.busquedas.create').'"', false)
+        ->assertDontSee('href="'.route('planes').'"', false)
+        ->assertDontSee('Suscripción')
+        ->assertDontSee('<aside class="hidden border-r', false);
+    $this->actingAs($user)->get(route('empresa.busquedas.index'))
+        ->assertOk()
+        ->assertSee('Mis búsquedas')
+        ->assertSee('Gerente de Finanzas');
     $this->actingAs($user)->get(route('empresa.busquedas.create'))->assertOk();
     $this->actingAs($user)->get(route('empresa.resultados', $busqueda))->assertOk();
     $this->actingAs($user)->get(route('empresa.candidatos.show', $match))->assertOk();
@@ -275,8 +355,8 @@ test('an empresa can view its pages and create a search', function () {
     Livewire::actingAs($user)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Controller Senior')
-        ->set('cargo', 'Control de Gestión')
-        ->set('industria', 'Forestal / Papelera')
+        ->set('cargo', ['Control de Gestión'])
+        ->set('industria', ['Forestal / Papelera'])
         ->set('aniosMinimos', 8)
         ->call('save')
         ->assertHasNoErrors();
@@ -300,5 +380,6 @@ test('users cannot open dashboards for another role', function () {
     Postulante::query()->create(['user_id' => $postulante->id]);
 
     $this->actingAs($postulante)->get(route('empresa.panel'))->assertForbidden();
+    $this->actingAs($postulante)->get(route('empresa.busquedas.index'))->assertForbidden();
     $this->actingAs($postulante)->get(route('admin.panel'))->assertForbidden();
 });

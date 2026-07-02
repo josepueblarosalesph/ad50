@@ -52,11 +52,11 @@ class MatchingService
             ->filter();
 
         $evaluadores = [
-            'cargo' => ['Cargo / especialidad', fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor))],
-            'carrera' => ['Carrera o título', fn (string $valor): bool => $this->iguales($postulante->carrera, $valor)],
-            'especialidad' => ['Especialidad / área', fn (string $valor): bool => $this->iguales($postulante->especialidad, $valor)],
-            'industria' => ['Industria', fn (string $valor): bool => collect([$postulante->industria, $postulante->industria_2, $postulante->industria_3])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor))],
-            'ciudad' => ['Ciudad / región', fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor)],
+            'cargo' => ['Cargo / especialidad', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor)))],
+            'carrera' => ['Carrera o título', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->carrera, $valor))],
+            'especialidad' => ['Especialidad / área', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->especialidad, $valor))],
+            'industria' => ['Industria', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect([$postulante->industria, $postulante->industria_2, $postulante->industria_3])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor)))],
+            'ciudad' => ['Ciudad / región', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor))],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
             'palabra_clave' => ['Palabra clave', function (string $valor) use ($postulante, $cargos): bool {
                 $responsabilidades = collect($postulante->experiencias ?? [])->pluck('responsabilidades');
@@ -75,14 +75,18 @@ class MatchingService
         foreach ($evaluadores as $clave => [$etiqueta, $evaluar]) {
             $valor = $criterios[$clave] ?? null;
 
-            if ($valor === null || $valor === '' || ($clave === 'min_anios' && (int) $valor === 0)) {
+            if ($valor === null || $valor === '' || $valor === [] || ($clave === 'min_anios' && (int) $valor === 0)) {
                 continue;
             }
 
+            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'especialidad', 'industria', 'ciudad'], true);
+            $valorEvaluado = $esSeleccionMultiple ? array_values((array) $valor) : (string) $valor;
+            $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
+
             $detalle[$clave] = [
                 'criterio' => $etiqueta,
-                'valor' => $clave === 'min_anios' ? $valor.' años' : (string) $valor,
-                'cumple' => $evaluar((string) $valor),
+                'valor' => $clave === 'min_anios' ? $valor.' años' : $valorMostrado,
+                'cumple' => $evaluar($valorEvaluado),
             ];
         }
 
@@ -105,6 +109,14 @@ class MatchingService
     private function guardarCoincidencia(Busqueda $busqueda, Postulante $postulante): void
     {
         $detalle = $this->evaluar($postulante, $busqueda->criterios ?? []);
+        $incumpleCriterio = collect($detalle)->contains(fn (array $criterio): bool => ! $criterio['cumple']);
+
+        if ($incumpleCriterio) {
+            $busqueda->candidatos()->whereBelongsTo($postulante)->delete();
+
+            return;
+        }
+
         $cumplidos = collect($detalle)->where('cumple', true)->count();
         $total = count($detalle);
 

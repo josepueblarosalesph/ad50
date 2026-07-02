@@ -43,6 +43,11 @@
 }
 
 @layer base {
+  :root {
+    --color-accent: var(--color-orange-600);
+    --color-accent-foreground: #FFFFFF;
+  }
+
   html, body { font-family: var(--font-sans); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
   body       { background: var(--color-paper); font-size: 17px; line-height: 1.55; }
   h1,h2,h3 { font-family: var(--font-display); font-weight: 900; letter-spacing: -.025em; line-height: 1.05; }

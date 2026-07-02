@@ -2,30 +2,36 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Panel</a>
-        <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nueva búsqueda</a>
         <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi plan</a>
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Candidato</div>
-        <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.arrow-left class="size-[18px]" />Volver a resultados</a>
+        <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.arrow-left class="size-[18px]" />Volver a resultados</a>
         <a href="#contacto" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon.user class="size-[18px]" />Ficha profesional</a>
     </x-slot:sidebar>
 
     @php($postulante = $match->postulante)
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line-2 bg-white p-2.5 shadow-sm">
-        <a wire:navigate href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="inline-flex items-center gap-2 px-2 text-[13px] font-semibold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a {{ $filtro === 'favoritos' ? 'favoritos' : 'resultados' }}</a>
+        <a wire:navigate href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="inline-flex items-center gap-2 px-2 text-[13px] font-semibold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a {{ $filtro === 'favoritos' ? 'favoritos' : 'resultados' }}</a>
         <div class="flex items-center gap-2" aria-label="Navegación entre candidatos">
             @if ($filtro === 'favoritos')
                 <span class="mr-1 hidden items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-[12px] font-bold text-orange-600 sm:inline-flex"><flux:icon.star variant="solid" class="size-4" />Revisando favoritos</span>
             @endif
+            @if ($criterios !== [])
+                <flux:modal.trigger name="filtros-activos">
+                    <button type="button" class="mr-1 inline-flex items-center gap-1.5 rounded-full bg-sage-100 px-3 py-1.5 text-[12px] font-bold text-ink transition hover:bg-sage-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600" aria-label="Ver filtros activos"><flux:icon.funnel class="size-4" /><span class="hidden sm:inline">{{ count($criterios) }} {{ count($criterios) === 1 ? 'filtro activo' : 'filtros activos' }}</span></button>
+                </flux:modal.trigger>
+            @endif
             @if ($anteriorId)
-                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $anteriorId, 'filtro' => $filtro]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato anterior"><flux:icon.chevron-left class="size-5" /></a>
+                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $anteriorId, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato anterior"><flux:icon.chevron-left class="size-5" /></a>
             @else
                 <span class="grid size-10 place-items-center rounded-xl border border-line text-gray-300" aria-hidden="true"><flux:icon.chevron-left class="size-5" /></span>
             @endif
             <span class="min-w-20 text-center text-[13px] font-bold text-gray-600"><span class="text-ink">{{ $posicion }}</span> de {{ $totalCandidatos }}</span>
             @if ($siguienteId)
-                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $siguienteId, 'filtro' => $filtro]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato siguiente"><flux:icon.chevron-right class="size-5" /></a>
+                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $siguienteId, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato siguiente"><flux:icon.chevron-right class="size-5" /></a>
             @else
                 <span class="grid size-10 place-items-center rounded-xl border border-line text-gray-300" aria-hidden="true"><flux:icon.chevron-right class="size-5" /></span>
             @endif
@@ -56,4 +62,25 @@
             @endif
         </div></aside>
     </div>
+
+    @if ($criterios !== [])
+        <flux:modal name="filtros-activos" class="max-w-lg">
+            <div class="flex items-start gap-3">
+                <span class="grid size-10 flex-none place-items-center rounded-xl bg-sage-100 text-ink"><flux:icon.funnel class="size-5" /></span>
+                <div><flux:heading size="lg">Filtros activos</flux:heading><flux:text class="mt-1">Estás navegando solo entre candidatos que cumplen todos estos criterios.</flux:text></div>
+            </div>
+            <div class="mt-5 space-y-2">
+                @foreach ($criteriosActivos as $criterio)
+                    <div class="flex items-start gap-3 rounded-xl border border-line-2 bg-paper p-3.5">
+                        <span class="mt-0.5 grid size-6 flex-none place-items-center rounded-full bg-match-100 text-match"><flux:icon.check class="size-4" /></span>
+                        <div><p class="text-[12px] font-bold uppercase tracking-wide text-gray-400">{{ $criterio['etiqueta'] }}</p><p class="mt-0.5 text-[14px] font-bold text-ink">{{ $criterio['valor'] }}</p></div>
+                    </div>
+                @endforeach
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <flux:modal.close><flux:button variant="ghost">Cerrar</flux:button></flux:modal.close>
+                <a wire:navigate href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm">Volver a resultados</a>
+            </div>
+        </flux:modal>
+    @endif
 </div>

@@ -10,7 +10,7 @@
                 </a>
 
                 <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[14px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md md:flex">
-                    <a href="#como" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Cómo funciona</a>
+                    <a href="#empresas" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Cómo funciona</a>
                     <a href="#empresas" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Para empresas</a>
                     <a href="#postulantes" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Para postulantes</a>
                 </div>
@@ -23,7 +23,10 @@
                         {{ auth()->user()->dashboardLabel() }}
                     </a>
                 @else
-                    <a href="{{ route('registro') }}" class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur">Ingresar</a>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('login') }}" class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur">Iniciar sesión</a>
+                        <a href="{{ route('registro') }}" class="ad-btn-primary ad-btn-sm">Registrarse</a>
+                    </div>
                 @endauth
             </nav>
         </div>
@@ -86,7 +89,7 @@
     </section>
 
     {{-- Cómo funciona --}}
-    <section id="como" class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-32">
+    <section id="como" class="hidden">
         <div class="grid gap-12 lg:grid-cols-[.75fr_1.25fr] lg:gap-20">
             <div>
                 <span class="ad-eyebrow">Cómo funciona</span>
@@ -169,7 +172,7 @@
     </section>
 
     {{-- La tarjeta toma la claridad y estructura de la dirección corporativa elegida en el test. --}}
-    <section class="overflow-hidden bg-[#E7E7E4]">
+    <section class="hidden">
         <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-6 py-24 lg:grid-cols-[.8fr_1.2fr] lg:px-10 lg:py-28">
             <div>
                 <span class="ad-eyebrow">Decisiones más claras</span>
@@ -223,10 +226,10 @@
             <div class="flex flex-wrap items-start justify-between gap-10 border-b border-white/10 pb-10">
                 <div class="max-w-[390px]">
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-20 w-auto rounded-[10px]" loading="lazy">
-                    <p class="mt-5 text-[14px] leading-[1.7]">Una iniciativa de AD Consulting para conectar experiencia, criterio y nuevas oportunidades laborales.</p>
+                    <p class="mt-5 text-[15px] leading-[1.7]">Una iniciativa de AD Consulting para conectar experiencia, criterio y nuevas oportunidades laborales.</p>
                 </div>
-                <div class="grid grid-cols-2 gap-x-12 gap-y-3 text-[13px] font-bold sm:grid-cols-3">
-                    <a href="#como" class="hover:text-white">Cómo funciona</a>
+                <div class="grid grid-cols-2 gap-x-12 gap-y-3 text-[15px] font-bold sm:grid-cols-3">
+                    <a href="#empresas" class="hover:text-white">Cómo funciona</a>
                     <a href="#empresas" class="hover:text-white">Para empresas</a>
                     <a href="#postulantes" class="hover:text-white">Para postulantes</a>
                     <a href="{{ route('planes') }}" class="hover:text-white">Planes</a>
@@ -234,7 +237,7 @@
                     <a href="#seguridad" class="hover:text-white">Contacto</a>
                 </div>
             </div>
-            <div class="flex flex-wrap justify-between gap-3 pt-6 text-[12px]">
+            <div class="flex flex-wrap justify-between gap-3 pt-6 text-[14px]">
                 <span>© {{ date('Y') }} AD Consulting · Concepción, Chile</span>
                 <span>Plataforma de perfiles y matching de talento</span>
             </div>
