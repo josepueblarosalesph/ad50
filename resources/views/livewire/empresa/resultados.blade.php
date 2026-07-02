@@ -35,7 +35,7 @@
                     </div>
                     <div class="border-t border-line pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0 md:text-right">
                         <span @class(['ad-chip', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
-                        <p class="mt-2 text-[12.5px] font-semibold text-match">Contacto disponible</p>
+                        <p class="mt-2 text-[13px] font-semibold text-match">Contacto disponible</p>
                         <a href="{{ route('empresa.candidatos.show', $match) }}" class="ad-btn-primary ad-btn-sm mt-3">Ver ficha</a>
                     </div>
                 </div>

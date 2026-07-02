@@ -15,6 +15,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertOk()
         ->assertSeeText('La experiencia no se archiva. Se activa.')
         ->assertSee('Una tarjeta que explica el match.')
+        ->assertSee('ad-welcome-light', false)
         ->assertSee('/images/ad50-logo.png', false)
         ->assertSee('/images/ad50-hero-experiencia.webp', false);
 });
@@ -26,11 +27,38 @@ test('the interface uses the official brand typography and color tokens', functi
         ->toContain("--font-sans: 'Nunito'")
         ->toContain('--color-orange-500: #E87722')
         ->toContain('--color-gray-400:   #75787B')
+        ->toContain('@custom-variant dark')
+        ->toContain('border-color: #5A5F64 !important')
+        ->toContain('.dark .ad-welcome-light .ad-chip')
         ->not->toContain("--font-display: 'DM Serif Display'");
 
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('family=Nunito', false);
+});
+
+test('authentication and application shells use the official logo without forcing dark mode', function () {
+    $applicationLayout = file_get_contents(resource_path('views/components/layouts/app.blade.php'));
+    $authLayouts = collect([
+        resource_path('views/layouts/auth/simple.blade.php'),
+        resource_path('views/layouts/auth/card.blade.php'),
+        resource_path('views/layouts/auth/split.blade.php'),
+    ])->map(fn (string $path): string => file_get_contents($path))->implode('\n');
+
+    expect($applicationLayout)
+        ->toContain('/images/ad50-logo.png')
+        ->toContain('ad-logo-panel')
+        ->and($authLayouts)
+        ->toContain('/images/ad50-logo.png')
+        ->not->toContain('class="dark"');
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('/images/ad50-logo.png', false);
+
+    $this->get(route('registro'))
+        ->assertOk()
+        ->assertSee('/images/ad50-logo.png', false);
 });
 
 test('authenticated postulantes see mi perfil on the home page', function () {
@@ -103,15 +131,51 @@ test('a postulante can update every section of the professional profile', functi
         ->set('universidad', 'Universidad de Concepción')
         ->set('especialidad', 'Finanzas')
         ->set('postgrado', 'MBA')
+        ->set('educaciones', [
+            [
+                'nivel' => 'Básica',
+                'pais' => 'Chile',
+                'institucion' => 'Colegio de Prueba',
+                'carrera' => null,
+                'mencion' => null,
+                'modalidad' => null,
+                'situacion' => null,
+                'inicio_anio' => null,
+                'termino_anio' => null,
+                'egreso_anio' => 1983,
+            ],
+            [
+                'nivel' => 'Universitaria',
+                'pais' => 'Chile',
+                'institucion' => 'Universidad de Concepción',
+                'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
+                'mencion' => 'Finanzas',
+                'modalidad' => 'Presencial',
+                'situacion' => 'Titulado',
+                'inicio_anio' => 1989,
+                'termino_anio' => 1995,
+                'egreso_anio' => null,
+            ],
+        ])
+        ->set('idiomas', [
+            ['idioma' => 'Español', 'nivel' => 'Alto'],
+            ['idioma' => 'Inglés', 'nivel' => 'Medio'],
+        ])
         ->set('industria', 'Banca y servicios financieros')
         ->set('industria2', 'Forestal / Papelera')
         ->set('industria3', 'Tecnología de la Información')
         ->set('experiencias', [[
-            'cargo' => 'Finanzas',
+            'cargo' => 'Gerenta de Finanzas',
+            'tipo_trabajo' => 'Jornada completa',
             'empresa' => 'Empresa de Prueba SpA',
-            'area' => 'Finanzas',
-            'inicio' => now()->year - 17,
-            'fin' => null,
+            'jerarquia' => 'Gerencia / Dirección',
+            'actividad_empresa' => 'Banca y servicios financieros',
+            'inicio_mes' => 3,
+            'inicio_anio' => now()->year - 17,
+            'actualmente' => true,
+            'fin_mes' => null,
+            'fin_anio' => null,
+            'responsabilidades' => 'Liderazgo del equipo financiero y control de gestión.',
         ]])
         ->set('resumenProfesional', 'Experiencia liderando equipos financieros.')
         ->set('visible', true)
@@ -132,6 +196,36 @@ test('a postulante can update every section of the professional profile', functi
         'empresa_actual' => 'Empresa de Prueba SpA',
         'completitud' => 100,
     ]);
+
+    $experiencia = $user->postulante->fresh()->experiencias[0];
+    $educaciones = $user->postulante->fresh()->educaciones;
+    $idiomas = $user->postulante->fresh()->idiomas;
+
+    expect($experiencia)
+        ->toMatchArray([
+            'cargo' => 'Gerenta de Finanzas',
+            'tipo_trabajo' => 'Jornada completa',
+            'jerarquia' => 'Gerencia / Dirección',
+            'actividad_empresa' => 'Banca y servicios financieros',
+            'inicio_mes' => 3,
+            'actualmente' => true,
+            'responsabilidades' => 'Liderazgo del equipo financiero y control de gestión.',
+        ])
+        ->and($educaciones)->toHaveCount(2)
+        ->and($educaciones[0])->toMatchArray([
+            'nivel' => 'Básica',
+            'institucion' => 'Colegio de Prueba',
+            'egreso_anio' => 1983,
+        ])
+        ->and($educaciones[1])->toMatchArray([
+            'nivel' => 'Universitaria',
+            'modalidad' => 'Presencial',
+            'situacion' => 'Titulado',
+        ])
+        ->and($idiomas)->toBe([
+            ['idioma' => 'Español', 'nivel' => 'Alto'],
+            ['idioma' => 'Inglés', 'nivel' => 'Medio'],
+        ]);
 });
 
 test('the professional profile formats and validates rut on blur', function () {

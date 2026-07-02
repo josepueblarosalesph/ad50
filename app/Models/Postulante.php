@@ -16,6 +16,8 @@ class Postulante extends Model
         'anio_nacimiento' => 'integer',
         'experiencia_inicio' => 'integer',
         'experiencia_fin' => 'integer',
+        'educaciones' => 'array',
+        'idiomas' => 'array',
         'experiencias' => 'array',
     ];
 

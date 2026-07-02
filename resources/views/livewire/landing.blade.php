@@ -1,6 +1,6 @@
-<div>
+<div class="ad-welcome-light">
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
-    <section class="relative min-h-[760px] overflow-hidden border-b border-line bg-paper lg:min-h-[820px]"
+    <section class="ad-light-surface relative min-h-[760px] overflow-hidden border-b border-line bg-paper lg:min-h-[820px]"
         style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia.webp'); background-position: center, 68% center; background-size: cover;">
         <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/65 to-transparent"></div>
         <div class="absolute inset-x-0 top-0 z-20">
@@ -71,7 +71,7 @@
     </section>
 
     {{-- Franja de confianza --}}
-    <section class="bg-ink text-white">
+    <section class="bg-[#75787B] text-white">
         <div class="mx-auto grid max-w-[1240px] gap-6 px-6 py-7 md:grid-cols-[1.4fr_1fr_1fr] md:items-center lg:px-10">
             <p class="font-display text-[24px] leading-tight">El futuro del trabajo también se construye con experiencia.</p>
             <div class="flex items-center gap-3 text-[13px] font-bold text-white/70">
@@ -143,25 +143,25 @@
                     <a href="{{ route('registro') }}?tipo=empresa" class="ad-btn-primary">Crear una búsqueda</a>
                 </article>
 
-                <article id="postulantes" class="relative overflow-hidden rounded-[20px] bg-ink p-8 text-white sm:p-10">
-                    <div class="absolute -right-20 -top-20 size-64 rounded-full border-[50px] border-orange-500/10"></div>
+                <article id="postulantes" class="ad-postulante-card relative overflow-hidden rounded-[20px] border border-orange-200 p-8 text-ink transition-shadow duration-300 sm:p-10">
+                    <div class="ad-postulante-orbit absolute -right-20 -top-20 size-64 rounded-full border-[50px] border-orange-500/10"></div>
                     <div class="relative">
                         <div class="mb-8 flex items-center justify-between">
                             <span class="grid size-12 place-items-center rounded-[12px] bg-orange-500 text-white">
                                 <flux:icon.user class="size-6" />
                             </span>
-                            <span class="text-[11px] font-extrabold uppercase tracking-[.16em] text-white/50">Para postulantes</span>
+                            <span class="text-[11px] font-extrabold uppercase tracking-[.16em] text-orange-600">Para postulantes</span>
                         </div>
-                        <h3 class="text-[34px] text-white">Haz visible todo lo que sabes hacer.</h3>
-                        <p class="mt-4 text-[16px] leading-[1.7] text-white/70">Una ficha profesional activa, actualizable y bajo tu control para aparecer en búsquedas compatibles.</p>
+                        <h3 class="text-[34px] text-ink">Haz visible todo lo que sabes hacer.</h3>
+                        <p class="mt-4 text-[16px] leading-[1.7] text-gray-700">Una ficha profesional activa, actualizable y bajo tu control para aparecer en búsquedas compatibles.</p>
                         <ul class="my-7 grid gap-3">
                             @foreach (['Tu experiencia en un solo lugar', 'Visibilidad siempre bajo tu control', 'Datos protegidos y actualizables'] as $item)
-                                <li class="flex gap-3 text-[14px] font-bold text-white/75">
+                                <li class="flex gap-3 text-[14px] font-bold text-gray-700">
                                     <flux:icon.check class="size-5 shrink-0 text-orange-500" />{{ $item }}
                                 </li>
                             @endforeach
                         </ul>
-                        <a href="{{ route('registro') }}?tipo=postulante" class="ad-btn-light">Crear mi ficha</a>
+                        <a href="{{ route('registro') }}?tipo=postulante" class="ad-btn-primary">Crear mi ficha</a>
                     </div>
                 </article>
             </div>
@@ -180,9 +180,9 @@
                 </p>
             </div>
 
-            <article class="rounded-[18px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card-lg)] sm:p-8">
+            <article class="ad-match-preview rounded-[18px] border border-line-2 bg-white p-6 sm:p-8">
                 <div class="flex flex-wrap items-start gap-5">
-                    <div class="grid size-16 shrink-0 place-items-center rounded-[14px] bg-sage-100 text-[20px] font-extrabold text-ink">MF</div>
+                    <div class="grid size-16 shrink-0 place-items-center rounded-[14px] bg-orange-100 text-[20px] font-extrabold text-orange-700 ring-1 ring-orange-200">MF</div>
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div>
@@ -213,12 +213,12 @@
             </div>
             <div class="flex flex-wrap gap-3">
                 <a href="{{ route('registro') }}" class="ad-btn-light">Crear una cuenta</a>
-                <a href="{{ route('planes') }}" class="ad-btn bg-ink text-white hover:bg-ink-2">Ver planes</a>
+                <a href="{{ route('planes') }}" class="ad-btn bg-[#343638] text-white hover:bg-[#4C4F51]">Ver planes</a>
             </div>
         </div>
     </section>
 
-    <footer id="seguridad" class="bg-ink text-white/60">
+    <footer id="seguridad" class="bg-[#4C4F51] text-white/85">
         <div class="mx-auto max-w-[1240px] px-6 py-14 lg:px-10">
             <div class="flex flex-wrap items-start justify-between gap-10 border-b border-white/10 pb-10">
                 <div class="max-w-[390px]">

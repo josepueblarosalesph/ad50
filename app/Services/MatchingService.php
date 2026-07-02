@@ -52,14 +52,19 @@ class MatchingService
             ->filter();
 
         $evaluadores = [
-            'cargo' => ['Cargo / especialidad', fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->iguales($cargo, $valor))],
+            'cargo' => ['Cargo / especialidad', fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor))],
             'carrera' => ['Carrera o título', fn (string $valor): bool => $this->iguales($postulante->carrera, $valor)],
             'especialidad' => ['Especialidad / área', fn (string $valor): bool => $this->iguales($postulante->especialidad, $valor)],
             'industria' => ['Industria', fn (string $valor): bool => collect([$postulante->industria, $postulante->industria_2, $postulante->industria_3])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor))],
             'ciudad' => ['Ciudad / región', fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor)],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
             'palabra_clave' => ['Palabra clave', function (string $valor) use ($postulante, $cargos): bool {
-                $texto = $cargos->push($postulante->resumen_profesional)->filter()->implode(' ');
+                $responsabilidades = collect($postulante->experiencias ?? [])->pluck('responsabilidades');
+                $texto = $cargos
+                    ->concat($responsabilidades)
+                    ->push($postulante->resumen_profesional)
+                    ->filter()
+                    ->implode(' ');
 
                 return Str::contains(Str::lower($texto), Str::lower($valor));
             }],
@@ -87,6 +92,14 @@ class MatchingService
     private function iguales(?string $actual, string $esperado): bool
     {
         return Str::lower(trim((string) $actual)) === Str::lower(trim($esperado));
+    }
+
+    private function coincideCargo(?string $actual, string $esperado): bool
+    {
+        $cargo = Str::lower(trim((string) $actual));
+        $criterio = Str::lower(trim($esperado));
+
+        return $cargo === $criterio || Str::contains($cargo, $criterio);
     }
 
     private function guardarCoincidencia(Busqueda $busqueda, Postulante $postulante): void

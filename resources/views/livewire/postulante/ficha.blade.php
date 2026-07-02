@@ -8,7 +8,7 @@
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
-        @foreach ([['user','Datos personales', 'datos-personales'], ['academic-cap','Educación', 'educacion'], ['building-office-2','Industrias de interés', 'industrias'], ['briefcase','Experiencia', 'experiencia']] as [$icon, $label, $anchor])
+        @foreach ([['user','Datos personales', 'datos-personales'], ['academic-cap','Educación', 'educacion'], ['language','Idiomas', 'idiomas'], ['building-office-2','Industrias de interés', 'industrias'], ['briefcase','Experiencia', 'experiencia']] as [$icon, $label, $anchor])
             <a href="#{{ $anchor }}" @class(['flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px]', 'bg-orange-100 text-orange-600' => $loop->first, 'text-gray-700 hover:bg-paper' => !$loop->first])><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
         @endforeach
     </x-slot:sidebar>
@@ -27,12 +27,12 @@
         @endif
 
         <div class="ad-card p-5 mb-5 flex flex-wrap items-center gap-6">
-            <div class="flex-1 min-w-60"><div class="flex justify-between text-[12.5px] font-semibold mb-2"><span>Completitud de tu ficha</span><span class="text-orange-600">{{ $completitud }}%</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div></div></div>
-            <div class="ad-toggle-row min-w-64"><div><b class="text-[13.5px] block">Visibilidad del perfil</b><span class="text-[12px] text-gray-500">{{ $visible ? 'Activo — visible para empresas' : 'Perfil pausado' }}</span></div><flux:switch wire:model.live="visible" /></div>
+            <div class="flex-1 min-w-60"><div class="mb-2 flex justify-between text-[13px] font-semibold"><span>Completitud de tu ficha</span><span class="text-orange-600">{{ $completitud }}%</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div></div></div>
+            <div class="ad-toggle-row min-w-64"><div><b class="text-[13.5px] block">Visibilidad del perfil</b><span class="text-[13px] text-gray-500">{{ $visible ? 'Activo — visible para empresas' : 'Perfil pausado' }}</span></div><flux:switch wire:model.live="visible" /></div>
         </div>
 
         <section id="datos-personales" class="ad-card scroll-mt-24">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Datos personales</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 1 de 4</span></div>
+            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Datos personales</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 1 de 5</span></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
                 <flux:input wire:model="name" label="Nombre completo *" />
                 <flux:input wire:model.blur.live="rut" label="RUT *" placeholder="12.345.678-5" description="Puedes escribirlo sin puntos ni guion; lo formatearemos automáticamente." inputmode="text" autocomplete="off" />
@@ -45,27 +45,74 @@
                     @foreach ($ciudades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
                 </flux:select>
             </div>
-            <div class="px-6 pb-6 flex gap-2 text-[11.5px] text-gray-500"><flux:icon.lock-closed class="size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
+            <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
 
         <section id="educacion" class="ad-card mt-5 scroll-mt-24">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Educación</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 2 de 4</span></div>
-            <div class="p-6 grid md:grid-cols-2 gap-4">
-                <flux:select wire:model.live="carrera" label="Título o carrera *">
-                    <flux:select.option value="">Selecciona una carrera</flux:select.option>
-                    @foreach ($carreras as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
-                </flux:select>
-                <flux:input wire:model="universidad" label="Universidad o institución *" placeholder="Universidad de Concepción" />
-                <flux:select wire:model="especialidad" label="Especialidad o área *" :disabled="$carrera === ''">
-                    <flux:select.option value="">Selecciona una especialidad</flux:select.option>
-                    @foreach ($especialidades as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
-                </flux:select>
-                <flux:input wire:model="postgrado" label="Postgrado" placeholder="MBA" />
+            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
+            <div class="space-y-5 p-6">
+                @foreach ($educaciones as $index => $educacion)
+                    @php($esEscolar = in_array($educacion['nivel'], $nivelesEscolares, true))
+                    <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="educacion-{{ $index }}">
+                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Educación {{ $index + 1 }}</legend>@if (count($educaciones) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeEducacion({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <flux:select wire:model.live="educaciones.{{ $index }}.nivel" label="Nivel de estudios *">
+                                <flux:select.option value="">Selecciona un nivel</flux:select.option>
+                                @foreach ($nivelesEstudio as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                            <flux:input wire:model="educaciones.{{ $index }}.pais" label="País *" placeholder="Chile" />
+                            <flux:input wire:model="educaciones.{{ $index }}.institucion" label="Institución de educación *" placeholder="Nombre de la institución" />
+
+                            @if ($educacion['nivel'] !== '' && $esEscolar)
+                                <flux:select wire:model="educaciones.{{ $index }}.egreso_anio" label="Año de egreso *">
+                                    <flux:select.option value="">Selecciona un año</flux:select.option>
+                                    @foreach (range(now()->year, 1900) as $anio)<flux:select.option :value="$anio">{{ $anio }}</flux:select.option>@endforeach
+                                </flux:select>
+                            @elseif ($educacion['nivel'] !== '')
+                                <flux:input wire:model="educaciones.{{ $index }}.carrera" label="Carrera *" placeholder="Nombre de la carrera o programa" />
+                                <flux:input wire:model="educaciones.{{ $index }}.mencion" label="Mención *" placeholder="Mención o especialidad" />
+                                <flux:select wire:model="educaciones.{{ $index }}.modalidad" label="Modalidad de estudios *">
+                                    <flux:select.option value="">Selecciona una modalidad</flux:select.option>
+                                    @foreach ($modalidadesEstudio as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                                </flux:select>
+                                <flux:select wire:model="educaciones.{{ $index }}.situacion" label="Situación *">
+                                    <flux:select.option value="">Selecciona una situación</flux:select.option>
+                                    @foreach ($situacionesEstudio as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                                </flux:select>
+                                <div class="grid grid-cols-2 gap-3 md:col-span-2 md:max-w-md">
+                                    <flux:select wire:model="educaciones.{{ $index }}.inicio_anio" label="Año de inicio *"><flux:select.option value="">Selecciona</flux:select.option>@foreach (range(now()->year, 1900) as $anio)<flux:select.option :value="$anio">{{ $anio }}</flux:select.option>@endforeach</flux:select>
+                                    <flux:select wire:model="educaciones.{{ $index }}.termino_anio" label="Año de término *"><flux:select.option value="">Selecciona</flux:select.option>@foreach (range(now()->year, 1900) as $anio)<flux:select.option :value="$anio">{{ $anio }}</flux:select.option>@endforeach</flux:select>
+                                </div>
+                            @endif
+                        </div>
+                    </fieldset>
+                @endforeach
+            </div>
+        </section>
+
+        <section id="idiomas" class="ad-card mt-5 scroll-mt-24">
+            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
+            <div class="space-y-4 p-6">
+                @foreach ($idiomas as $index => $idioma)
+                    <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="idioma-{{ $index }}">
+                        <div class="mb-4 flex items-center justify-between gap-3"><legend class="font-bold">Idioma {{ $index + 1 }}</legend>@if (count($idiomas) === 1)<span class="ad-chip ad-chip-orange">Obligatorio</span>@else<button type="button" wire:click="removeIdioma({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="grid gap-4 md:grid-cols-2">
+                            <flux:select wire:model="idiomas.{{ $index }}.idioma" label="Idioma *">
+                                <flux:select.option value="">Selecciona un idioma</flux:select.option>
+                                @foreach ($idiomasDisponibles as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                            <flux:select wire:model="idiomas.{{ $index }}.nivel" label="Nivel *">
+                                <flux:select.option value="">Selecciona un nivel</flux:select.option>
+                                @foreach ($nivelesIdioma as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                        </div>
+                    </fieldset>
+                @endforeach
             </div>
         </section>
 
         <section id="industrias" class="ad-card mt-5 scroll-mt-24">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Industrias de interés</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 3 de 4</span></div>
+            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Industrias de interés</h2><span class="text-[11px] font-bold text-orange-500 uppercase tracking-wider">Sección 4 de 5</span></div>
             <div class="p-6 grid md:grid-cols-3 gap-4">
                 @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
                     <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
@@ -77,25 +124,66 @@
         </section>
 
         <section id="experiencia" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-500">
-            <div class="ad-card-head"><div><h2 class="text-[16px] font-bold">Experiencia</h2><p class="mt-1 text-[12px] text-gray-500">Agrega hasta tres experiencias. La primera es obligatoria.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm" @disabled(count($experiencias) >= 3)>+ Agregar experiencia</button></div>
+            <div class="ad-card-head flex-wrap gap-4"><div><h2 class="text-[20px] font-extrabold text-orange-600">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
-                        <div class="mb-4 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if ($index === 0)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="text-[13px] font-bold text-[#A93226]">Quitar</button>@endif</div>
-                        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            <flux:select wire:model="experiencias.{{ $index }}.cargo" label="Cargo / especialidad *"><flux:select.option value="">Selecciona</flux:select.option>@foreach ($cargosAreas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach</flux:select>
-                            <flux:input wire:model="experiencias.{{ $index }}.empresa" label="Empresa *" />
-                            <flux:select wire:model="experiencias.{{ $index }}.area" label="Área *"><flux:select.option value="">Selecciona</flux:select.option>@foreach ($cargosAreas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach</flux:select>
-                            <flux:input wire:model="experiencias.{{ $index }}.inicio" type="number" min="1950" max="{{ now()->year }}" label="Año de inicio *" />
-                            <flux:input wire:model="experiencias.{{ $index }}.fin" type="number" min="1950" max="{{ now()->year }}" label="Año de término" description="Vacío si continúa vigente." />
+                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <flux:input wire:model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" placeholder="Ingresa tu cargo" />
+                            <flux:select wire:model="experiencias.{{ $index }}.tipo_trabajo" label="Tipo de trabajo *">
+                                @foreach ($tiposTrabajo as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                            <flux:input wire:model="experiencias.{{ $index }}.empresa" label="Empresa *" placeholder="Nombre de la empresa" />
+                            <flux:select wire:model="experiencias.{{ $index }}.jerarquia" label="Jerarquía *">
+                                <flux:select.option value="">Selecciona una jerarquía</flux:select.option>
+                                @foreach ($jerarquias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                            <flux:select wire:model="experiencias.{{ $index }}.actividad_empresa" label="Actividad de la empresa *">
+                                <flux:select.option value="">Selecciona una actividad</flux:select.option>
+                                @foreach ($industrias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                            <div class="space-y-2">
+                                <div class="text-[13px] font-medium">Fecha de inicio <span class="text-red-600">*</span></div>
+                                <div class="grid grid-cols-[1fr_110px] gap-2">
+                                    <flux:select wire:model="experiencias.{{ $index }}.inicio_mes" aria-label="Mes de inicio">
+                                        <flux:select.option value="">Mes</flux:select.option>
+                                        @foreach ($meses as $numero => $mes)<flux:select.option :value="$numero">{{ $mes }}</flux:select.option>@endforeach
+                                    </flux:select>
+                                    <flux:select wire:model="experiencias.{{ $index }}.inicio_anio" aria-label="Año de inicio">
+                                        <flux:select.option value="">Año</flux:select.option>
+                                        @foreach (range(now()->year, 1950) as $anio)<flux:select.option :value="$anio">{{ $anio }}</flux:select.option>@endforeach
+                                    </flux:select>
+                                </div>
+                                <flux:error name="experiencias.{{ $index }}.inicio_mes" />
+                                <flux:error name="experiencias.{{ $index }}.inicio_anio" />
+                            </div>
+                            <div class="md:col-start-2 space-y-3">
+                                <flux:checkbox wire:model.live="experiencias.{{ $index }}.actualmente" label="Actualmente trabajando" />
+                                @unless ($experiencia['actualmente'])
+                                    <div class="space-y-2">
+                                        <div class="text-[13px] font-medium">Fecha de término <span class="text-red-600">*</span></div>
+                                        <div class="grid grid-cols-[1fr_110px] gap-2">
+                                            <flux:select wire:model="experiencias.{{ $index }}.fin_mes" aria-label="Mes de término"><flux:select.option value="">Mes</flux:select.option>@foreach ($meses as $numero => $mes)<flux:select.option :value="$numero">{{ $mes }}</flux:select.option>@endforeach</flux:select>
+                                            <flux:select wire:model="experiencias.{{ $index }}.fin_anio" aria-label="Año de término"><flux:select.option value="">Año</flux:select.option>@foreach (range(now()->year, 1950) as $anio)<flux:select.option :value="$anio">{{ $anio }}</flux:select.option>@endforeach</flux:select>
+                                        </div>
+                                        <flux:error name="experiencias.{{ $index }}.fin_mes" />
+                                        <flux:error name="experiencias.{{ $index }}.fin_anio" />
+                                    </div>
+                                @endunless
+                            </div>
+                            <div class="md:col-span-2">
+                                <flux:textarea wire:model="experiencias.{{ $index }}.responsabilidades" label="Responsabilidades y logros en el cargo *" placeholder="Describe tus principales responsabilidades, resultados y logros." rows="5" />
+                                <p class="mt-2 text-[13px] leading-relaxed text-gray-500">Prioriza logros concretos y actividades relacionadas con tu foco laboral actual.</p>
+                            </div>
                         </div>
                     </fieldset>
                 @endforeach
                 <div class="rounded-[12px] bg-paper px-4 py-3 text-[13px] text-gray-700"><b>Años totales calculados:</b> {{ $aniosExperiencia }}. Se actualizarán al guardar y los períodos superpuestos no se duplican.</div>
-                <flux:textarea wire:model="resumenProfesional" label="Resumen profesional" placeholder="Describe tus principales responsabilidades y logros." rows="5" />
+                <flux:textarea wire:model="resumenProfesional" label="Resumen profesional" placeholder="Resume el valor que aporta el conjunto de tu trayectoria." rows="5" />
             </div>
         </section>
 
-        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="text-[12.5px] text-gray-500 mt-1">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm">Guardar toda la ficha</button></div>
+        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm">Guardar toda la ficha</button></div>
     </form>
 </div>

@@ -13,15 +13,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @fluxAppearance
 </head>
-<body class="min-h-screen bg-paper text-ink">
+<body class="min-h-screen bg-paper text-ink transition-colors duration-200">
 
     {{-- ====== TOPBAR ====== --}}
-    <header class="sticky top-0 z-30 bg-white/95 border-b border-line backdrop-blur">
+    <header class="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur dark:bg-[#1D2022]/95">
         <div class="flex items-center gap-4 px-4 py-3 md:gap-6 md:px-6">
             <div class="flex items-center gap-3">
-                <div class="ad-logo">
-                    <span class="text-[15px]">AD<span class="ad-logo-plus">+</span>50</span>
-                </div>
+                <a href="{{ route('home') }}" class="ad-logo ad-logo-panel" aria-label="AD+50 Talento Senior">
+                    <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo">
+                </a>
                 <span class="text-[12px] font-bold tracking-[0.13em] uppercase text-gray-500
                              border-l border-line-2 pl-3">
                     {{ $context ?? 'Postulante' }}
@@ -55,7 +55,7 @@
 
     {{-- ====== SHELL CON SIDEBAR ====== --}}
     <div class="grid min-h-[calc(100vh-65px)] md:grid-cols-[230px_1fr]">
-        <aside class="hidden bg-white border-r border-line p-4 md:block">
+        <aside class="hidden border-r border-line bg-white p-4 dark:bg-[#1D2022] md:block">
             {{ $sidebar ?? '' }}
         </aside>
 

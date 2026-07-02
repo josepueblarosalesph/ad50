@@ -3,6 +3,7 @@
 namespace App\Livewire\Empresa;
 
 use App\Models\BusquedaCandidato;
+use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -35,6 +36,8 @@ class Candidato extends Component
     #[Layout('components.layouts.app')]
     public function render(): View
     {
-        return view('livewire.empresa.candidato');
+        return view('livewire.empresa.candidato', [
+            'meses' => CatalogosProfesionales::meses(),
+        ]);
     }
 }

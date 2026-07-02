@@ -68,7 +68,7 @@ test('a structured search ranks complete matches before partial matches and expl
         ->and($matches->last()->estado_match)->toBe('parcial');
 });
 
-test('profile experience is limited to three entries and total years are calculated without overlaps', function () {
+test('a postulante can add and remove multiple work experiences', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id]);
 
@@ -76,7 +76,41 @@ test('profile experience is limited to three entries and total years are calcula
 
     $component->call('addExperiencia')->call('addExperiencia')->call('addExperiencia');
 
+    expect($component->get('experiencias'))->toHaveCount(4);
+
+    $component->call('removeExperiencia', 1);
+
     expect($component->get('experiencias'))->toHaveCount(3);
+});
+
+test('a postulante can add and remove multiple education entries', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id]);
+
+    $component = Livewire::actingAs($user)->test(Ficha::class);
+
+    $component->call('addEducacion')->call('addEducacion');
+
+    expect($component->get('educaciones'))->toHaveCount(3);
+
+    $component->call('removeEducacion', 1);
+
+    expect($component->get('educaciones'))->toHaveCount(2);
+});
+
+test('a postulante can add and remove multiple languages', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id]);
+
+    $component = Livewire::actingAs($user)->test(Ficha::class);
+
+    $component->call('addIdioma')->call('addIdioma');
+
+    expect($component->get('idiomas'))->toHaveCount(3);
+
+    $component->call('removeIdioma', 1);
+
+    expect($component->get('idiomas'))->toHaveCount(2);
 });
 
 test('candidate contact details require an active company subscription and access is audited', function () {

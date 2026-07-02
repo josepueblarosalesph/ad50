@@ -71,6 +71,76 @@ class CatalogosProfesionales
     }
 
     /** @return array<int, string> */
+    public static function tiposTrabajo(): array
+    {
+        return [
+            'Jornada completa', 'Media jornada', 'Independiente', 'Contrato temporal',
+            'Práctica', 'Por proyecto', 'Consultoría',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function jerarquias(): array
+    {
+        return [
+            'Gerencia / Dirección', 'Subgerencia', 'Jefatura', 'Coordinación / Supervisión',
+            'Profesional / Especialista', 'Técnico', 'Administrativo', 'Operativo',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function meses(): array
+    {
+        return [
+            1 => 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function nivelesEstudio(): array
+    {
+        return [
+            'Básica', 'Media', 'Técnico Medio / Colegio Técnico',
+            'Técnico profesional superior', 'Universitaria', 'Diplomado',
+            'Postgrado', 'Magíster', 'Doctorado', 'Otro',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function nivelesEscolares(): array
+    {
+        return ['Básica', 'Media', 'Técnico Medio / Colegio Técnico'];
+    }
+
+    /** @return array<int, string> */
+    public static function modalidadesEstudio(): array
+    {
+        return ['Presencial', 'Semi-presencial', 'Online'];
+    }
+
+    /** @return array<int, string> */
+    public static function situacionesEstudio(): array
+    {
+        return ['Egresado', 'Titulado', 'Estudiando', 'Incompleto'];
+    }
+
+    /** @return array<int, string> */
+    public static function idiomas(): array
+    {
+        return [
+            'Alemán', 'Chino Mandarín', 'Coreano', 'Español', 'Francés', 'Inglés',
+            'Italiano', 'Japonés', 'Mapudungun', 'Polaco', 'Portugués', 'Ruso',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function nivelesIdioma(): array
+    {
+        return ['Bajo', 'Medio', 'Alto'];
+    }
+
+    /** @return array<int, string> */
     public static function especialidades(?string $carrera): array
     {
         return self::carreras()[$carrera] ?? [];
