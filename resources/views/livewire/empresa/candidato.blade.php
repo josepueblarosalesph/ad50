@@ -2,19 +2,37 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Panel</a>
-        <a href="{{ route('empresa.resultados', $match->busqueda) }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
+        <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Búsquedas</a>
         <a href="{{ route('planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi plan</a>
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Candidato</div>
-        <a href="{{ route('empresa.resultados', $match->busqueda) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.arrow-left class="size-[18px]" />Volver a resultados</a>
+        <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.arrow-left class="size-[18px]" />Volver a resultados</a>
         <a href="#contacto" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon.user class="size-[18px]" />Ficha profesional</a>
     </x-slot:sidebar>
 
     @php($postulante = $match->postulante)
-    <a href="{{ route('empresa.resultados', $match->busqueda) }}" class="inline-flex items-center gap-2 text-[13px] font-semibold text-gray-500 mb-5"><flux:icon.arrow-left class="size-4" />Volver a resultados</a>
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line-2 bg-white p-2.5 shadow-sm">
+        <a wire:navigate href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro]) }}" class="inline-flex items-center gap-2 px-2 text-[13px] font-semibold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a {{ $filtro === 'favoritos' ? 'favoritos' : 'resultados' }}</a>
+        <div class="flex items-center gap-2" aria-label="Navegación entre candidatos">
+            @if ($filtro === 'favoritos')
+                <span class="mr-1 hidden items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-[12px] font-bold text-orange-600 sm:inline-flex"><flux:icon.star variant="solid" class="size-4" />Revisando favoritos</span>
+            @endif
+            @if ($anteriorId)
+                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $anteriorId, 'filtro' => $filtro]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato anterior"><flux:icon.chevron-left class="size-5" /></a>
+            @else
+                <span class="grid size-10 place-items-center rounded-xl border border-line text-gray-300" aria-hidden="true"><flux:icon.chevron-left class="size-5" /></span>
+            @endif
+            <span class="min-w-20 text-center text-[13px] font-bold text-gray-600"><span class="text-ink">{{ $posicion }}</span> de {{ $totalCandidatos }}</span>
+            @if ($siguienteId)
+                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $siguienteId, 'filtro' => $filtro]) }}" class="grid size-10 place-items-center rounded-xl border border-line-2 text-gray-600 transition hover:border-orange-300 hover:text-orange-600" aria-label="Ver candidato siguiente"><flux:icon.chevron-right class="size-5" /></a>
+            @else
+                <span class="grid size-10 place-items-center rounded-xl border border-line text-gray-300" aria-hidden="true"><flux:icon.chevron-right class="size-5" /></span>
+            @endif
+        </div>
+    </div>
 
-    <div class="flex items-center justify-between gap-5 mb-6 flex-wrap"><div class="flex items-center gap-4"><div class="size-16 rounded-full bg-orange-100 text-orange-600 grid place-items-center" aria-hidden="true"><flux:icon.user class="size-7" /></div><div><h1 class="text-[24px] font-extrabold">Perfil profesional <span class="font-medium text-gray-500 text-[15px]">#{{ $postulante->id }}</span></h1><p class="text-[14px] text-gray-500 mt-1">{{ $postulante->cargo_actual ?: 'Trayectoria profesional' }}</p><span @class(['ad-chip mt-2', 'ad-chip-green' => $match->estado_match === 'cumple'])>{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }} criterios</span></div></div><button class="ad-btn-ghost ad-btn-sm">Guardar candidato</button></div>
+    <div class="flex items-center justify-between gap-5 mb-6 flex-wrap"><div class="flex items-center gap-4"><div class="size-16 rounded-full bg-orange-100 text-orange-600 grid place-items-center" aria-hidden="true"><flux:icon.user class="size-7" /></div><div><h1 class="text-[24px] font-extrabold">Perfil profesional <span class="font-medium text-gray-500 text-[15px]">#{{ $postulante->id }}</span></h1><p class="text-[14px] text-gray-500 mt-1">{{ $postulante->cargo_actual ?: 'Trayectoria profesional' }}</p><span @class(['ad-chip mt-2', 'ad-chip-green' => $match->estado_match === 'cumple'])>{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }} criterios</span></div></div><button type="button" wire:click="toggleFavorito" wire:loading.attr="disabled" @class(['ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-600 hover:border-orange-300 hover:text-orange-600' => ! $match->favorito]) aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" />{{ $match->favorito ? 'Guardado en favoritos' : 'Guardar como favorito' }}</button></div>
 
     <div class="grid lg:grid-cols-[1.4fr_0.8fr] gap-5 items-start">
         <div class="space-y-5">

@@ -12,6 +12,7 @@ class BusquedaCandidato extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'favorito' => 'boolean',
         'contactado_at' => 'datetime',
         'criterios_detalle' => 'array',
     ];
