@@ -9,13 +9,17 @@ use App\Support\CatalogosProfesionales;
 use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Ficha extends Component
 {
+    use WithFileUploads;
+
     public string $name = '';
 
     public string $email = '';
@@ -71,6 +75,10 @@ class Ficha extends Component
 
     public bool $visible = true;
 
+    public mixed $cv = null;
+
+    public ?string $cvRutaExistente = null;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->role === 'postulante', 403);
@@ -125,6 +133,7 @@ class Ficha extends Component
             ->all();
         $this->completitud = $postulante?->completitud ?? 0;
         $this->visible = $postulante?->visible ?? true;
+        $this->cvRutaExistente = $postulante?->cv_ruta;
     }
 
     public function updatedRut(): void
@@ -233,6 +242,7 @@ class Ficha extends Component
             'experiencias.*.responsabilidades' => ['required', 'string', 'max:3000'],
             'resumenProfesional' => ['nullable', 'string', 'max:2000'],
             'visible' => ['boolean'],
+            'cv' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
 
         foreach ($validated['educaciones'] as $index => $educacion) {
@@ -302,44 +312,70 @@ class Ficha extends Component
 
         $completitud = $this->calculateCompletitud($validated);
 
-        $postulante = DB::transaction(function () use ($validated, $completitud, $principal, $educacionPrincipal): Postulante {
-            auth()->user()->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-            ]);
+        $cvRutaAnterior = auth()->user()->postulante?->cv_ruta;
+        $cvRutaNueva = isset($validated['cv']) && $validated['cv'] !== null
+            ? $validated['cv']->store('cvs', 'local')
+            : null;
 
-            return Postulante::query()->updateOrCreate(['user_id' => auth()->id()], [
-                'rut' => $validated['rut'],
-                'anio_nacimiento' => $validated['anioNacimiento'],
-                'telefono' => $validated['telefono'],
-                'linkedin' => $validated['linkedin'],
-                'ciudad' => $validated['ciudad'],
-                'cargo_actual' => $principal['cargo'],
-                'industria' => $validated['industria'],
-                'industria_2' => $validated['industria2'],
-                'industria_3' => $validated['industria3'],
-                'carrera' => $educacionPrincipal['carrera'],
-                'universidad' => $educacionPrincipal['institucion'],
-                'especialidad' => $educacionPrincipal['mencion'],
-                'postgrado' => in_array($educacionPrincipal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $educacionPrincipal['carrera'] : null,
-                'educaciones' => $validated['educaciones'],
-                'idiomas' => $validated['idiomas'],
-                'empresa_actual' => $principal['empresa'],
-                'experiencia_area' => $principal['actividad_empresa'],
-                'experiencia_inicio' => $principal['inicio_anio'],
-                'experiencia_fin' => $principal['fin_anio'],
-                'experiencias' => $validated['experiencias'],
-                'resumen_profesional' => $validated['resumenProfesional'],
-                'anios_experiencia' => $validated['aniosExperiencia'],
-                'visible' => $validated['visible'],
-                'completitud' => $completitud,
-            ]);
-        });
+        if ($cvRutaNueva === false) {
+            $this->addError('cv', 'No pudimos guardar el archivo. Inténtalo nuevamente.');
+
+            return;
+        }
+
+        try {
+            $postulante = DB::transaction(function () use ($validated, $completitud, $principal, $educacionPrincipal, $cvRutaAnterior, $cvRutaNueva): Postulante {
+                auth()->user()->update([
+                    'name' => $validated['name'],
+                    'email' => $validated['email'],
+                ]);
+
+                return Postulante::query()->updateOrCreate(['user_id' => auth()->id()], [
+                    'rut' => $validated['rut'],
+                    'anio_nacimiento' => $validated['anioNacimiento'],
+                    'telefono' => $validated['telefono'],
+                    'linkedin' => $validated['linkedin'],
+                    'ciudad' => $validated['ciudad'],
+                    'cargo_actual' => $principal['cargo'],
+                    'industria' => $validated['industria'],
+                    'industria_2' => $validated['industria2'],
+                    'industria_3' => $validated['industria3'],
+                    'carrera' => $educacionPrincipal['carrera'],
+                    'universidad' => $educacionPrincipal['institucion'],
+                    'especialidad' => $educacionPrincipal['mencion'],
+                    'postgrado' => in_array($educacionPrincipal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $educacionPrincipal['carrera'] : null,
+                    'educaciones' => $validated['educaciones'],
+                    'idiomas' => $validated['idiomas'],
+                    'empresa_actual' => $principal['empresa'],
+                    'experiencia_area' => $principal['actividad_empresa'],
+                    'experiencia_inicio' => $principal['inicio_anio'],
+                    'experiencia_fin' => $principal['fin_anio'],
+                    'experiencias' => $validated['experiencias'],
+                    'resumen_profesional' => $validated['resumenProfesional'],
+                    'anios_experiencia' => $validated['aniosExperiencia'],
+                    'visible' => $validated['visible'],
+                    'completitud' => $completitud,
+                    'cv_ruta' => $cvRutaNueva ?? $cvRutaAnterior,
+                ]);
+            });
+        } catch (\Throwable $exception) {
+            if ($cvRutaNueva !== null) {
+                Storage::disk('local')->delete($cvRutaNueva);
+            }
+
+            throw $exception;
+        }
+
+        if ($cvRutaNueva !== null && $cvRutaAnterior !== null) {
+            Storage::disk('local')->delete($cvRutaAnterior);
+        }
 
         $matching->sincronizarPostulante($postulante);
 
         $this->completitud = $completitud;
         $this->aniosExperiencia = $validated['aniosExperiencia'];
+        $this->cvRutaExistente = $postulante->cv_ruta;
+        $this->reset('cv');
 
         session()->flash('status', 'Ficha actualizada correctamente.');
     }

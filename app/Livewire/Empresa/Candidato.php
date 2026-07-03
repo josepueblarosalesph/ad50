@@ -5,10 +5,12 @@ namespace App\Livewire\Empresa;
 use App\Models\BusquedaCandidato;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Candidato extends Component
 {
@@ -22,6 +24,8 @@ class Candidato extends Component
     public array $criterios = [];
 
     public bool $puedeVerContacto = false;
+
+    public bool $cvDisponible = false;
 
     public ?int $anteriorId = null;
 
@@ -41,10 +45,9 @@ class Candidato extends Component
 
         $this->match = $match->load('busqueda', 'postulante.user');
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
-        $empresa = auth()->user()->empresa;
-        $this->puedeVerContacto = $empresa?->plan_id !== null
-            && $empresa->plan_hasta !== null
-            && $empresa->plan_hasta->endOfDay()->isFuture();
+        $this->puedeVerContacto = $this->empresaTieneAccesoActivo();
+        $this->cvDisponible = filled($this->match->postulante->cv_ruta)
+            && Storage::disk('local')->exists($this->match->postulante->cv_ruta);
 
         if ($this->puedeVerContacto && $this->match->contactado_at === null) {
             $this->match->update(['contactado_at' => now()]);
@@ -57,6 +60,33 @@ class Candidato extends Component
     {
         $this->match->update(['favorito' => ! $this->match->favorito]);
         $this->match->refresh();
+    }
+
+    public function descargarCv(): StreamedResponse
+    {
+        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless($this->match->busqueda->empresa_id === auth()->user()->empresa?->id, 403);
+        abort_unless($this->match->postulante->visible, 404);
+        abort_unless($this->empresaTieneAccesoActivo(), 403);
+
+        $cvRuta = $this->match->postulante->cv_ruta;
+
+        abort_unless(filled($cvRuta) && Storage::disk('local')->exists($cvRuta), 404);
+
+        return Storage::disk('local')->download(
+            $cvRuta,
+            'cv-postulante-'.$this->match->postulante_id.'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
+    private function empresaTieneAccesoActivo(): bool
+    {
+        $empresa = auth()->user()->empresa;
+
+        return $empresa?->plan_id !== null
+            && $empresa->plan_hasta !== null
+            && $empresa->plan_hasta->endOfDay()->isFuture();
     }
 
     private function cargarNavegacion(): void

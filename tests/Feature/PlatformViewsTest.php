@@ -145,10 +145,13 @@ test('a postulante can view the panel and professional profile', function () {
         ->toContain('id="educacion" class="ad-card order-3')
         ->toContain('id="idiomas" class="ad-card order-4')
         ->toContain('id="industrias" class="ad-card order-5')
+        ->toContain('id="curriculum" class="ad-card mt-5')
         ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
-        ->and(strpos($ficha, "'Idiomas'"))->toBeLessThan(strpos($ficha, "'Industrias de interés'"));
+        ->and(strpos($ficha, "'Idiomas'"))->toBeLessThan(strpos($ficha, "'Industrias de interés'"))
+        ->and(strpos($ficha, 'id="industrias"'))->toBeLessThan(strpos($ficha, 'id="curriculum"'))
+        ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
 });
 
 test('the postulante panel summarizes three searches and the searches page lists them all', function () {

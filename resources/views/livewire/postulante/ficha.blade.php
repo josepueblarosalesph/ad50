@@ -1,4 +1,5 @@
-<div>
+<div class="ad-panel">
+
     <x-slot:context>Postulante</x-slot:context>
     <x-slot:nav>
         <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
@@ -15,6 +16,7 @@
                     ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7]'],
                     ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4]'],
                     ['building-office-2', 'Industrias de interés', 'industrias', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD]'],
+                    ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4]'],
                 ] as [$icon, $label, $anchor, $color])
                     <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
                 @endforeach
@@ -25,7 +27,7 @@
     <form wire:submit="save">
         <div class="flex items-start justify-between gap-5 mb-6 flex-wrap">
             <div><h1 class="text-[27px] font-extrabold">Mi ficha profesional</h1><p class="text-[14px] text-gray-500 mt-1.5">Completa tus datos para aparecer en las búsquedas de empresas.</p></div>
-            <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save">
+            <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">
                 <span wire:loading.remove wire:target="save">Guardar cambios</span>
                 <span wire:loading wire:target="save">Guardando…</span>
             </button>
@@ -195,6 +197,37 @@
         </section>
         </div>
 
-        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm">Guardar toda la ficha</button></div>
+        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5]">
+            <div class="ad-card-head bg-[#F8F6FA]"><div><h2 class="text-[18px] font-extrabold text-[#665579]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu ficha con un documento actualizado.</p></div></div>
+            <div class="space-y-4 p-6">
+                <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA]">
+                    <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579]" />
+                    <span class="mt-3 block text-[14px] font-bold text-ink">Selecciona tu CV en PDF</span>
+                    <span class="mt-1 block text-[12px] text-gray-500">Un archivo de hasta 10 MB</span>
+                    <span class="ad-btn-ghost ad-btn-sm mt-4">Elegir archivo</span>
+                    <input id="cv" type="file" wire:model="cv" accept="application/pdf,.pdf" class="sr-only" />
+                </label>
+
+                <div wire:loading wire:target="cv" class="rounded-[10px] border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] font-semibold text-blue-700" role="status">Cargando el archivo…</div>
+
+                @error('cv') <div class="rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-700" role="alert">{{ $message }}</div> @enderror
+
+                @if ($cv)
+                    <div class="flex items-center gap-3 rounded-[10px] border border-blue-200 bg-blue-50 p-3">
+                        <flux:icon.document class="size-5 flex-none text-blue-600" />
+                        <div class="min-w-0"><b class="block truncate text-[13px] text-blue-800">{{ $cv->getClientOriginalName() }}</b><span class="text-[12px] text-blue-700">Listo para guardar</span></div>
+                    </div>
+                @elseif ($cvRutaExistente)
+                    <div class="flex items-center gap-3 rounded-[10px] border border-[#BFE6CD] bg-match-100 p-3">
+                        <flux:icon.check-circle class="size-5 flex-none text-match" />
+                        <div><b class="block text-[13px] text-match">CV guardado</b><span class="text-[12px] text-gray-600">Al elegir otro PDF reemplazarás el archivo actual.</span></div>
+                    </div>
+                @endif
+
+                <p class="text-[13px] leading-relaxed text-gray-500">Las empresas podrán acceder al CV cuando tengan acceso autorizado a tu perfil.</p>
+            </div>
+        </section>
+
+        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">Guardar toda la ficha</button></div>
     </form>
 </div>

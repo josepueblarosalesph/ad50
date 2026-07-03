@@ -56,6 +56,15 @@
             <div class="ad-toggle-row"><flux:icon.phone class="size-4 text-gray-500" /><span class="flex-1 text-[13px]"><b>{{ $postulante->telefono ?: 'Sin teléfono informado' }}</b></span></div>
             <div class="ad-toggle-row"><flux:icon.envelope class="size-4 text-gray-500" /><span class="flex-1 text-[13px]"><b>{{ $postulante->user->email }}</b></span></div>
             <div class="ad-toggle-row"><flux:icon.map-pin class="size-4 text-gray-500" /><span class="flex-1 text-[13px]"><b>{{ $postulante->ciudad ?: 'Chile' }}</b></span></div>
+            @if ($cvDisponible)
+                <button type="button" wire:click="descargarCv" wire:loading.attr="disabled" wire:target="descargarCv" class="ad-btn-primary ad-btn-sm w-full justify-center disabled:opacity-60">
+                    <flux:icon.arrow-down-tray class="size-4" />
+                    <span wire:loading.remove wire:target="descargarCv">Descargar CV en PDF</span>
+                    <span wire:loading wire:target="descargarCv">Preparando descarga…</span>
+                </button>
+            @else
+                <div class="rounded-[10px] border border-line-2 bg-paper px-4 py-3 text-[13px] text-gray-500"><b class="text-gray-700">CV no disponible</b><span class="mt-1 block">El postulante aún no ha adjuntado un currículum.</span></div>
+            @endif
             <p class="flex gap-2 text-[13px] leading-relaxed text-gray-500"><flux:icon.information-circle class="mt-0.5 size-4 flex-none" />El acceso queda registrado para fines de privacidad y auditoría.</p>
             @else
             <p class="text-[13px] text-gray-700">Necesitas una suscripción de empresa activa para revelar RUT, teléfono y correo.</p>
