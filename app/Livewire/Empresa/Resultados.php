@@ -107,7 +107,6 @@ class Resultados extends Component
                 ->paginate(20, pageName: 'candidatos'),
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
-            'criteriosDisponibles' => $this->criteriosDisponibles(),
         ]);
     }
 

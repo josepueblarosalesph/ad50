@@ -10,24 +10,7 @@
         <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" /></div>
     </x-slot:sidebar>
 
-    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Candidatos ordenados por nivel de coincidencia.</p></div><a href="#filtros-busqueda" class="ad-btn-ghost ad-btn-sm">Editar filtros</a></div>
-
-    <div class="rounded-[16px] bg-ink p-4 text-white md:px-5 mb-5">
-        <div class="flex flex-wrap items-center gap-3">
-            <div><b class="text-[15px]">Encontramos <span class="text-orange-500">{{ $totalCandidatos }} candidatos</span></b><p class="mt-1 text-[12px] text-white/60">Selecciona criterios para filtrar quiénes los cumplen.</p></div>
-            <div class="ml-auto flex flex-wrap gap-2">
-                @foreach ($criteriosDisponibles as $key => $criterio)
-                    <button type="button" wire:key="criterio-{{ $key }}" wire:click="toggleCriterio('{{ $key }}')" @class(['ad-chip cursor-pointer transition', 'border-orange-400 bg-orange-500 text-white' => in_array($key, $criterios, true), 'border-white/15 bg-white/10 text-white hover:border-white/40 hover:bg-white/15' => ! in_array($key, $criterios, true)]) aria-pressed="{{ in_array($key, $criterios, true) ? 'true' : 'false' }}">
-                        @if (in_array($key, $criterios, true))<flux:icon.check class="size-4" />@endif
-                        {{ $criterio['etiqueta'] }}: {{ $criterio['valor'] }}
-                    </button>
-                @endforeach
-                @if ($criterios !== [])
-                    <button type="button" wire:click="limpiarCriterios" class="px-2 text-[12px] font-bold text-white/70 underline underline-offset-4 hover:text-white">Limpiar</button>
-                @endif
-            </div>
-        </div>
-    </div>
+    <div class="mb-6"><h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1><p class="mt-1.5 text-[14px] text-gray-500">Candidatos ordenados por nivel de coincidencia.</p></div>
 
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div class="inline-flex rounded-xl border border-line-2 bg-white p-1" aria-label="Filtrar candidatos">
@@ -39,23 +22,24 @@
 
     <div class="space-y-3">
         @forelse ($candidatos as $match)
-            <article wire:key="candidato-{{ $match->id }}" class="ad-card relative overflow-hidden p-5 md:p-6">
+            <article wire:key="candidato-{{ $match->id }}" class="ad-card relative overflow-hidden p-4 md:p-5">
                 <div class="absolute inset-y-0 left-0 w-1 bg-orange-500"></div>
-                <div class="grid items-center gap-5 md:grid-cols-[auto_1fr_auto]">
-                    <div class="grid size-14 place-items-center rounded-[13px] bg-sage-100 text-lg font-extrabold text-ink" aria-hidden="true"><flux:icon.user class="size-6" /></div>
-                    <div class="min-w-0">
-                        <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $match->postulante->carrera ?: 'Carrera no informada' }}</p>
-                        <h2 class="mt-1 truncate text-[22px] font-extrabold text-ink">{{ $match->postulante->user->name }}</h2>
-                        <p class="mt-3 max-w-4xl text-[13.5px] leading-relaxed text-gray-600">{{ $match->postulante->resumen_profesional ?: 'Sin descripción profesional disponible.' }}</p>
+                <div class="grid items-stretch gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-0">
+                    <div class="flex min-w-0 items-center gap-4 md:pr-6">
+                        <div class="grid size-12 flex-none place-items-center rounded-[12px] bg-sage-100 text-ink" aria-hidden="true"><flux:icon.user class="size-5" /></div>
+                        <div class="min-w-0">
+                            <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $match->postulante->carrera ?: 'Carrera no informada' }}</p>
+                            <h2 class="mt-0.5 truncate text-[20px] font-extrabold text-ink">{{ $match->postulante->user->name }}</h2>
+                            <p class="mt-2 max-w-4xl text-[13px] leading-relaxed text-gray-600">{{ Str::limit($match->postulante->resumen_profesional ?: 'Sin descripción profesional disponible.', 100, '…') }}</p>
+                        </div>
                     </div>
-                    <div class="border-t border-line pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0 md:text-right">
-                        <span @class(['ad-chip', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
-                        <p class="mt-2 text-[13px] font-semibold text-match">Contacto disponible</p>
-                        <div class="mt-3 flex items-center gap-2 md:justify-end">
+                    <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 md:pl-4 md:pt-0">
+                        <span @class(['ad-chip whitespace-nowrap', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
+                        <div class="flex items-center gap-2">
                             <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
-                                <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
+                                <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
                             </flux:tooltip>
-                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm">Ver ficha</a>
+                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver ficha</a>
                         </div>
                     </div>
                 </div>

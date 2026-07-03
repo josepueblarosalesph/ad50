@@ -9,6 +9,7 @@ use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 test('a company can mark and filter favorite candidates within a search', function () {
@@ -29,12 +30,13 @@ test('a company can mark and filter favorite candidates within a search', functi
 test('candidate cards show career name and professional summary instead of criteria tags', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
     $postulante = $matches[0]->postulante;
+    $resumenProfesional = str_repeat('Experiencia ejecutiva. ', 8);
 
     $postulante->user->update(['name' => 'María José Fuentes']);
     $postulante->update([
         'carrera' => 'Ingeniería Comercial',
         'cargo_actual' => 'Subgerente de Finanzas',
-        'resumen_profesional' => 'Ejecutiva con experiencia liderando equipos financieros y procesos de transformación.',
+        'resumen_profesional' => $resumenProfesional,
     ]);
     $matches[0]->update(['criterios_detalle' => [[
         'criterio' => 'Experiencia mínima',
@@ -46,17 +48,26 @@ test('candidate cards show career name and professional summary instead of crite
         ->test(Resultados::class, ['busqueda' => $busqueda])
         ->assertSee('Ingeniería Comercial')
         ->assertSee('María José Fuentes')
-        ->assertSee('Ejecutiva con experiencia liderando equipos financieros y procesos de transformación.')
+        ->assertSee(Str::limit($resumenProfesional, 100, '…'))
+        ->assertDontSee($resumenProfesional)
         ->assertDontSee('Perfil profesional #'.$postulante->id)
         ->assertDontSee('Subgerente de Finanzas')
-        ->assertDontSee('Experiencia mínima: 5 años');
+        ->assertDontSee('Experiencia mínima: 5 años')
+        ->assertDontSee('Selecciona criterios para filtrar quiénes los cumplen.')
+        ->assertDontSee('Contacto disponible')
+        ->assertDontSee('Editar filtros');
 });
 
 test('candidate detail navigation follows the search result ranking', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    $matches[1]->postulante->user->update(['name' => 'María José Fuentes']);
+    $matches[1]->postulante->update(['carrera' => 'Ingeniería Comercial']);
 
     Livewire::actingAs($empresaUser)
         ->test(Candidato::class, ['match' => $matches[1]])
+        ->assertSee('María José Fuentes')
+        ->assertSee('Ingeniería Comercial')
+        ->assertDontSee('Perfil profesional #'.$matches[1]->postulante_id)
         ->assertSet('anteriorId', $matches[0]->id)
         ->assertSet('siguienteId', $matches[2]->id)
         ->assertSet('posicion', 2)
