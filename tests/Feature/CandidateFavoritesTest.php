@@ -55,7 +55,8 @@ test('candidate cards show career name and professional summary instead of crite
         ->assertDontSee('Experiencia mínima: 5 años')
         ->assertDontSee('Selecciona criterios para filtrar quiénes los cumplen.')
         ->assertDontSee('Contacto disponible')
-        ->assertDontSee('Editar filtros');
+        ->assertDontSee('Editar filtros')
+        ->assertDontSee('Mi plan');
 });
 
 test('candidate detail navigation follows the search result ranking', function () {
