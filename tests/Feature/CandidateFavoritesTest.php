@@ -26,6 +26,32 @@ test('a company can mark and filter favorite candidates within a search', functi
         ->and($matches[0]->fresh()->favorito)->toBeFalse();
 });
 
+test('candidate cards show career name and professional summary instead of criteria tags', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    $postulante = $matches[0]->postulante;
+
+    $postulante->user->update(['name' => 'María José Fuentes']);
+    $postulante->update([
+        'carrera' => 'Ingeniería Comercial',
+        'cargo_actual' => 'Subgerente de Finanzas',
+        'resumen_profesional' => 'Ejecutiva con experiencia liderando equipos financieros y procesos de transformación.',
+    ]);
+    $matches[0]->update(['criterios_detalle' => [[
+        'criterio' => 'Experiencia mínima',
+        'valor' => '5 años',
+        'cumple' => true,
+    ]]]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->assertSee('Ingeniería Comercial')
+        ->assertSee('María José Fuentes')
+        ->assertSee('Ejecutiva con experiencia liderando equipos financieros y procesos de transformación.')
+        ->assertDontSee('Perfil profesional #'.$postulante->id)
+        ->assertDontSee('Subgerente de Finanzas')
+        ->assertDontSee('Experiencia mínima: 5 años');
+});
+
 test('candidate detail navigation follows the search result ranking', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
 

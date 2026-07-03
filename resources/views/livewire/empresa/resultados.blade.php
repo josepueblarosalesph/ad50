@@ -44,16 +44,9 @@
                 <div class="grid items-center gap-5 md:grid-cols-[auto_1fr_auto]">
                     <div class="grid size-14 place-items-center rounded-[13px] bg-sage-100 text-lg font-extrabold text-ink" aria-hidden="true"><flux:icon.user class="size-6" /></div>
                     <div class="min-w-0">
-                        <p class="text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">Perfil profesional #{{ $match->postulante->id }}</p>
-                        <h2 class="mt-1 text-[22px]">{{ $match->postulante->cargo_actual ?: 'Perfil profesional' }}</h2>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach ($match->criterios_detalle ?? [] as $detalle)
-                                <span @class(['ad-chip', 'ad-chip-green' => $detalle['cumple'], 'text-gray-700' => ! $detalle['cumple']])>
-                                    <flux:icon :name="$detalle['cumple'] ? 'check' : 'x-mark'" class="size-4" />
-                                    {{ $detalle['criterio'] }}: {{ $detalle['valor'] }}
-                                </span>
-                            @endforeach
-                        </div>
+                        <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $match->postulante->carrera ?: 'Carrera no informada' }}</p>
+                        <h2 class="mt-1 truncate text-[22px] font-extrabold text-ink">{{ $match->postulante->user->name }}</h2>
+                        <p class="mt-3 max-w-4xl text-[13.5px] leading-relaxed text-gray-600">{{ $match->postulante->resumen_profesional ?: 'Sin descripción profesional disponible.' }}</p>
                     </div>
                     <div class="border-t border-line pt-4 md:border-l md:border-t-0 md:pl-6 md:pt-0 md:text-right">
                         <span @class(['ad-chip', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
