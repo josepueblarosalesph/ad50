@@ -56,6 +56,7 @@ test('the interface uses the official brand typography and color tokens', functi
 
 test('authentication and application shells use the official logo without forcing dark mode', function () {
     $applicationLayout = file_get_contents(resource_path('views/components/layouts/app.blade.php'));
+    $applicationStyles = file_get_contents(resource_path('css/app.css'));
     $authLayouts = collect([
         resource_path('views/layouts/auth/simple.blade.php'),
         resource_path('views/layouts/auth/card.blade.php'),
@@ -65,6 +66,9 @@ test('authentication and application shells use the official logo without forcin
     expect($applicationLayout)
         ->toContain('/images/ad50-logo.png')
         ->toContain('class="ad-logo shrink-0"')
+        ->and($applicationStyles)
+        ->toContain('.dark .ad-logo')
+        ->toContain('background-color: #222528')
         ->and($authLayouts)
         ->toContain('/images/ad50-logo.png')
         ->not->toContain('class="dark"');

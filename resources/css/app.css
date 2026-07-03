@@ -159,6 +159,12 @@
     @apply block h-11 w-auto object-contain;
   }
 
+  .dark .ad-logo {
+    background-color: #222528;
+    border-color: #4A4E52;
+    box-shadow: 0 8px 22px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.025);
+  }
+
   .dark .ad-card,
   .dark .ad-toggle-row {
     @apply bg-[#222528] border-line-2;
