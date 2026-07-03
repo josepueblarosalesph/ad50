@@ -46,6 +46,11 @@
   :root {
     --color-accent: var(--color-orange-600);
     --color-accent-foreground: #FFFFFF;
+    --ad-accent-text: #B94F08;
+    --ad-accent-text-strong: #8F3B04;
+    --ad-accent-surface: #FCE8D8;
+    --ad-accent-surface-subtle: #FFF7F1;
+    --ad-accent-border: #F7C59E;
   }
 
   html, body { font-family: var(--font-sans); color: var(--color-ink); -webkit-font-smoothing: antialiased; }
@@ -68,6 +73,11 @@
     --color-orange-100: #422A1C;
     --color-orange-200: #70401F;
     --color-match-100: #163323;
+    --ad-accent-text: #F7C59E;
+    --ad-accent-text-strong: #FFD8BA;
+    --ad-accent-surface: #33251D;
+    --ad-accent-surface-subtle: #2B211B;
+    --ad-accent-border: #8A4B22;
     --shadow-card: 0 1px 0 rgba(255,255,255,.04), 0 18px 44px rgba(0,0,0,.24);
     --shadow-card-lg: 0 28px 70px rgba(0,0,0,.38);
   }
@@ -219,7 +229,9 @@
   }
 
   .dark .ad-chip-orange {
-    @apply border-[#8A4B22] bg-[#33251D] text-[#F7C59E];
+    border-color: var(--ad-accent-border);
+    background-color: var(--ad-accent-surface);
+    color: var(--ad-accent-text);
   }
 
   .dark .ad-candidate-value {
@@ -236,7 +248,8 @@
   }
 
   .dark .ad-candidate-sidebar-active {
-    @apply bg-[#33251D] text-[#F7C59E];
+    background-color: var(--ad-accent-surface);
+    color: var(--ad-accent-text);
     box-shadow: inset 3px 0 0 #E87722;
   }
 
@@ -245,7 +258,36 @@
   }
 
   .dark .ad-favorite-button.is-active {
-    @apply border-[#8A4B22] bg-[#33251D] text-[#F7C59E];
+    border-color: var(--ad-accent-border);
+    background-color: var(--ad-accent-surface);
+    color: var(--ad-accent-text);
+  }
+
+  /* Homologa las utilidades de acento usadas en vistas antiguas sin alterar
+     botones primarios: sobre superficies dark, el naranja funciona como texto
+     claro; como fondo sólido conserva el naranja de marca con texto blanco. */
+  .dark [class~="text-orange-600"],
+  .dark [class~="hover:text-orange-600"]:hover {
+    color: var(--ad-accent-text);
+  }
+
+  .dark [class~="text-orange-700"],
+  .dark [class~="hover:text-orange-700"]:hover {
+    color: var(--ad-accent-text-strong);
+  }
+
+  .dark [class~="decoration-orange-600"] {
+    text-decoration-color: var(--ad-accent-text);
+  }
+
+  .dark .ad-welcome-light [class~="text-orange-600"],
+  .dark .ad-welcome-light [class~="hover:text-orange-600"]:hover {
+    color: #B94F08;
+  }
+
+  .dark .ad-welcome-light [class~="text-orange-700"],
+  .dark .ad-welcome-light [class~="hover:text-orange-700"]:hover {
+    color: #8F3B04;
   }
 
   .dark .ad-chip-green {
