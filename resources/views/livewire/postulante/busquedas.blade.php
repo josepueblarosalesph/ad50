@@ -48,8 +48,8 @@
         <div class="mt-6">{{ $matches->links() }}</div>
     @endif
 
-    <div class="mt-6 flex items-start gap-2 rounded-xl border border-line-2 bg-white p-4 text-[13px] text-gray-500">
-        <flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />
+    <div class="mt-6 flex items-start gap-2 rounded-xl border border-line-2 bg-white p-4 text-[13px] text-gray-500 transition-colors dark:bg-[#222528]">
+        <flux:icon.lock-closed class="mt-0.5 size-4 flex-none text-gray-400" />
         <span>Por privacidad, no mostramos la identidad de la empresa mientras el contacto no haya sido habilitado.</span>
     </div>
 </div>

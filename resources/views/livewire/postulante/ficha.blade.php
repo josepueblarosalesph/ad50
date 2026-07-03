@@ -11,12 +11,12 @@
             <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
             <div class="space-y-1.5">
                 @foreach ([
-                    ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'],
-                    ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5]'],
-                    ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7]'],
-                    ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4]'],
-                    ['building-office-2', 'Industrias de interés', 'industrias', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD]'],
-                    ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4]'],
+                    ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
+                    ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5] dark:border-[#36566B] dark:bg-[#1C2B34] dark:text-[#91BDD5] dark:hover:bg-[#243843]'],
+                    ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7] dark:border-[#3D5B45] dark:bg-[#202D24] dark:text-[#9BC2A3] dark:hover:bg-[#293A2E]'],
+                    ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
+                    ['building-office-2', 'Industrias de interés', 'industrias', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
+                    ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
                 ] as [$icon, $label, $anchor, $color])
                     <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
                 @endforeach
@@ -43,8 +43,8 @@
         </div>
 
         <div class="flex flex-col">
-        <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300">
-            <div class="ad-card-head bg-orange-50/60"><h2 class="text-[18px] font-extrabold text-orange-700">Datos personales</h2></div>
+        <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
+            <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Datos personales</h2></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
                 <flux:input wire:model="name" label="Nombre completo *" />
                 <flux:input wire:model.blur.live="rut" label="RUT *" placeholder="12.345.678-5" description="Puedes escribirlo sin puntos ni guion; lo formatearemos automáticamente." inputmode="text" autocomplete="off" />
@@ -60,13 +60,13 @@
             <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
 
-        <section id="educacion" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8]">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5]"><div><h2 class="text-[20px] font-extrabold text-[#496451]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
+        <section id="educacion" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8] dark:border-l-[#6E9B78]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5] dark:bg-[#202D24]"><div><h2 class="text-[20px] font-extrabold text-[#496451] dark:text-[#9BC2A3]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
             <div class="space-y-5 p-6">
                 @foreach ($educaciones as $index => $educacion)
                     @php($esEscolar = in_array($educacion['nivel'], $nivelesEscolares, true))
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="educacion-{{ $index }}">
-                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Educación {{ $index + 1 }}</legend>@if (count($educaciones) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeEducacion({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Educación {{ $index + 1 }}</legend>@if (count($educaciones) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeEducacion({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
                         <div class="grid gap-4 md:grid-cols-2">
                             <flux:select wire:model.live="educaciones.{{ $index }}.nivel" label="Nivel de estudios *">
                                 <flux:select.option value="">Selecciona un nivel</flux:select.option>
@@ -102,12 +102,12 @@
             </div>
         </section>
 
-        <section id="idiomas" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4]">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC]"><div><h2 class="text-[20px] font-extrabold text-[#665579]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
+        <section id="idiomas" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4] dark:border-l-[#8A70A1]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC] dark:bg-[#2B2532]"><div><h2 class="text-[20px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
             <div class="space-y-4 p-6">
                 @foreach ($idiomas as $index => $idioma)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="idioma-{{ $index }}">
-                        <div class="mb-4 flex items-center justify-between gap-3"><legend class="font-bold">Idioma {{ $index + 1 }}</legend>@if (count($idiomas) === 1)<span class="ad-chip ad-chip-orange">Obligatorio</span>@else<button type="button" wire:click="removeIdioma({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="mb-4 flex items-center justify-between gap-3"><legend class="font-bold">Idioma {{ $index + 1 }}</legend>@if (count($idiomas) === 1)<span class="ad-chip ad-chip-orange">Obligatorio</span>@else<button type="button" wire:click="removeIdioma({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
                         <div class="grid gap-4 md:grid-cols-2">
                             <flux:select wire:model="idiomas.{{ $index }}.idioma" label="Idioma *">
                                 <flux:select.option value="">Selecciona un idioma</flux:select.option>
@@ -123,8 +123,8 @@
             </div>
         </section>
 
-        <section id="industrias" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E]">
-            <div class="ad-card-head bg-[#FCFAF5]"><h2 class="text-[18px] font-extrabold text-[#75603B]">Industrias de interés</h2></div>
+        <section id="industrias" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E] dark:border-l-[#A78A52]">
+            <div class="ad-card-head bg-[#FCFAF5] dark:bg-[#30291D]"><h2 class="text-[18px] font-extrabold text-[#75603B] dark:text-[#D7BA7D]">Industrias de interés</h2></div>
             <div class="p-6 grid md:grid-cols-3 gap-4">
                 @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
                     <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
@@ -135,12 +135,12 @@
             </div>
         </section>
 
-        <section id="experiencia" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5]">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB]"><div><h2 class="text-[20px] font-extrabold text-[#45657A]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+        <section id="experiencia" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5] dark:border-l-[#5D8CA7]">
+            <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB] dark:bg-[#1C2B34]"><div><h2 class="text-[20px] font-extrabold text-[#45657A] dark:text-[#91BDD5]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
-                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226]"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+                        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
                         <div class="grid md:grid-cols-2 gap-4">
                             <flux:input wire:model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" placeholder="Ingresa tu cargo" />
                             <flux:select wire:model="experiencias.{{ $index }}.tipo_trabajo" label="Tipo de trabajo *">
@@ -197,25 +197,25 @@
         </section>
         </div>
 
-        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5]">
-            <div class="ad-card-head bg-[#F8F6FA]"><div><h2 class="text-[18px] font-extrabold text-[#665579]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu ficha con un documento actualizado.</p></div></div>
+        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5] dark:border-l-[#8A70A1]">
+            <div class="ad-card-head bg-[#F8F6FA] dark:bg-[#2B2532]"><div><h2 class="text-[18px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu ficha con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">
-                <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA]">
-                    <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579]" />
+                <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA] dark:border-[#584969] dark:bg-[#252129] dark:hover:border-[#8A70A1] dark:hover:bg-[#2B2532]">
+                    <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579] dark:text-[#C3ABD4]" />
                     <span class="mt-3 block text-[14px] font-bold text-ink">Selecciona tu CV en PDF</span>
                     <span class="mt-1 block text-[12px] text-gray-500">Un archivo de hasta 10 MB</span>
                     <span class="ad-btn-ghost ad-btn-sm mt-4">Elegir archivo</span>
                     <input id="cv" type="file" wire:model="cv" accept="application/pdf,.pdf" class="sr-only" />
                 </label>
 
-                <div wire:loading wire:target="cv" class="rounded-[10px] border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] font-semibold text-blue-700" role="status">Cargando el archivo…</div>
+                <div wire:loading wire:target="cv" class="rounded-[10px] border border-blue-200 bg-blue-50 px-4 py-3 text-[13px] font-semibold text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300" role="status">Cargando el archivo…</div>
 
                 @error('cv') <div class="rounded-[10px] border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-700" role="alert">{{ $message }}</div> @enderror
 
                 @if ($cv)
-                    <div class="flex items-center gap-3 rounded-[10px] border border-blue-200 bg-blue-50 p-3">
-                        <flux:icon.document class="size-5 flex-none text-blue-600" />
-                        <div class="min-w-0"><b class="block truncate text-[13px] text-blue-800">{{ $cv->getClientOriginalName() }}</b><span class="text-[12px] text-blue-700">Listo para guardar</span></div>
+                    <div class="flex items-center gap-3 rounded-[10px] border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950/40">
+                        <flux:icon.document class="size-5 flex-none text-blue-600 dark:text-blue-300" />
+                        <div class="min-w-0"><b class="block truncate text-[13px] text-blue-800 dark:text-blue-200">{{ $cv->getClientOriginalName() }}</b><span class="text-[12px] text-blue-700 dark:text-blue-300">Listo para guardar</span></div>
                     </div>
                 @elseif ($cvRutaExistente)
                     <div class="flex items-center gap-3 rounded-[10px] border border-[#BFE6CD] bg-match-100 p-3">

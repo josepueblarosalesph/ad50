@@ -136,6 +136,10 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertDontSee('Sección 1 de 5')
         ->assertDontSee('Sección 5 de 5');
 
+    $this->actingAs($user)->get(route('postulante.busquedas'))
+        ->assertOk()
+        ->assertSee('dark:bg-[#222528]', false);
+
     $ficha = file_get_contents(resource_path('views/livewire/postulante/ficha.blade.php'));
 
     expect($ficha)
@@ -146,6 +150,10 @@ test('a postulante can view the panel and professional profile', function () {
         ->toContain('id="idiomas" class="ad-card order-4')
         ->toContain('id="industrias" class="ad-card order-5')
         ->toContain('id="curriculum" class="ad-card mt-5')
+        ->toContain('dark:bg-[#1C2B34]')
+        ->toContain('dark:bg-[#202D24]')
+        ->toContain('dark:bg-[#2B2532]')
+        ->toContain('dark:bg-[#30291D]')
         ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
