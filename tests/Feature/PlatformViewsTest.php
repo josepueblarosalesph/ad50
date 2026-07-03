@@ -365,7 +365,13 @@ test('an empresa can view its pages and create a search', function () {
         ->assertSee('Gerente de Finanzas');
     $this->actingAs($user)->get(route('empresa.busquedas.create'))->assertOk();
     $this->actingAs($user)->get(route('empresa.resultados', $busqueda))->assertOk();
-    $this->actingAs($user)->get(route('empresa.candidatos.show', $match))->assertOk();
+    $this->actingAs($user)->get(route('empresa.candidatos.show', $match))
+        ->assertOk()
+        ->assertSee('ad-candidate-value', false)
+        ->assertSee('ad-candidate-toolbar', false)
+        ->assertSee('ad-candidate-sidebar-active', false)
+        ->assertSee('ad-favorite-button', false)
+        ->assertSee('15 años de experiencia');
 
     Livewire::actingAs($user)
         ->test(NuevaBusqueda::class)
