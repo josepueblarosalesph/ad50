@@ -33,6 +33,7 @@ test('an empresa can create an account', function () {
         ->set('email', 'ana@empresa.cl')
         ->set('password', 'password')
         ->set('razon_social', 'Empresa de Prueba SpA')
+        ->set('telefono', '+56 9 8765 4321')
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors()
@@ -47,5 +48,20 @@ test('an empresa can create an account', function () {
     $this->assertDatabaseHas('empresas', [
         'user_id' => $user->id,
         'razon_social' => 'Empresa de Prueba SpA',
+        'telefono' => '+56 9 8765 4321',
     ]);
+});
+
+test('an empresa must provide a contact phone number', function () {
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@empresa.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Empresa de Prueba SpA')
+        ->set('telefono', '')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasErrors(['telefono' => 'required']);
 });

@@ -41,7 +41,7 @@
         </section>
 
         <section class="relative flex min-h-screen items-center justify-center px-5 py-8 dark:bg-[#16181A] sm:px-8 lg:px-12 xl:px-20">
-            <a href="{{ route('home') }}" class="absolute left-5 top-5 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 transition hover:text-ink sm:left-8 sm:top-7 lg:left-10" wire:navigate>
+            <a href="{{ route('home') }}" class="ad-auth-back absolute left-5 top-5 sm:left-8 sm:top-7 lg:left-10" wire:navigate>
                 <flux:icon.arrow-left class="size-4" />
                 Volver al inicio
             </a>

@@ -5,7 +5,7 @@
 <x-slot:nav>
     @php($nav = [
         ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
-        ['label' => 'Mi ficha', 'href' => route('postulante.ficha')],
+        ['label' => 'Mi perfil profesional', 'href' => route('postulante.ficha')],
         ['label' => 'Búsquedas que me incluyen', 'href' => route('postulante.busquedas')],
     ])
     @foreach ($nav as $item)
@@ -29,7 +29,7 @@
             <div><b class="block text-[13px]">Visibilidad del perfil</b><span class="text-[12px] text-gray-500">{{ $postulante?->visible ? 'Visible para empresas' : 'Perfil pausado' }}</span></div>
             <flux:switch wire:click="toggleVisibilidad" :checked="$postulante?->visible ?? false" aria-label="Cambiar visibilidad del perfil" />
         </div>
-        <a href="{{ route('postulante.ficha') }}" class="ad-btn-primary ad-btn-sm">Editar mi ficha</a>
+        <a href="{{ route('postulante.ficha') }}" class="ad-btn-primary ad-btn-sm">Editar mi perfil profesional</a>
     </div>
 </div>
 
@@ -37,7 +37,7 @@
 <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
     <div class="ad-card p-5">
         <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Completitud de ficha</span>
+            <span class="text-[13px] text-gray-500 font-semibold">Completitud del perfil</span>
             <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
                 <flux:icon.user class="size-4" />
             </span>
@@ -73,7 +73,7 @@
 
     <div class="ad-card p-5">
         <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Activación de ficha</span>
+            <span class="text-[13px] text-gray-500 font-semibold">Activación del perfil</span>
             <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
                 <flux:icon.check-circle class="size-4" />
             </span>
@@ -116,7 +116,7 @@
 </div>
 
 @if ($postulante?->updated_at?->lt(now()->subMonths(6)))
-    <div class="mt-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5"><b class="text-[14px]">¿Cambió tu trayectoria?</b><p class="mt-1 text-[13px] text-gray-700">Actualiza tu ficha para seguir apareciendo en búsquedas relevantes.</p><a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-3">Revisar mi ficha</a></div>
+    <div class="mt-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5"><b class="text-[14px]">¿Cambió tu trayectoria?</b><p class="mt-1 text-[13px] text-gray-700">Actualiza tu perfil profesional para seguir apareciendo en búsquedas relevantes.</p><a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-3">Revisar mi perfil profesional</a></div>
 @endif
 
 </div>

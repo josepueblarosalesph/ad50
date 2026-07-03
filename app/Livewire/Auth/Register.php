@@ -29,6 +29,8 @@ class Register extends Component
 
     public string $razon_social = '';
 
+    public string $telefono = '';
+
     public bool $acepta = true;
 
     public function setRole(string $role): void
@@ -53,7 +55,11 @@ class Register extends Component
         if ($this->role === 'postulante') {
             Postulante::create(['user_id' => $user->id, 'completitud' => 10, 'visible' => true]);
         } else {
-            Empresa::create(['user_id' => $user->id, 'razon_social' => $this->razon_social]);
+            Empresa::create([
+                'user_id' => $user->id,
+                'razon_social' => $this->razon_social,
+                'telefono' => $this->telefono,
+            ]);
         }
 
         event(new Registered($user));
@@ -81,6 +87,7 @@ class Register extends Component
 
         if ($this->role === 'empresa') {
             $rules['razon_social'] = ['required', 'string', 'max:160'];
+            $rules['telefono'] = ['required', 'string', 'max:30'];
         }
 
         return $rules;

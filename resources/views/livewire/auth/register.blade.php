@@ -13,7 +13,7 @@
         </h1>
         <ul class="grid gap-4 mt-8 max-w-[380px] list-none">
             @foreach ([
-                'Una ficha única que cargas una vez y mantienes actualizada.',
+                'Un perfil profesional único que completas una vez y mantienes actualizado.',
                 'Tú controlas la visibilidad y el contacto.',
                 'Datos protegidos bajo AD Consulting. Nunca se comercializan.',
             ] as $l)
@@ -34,6 +34,10 @@
 
 {{-- ====== Panel formulario ====== --}}
 <section class="relative flex flex-col justify-center bg-white px-5 py-9 dark:bg-[#16181A] sm:px-8 lg:px-12 xl:px-20">
+    <a href="{{ route('home') }}" class="ad-auth-back absolute left-5 top-5 sm:left-8 sm:top-7 lg:left-10" wire:navigate>
+        <flux:icon.arrow-left class="size-4" />
+        Volver al inicio
+    </a>
     <a href="{{ route('home') }}" class="mb-8 inline-flex w-fit rounded-[12px] bg-ink px-3 py-2 lg:hidden" aria-label="AD+50 Talento Senior">
         <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto">
     </a>
@@ -58,12 +62,13 @@
         <span class="text-[11px] font-extrabold uppercase tracking-[.18em] text-orange-600">Registro seguro</span>
         <h2 class="mt-3 text-[34px] sm:text-[40px]">Crea tu cuenta</h2>
         <p class="text-[14px] text-gray-500 mt-2 mb-6">
-            Toma menos de 2 minutos. Luego completas tu {{ $role === 'postulante' ? 'ficha profesional' : 'perfil de empresa' }}.
+            Toma menos de 2 minutos. Luego completas tu {{ $role === 'postulante' ? 'perfil profesional' : 'perfil de empresa' }}.
         </p>
 
         @if ($role === 'empresa')
             <div class="grid gap-3.5 mb-3.5">
                 <flux:input wire:model="razon_social" label="Razón social *" placeholder="Forestal del Bío Bío S.A." />
+                <flux:input wire:model="telefono" type="tel" label="Teléfono de contacto *" placeholder="+56 9 1234 5678" autocomplete="tel" />
             </div>
         @endif
 

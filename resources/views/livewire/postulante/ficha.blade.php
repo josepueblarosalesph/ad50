@@ -3,12 +3,12 @@
     <x-slot:context>Postulante</x-slot:context>
     <x-slot:nav>
         <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
-        <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi ficha</a>
+        <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil profesional</a>
         <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4">
-            <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi ficha</div>
+            <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Perfil profesional</div>
             <div class="space-y-1.5">
                 @foreach ([
                     ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
@@ -26,7 +26,7 @@
 
     <form wire:submit="save">
         <div class="flex items-start justify-between gap-5 mb-6 flex-wrap">
-            <div><h1 class="text-[27px] font-extrabold">Mi ficha profesional</h1><p class="text-[14px] text-gray-500 mt-1.5">Completa tus datos para aparecer en las búsquedas de empresas.</p></div>
+            <div><h1 class="text-[27px] font-extrabold">Mi perfil profesional</h1><p class="text-[14px] text-gray-500 mt-1.5">Completa tus datos para aparecer en las búsquedas de empresas.</p></div>
             <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">
                 <span wire:loading.remove wire:target="save">Guardar cambios</span>
                 <span wire:loading wire:target="save">Guardando…</span>
@@ -38,7 +38,7 @@
         @endif
 
         <div class="ad-card p-5 mb-5 flex flex-wrap items-center gap-6">
-            <div class="flex-1 min-w-60"><div class="mb-2 flex justify-between text-[13px] font-semibold"><span>Completitud de tu ficha</span><span class="text-orange-600">{{ $completitud }}%</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div></div></div>
+            <div class="flex-1 min-w-60"><div class="mb-2 flex justify-between text-[13px] font-semibold"><span>Completitud de tu perfil</span><span class="text-orange-600">{{ $completitud }}%</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div></div></div>
             <div class="ad-toggle-row min-w-64"><div><b class="text-[13.5px] block">Visibilidad del perfil</b><span class="text-[13px] text-gray-500">{{ $visible ? 'Activo — visible para empresas' : 'Perfil pausado' }}</span></div><flux:switch wire:model.live="visible" /></div>
         </div>
 
@@ -198,7 +198,7 @@
         </div>
 
         <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5] dark:border-l-[#8A70A1]">
-            <div class="ad-card-head bg-[#F8F6FA] dark:bg-[#2B2532]"><div><h2 class="text-[18px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu ficha con un documento actualizado.</p></div></div>
+            <div class="ad-card-head bg-[#F8F6FA] dark:bg-[#2B2532]"><div><h2 class="text-[18px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">
                 <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA] dark:border-[#584969] dark:bg-[#252129] dark:hover:border-[#8A70A1] dark:hover:bg-[#2B2532]">
                     <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579] dark:text-[#C3ABD4]" />
@@ -228,6 +228,6 @@
             </div>
         </section>
 
-        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">Guardar toda la ficha</button></div>
+        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">Guardar perfil profesional</button></div>
     </form>
 </div>

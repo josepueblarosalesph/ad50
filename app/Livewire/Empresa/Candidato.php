@@ -147,7 +147,7 @@ class Candidato extends Component
                 && ($detalle['cumple'] ?? false) === true));
     }
 
-    #[Title('Ficha de candidato · AD+50')]
+    #[Title('Perfil profesional del candidato · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
     {

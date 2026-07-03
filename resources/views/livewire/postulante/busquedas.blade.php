@@ -3,7 +3,7 @@
 
     <x-slot:nav>
         <a wire:navigate href="{{ route('postulante.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi panel</a>
-        <a wire:navigate href="{{ route('postulante.ficha') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi ficha</a>
+        <a wire:navigate href="{{ route('postulante.ficha') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi perfil profesional</a>
         <a wire:navigate href="{{ route('postulante.busquedas') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Búsquedas que me incluyen</a>
     </x-slot:nav>
 
@@ -39,7 +39,7 @@
             <div class="ad-card p-10 text-center">
                 <flux:icon.magnifying-glass class="mx-auto size-8 text-gray-400" />
                 <h2 class="mt-3 font-bold">Aún no apareces en búsquedas</h2>
-                <p class="mt-2 text-[13px] text-gray-500">Mantén tu ficha completa y visible para aparecer en nuevas coincidencias.</p>
+                <p class="mt-2 text-[13px] text-gray-500">Mantén tu perfil profesional completo y visible para aparecer en nuevas coincidencias.</p>
             </div>
         @endforelse
     </div>

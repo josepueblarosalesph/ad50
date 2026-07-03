@@ -377,7 +377,7 @@ class Ficha extends Component
         $this->cvRutaExistente = $postulante->cv_ruta;
         $this->reset('cv');
 
-        session()->flash('status', 'Ficha actualizada correctamente.');
+        session()->flash('status', 'Perfil profesional actualizado correctamente.');
     }
 
     /**
@@ -506,7 +506,7 @@ class Ficha extends Component
         ]);
     }
 
-    #[Title('Mi ficha profesional · AD+50')]
+    #[Title('Mi perfil profesional · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
     {

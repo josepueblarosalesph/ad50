@@ -123,6 +123,13 @@
   .ad-btn-sm      { @apply px-4 py-2 text-[14px]; }
   .ad-btn-block   { @apply w-full; }
 
+  .ad-auth-back {
+    @apply inline-flex items-center gap-2 rounded-xl border border-line-2 bg-white px-3.5 py-2
+           text-[13px] font-bold text-gray-700 shadow-sm transition duration-200
+           hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500;
+  }
+
   .ad-card        { @apply bg-white border border-line-2 rounded-[18px] shadow-[var(--shadow-card)]; }
   .ad-card-pad    { @apply p-6; }
   .ad-card-head   { @apply flex items-center justify-between px-6 py-4 border-b border-line; }
@@ -296,6 +303,11 @@
 
   .dark .ad-btn-ghost {
     @apply border-line-2 text-ink hover:border-orange-500 hover:bg-white/5;
+  }
+
+  .dark .ad-auth-back {
+    @apply border-line-2 bg-[#222528] text-gray-700 hover:border-[#8A4B22] hover:bg-[#33251D];
+    box-shadow: 0 8px 20px rgba(0,0,0,.18);
   }
 
   .ad-welcome-light {

@@ -16,23 +16,48 @@ test('the landing page presents the experience-led visual direction', function (
     $this->get(route('home'))
         ->assertOk()
         ->assertSeeText('La experiencia no se archiva. Se activa.')
-        ->assertSee('id="como" class="hidden"', false)
+        ->assertSee('fixed inset-x-0 top-0 z-40', false)
+        ->assertSee('pastHero: false', false)
+        ->assertSee("pastHero ? 'border-white/10 bg-[#252729]/90", false)
+        ->assertSee('id="como-postulantes"', false)
+        ->assertSee('id="como-empresas"', false)
+        ->assertSee('id="acerca-de"', false)
+        ->assertSee('id="planes"', false)
+        ->assertSee('Cómo funciona para postulantes')
+        ->assertSee('Cómo funciona para empresas')
+        ->assertSee('Acerca de AD+50')
+        ->assertSee('href="#acerca-de"', false)
+        ->assertSee('href="#planes"', false)
+        ->assertSee('Planes AD+50')
+        ->assertSee('Ver todos los planes')
+        ->assertSee('Crea tu perfil profesional')
+        ->assertSee('Configura la búsqueda')
+        ->assertDontSee('id="como" class="hidden"', false)
         ->assertSee('<section class="hidden">', false)
         ->assertSee('ad-welcome-light', false)
         ->assertSee('/images/ad50-logo.png', false)
         ->assertSee('/images/ad50-hero-experiencia.webp', false)
         ->assertSee('href="'.route('login').'"', false)
+        ->assertSee('href="'.route('login').'" class="ad-btn-primary ad-btn-sm"', false)
         ->assertSee('Iniciar sesión')
-        ->assertSee('href="'.route('registro').'"', false)
+        ->assertSee('href="'.route('registro', ['tipo' => 'postulante']).'"', false)
+        ->assertSee('href="'.route('registro', ['tipo' => 'empresa']).'"', false)
         ->assertSee('Registrarse')
-        ->assertSee('href="#empresas"', false)
+        ->assertSee('Postulante')
+        ->assertSee('Empresa')
+        ->assertSee('Crear mi perfil')
+        ->assertSee('href="#como-postulantes"', false)
+        ->assertSee('href="#como-empresas"', false)
         ->assertSee('Cómo funciona');
 
     $landing = file_get_contents(resource_path('views/livewire/landing.blade.php'));
 
     expect($landing)
         ->toContain('gap-y-3 text-[15px]')
-        ->toContain('pt-6 text-[14px]');
+        ->toContain('pt-6 text-[14px]')
+        ->and(strpos($landing, 'href="#acerca-de"'))->toBeLessThan(strpos($landing, 'aria-label="Elegir cómo funciona AD+50"'))
+        ->and(strpos($landing, 'id="acerca-de"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
+        ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="planes"'));
 });
 
 test('the interface uses the official brand typography and color tokens', function () {
@@ -80,11 +105,15 @@ test('authentication and application shells use the official logo without forcin
 
     $this->get(route('login'))
         ->assertOk()
-        ->assertSee('/images/ad50-logo.png', false);
+        ->assertSee('/images/ad50-logo.png', false)
+        ->assertSee('ad-auth-back', false)
+        ->assertSee('Volver al inicio');
 
     $this->get(route('registro'))
         ->assertOk()
-        ->assertSee('/images/ad50-logo.png', false);
+        ->assertSee('/images/ad50-logo.png', false)
+        ->assertSee('ad-auth-back', false)
+        ->assertSee('Volver al inicio');
 });
 
 test('authenticated postulantes see mi perfil on the home page', function () {
@@ -138,7 +167,7 @@ test('a postulante can view the panel and professional profile', function () {
 
     $this->actingAs($user)->get(route('postulante.ficha'))
         ->assertOk()
-        ->assertSee('Mi ficha profesional')
+        ->assertSee('Mi perfil profesional')
         ->assertSee('href="'.route('postulante.busquedas').'"', false)
         ->assertDontSee(route('postulante.panel').'#coincidencias', false)
         ->assertDontSee('Mi activación')

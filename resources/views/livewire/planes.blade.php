@@ -49,7 +49,7 @@
 
         @if ($planPostulante)
             <div class="ad-card p-5 mt-6 flex flex-wrap items-center justify-between gap-4">
-                <div><b class="text-[14px]">¿Eres postulante?</b><p class="text-[12.5px] text-gray-500 mt-1">Activa tu ficha con un pago único de ${{ number_format($planPostulante->precio_clp, 0, ',', '.') }} CLP. Sin renovación.</p></div>
+                <div><b class="text-[14px]">¿Eres postulante?</b><p class="text-[12.5px] text-gray-500 mt-1">Activa tu perfil profesional con un pago único de ${{ number_format($planPostulante->precio_clp, 0, ',', '.') }} CLP. Sin renovación.</p></div>
                 <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-ghost ad-btn-sm">Crear mi perfil</a>
             </div>
         @endif
