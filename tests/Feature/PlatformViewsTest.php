@@ -16,17 +16,20 @@ test('the landing page presents the experience-led visual direction', function (
     $this->get(route('home'))
         ->assertOk()
         ->assertSeeText('La experiencia no se archiva. Se activa.')
+        ->assertSee('text-[44px] leading-[.98] text-ink sm:text-[56px] lg:text-[66px]', false)
         ->assertSee('fixed inset-x-0 top-0 z-40', false)
+        ->assertSee('p-1.5 text-[15px] font-bold text-ink', false)
         ->assertSee('pastHero: false', false)
         ->assertSee("pastHero ? 'border-white/10 bg-[#252729]/90", false)
         ->assertSee('id="como-postulantes"', false)
         ->assertSee('id="como-empresas"', false)
-        ->assertSee('id="acerca-de"', false)
+        ->assertSee('id="quienes-somos"', false)
         ->assertSee('id="planes"', false)
         ->assertSee('Cómo funciona para postulantes')
         ->assertSee('Cómo funciona para empresas')
-        ->assertSee('Acerca de AD+50')
-        ->assertSee('href="#acerca-de"', false)
+        ->assertSee('Quiénes somos')
+        ->assertSee('href="#quienes-somos"', false)
+        ->assertDontSee('Acerca de')
         ->assertSee('href="#planes"', false)
         ->assertSee('Planes AD+50')
         ->assertSee('Ver todos los planes')
@@ -55,8 +58,8 @@ test('the landing page presents the experience-led visual direction', function (
     expect($landing)
         ->toContain('gap-y-3 text-[15px]')
         ->toContain('pt-6 text-[14px]')
-        ->and(strpos($landing, 'href="#acerca-de"'))->toBeLessThan(strpos($landing, 'aria-label="Elegir cómo funciona AD+50"'))
-        ->and(strpos($landing, 'id="acerca-de"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
+        ->and(strpos($landing, 'href="#quienes-somos"'))->toBeLessThan(strpos($landing, 'aria-label="Elegir cómo funciona AD+50"'))
+        ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
         ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="planes"'));
 });
 
@@ -107,12 +110,15 @@ test('authentication and application shells use the official logo without forcin
         ->assertOk()
         ->assertSee('/images/ad50-logo.png', false)
         ->assertSee('ad-auth-back', false)
-        ->assertSee('Volver al inicio');
+        ->assertSee('absolute right-5 top-5', false)
+        ->assertSee('Volver al inicio')
+        ->assertDontSee('Acceso seguro');
 
     $this->get(route('registro'))
         ->assertOk()
         ->assertSee('/images/ad50-logo.png', false)
         ->assertSee('ad-auth-back', false)
+        ->assertSee('absolute right-5 top-5', false)
         ->assertSee('Volver al inicio');
 });
 

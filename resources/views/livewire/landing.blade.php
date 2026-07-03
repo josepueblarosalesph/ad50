@@ -14,8 +14,8 @@
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto sm:h-16">
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[14px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md md:flex">
-                    <a href="#acerca-de" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Acerca de</a>
+                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[15px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md md:flex">
+                    <a href="#quienes-somos" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Quiénes somos</a>
                     <flux:dropdown position="bottom" align="start">
                         <button type="button" class="inline-flex items-center gap-1.5 rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Elegir cómo funciona AD+50">
                             Cómo funciona
@@ -61,7 +61,7 @@
         <div class="relative z-10 mx-auto flex min-h-[760px] max-w-[1240px] items-center px-6 pb-24 pt-32 lg:min-h-[820px] lg:px-10">
             <div class="max-w-[670px]">
                 <span class="ad-eyebrow">Talento con experiencia</span>
-                <h1 class="mt-5 max-w-[640px] text-[52px] leading-[.96] text-ink sm:text-[66px] lg:text-[78px]">
+                <h1 class="mt-5 max-w-[640px] text-[44px] leading-[.98] text-ink sm:text-[56px] lg:text-[66px]">
                     La experiencia no se archiva. <span class="text-orange-500">Se activa.</span>
                 </h1>
                 <p class="mt-7 max-w-[590px] text-[18px] font-medium leading-[1.7] text-gray-700 lg:text-[20px]">
@@ -115,11 +115,11 @@
         </div>
     </section>
 
-    {{-- Acerca de AD+50 --}}
-    <section id="acerca-de" class="scroll-mt-24 border-b border-line bg-paper">
+    {{-- Quiénes somos --}}
+    <section id="quienes-somos" class="scroll-mt-24 border-b border-line bg-paper">
         <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-6 py-24 lg:grid-cols-[.9fr_1.1fr] lg:gap-20 lg:px-10 lg:py-28">
             <div>
-                <span class="ad-eyebrow">Acerca de AD+50</span>
+                <span class="ad-eyebrow">Quiénes somos</span>
                 <h2 class="mt-5 max-w-[560px] text-[46px] sm:text-[56px]">Experiencia que abre nuevas oportunidades.</h2>
                 <p class="mt-5 max-w-[560px] text-[17px] leading-[1.75] text-gray-700">
                     AD+50 es una iniciativa de AD Consulting creada para conectar profesionales con amplia trayectoria y organizaciones que valoran el criterio, el oficio y la capacidad de seguir aportando.
@@ -367,7 +367,7 @@
                     <a href="#como-postulantes" class="hover:text-white">Cómo funciona</a>
                     <a href="#como-empresas" class="hover:text-white">Para empresas</a>
                     <a href="#como-postulantes" class="hover:text-white">Para postulantes</a>
-                    <a href="#acerca-de" class="hover:text-white">Acerca de</a>
+                    <a href="#quienes-somos" class="hover:text-white">Quiénes somos</a>
                     <a href="#planes" class="hover:text-white">Planes</a>
                     <a href="#seguridad" class="hover:text-white">Privacidad</a>
                     <a href="#seguridad" class="hover:text-white">Contacto</a>

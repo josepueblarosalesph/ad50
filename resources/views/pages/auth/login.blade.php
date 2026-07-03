@@ -41,7 +41,7 @@
         </section>
 
         <section class="relative flex min-h-screen items-center justify-center px-5 py-8 dark:bg-[#16181A] sm:px-8 lg:px-12 xl:px-20">
-            <a href="{{ route('home') }}" class="ad-auth-back absolute left-5 top-5 sm:left-8 sm:top-7 lg:left-10" wire:navigate>
+            <a href="{{ route('home') }}" class="ad-auth-back absolute right-5 top-5 sm:right-8 sm:top-7 lg:right-10" wire:navigate>
                 <flux:icon.arrow-left class="size-4" />
                 Volver al inicio
             </a>
@@ -55,7 +55,6 @@
 
                 <div class="rounded-[24px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card-lg)] dark:bg-[#222528] sm:p-9 lg:p-10">
                     <div>
-                        <span class="text-[11px] font-extrabold uppercase tracking-[.18em] text-orange-600">Acceso seguro</span>
                         <h2 class="mt-3 text-[38px] text-ink sm:text-[44px]">Ingresa a tu cuenta</h2>
                         <p class="mt-3 text-[14px] font-medium leading-[1.65] text-gray-500">
                             Usa las credenciales con las que creaste tu perfil.
