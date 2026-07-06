@@ -320,6 +320,8 @@
                 @endforelse
 
             </div>
+
+            <x-plan-benefits class="mt-10" />
         </div>
     </section>
 
