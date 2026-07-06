@@ -2,6 +2,7 @@
 
 use App\Models\Busqueda;
 use App\Models\Empresa;
+use App\Models\Plan;
 use App\Models\Postulante;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -19,6 +20,11 @@ test('database seeders create diverse and filterable demo data', function () {
         ->and(Postulante::query()->whereNotNull('idiomas')->count())->toBe(18)
         ->and(Postulante::query()->whereNotNull('experiencias')->count())->toBe(18)
         ->and(Busqueda::query()->has('candidatos')->count())->toBe(11)
+        ->and(Plan::query()->where('audiencia', 'empresa')->count())->toBe(3)
+        ->and(Plan::query()->where('codigo', 'empresa_basic')->firstOrFail()->precio_uf)->toBe('2.00')
+        ->and(Plan::query()->where('codigo', 'empresa_pro')->firstOrFail()->precio_uf)->toBe('30.00')
+        ->and(Plan::query()->where('codigo', 'empresa_premium')->firstOrFail()->precio_uf)->toBe('45.00')
+        ->and(Plan::query()->where('codigo', 'empresa_premium')->firstOrFail()->destacado)->toBeTrue()
         ->and(User::query()->where('email', 'maria@adconsulting.cl')->firstOrFail()->postulante?->completitud)->toBe(100);
 });
 

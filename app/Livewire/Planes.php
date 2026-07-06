@@ -15,7 +15,7 @@ class Planes extends Component
     public function render(): View
     {
         return view('livewire.planes', [
-            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_clp')->get(),
+            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
         ]);
     }
 }

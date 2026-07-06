@@ -21,11 +21,25 @@ test('the landing page presents the experience-led visual direction', function (
         'periodo' => 'anual',
     ]);
     Plan::query()->create([
-        'codigo' => 'empresa_landing',
-        'nombre' => 'Empresa landing',
+        'codigo' => 'empresa_basic',
+        'nombre' => 'Básico',
         'audiencia' => 'empresa',
-        'precio_clp' => 89000,
-        'periodo' => 'mensual',
+        'precio_clp' => 0,
+        'precio_uf' => 2,
+        'periodo' => 'único',
+        'features' => ['1 publicación'],
+        'recomendacion' => 'Recomendado para búsquedas puntuales',
+    ]);
+    Plan::query()->create([
+        'codigo' => 'empresa_premium',
+        'nombre' => 'Premium',
+        'audiencia' => 'empresa',
+        'precio_clp' => 0,
+        'precio_uf' => 45,
+        'periodo' => 'anual',
+        'destacado' => true,
+        'features' => ['Publicaciones ilimitadas'],
+        'recomendacion' => 'Recomendado para empresas con altas demandas de ofertas laborales',
     ]);
 
     $response = $this->get(route('home'));
@@ -55,11 +69,12 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('href="#planes"', false)
         ->assertSee('Planes para empresas')
         ->assertSee('Elige el alcance de tu búsqueda.')
-        ->assertSee('$89.000')
+        ->assertSee('2')
+        ->assertSee('UF + IVA')
         ->assertSee('Premium')
-        ->assertSee('A medida')
-        ->assertSee('Búsquedas ilimitadas')
-        ->assertSee('mailto:contacto@adconsulting.cl', false)
+        ->assertSee('45')
+        ->assertSee('Publicaciones ilimitadas')
+        ->assertSee('Más elegido')
         ->assertSee('Acceso al portal: $20.000 CLP al año.')
         ->assertSee(route('planes.postulantes'), false)
         ->assertDontSee('Postulante visible')
@@ -70,7 +85,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('<section class="hidden">', false)
         ->assertSee('ad-welcome-light', false)
         ->assertSee('/images/ad50-logo.png', false)
-        ->assertSee('/images/ad50-hero-experiencia.webp', false)
+        ->assertSee('/images/ad50-hero-experiencia-v2.webp', false)
         ->assertSee('href="'.route('login').'"', false)
         ->assertSee('href="'.route('login').'" class="ad-btn-primary ad-btn-sm"', false)
         ->assertSee('Iniciar sesión')
@@ -193,15 +208,32 @@ test('the plans page can be viewed', function () {
         'codigo' => 'empresa_basic',
         'nombre' => 'Básico',
         'audiencia' => 'empresa',
-        'precio_clp' => 89000,
-        'features' => ['Una búsqueda activa'],
+        'precio_clp' => 0,
+        'precio_uf' => 2,
+        'periodo' => 'único',
+        'features' => ['1 publicación', 'Match inteligente (candidatos que más se acercan al perfil buscado)', '5 accesos a perfiles completos o desbloqueos de CV'],
+        'recomendacion' => 'Recomendado para búsquedas puntuales',
     ]);
     Plan::query()->create([
         'codigo' => 'empresa_pro',
         'nombre' => 'Profesional',
         'audiencia' => 'empresa',
-        'precio_clp' => 189000,
-        'features' => ['Búsquedas ilimitadas'],
+        'precio_clp' => 0,
+        'precio_uf' => 30,
+        'periodo' => 'anual',
+        'features' => ['30 publicaciones', '15 accesos a perfiles completos o desbloqueos de CV', 'Soporte técnico'],
+        'recomendacion' => 'Recomendado para múltiples búsquedas',
+    ]);
+    Plan::query()->create([
+        'codigo' => 'empresa_premium',
+        'nombre' => 'Premium',
+        'audiencia' => 'empresa',
+        'precio_clp' => 0,
+        'precio_uf' => 45,
+        'periodo' => 'anual',
+        'destacado' => true,
+        'features' => ['Publicaciones ilimitadas', '100 accesos a perfiles completos o desbloqueos de CV', 'Soporte técnico'],
+        'recomendacion' => 'Recomendado para empresas con altas demandas de ofertas laborales',
     ]);
     Plan::query()->create([
         'codigo' => 'postulante',
@@ -215,19 +247,42 @@ test('the plans page can be viewed', function () {
     $this->get(route('planes'))
         ->assertOk()
         ->assertSee('Elige el alcance de tu búsqueda')
+        ->assertSee('Volver al inicio')
+        ->assertSee('class="ad-btn-ghost ad-btn-sm gap-2"', false)
         ->assertSee('Básico')
         ->assertSee('Profesional')
         ->assertSee('Premium')
+        ->assertSee('2')
+        ->assertSee('30')
+        ->assertSee('45')
+        ->assertSee('UF + IVA')
+        ->assertSee('Más elegido')
+        ->assertSee('Recibe candidatos compatibles automáticamente')
+        ->assertSee('Encuentra talento con experiencia comprobada')
         ->assertSee(route('planes.postulantes'), false)
         ->assertDontSee('$20.000');
 
     $this->get(route('planes.postulantes'))
         ->assertOk()
         ->assertSee('Haz visible tu experiencia')
+        ->assertSee('Volver al inicio')
+        ->assertSee('class="ad-btn-ghost ad-btn-sm gap-2"', false)
         ->assertSee('$20.000')
         ->assertSee('por año')
         ->assertSee('Perfil visible en el portal')
         ->assertSee(route('planes'), false);
+
+    expect(file_get_contents(resource_path('views/livewire/planes.blade.php')))
+        ->toContain('<flux:icon.arrow-left class="size-4" />')
+        ->toContain('<flux:icon.user class="size-4" />')
+        ->toContain('<span class="hidden md:inline">Planes para postulantes</span>')
+        ->toContain('<span class="md:hidden">Postulantes</span>');
+
+    expect(file_get_contents(resource_path('views/livewire/postulante/planes.blade.php')))
+        ->toContain('<flux:icon.arrow-left class="size-4" />')
+        ->toContain('<flux:icon.building-office-2 class="size-4" />')
+        ->toContain('<span class="hidden md:inline">Planes para empresas</span>')
+        ->toContain('<span class="md:hidden">Empresas</span>');
 });
 
 test('a postulante can view the panel and professional profile', function () {

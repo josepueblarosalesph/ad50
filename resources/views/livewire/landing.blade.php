@@ -1,7 +1,7 @@
 <div class="ad-welcome-light">
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
     <section class="ad-light-surface relative min-h-[100svh] overflow-hidden border-b border-line bg-paper"
-        style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia.webp'); background-position: center, 68% center; background-size: cover;">
+        style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia-v2.webp'); background-position: center, 68% center; background-size: cover;">
         <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/65 to-transparent"></div>
         <div
             x-data="{ pastHero: false }"
@@ -263,7 +263,7 @@
                     <span class="ad-eyebrow">Planes para empresas</span>
                     <h2 class="mt-5 text-[46px] sm:text-[56px]">Elige el alcance de tu búsqueda.</h2>
                     <p class="mt-5 max-w-[620px] text-[17px] leading-[1.7] text-gray-700">
-                        Selecciona el plan que tu empresa necesita para encontrar y contactar talento senior.
+                        Publica tus vacantes, recibe candidatos compatibles mediante nuestro sistema de matching y accede a los currículums que mejor se ajustan a tu búsqueda.
                     </p>
                 </div>
             </div>
@@ -292,10 +292,10 @@
                         </div>
 
                         <div class="mt-6 text-[34px] font-extrabold text-ink">
-                            ${{ number_format($plan->precio_clp, 0, ',', '.') }}
-                            <small class="text-[12px] font-bold text-gray-500">CLP</small>
+                            {{ number_format((float) $plan->precio_uf, 0, ',', '.') }}
+                            <small class="text-[12px] font-bold text-gray-500">UF + IVA</small>
                         </div>
-                        <p class="mt-1 text-[12px] font-semibold text-gray-500">{{ $plan->periodo === 'único' ? 'pago único' : 'por '.$plan->periodo }}</p>
+                        <p class="mt-1 text-[12px] font-semibold text-gray-500">{{ $plan->periodo === 'anual' ? 'plan anual' : 'pago único' }}</p>
 
                         <ul class="my-6 grid flex-1 gap-3">
                             @foreach ($plan->features ?? [] as $feature)
@@ -305,6 +305,8 @@
                                 </li>
                             @endforeach
                         </ul>
+
+                        <p class="mb-6 rounded-xl bg-orange-50 px-4 py-3 text-[13px] font-bold text-orange-700">{{ $plan->recomendacion }}</p>
 
                         <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="{{ $plan->destacado ? 'ad-btn-primary' : 'ad-btn-ghost' }} ad-btn-sm ad-btn-block">
                             Elegir este plan
@@ -317,31 +319,6 @@
                     </div>
                 @endforelse
 
-                <article class="relative flex flex-col rounded-[20px] border border-line-2 bg-paper p-7 shadow-[var(--shadow-card)]">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <span class="text-[11px] font-extrabold uppercase tracking-[.14em] text-orange-600">Para empresas</span>
-                            <h3 class="mt-2 text-[24px]">Premium</h3>
-                        </div>
-                        <span class="grid size-10 shrink-0 place-items-center rounded-[11px] bg-orange-100 text-orange-700">
-                            <flux:icon.building-office-2 class="size-5" />
-                        </span>
-                    </div>
-
-                    <div class="mt-6 text-[30px] font-extrabold text-ink">A medida</div>
-                    <p class="mt-1 text-[12px] font-semibold text-gray-500">para equipos y procesos de alto volumen</p>
-
-                    <ul class="my-6 grid flex-1 gap-3">
-                        @foreach (['Búsquedas ilimitadas', 'Múltiples usuarios y áreas', 'Soporte prioritario', 'Onboarding dedicado'] as $feature)
-                            <li wire:key="landing-premium-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] font-semibold text-gray-700">
-                                <flux:icon.check class="mt-0.5 size-4 shrink-0 text-match" />
-                                {{ $feature }}
-                            </li>
-                        @endforeach
-                    </ul>
-
-                    <a href="mailto:contacto@adconsulting.cl" class="ad-btn-ghost ad-btn-sm ad-btn-block">Hablar con AD Consulting</a>
-                </article>
             </div>
         </div>
     </section>

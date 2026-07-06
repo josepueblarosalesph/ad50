@@ -13,5 +13,6 @@ class Plan extends Model
     protected $casts = [
         'features' => 'array',
         'destacado' => 'bool',
+        'precio_uf' => 'decimal:2',
     ];
 }

@@ -15,7 +15,7 @@ class Landing extends Component
     public function render(): View
     {
         return view('livewire.landing', [
-            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_clp')->get(),
+            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
             'planPostulante' => Plan::query()->where('audiencia', 'postulante')->first(),
         ]);
     }
