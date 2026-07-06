@@ -26,7 +26,11 @@ test('a postulante can create an account', function () {
         ->and($user->acepta_ley_21719)->toBeTrue();
 
     $this->assertAuthenticatedAs($user);
-    $this->assertDatabaseHas('postulantes', ['user_id' => $user->id]);
+    $this->assertDatabaseHas('postulantes', [
+        'user_id' => $user->id,
+        'onboarding_paso' => 1,
+        'onboarding_completado' => false,
+    ]);
     Notification::assertSentTo($user, VerifyEmail::class);
 });
 

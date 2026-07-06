@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Empresa;
+use App\Models\Postulante;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
@@ -45,6 +47,44 @@ test('email can be verified', function () {
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     $response->assertRedirect(route('postulante.panel', ['verified' => 1]));
+});
+
+test('a newly verified postulante is redirected to onboarding', function () {
+    $user = User::factory()->unverified()->create(['role' => 'postulante']);
+    Postulante::query()->create([
+        'user_id' => $user->id,
+        'onboarding_paso' => 1,
+        'onboarding_completado' => false,
+    ]);
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $user->id, 'hash' => sha1($user->email)],
+    );
+
+    $this->actingAs($user)
+        ->get($verificationUrl)
+        ->assertRedirect(route('postulante.ficha', ['verified' => 1]));
+});
+
+test('a newly verified empresa is redirected to its activation panel', function () {
+    $user = User::factory()->unverified()->create(['role' => 'empresa']);
+    Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa de Prueba SpA',
+        'estado_activacion' => 'inactiva',
+    ]);
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $user->id, 'hash' => sha1($user->email)],
+    );
+
+    $this->actingAs($user)
+        ->get($verificationUrl)
+        ->assertRedirect(route('empresa.activacion', ['verified' => 1]));
 });
 
 test('email is not verified with invalid hash', function () {

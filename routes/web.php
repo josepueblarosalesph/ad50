@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureEmpresaActiva;
+use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
 use App\Livewire\Admin\Panel as AdminPanel;
 use App\Livewire\Auth\Register;
@@ -16,6 +17,8 @@ use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\Ficha;
 use App\Livewire\Postulante\Panel;
 use App\Livewire\Postulante\Planes as PostulantePlanes;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Landing::class)->name('home');
@@ -24,9 +27,11 @@ Route::get('/planes', Planes::class)->name('planes');
 Route::get('/planes/postulantes', PostulantePlanes::class)->name('planes.postulantes');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/postulante', Panel::class)->name('postulante.panel');
     Route::get('/postulante/ficha', Ficha::class)->name('postulante.ficha');
-    Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
+    Route::middleware(EnsurePostulanteOnboardingComplete::class)->group(function () {
+        Route::get('/postulante', Panel::class)->name('postulante.panel');
+        Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
+    });
 
     Route::get('/empresa/activacion', EmpresaActivacion::class)->name('empresa.activacion');
 
@@ -43,7 +48,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/empresas', AdminEmpresas::class)->name('admin.empresas');
 });
 
-Route::view('dashboard', 'dashboard')
+Route::get('dashboard', function (Request $request): RedirectResponse {
+    return redirect()->route($request->user()->dashboardRouteName());
+})
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 

@@ -53,7 +53,13 @@ class Register extends Component
         ]);
 
         if ($this->role === 'postulante') {
-            Postulante::create(['user_id' => $user->id, 'completitud' => 10, 'visible' => true]);
+            Postulante::create([
+                'user_id' => $user->id,
+                'completitud' => 10,
+                'visible' => true,
+                'onboarding_paso' => 1,
+                'onboarding_completado' => false,
+            ]);
         } else {
             Empresa::create([
                 'user_id' => $user->id,

@@ -2,48 +2,68 @@
 
     <x-slot:context>Postulante</x-slot:context>
     <x-slot:nav>
-        <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
+        @unless ($modoOnboarding)
+            <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
+        @endunless
         <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil profesional</a>
-        <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
+        @unless ($modoOnboarding)
+            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
+        @endunless
     </x-slot:nav>
-    <x-slot:sidebar>
-        <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4">
-            <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Perfil profesional</div>
-            <div class="space-y-1.5">
-                @foreach ([
-                    ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
-                    ['heart', 'Intereses', 'intereses', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
-                    ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5] dark:border-[#36566B] dark:bg-[#1C2B34] dark:text-[#91BDD5] dark:hover:bg-[#243843]'],
-                    ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7] dark:border-[#3D5B45] dark:bg-[#202D24] dark:text-[#9BC2A3] dark:hover:bg-[#293A2E]'],
-                    ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
-                    ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
-                ] as [$icon, $label, $anchor, $color])
-                    <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
-                @endforeach
+    @unless ($modoOnboarding)
+        <x-slot:sidebar>
+            <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4">
+                <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Perfil profesional</div>
+                <div class="space-y-1.5">
+                    @foreach ([
+                        ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
+                        ['heart', 'Intereses', 'intereses', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
+                        ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5] dark:border-[#36566B] dark:bg-[#1C2B34] dark:text-[#91BDD5] dark:hover:bg-[#243843]'],
+                        ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7] dark:border-[#3D5B45] dark:bg-[#202D24] dark:text-[#9BC2A3] dark:hover:bg-[#293A2E]'],
+                        ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
+                        ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
+                    ] as [$icon, $label, $anchor, $color])
+                        <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
+                    @endforeach
+                </div>
             </div>
-        </div>
-    </x-slot:sidebar>
+        </x-slot:sidebar>
+    @endunless
 
-    <form wire:submit="save">
+    <form wire:submit="{{ $modoOnboarding ? 'avanzar' : 'save' }}" class="{{ $modoOnboarding ? 'mx-auto max-w-4xl' : '' }}">
         <div class="flex items-start justify-between gap-5 mb-6 flex-wrap">
-            <div><h1 class="text-[27px] font-extrabold">Mi perfil profesional</h1><p class="text-[14px] text-gray-500 mt-1.5">Completa tus datos para aparecer en las búsquedas de empresas.</p></div>
-            <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">
-                <span wire:loading.remove wire:target="save">Guardar cambios</span>
-                <span wire:loading wire:target="save">Guardando…</span>
-            </button>
+            <div><h1 class="text-[27px] font-extrabold">{{ $modoOnboarding ? 'Completa tu perfil paso a paso' : 'Mi perfil profesional' }}</h1><p class="text-[14px] text-gray-500 mt-1.5">{{ $modoOnboarding ? 'Guardaremos tu avance cada vez que presiones Siguiente.' : 'Completa tus datos para aparecer en las búsquedas de empresas.' }}</p></div>
+            @unless ($modoOnboarding)
+                <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">
+                    <span wire:loading.remove wire:target="save">Guardar cambios</span>
+                    <span wire:loading wire:target="save">Guardando…</span>
+                </button>
+            @endunless
         </div>
+
+        @if ($modoOnboarding)
+            <div class="ad-card mb-5 p-5">
+                <div class="mb-3 flex items-center justify-between gap-4 text-[13px] font-bold"><span>Paso {{ $pasoActual }} de 6</span><span class="text-orange-600">{{ (int) round(($pasoActual / 6) * 100) }}%</span></div>
+                <div class="h-2 overflow-hidden rounded-full bg-line"><div class="h-full rounded-full bg-gradient-to-r from-orange-500 to-[#F59A53] transition-all" style="width: {{ ($pasoActual / 6) * 100 }}%"></div></div>
+                <div class="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] font-bold text-gray-500 sm:grid-cols-6">
+                    @foreach (['Datos', 'Intereses', 'Experiencia', 'Educación', 'Idiomas', 'CV'] as $numero => $nombrePaso)
+                        <span @class(['rounded-lg px-2 py-1.5', 'bg-orange-100 text-orange-700' => $pasoActual === $numero + 1, 'text-match' => $pasoActual > $numero + 1])>{{ $nombrePaso }}</span>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         @if (session('status'))
             <div class="mb-5 rounded-[10px] border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-semibold text-match">{{ session('status') }}</div>
         @endif
 
-        <div class="ad-card p-5 mb-5 flex flex-wrap items-center gap-6">
+        <div class="ad-card p-5 mb-5 flex flex-wrap items-center gap-6 {{ $modoOnboarding ? 'hidden' : '' }}">
             <div class="flex-1 min-w-60"><div class="mb-2 flex justify-between text-[13px] font-semibold"><span>Completitud de tu perfil</span><span class="text-orange-600">{{ $completitud }}%</span></div><div class="h-2 rounded-full bg-line overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div></div></div>
             <div class="ad-toggle-row min-w-64"><div><b class="text-[13.5px] block">Visibilidad del perfil</b><span class="text-[13px] text-gray-500">{{ $visible ? 'Activo — visible para empresas' : 'Perfil pausado' }}</span></div><flux:switch wire:model.live="visible" /></div>
         </div>
 
         <div class="flex flex-col">
-        <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
+        <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 1 ? 'hidden' : '' }}">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Datos personales</h2></div>
             <div class="p-6 grid md:grid-cols-2 gap-4">
                 <flux:input wire:model="name" label="Nombre completo *" />
@@ -67,7 +87,7 @@
             <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
 
-        <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8] dark:border-l-[#6E9B78]">
+        <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8] dark:border-l-[#6E9B78] {{ $modoOnboarding && $pasoActual !== 4 ? 'hidden' : '' }}">
             <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5] dark:bg-[#202D24]"><div><h2 class="text-[20px] font-extrabold text-[#496451] dark:text-[#9BC2A3]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
             <div class="space-y-5 p-6">
                 @foreach ($educaciones as $index => $educacion)
@@ -109,7 +129,7 @@
             </div>
         </section>
 
-        <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4] dark:border-l-[#8A70A1]">
+        <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4] dark:border-l-[#8A70A1] {{ $modoOnboarding && $pasoActual !== 5 ? 'hidden' : '' }}">
             <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC] dark:bg-[#2B2532]"><div><h2 class="text-[20px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
             <div class="space-y-4 p-6">
                 @foreach ($idiomas as $index => $idioma)
@@ -130,7 +150,7 @@
             </div>
         </section>
 
-        <section id="intereses" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E] dark:border-l-[#A78A52]">
+        <section id="intereses" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E] dark:border-l-[#A78A52] {{ $modoOnboarding && $pasoActual !== 2 ? 'hidden' : '' }}">
             <div class="ad-card-head bg-[#FCFAF5] dark:bg-[#30291D]"><div><h2 class="text-[20px] font-extrabold text-[#75603B] dark:text-[#D7BA7D]">Intereses</h2><p class="mt-1 text-[13px] text-gray-500">Cuéntanos dónde y cómo te gustaría desarrollar tu próximo desafío.</p></div></div>
             <div class="space-y-7 p-6">
                 <fieldset>
@@ -169,7 +189,7 @@
             </div>
         </section>
 
-        <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5] dark:border-l-[#5D8CA7]">
+        <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5] dark:border-l-[#5D8CA7] {{ $modoOnboarding && $pasoActual !== 3 ? 'hidden' : '' }}">
             <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB] dark:bg-[#1C2B34]"><div><h2 class="text-[20px] font-extrabold text-[#45657A] dark:text-[#91BDD5]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)
@@ -231,7 +251,7 @@
         </section>
         </div>
 
-        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5] dark:border-l-[#8A70A1]">
+        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-[#D9C9E5] dark:border-l-[#8A70A1] {{ $modoOnboarding && $pasoActual !== 6 ? 'hidden' : '' }}">
             <div class="ad-card-head bg-[#F8F6FA] dark:bg-[#2B2532]"><div><h2 class="text-[18px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">
                 <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA] dark:border-[#584969] dark:bg-[#252129] dark:hover:border-[#8A70A1] dark:hover:bg-[#2B2532]">
@@ -262,6 +282,21 @@
             </div>
         </section>
 
-        <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">Guardar perfil profesional</button></div>
+        @if ($modoOnboarding)
+            <div class="ad-card mt-5 flex flex-wrap items-center justify-between gap-3 p-5">
+                <button type="button" wire:click="anterior" class="ad-btn-ghost ad-btn-sm {{ $pasoActual === 1 ? 'invisible' : '' }}" wire:loading.attr="disabled">Anterior</button>
+                <div class="flex items-center gap-3">
+                    @if (in_array($pasoActual, [2, 6], true))
+                        <button type="button" wire:click="omitir" class="px-3 py-2 text-[14px] font-bold text-gray-500 hover:text-ink" wire:loading.attr="disabled">Completar después</button>
+                    @endif
+                    <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="avanzar,cv">
+                        <span wire:loading.remove wire:target="avanzar">{{ $pasoActual === 6 ? 'Finalizar' : 'Guardar y continuar' }}</span>
+                        <span wire:loading wire:target="avanzar">Guardando…</span>
+                    </button>
+                </div>
+            </div>
+        @else
+            <div class="ad-card mt-5 p-5 flex flex-wrap items-center justify-between gap-4"><div class="flex gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Puedes editarla, pausar tu visibilidad o solicitar su eliminación.</p></div></div><button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="save,cv">Guardar perfil profesional</button></div>
+        @endif
     </form>
 </div>

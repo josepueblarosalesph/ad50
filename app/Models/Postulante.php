@@ -22,6 +22,8 @@ class Postulante extends Model
         'educaciones' => 'array',
         'idiomas' => 'array',
         'experiencias' => 'array',
+        'onboarding_paso' => 'integer',
+        'onboarding_completado' => 'boolean',
     ];
 
     public function user(): BelongsTo

@@ -91,11 +91,18 @@ class Ficha extends Component
 
     public ?string $cvRutaExistente = null;
 
+    public bool $modoOnboarding = false;
+
+    public int $pasoActual = 1;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->role === 'postulante', 403);
 
         $postulante = auth()->user()->postulante;
+
+        $this->modoOnboarding = $postulante !== null && ! $postulante->onboarding_completado;
+        $this->pasoActual = min(6, max(1, $postulante?->onboarding_paso ?? 1));
 
         $this->name = auth()->user()->name;
         $this->email = auth()->user()->email;
@@ -217,6 +224,324 @@ class Ficha extends Component
         $this->experiencias = array_values($this->experiencias);
     }
 
+    public function anterior(): void
+    {
+        if (! $this->modoOnboarding || $this->pasoActual === 1) {
+            return;
+        }
+
+        $this->pasoActual--;
+        auth()->user()->postulante()->update(['onboarding_paso' => $this->pasoActual]);
+        $this->resetValidation();
+    }
+
+    public function omitir(MatchingService $matching): void
+    {
+        if (! $this->modoOnboarding || ! in_array($this->pasoActual, [2, 6], true)) {
+            return;
+        }
+
+        if ($this->pasoActual === 6) {
+            $this->completarOnboarding($matching);
+
+            return;
+        }
+
+        $this->continuarOnboarding();
+    }
+
+    public function avanzar(MatchingService $matching): void
+    {
+        if (! $this->modoOnboarding) {
+            return;
+        }
+
+        $guardado = match ($this->pasoActual) {
+            1 => $this->guardarDatosPersonales(),
+            2 => $this->guardarIntereses(),
+            3 => $this->guardarExperiencias(),
+            4 => $this->guardarEducaciones(),
+            5 => $this->guardarIdiomas(),
+            6 => $this->guardarCurriculum(),
+        };
+
+        if (! $guardado) {
+            return;
+        }
+
+        if ($this->pasoActual < 6) {
+            $this->continuarOnboarding();
+
+            return;
+        }
+
+        $this->completarOnboarding($matching);
+    }
+
+    private function completarOnboarding(MatchingService $matching): void
+    {
+        $postulante = auth()->user()->postulante()->firstOrFail();
+        $postulante->update([
+            'onboarding_paso' => 6,
+            'onboarding_completado' => true,
+            'completitud' => max(100, $postulante->completitud),
+        ]);
+
+        $matching->sincronizarPostulante($postulante->fresh());
+        $this->modoOnboarding = false;
+        $this->redirectRoute('postulante.panel', navigate: true);
+    }
+
+    private function continuarOnboarding(): void
+    {
+        $this->pasoActual++;
+        auth()->user()->postulante()->update(['onboarding_paso' => $this->pasoActual]);
+        $this->resetValidation();
+    }
+
+    private function guardarDatosPersonales(): bool
+    {
+        $this->rut = Rut::formatear($this->rut);
+
+        $validated = $this->validate([
+            'name' => ['required', 'string', 'max:160'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore(auth()->id())],
+            'rut' => ['required', 'string', 'max:20', new RutValido],
+            'anioNacimiento' => ['required', 'integer', 'min:1900', 'max:'.now()->year],
+            'genero' => ['nullable', Rule::in(CatalogosProfesionales::generos())],
+            'titular' => ['nullable', 'string', 'max:100'],
+            'telefono' => ['nullable', 'string', 'max:30'],
+            'linkedin' => ['nullable', 'url:http,https', 'max:255'],
+            'ciudad' => ['required', Rule::in(CatalogosProfesionales::ciudades())],
+        ]);
+
+        DB::transaction(function () use ($validated): void {
+            auth()->user()->update(['name' => $validated['name'], 'email' => $validated['email']]);
+            auth()->user()->postulante()->update([
+                'rut' => $validated['rut'],
+                'anio_nacimiento' => $validated['anioNacimiento'],
+                'genero' => $validated['genero'],
+                'titular' => $validated['titular'],
+                'telefono' => $validated['telefono'],
+                'linkedin' => $validated['linkedin'],
+                'ciudad' => $validated['ciudad'],
+                'completitud' => max(25, $this->completitud),
+            ]);
+        });
+
+        $this->completitud = max(25, $this->completitud);
+
+        return true;
+    }
+
+    private function guardarIntereses(): bool
+    {
+        $validated = $this->validate([
+            'regionInteres' => ['nullable', Rule::in(CatalogosProfesionales::regiones())],
+            'regionInteres2' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres'],
+            'regionInteres3' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres', 'different:regionInteres2'],
+            'modalidadTrabajo' => ['nullable', Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
+            'industria' => ['nullable', Rule::in(CatalogosProfesionales::industrias())],
+            'industria2' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria'],
+            'industria3' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria', 'different:industria2'],
+        ]);
+
+        auth()->user()->postulante()->update([
+            'region_interes' => $validated['regionInteres'],
+            'region_interes_2' => $validated['regionInteres2'],
+            'region_interes_3' => $validated['regionInteres3'],
+            'modalidad_trabajo' => $validated['modalidadTrabajo'],
+            'industria' => $validated['industria'],
+            'industria_2' => $validated['industria2'],
+            'industria_3' => $validated['industria3'],
+        ]);
+
+        return true;
+    }
+
+    private function guardarExperiencias(): bool
+    {
+        $validated = $this->validate([
+            'experiencias' => ['required', 'array', 'min:1', 'max:20'],
+            'experiencias.*.cargo' => ['required', 'string', 'max:160'],
+            'experiencias.*.tipo_trabajo' => ['required', Rule::in(CatalogosProfesionales::tiposTrabajo())],
+            'experiencias.*.empresa' => ['required', 'string', 'max:160'],
+            'experiencias.*.jerarquia' => ['required', Rule::in(CatalogosProfesionales::jerarquias())],
+            'experiencias.*.actividad_empresa' => ['required', Rule::in(CatalogosProfesionales::industrias())],
+            'experiencias.*.inicio_mes' => ['required', 'integer', 'between:1,12'],
+            'experiencias.*.inicio_anio' => ['required', 'integer', 'min:1950', 'max:'.now()->year],
+            'experiencias.*.actualmente' => ['boolean'],
+            'experiencias.*.fin_mes' => ['nullable', 'integer', 'between:1,12'],
+            'experiencias.*.fin_anio' => ['nullable', 'integer', 'min:1950', 'max:'.now()->year],
+            'experiencias.*.responsabilidades' => ['required', 'string', 'max:3000'],
+            'resumenProfesional' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        foreach ($validated['experiencias'] as $index => $experiencia) {
+            if ($experiencia['actualmente']) {
+                $validated['experiencias'][$index]['fin_mes'] = null;
+                $validated['experiencias'][$index]['fin_anio'] = null;
+
+                continue;
+            }
+
+            if ($experiencia['fin_mes'] === null || $experiencia['fin_anio'] === null) {
+                $this->addError("experiencias.$index.fin_anio", 'Indica la fecha de término o marca que actualmente trabajas aquí.');
+
+                continue;
+            }
+
+            $inicio = ($experiencia['inicio_anio'] * 12) + $experiencia['inicio_mes'];
+            $fin = ($experiencia['fin_anio'] * 12) + $experiencia['fin_mes'];
+
+            if ($fin < $inicio) {
+                $this->addError("experiencias.$index.fin_anio", 'La fecha de término debe ser posterior a la de inicio.');
+            }
+        }
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return false;
+        }
+
+        $anios = $this->calculateAniosExperiencia($validated['experiencias']);
+        $principal = $validated['experiencias'][0];
+
+        auth()->user()->postulante()->update([
+            'cargo_actual' => $principal['cargo'],
+            'empresa_actual' => $principal['empresa'],
+            'experiencia_area' => $principal['actividad_empresa'],
+            'experiencia_inicio' => $principal['inicio_anio'],
+            'experiencia_fin' => $principal['fin_anio'],
+            'experiencias' => $validated['experiencias'],
+            'resumen_profesional' => $validated['resumenProfesional'],
+            'anios_experiencia' => $anios,
+            'completitud' => max(50, $this->completitud),
+        ]);
+
+        $this->aniosExperiencia = $anios;
+        $this->completitud = max(50, $this->completitud);
+
+        return true;
+    }
+
+    private function guardarEducaciones(): bool
+    {
+        $validated = $this->validate([
+            'educaciones' => ['required', 'array', 'min:1', 'max:20'],
+            'educaciones.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesEstudio())],
+            'educaciones.*.pais' => ['required', 'string', 'max:100'],
+            'educaciones.*.institucion' => ['required', 'string', 'max:180'],
+            'educaciones.*.carrera' => ['nullable', 'string', 'max:180'],
+            'educaciones.*.mencion' => ['nullable', 'string', 'max:180'],
+            'educaciones.*.modalidad' => ['nullable', Rule::in(CatalogosProfesionales::modalidadesEstudio())],
+            'educaciones.*.situacion' => ['nullable', Rule::in(CatalogosProfesionales::situacionesEstudio())],
+            'educaciones.*.inicio_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
+            'educaciones.*.termino_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
+            'educaciones.*.egreso_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
+        ]);
+
+        foreach ($validated['educaciones'] as $index => $educacion) {
+            if (in_array($educacion['nivel'], CatalogosProfesionales::nivelesEscolares(), true)) {
+                if ($educacion['egreso_anio'] === null) {
+                    $this->addError("educaciones.$index.egreso_anio", 'El año de egreso es obligatorio.');
+                }
+
+                $validated['educaciones'][$index] = array_replace($educacion, [
+                    'carrera' => null,
+                    'mencion' => null,
+                    'modalidad' => null,
+                    'situacion' => null,
+                    'inicio_anio' => null,
+                    'termino_anio' => null,
+                ]);
+
+                continue;
+            }
+
+            foreach (['carrera', 'mencion', 'modalidad', 'situacion', 'inicio_anio', 'termino_anio'] as $campo) {
+                if (blank($educacion[$campo])) {
+                    $this->addError("educaciones.$index.$campo", 'Este campo es obligatorio para el nivel seleccionado.');
+                }
+            }
+
+            if ($educacion['inicio_anio'] !== null && $educacion['termino_anio'] !== null && $educacion['termino_anio'] < $educacion['inicio_anio']) {
+                $this->addError("educaciones.$index.termino_anio", 'El año de término debe ser posterior al de inicio.');
+            }
+
+            $validated['educaciones'][$index]['egreso_anio'] = null;
+        }
+
+        if ($this->getErrorBag()->isNotEmpty()) {
+            return false;
+        }
+
+        $principal = collect($validated['educaciones'])
+            ->first(fn (array $educacion): bool => ! in_array($educacion['nivel'], CatalogosProfesionales::nivelesEscolares(), true))
+            ?? $validated['educaciones'][0];
+
+        auth()->user()->postulante()->update([
+            'carrera' => $principal['carrera'],
+            'universidad' => $principal['institucion'],
+            'especialidad' => $principal['mencion'],
+            'postgrado' => in_array($principal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $principal['carrera'] : null,
+            'educaciones' => $validated['educaciones'],
+            'completitud' => max(75, $this->completitud),
+        ]);
+
+        $this->completitud = max(75, $this->completitud);
+
+        return true;
+    }
+
+    private function guardarIdiomas(): bool
+    {
+        $validated = $this->validate([
+            'idiomas' => ['required', 'array', 'min:1', 'max:'.count(CatalogosProfesionales::idiomas())],
+            'idiomas.*.idioma' => ['required', Rule::in(CatalogosProfesionales::idiomas()), 'distinct:strict'],
+            'idiomas.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesIdioma())],
+        ]);
+
+        auth()->user()->postulante()->update([
+            'idiomas' => $validated['idiomas'],
+            'completitud' => 100,
+        ]);
+
+        $this->completitud = 100;
+
+        return true;
+    }
+
+    private function guardarCurriculum(): bool
+    {
+        $validated = $this->validate([
+            'cv' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+        ]);
+
+        if (! isset($validated['cv']) || $validated['cv'] === null) {
+            return true;
+        }
+
+        $rutaAnterior = auth()->user()->postulante?->cv_ruta;
+        $rutaNueva = $validated['cv']->store('cvs', 'local');
+
+        if ($rutaNueva === false) {
+            $this->addError('cv', 'No pudimos guardar el archivo. Inténtalo nuevamente.');
+
+            return false;
+        }
+
+        auth()->user()->postulante()->update(['cv_ruta' => $rutaNueva]);
+
+        if ($rutaAnterior !== null) {
+            Storage::disk('local')->delete($rutaAnterior);
+        }
+
+        $this->cvRutaExistente = $rutaNueva;
+        $this->reset('cv');
+
+        return true;
+    }
+
     public function save(MatchingService $matching): void
     {
         $this->rut = Rut::formatear($this->rut);
@@ -235,7 +560,7 @@ class Ficha extends Component
             'regionInteres2' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres'],
             'regionInteres3' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres', 'different:regionInteres2'],
             'modalidadTrabajo' => ['nullable', Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
-            'industria' => ['required', Rule::in(CatalogosProfesionales::industrias())],
+            'industria' => ['nullable', Rule::in(CatalogosProfesionales::industrias())],
             'industria2' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria'],
             'industria3' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria', 'different:industria2'],
             'educaciones' => ['required', 'array', 'min:1', 'max:20'],

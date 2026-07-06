@@ -67,7 +67,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
-            'postulante' => 'postulante.panel',
+            'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.panel',
             'empresa' => $this->empresa?->estaActiva() ? 'empresa.panel' : 'empresa.activacion',
             'admin' => 'admin.panel',
             default => 'dashboard',

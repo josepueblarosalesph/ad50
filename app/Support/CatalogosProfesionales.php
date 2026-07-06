@@ -61,7 +61,7 @@ class CatalogosProfesionales
     /** @return array<int, string> */
     public static function generos(): array
     {
-        return ['Mujer', 'Hombre', 'No binario', 'Otro', 'Prefiero no informar'];
+        return ['Masculino', 'Femenino', 'Prefiero no Informar'];
     }
 
     /** @return array<int, string> */

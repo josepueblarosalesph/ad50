@@ -216,6 +216,12 @@ class PostulanteSeeder extends Seeder
     /** @return array<string, mixed> */
     private function perfil(string $name, string $email, string $slug, int $edad, string $genero, string $cargo, string $titular, string $ciudad, array $regiones, string $modalidad, string $carrera, string $especialidad, string $institucion, string $industria, array $industriasAdicionales, int $aniosExperiencia, string $empresa, string $cargoAnterior, string $empresaAnterior, string $jerarquia, string $resumen, array $idiomas, ?string $postgrado = null): array
     {
+        $genero = match ($genero) {
+            'Mujer' => 'Femenino',
+            'Hombre' => 'Masculino',
+            default => 'Prefiero no Informar',
+        };
+
         return [
             'name' => $name, 'email' => $email, 'slug' => $slug, 'edad' => $edad, 'genero' => $genero,
             'cargo' => $cargo, 'titular' => $titular, 'ciudad' => $ciudad, 'regiones' => $regiones,

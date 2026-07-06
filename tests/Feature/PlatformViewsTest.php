@@ -10,6 +10,7 @@ use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Support\CatalogosProfesionales;
 use Livewire\Livewire;
 
 test('the landing page presents the experience-led visual direction', function () {
@@ -307,7 +308,10 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertOk()
         ->assertSee('Mi perfil profesional')
         ->assertSee('Género')
-        ->assertSee('Prefiero no informar')
+        ->assertSee('Masculino')
+        ->assertSee('Femenino')
+        ->assertSee('Prefiero no Informar')
+        ->assertDontSee('No binario')
         ->assertSee('Titular profesional')
         ->assertSee('maxlength="100"', false)
         ->assertSee('Medio')
@@ -346,6 +350,23 @@ test('a postulante can view the panel and professional profile', function () {
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
         ->and(strpos($ficha, 'id="intereses"'))->toBeLessThan(strpos($ficha, 'id="curriculum"'))
         ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
+
+    expect(CatalogosProfesionales::generos())->toBe([
+        'Masculino',
+        'Femenino',
+        'Prefiero no Informar',
+    ]);
+});
+
+test('a postulante cannot save a gender outside the available options', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id]);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->set('genero', 'Otro')
+        ->call('save')
+        ->assertHasErrors(['genero' => 'in']);
 });
 
 test('the postulante panel summarizes three searches and the searches page lists them all', function () {
@@ -391,7 +412,7 @@ test('a postulante can update every section of the professional profile', functi
         ->set('email', 'maria.fuentes@example.com')
         ->set('rut', '98421157')
         ->set('anioNacimiento', 1971)
-        ->set('genero', 'Mujer')
+        ->set('genero', 'Femenino')
         ->set('telefono', '+56 9 5555 1234')
         ->set('linkedin', 'https://linkedin.com/in/maria-fuentes')
         ->set('ciudad', 'Concepción')
@@ -467,7 +488,7 @@ test('a postulante can update every section of the professional profile', functi
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
         'rut' => '9.842.115-7',
-        'genero' => 'Mujer',
+        'genero' => 'Femenino',
         'titular' => 'Gerenta de Finanzas y transformación empresarial',
         'region_interes' => 'Biobío',
         'region_interes_2' => 'Ñuble',
