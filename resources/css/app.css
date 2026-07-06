@@ -6,6 +6,8 @@
 @source '../../app/Livewire';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
+[x-cloak] { display: none !important; }
+
 /* ============================================================
    AD+50 — tokens de marca (levantados de adconsulting.cl/ad50)
    ============================================================ */

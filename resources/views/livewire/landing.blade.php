@@ -32,12 +32,12 @@
                 @auth
                     <a
                         href="{{ route(auth()->user()->dashboardRouteName()) }}"
-                        class="ad-btn-ghost ad-btn-sm bg-paper/70 backdrop-blur"
+                        class="ad-btn-ghost ad-btn-sm hidden bg-paper/70 backdrop-blur lg:inline-flex"
                     >
                         {{ auth()->user()->dashboardLabel() }}
                     </a>
                 @else
-                    <div class="flex items-center gap-2">
+                    <div class="hidden items-center gap-2 lg:flex">
                         <a href="{{ route('login') }}" class="ad-btn-primary ad-btn-sm">Iniciar sesión</a>
                         <flux:dropdown position="bottom" align="end">
                             <button type="button" class="ad-btn-primary ad-btn-sm" aria-label="Elegir tipo de registro">
@@ -55,6 +55,21 @@
                         </flux:dropdown>
                     </div>
                 @endauth
+
+                <x-mobile-menu breakpoint="lg" id="landing-mobile-navigation" panel-class="bg-white/95 backdrop-blur-xl">
+                    <a href="#quienes-somos">Quiénes somos</a>
+                    <a href="#como-empresas"><flux:icon.building-office-2 class="mr-2 size-4" />Cómo funciona para empresas</a>
+                    <a href="#como-postulantes"><flux:icon.user class="mr-2 size-4" />Cómo funciona para postulantes</a>
+                    <a href="#planes">Planes</a>
+                    <div class="my-2 h-px bg-line"></div>
+                    @auth
+                        <a href="{{ route(auth()->user()->dashboardRouteName()) }}">{{ auth()->user()->dashboardLabel() }}</a>
+                    @else
+                        <a href="{{ route('login') }}">Iniciar sesión</a>
+                        <a href="{{ route('registro', ['tipo' => 'empresa']) }}"><flux:icon.building-office-2 class="mr-2 size-4" />Registrarse como empresa</a>
+                        <a href="{{ route('registro', ['tipo' => 'postulante']) }}"><flux:icon.user class="mr-2 size-4" />Registrarse como postulante</a>
+                    @endauth
+                </x-mobile-menu>
             </nav>
         </div>
 

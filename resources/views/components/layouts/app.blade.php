@@ -33,6 +33,11 @@
             </nav>
 
             <div class="flex items-center gap-3">
+                @if (isset($nav))
+                    <x-mobile-menu id="application-mobile-navigation">
+                        {{ $nav }}
+                    </x-mobile-menu>
+                @endif
                 <span class="hidden ad-chip ad-chip-green ad-chip-dot sm:inline-flex">{{ $status ?? 'Perfil activo' }}</span>
                 <flux:dropdown align="end">
                     <flux:profile :name="auth()->user()?->name ?? 'MF'"

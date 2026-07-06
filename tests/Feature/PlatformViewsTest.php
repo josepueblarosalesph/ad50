@@ -51,6 +51,8 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('min-h-[100svh]', false)
         ->assertSee('text-[44px] leading-[.98] text-ink sm:text-[56px] lg:text-[66px]', false)
         ->assertSee('fixed inset-x-0 top-0 z-40', false)
+        ->assertSee('id="landing-mobile-navigation"', false)
+        ->assertSee('aria-label="Abrir menú de navegación"', false)
         ->assertSee('p-1.5 text-[15px] font-bold text-ink', false)
         ->assertSee('pastHero: false', false)
         ->assertSee("pastHero ? 'border-white/10 bg-[#252729]/90", false)
@@ -141,6 +143,7 @@ test('the interface uses the official brand typography and color tokens', functi
         ->toContain('[data-flux-control]:not([data-flux-checkbox]):not([data-flux-switch])')
         ->toContain('min-height: 44px')
         ->toContain('@custom-variant dark')
+        ->toContain('[x-cloak] { display: none !important; }')
         ->toContain('border-color: #5A5F64 !important')
         ->toContain('.dark .ad-welcome-light .ad-chip')
         ->not->toContain("--font-display: 'DM Serif Display'");
@@ -148,6 +151,19 @@ test('the interface uses the official brand typography and color tokens', functi
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('family=Nunito', false);
+});
+
+test('the reusable mobile menu is accessible and responsive', function () {
+    $menu = file_get_contents(resource_path('views/components/mobile-menu.blade.php'));
+
+    expect($menu)
+        ->toContain('<flux:icon.bars-3')
+        ->toContain('<flux:icon.x-mark')
+        ->toContain('x-bind:aria-expanded="open"')
+        ->toContain('x-on:keydown.escape.window="open = false"')
+        ->toContain('x-on:click.outside="open = false"')
+        ->toContain("'md:hidden' => \$breakpoint === 'md'")
+        ->toContain("'lg:hidden' => \$breakpoint === 'lg'");
 });
 
 test('authentication and application shells use the official logo without forcing dark mode', function () {
@@ -254,6 +270,7 @@ test('the plans page can be viewed', function () {
         ->assertOk()
         ->assertSee('Elige el alcance de tu búsqueda')
         ->assertSee('Volver al inicio')
+        ->assertSee('id="company-plans-mobile-navigation"', false)
         ->assertSee('class="ad-btn-ghost ad-btn-sm gap-2"', false)
         ->assertSee('Básico')
         ->assertSee('Profesional')
@@ -272,6 +289,7 @@ test('the plans page can be viewed', function () {
         ->assertOk()
         ->assertSee('Haz visible tu experiencia')
         ->assertSee('Volver al inicio')
+        ->assertSee('id="candidate-plans-mobile-navigation"', false)
         ->assertSee('class="ad-btn-ghost ad-btn-sm gap-2"', false)
         ->assertSee('$20.000')
         ->assertSee('por año')
@@ -297,6 +315,8 @@ test('a postulante can view the panel and professional profile', function () {
 
     $this->actingAs($user)->get(route('postulante.panel'))
         ->assertOk()
+        ->assertSee('id="application-mobile-navigation"', false)
+        ->assertSee('aria-label="Navegación móvil"', false)
         ->assertSee('Así se ve tu presencia')
         ->assertSee('Visibilidad del perfil')
         ->assertSee(route('postulante.busquedas'), false)

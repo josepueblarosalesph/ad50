@@ -2,7 +2,7 @@
     <header class="border-b border-line bg-white dark:bg-[#1D2022]">
         <div class="max-w-[1180px] mx-auto px-6 md:px-11 py-4 flex items-center justify-between gap-4">
             <a href="{{ route('home') }}" class="ad-logo ad-logo-panel" aria-label="AD+50 Talento Senior"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo"></a>
-            <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+            <div class="hidden flex-wrap items-center justify-end gap-2 md:flex sm:gap-3">
                 <a href="{{ route('home') }}" class="ad-btn-ghost ad-btn-sm gap-2">
                     <flux:icon.arrow-left class="size-4" />
                     <span class="hidden sm:inline">Volver al inicio</span>
@@ -15,6 +15,11 @@
                 </a>
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary ad-btn-sm">Crear cuenta</a>
             </div>
+            <x-mobile-menu id="company-plans-mobile-navigation">
+                <a href="{{ route('home') }}"><flux:icon.arrow-left class="mr-2 size-4" />Volver al inicio</a>
+                <a href="{{ route('planes.postulantes') }}"><flux:icon.user class="mr-2 size-4" />Planes para postulantes</a>
+                <a href="{{ route('registro', ['tipo' => 'empresa']) }}">Crear cuenta empresa</a>
+            </x-mobile-menu>
         </div>
     </header>
 
