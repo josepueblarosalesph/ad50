@@ -24,7 +24,8 @@ class Panel extends Component
     {
         return view('livewire.admin.panel', [
             'empresas' => Empresa::query()->with('user', 'plan')->latest()->take(5)->get(),
-            'totalEmpresas' => Empresa::query()->count(),
+            'totalEmpresas' => Empresa::query()->where('estado_activacion', 'activa')->count(),
+            'empresasPendientes' => Empresa::query()->where('estado_activacion', 'pendiente')->count(),
             'totalPostulantes' => Postulante::query()->count(),
             'totalBusquedas' => Busqueda::query()->where('estado', 'activa')->count(),
             'totalCoincidencias' => BusquedaCandidato::query()->count(),

@@ -59,16 +59,17 @@ class Register extends Component
                 'user_id' => $user->id,
                 'razon_social' => $this->razon_social,
                 'telefono' => $this->telefono,
+                'estado_activacion' => 'inactiva',
+                'contacto_principal_nombre' => $user->name,
+                'contacto_principal_email' => $user->email,
+                'contacto_principal_telefono' => $this->telefono,
             ]);
         }
 
         event(new Registered($user));
         Auth::login($user, remember: true);
 
-        $this->redirectIntended(
-            $this->role === 'postulante' ? route('postulante.panel') : route('empresa.panel'),
-            navigate: true
-        );
+        $this->redirect(route('verification.notice'), navigate: true);
     }
 
     /**

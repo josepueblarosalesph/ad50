@@ -21,7 +21,7 @@ test('authenticated users are redirected from login to their role dashboard', fu
         ->assertRedirect(route($dashboardRoute, absolute: false));
 })->with([
     'postulante' => ['postulante', 'postulante.panel'],
-    'empresa' => ['empresa', 'empresa.panel'],
+    'empresa' => ['empresa', 'empresa.activacion'],
     'admin' => ['admin', 'admin.panel'],
 ]);
 
@@ -40,7 +40,7 @@ test('users are redirected to their role dashboard after authentication', functi
     $this->assertAuthenticated();
 })->with([
     'postulante' => ['postulante', 'postulante.panel'],
-    'empresa' => ['empresa', 'empresa.panel'],
+    'empresa' => ['empresa', 'empresa.activacion'],
     'admin' => ['admin', 'admin.panel'],
 ]);
 

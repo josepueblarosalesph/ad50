@@ -1,6 +1,6 @@
 <div class="ad-welcome-light">
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
-    <section class="ad-light-surface relative min-h-[760px] overflow-hidden border-b border-line bg-paper lg:min-h-[820px]"
+    <section class="ad-light-surface relative min-h-[100svh] overflow-hidden border-b border-line bg-paper"
         style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia.webp'); background-position: center, 68% center; background-size: cover;">
         <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/65 to-transparent"></div>
         <div
@@ -14,7 +14,7 @@
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto sm:h-16">
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[15px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md md:flex">
+                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[15px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md lg:flex">
                     <a href="#quienes-somos" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Quiénes somos</a>
                     <flux:dropdown position="bottom" align="start">
                         <button type="button" class="inline-flex items-center gap-1.5 rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Elegir cómo funciona AD+50">
@@ -22,8 +22,8 @@
                             <flux:icon.chevron-down class="size-4" />
                         </button>
                         <flux:menu>
-                            <flux:menu.item href="#como-postulantes" icon="user">Postulantes</flux:menu.item>
                             <flux:menu.item href="#como-empresas" icon="building-office-2">Empresas</flux:menu.item>
+                            <flux:menu.item href="#como-postulantes" icon="user">Postulantes</flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
                     <a href="#planes" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Planes</a>
@@ -45,11 +45,11 @@
                                 <flux:icon.chevron-down class="size-4" />
                             </button>
                             <flux:menu>
-                                <flux:menu.item :href="route('registro', ['tipo' => 'postulante'])" icon="user" wire:navigate>
-                                    Postulante
-                                </flux:menu.item>
                                 <flux:menu.item :href="route('registro', ['tipo' => 'empresa'])" icon="building-office-2" wire:navigate>
                                     Empresa
+                                </flux:menu.item>
+                                <flux:menu.item :href="route('registro', ['tipo' => 'postulante'])" icon="user" wire:navigate>
+                                    Postulante
                                 </flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
@@ -58,7 +58,7 @@
             </nav>
         </div>
 
-        <div class="relative z-10 mx-auto flex min-h-[760px] max-w-[1240px] items-center px-6 pb-24 pt-32 lg:min-h-[820px] lg:px-10">
+        <div class="relative z-10 mx-auto flex min-h-[100svh] max-w-[1240px] items-center px-6 pb-10 pt-28 lg:px-10 lg:pb-12 lg:pt-28">
             <div class="max-w-[670px]">
                 <span class="ad-eyebrow">Talento con experiencia</span>
                 <h1 class="mt-5 max-w-[640px] text-[44px] leading-[.98] text-ink sm:text-[56px] lg:text-[66px]">
@@ -75,11 +75,11 @@
                         <flux:icon.arrow-right class="size-4" />
                     </a>
                     <a href="{{ route('registro') }}?tipo=postulante" class="ad-btn-primary">
-                        Crear mi perfil
+                        Crear mi perfil profesional
                     </a>
                 </div>
 
-                <div class="mt-11 flex max-w-[590px] flex-wrap gap-x-8 gap-y-4 border-t border-line-2 pt-6">
+                <div class="mt-8 flex max-w-[590px] flex-wrap gap-x-8 gap-y-3 border-t border-line-2 pt-5">
                     @foreach ([
                         ['+50', 'experiencia que suma'],
                         ['1', 'perfil profesional'],
@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        <div class="absolute bottom-6 right-6 z-10 hidden max-w-[230px] rounded-[14px] border border-white/50 bg-white/80 p-4 shadow-[var(--shadow-card)] backdrop-blur-md lg:block">
+        <div class="absolute bottom-10 right-10 z-10 hidden max-w-[230px] rounded-[14px] border border-white/50 bg-white/80 p-4 shadow-[var(--shadow-card)] backdrop-blur-md lg:block">
             <p class="font-display text-[19px] leading-[1.15] text-ink">Trayectorias reales. Nuevas oportunidades.</p>
             <p class="mt-2 text-[12px] font-bold uppercase tracking-[.12em] text-orange-600">AD Consulting · Chile</p>
         </div>
@@ -157,6 +157,61 @@
         </div>
     </section>
 
+    {{-- Cómo funciona para empresas --}}
+    <section id="como-empresas" class="relative isolate scroll-mt-24 overflow-hidden bg-[#252729] text-white">
+        <div class="pointer-events-none absolute -right-24 -top-32 size-[520px] rounded-full bg-orange-500/20 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-56 -left-40 size-[560px] rounded-full border-[90px] border-white/[.035]"></div>
+        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-700 via-orange-500 to-orange-200"></div>
+
+        <div class="relative mx-auto max-w-[1240px] px-6 py-28 lg:px-10 lg:py-36">
+            <div class="grid items-start gap-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-24">
+                <div class="lg:sticky lg:top-28">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200/35 bg-orange-500/10 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-200 shadow-[0_8px_30px_rgba(232,119,34,.12)] backdrop-blur-sm">
+                        <flux:icon.building-office-2 class="size-4" />
+                        Cómo funciona para empresas
+                    </span>
+                    <h2 class="mt-7 max-w-[610px] text-[50px] leading-[.98] text-white sm:text-[64px] lg:text-[72px]">Menos volumen. <span class="text-orange-200">Más evidencia</span> para decidir.</h2>
+                    <p class="mt-7 max-w-[560px] text-[18px] font-medium leading-[1.75] text-white/72">
+                        Define el desafío con criterios concretos y revisa únicamente profesionales cuya experiencia responde a lo que estás buscando.
+                    </p>
+                    <div class="mt-9 flex flex-wrap gap-3">
+                        <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary">
+                            Registrar mi empresa
+                            <flux:icon.arrow-right class="size-4" />
+                        </a>
+                        <a href="{{ route('planes') }}" class="ad-btn-light">Ver planes</a>
+                    </div>
+
+                    <div class="mt-10 grid max-w-[560px] grid-cols-3 gap-3 border-t border-white/15 pt-6">
+                        @foreach ([['Criterios', 'configurables'], ['Resultados', 'relevantes'], ['Contacto', 'protegido']] as [$value, $label])
+                            <div><strong class="block text-[14px] font-extrabold text-white">{{ $value }}</strong><span class="mt-1 block text-[11px] font-bold uppercase tracking-wide text-white/45">{{ $label }}</span></div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <ol class="grid gap-5">
+                    @foreach ([
+                        ['adjustments-horizontal', '01', 'Configura la búsqueda', 'Define cargo, experiencia, industria y ubicación según las necesidades reales del desafío.'],
+                        ['user-group', '02', 'Recibe una lista relevante', 'AD+50 muestra profesionales que cumplen los criterios, reduciendo revisión manual y ruido.'],
+                        ['check-badge', '03', 'Evalúa y contacta', 'Compara perfiles profesionales, guarda favoritos y accede a sus datos de contacto con un plan activo.'],
+                    ] as [$icon, $number, $title, $description])
+                        <li @class(['group relative overflow-hidden rounded-[22px] border p-7 backdrop-blur-md transition duration-300 sm:p-8', 'border-orange-200/50 bg-gradient-to-br from-orange-500/20 to-white/[.07] shadow-[0_24px_60px_rgba(0,0,0,.22)]' => $loop->first, 'border-white/15 bg-white/[.065] hover:border-orange-200/35 hover:bg-white/[.09]' => ! $loop->first])>
+                            <div class="absolute right-5 top-3 font-display text-[64px] text-white/[.045]">{{ $number }}</div>
+                            <div class="relative grid gap-5 sm:grid-cols-[56px_1fr] sm:items-start">
+                                <span class="grid size-12 place-items-center rounded-[13px] border border-orange-200/30 bg-orange-500/15 text-orange-200 shadow-[0_8px_24px_rgba(232,119,34,.12)]"><flux:icon :name="$icon" class="size-6" /></span>
+                                <div>
+                                    <span class="text-[11px] font-extrabold uppercase tracking-[.16em] text-orange-200/80">Paso {{ $number }}</span>
+                                    <h3 class="mt-2 text-[27px] leading-[1.08] text-white">{{ $title }}</h3>
+                                    <p class="mt-3 text-[15px] leading-[1.7] text-white/62">{{ $description }}</p>
+                                </div>
+                            </div>
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        </div>
+    </section>
+
     {{-- Cómo funciona para postulantes --}}
     <section id="como-postulantes" class="scroll-mt-24 border-y border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
@@ -171,6 +226,12 @@
                         Crear mi perfil profesional
                         <flux:icon.arrow-right class="size-4" />
                     </a>
+                    @if ($planPostulante)
+                        <p class="mt-3 text-[12px] font-semibold text-gray-400">
+                            Acceso al portal: ${{ number_format($planPostulante->precio_clp, 0, ',', '.') }} CLP al año.
+                            <a href="{{ route('planes.postulantes') }}" class="underline decoration-gray-300 underline-offset-2 transition hover:text-orange-600">Ver detalle</a>
+                        </p>
+                    @endif
                 </div>
 
                 <ol class="grid gap-4">
@@ -194,69 +255,22 @@
         </div>
     </section>
 
-    {{-- Cómo funciona para empresas --}}
-    <section id="como-empresas" class="scroll-mt-24 bg-[#343638] text-white">
-        <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
-            <div class="grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:gap-20">
-                <div>
-                    <span class="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-200">
-                        <span class="h-px w-7 bg-orange-500"></span>
-                        Cómo funciona para empresas
-                    </span>
-                    <h2 class="mt-5 max-w-[520px] text-[46px] text-white sm:text-[56px]">Menos volumen. Más evidencia para decidir.</h2>
-                    <p class="mt-5 max-w-[490px] text-[17px] leading-[1.7] text-white/70">
-                        Define el desafío con criterios concretos y revisa únicamente profesionales cuya experiencia responde a lo que estás buscando.
-                    </p>
-                    <div class="mt-8 flex flex-wrap gap-3">
-                        <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary">
-                            Registrar mi empresa
-                            <flux:icon.arrow-right class="size-4" />
-                        </a>
-                        <a href="{{ route('planes') }}" class="ad-btn-light">Ver planes</a>
-                    </div>
-                </div>
-
-                <ol class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                    @foreach ([
-                        ['01', 'Configura la búsqueda', 'Define cargo, experiencia, industria y ubicación según las necesidades reales del desafío.'],
-                        ['02', 'Recibe una lista relevante', 'AD+50 muestra profesionales que cumplen los criterios, reduciendo revisión manual y ruido.'],
-                        ['03', 'Evalúa y contacta', 'Compara perfiles profesionales, guarda favoritos y accede a sus datos de contacto con un plan activo.'],
-                    ] as [$number, $title, $description])
-                        <li class="rounded-[18px] border border-white/15 bg-white/[.06] p-6 backdrop-blur-sm sm:p-7">
-                            <div class="grid gap-4 lg:grid-cols-[64px_1fr]">
-                                <span class="font-display text-[31px] text-orange-200">{{ $number }}</span>
-                                <div>
-                                    <h3 class="text-[24px] leading-[1.1] text-white">{{ $title }}</h3>
-                                    <p class="mt-2 text-[14px] leading-[1.65] text-white/65">{{ $description }}</p>
-                                </div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ol>
-            </div>
-        </div>
-    </section>
-
     {{-- Planes --}}
     <section id="planes" class="scroll-mt-24 border-t border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
             <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div class="max-w-[720px]">
-                    <span class="ad-eyebrow">Planes AD+50</span>
-                    <h2 class="mt-5 text-[46px] sm:text-[56px]">Elige cómo quieres participar.</h2>
+                    <span class="ad-eyebrow">Planes para empresas</span>
+                    <h2 class="mt-5 text-[46px] sm:text-[56px]">Elige el alcance de tu búsqueda.</h2>
                     <p class="mt-5 max-w-[620px] text-[17px] leading-[1.7] text-gray-700">
-                        Activa tu perfil profesional o selecciona el alcance que tu empresa necesita para encontrar y contactar talento senior.
+                        Selecciona el plan que tu empresa necesita para encontrar y contactar talento senior.
                     </p>
                 </div>
-                <a href="{{ route('planes') }}" class="ad-btn-ghost ad-btn-sm">
-                    Ver todos los planes
-                    <flux:icon.arrow-right class="size-4" />
-                </a>
             </div>
 
             <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                 @forelse ($planes as $plan)
-                    <article @class([
+                    <article wire:key="landing-plan-{{ $plan->id }}" @class([
                         'relative flex flex-col rounded-[20px] border bg-paper p-7',
                         'border-2 border-orange-500 shadow-[var(--shadow-card-lg)]' => $plan->destacado,
                         'border-line-2 shadow-[var(--shadow-card)]' => ! $plan->destacado,
@@ -268,12 +282,12 @@
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <span class="text-[11px] font-extrabold uppercase tracking-[.14em] text-orange-600">
-                                    {{ $plan->audiencia === 'empresa' ? 'Para empresas' : 'Para postulantes' }}
+                                    Para empresas
                                 </span>
                                 <h3 class="mt-2 text-[24px]">{{ Str::after($plan->nombre, '· ') }}</h3>
                             </div>
                             <span class="grid size-10 shrink-0 place-items-center rounded-[11px] bg-orange-100 text-orange-700">
-                                <flux:icon :name="$plan->audiencia === 'empresa' ? 'building-office-2' : 'user'" class="size-5" />
+                                <flux:icon.building-office-2 class="size-5" />
                             </span>
                         </div>
 
@@ -285,15 +299,15 @@
 
                         <ul class="my-6 grid flex-1 gap-3">
                             @foreach ($plan->features ?? [] as $feature)
-                                <li class="flex gap-2.5 text-[13.5px] font-semibold text-gray-700">
+                                <li wire:key="landing-plan-{{ $plan->id }}-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] font-semibold text-gray-700">
                                     <flux:icon.check class="mt-0.5 size-4 shrink-0 text-match" />
                                     {{ $feature }}
                                 </li>
                             @endforeach
                         </ul>
 
-                        <a href="{{ route('registro', ['tipo' => $plan->audiencia]) }}" class="{{ $plan->destacado ? 'ad-btn-primary' : 'ad-btn-ghost' }} ad-btn-sm ad-btn-block">
-                            {{ $plan->audiencia === 'empresa' ? 'Elegir este plan' : 'Crear mi perfil' }}
+                        <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="{{ $plan->destacado ? 'ad-btn-primary' : 'ad-btn-ghost' }} ad-btn-sm ad-btn-block">
+                            Elegir este plan
                         </a>
                     </article>
                 @empty
@@ -302,6 +316,32 @@
                         <p class="mt-2 text-[14px] text-gray-500">Contáctanos para conocer las alternativas disponibles.</p>
                     </div>
                 @endforelse
+
+                <article class="relative flex flex-col rounded-[20px] border border-line-2 bg-paper p-7 shadow-[var(--shadow-card)]">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <span class="text-[11px] font-extrabold uppercase tracking-[.14em] text-orange-600">Para empresas</span>
+                            <h3 class="mt-2 text-[24px]">Premium</h3>
+                        </div>
+                        <span class="grid size-10 shrink-0 place-items-center rounded-[11px] bg-orange-100 text-orange-700">
+                            <flux:icon.building-office-2 class="size-5" />
+                        </span>
+                    </div>
+
+                    <div class="mt-6 text-[30px] font-extrabold text-ink">A medida</div>
+                    <p class="mt-1 text-[12px] font-semibold text-gray-500">para equipos y procesos de alto volumen</p>
+
+                    <ul class="my-6 grid flex-1 gap-3">
+                        @foreach (['Búsquedas ilimitadas', 'Múltiples usuarios y áreas', 'Soporte prioritario', 'Onboarding dedicado'] as $feature)
+                            <li wire:key="landing-premium-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] font-semibold text-gray-700">
+                                <flux:icon.check class="mt-0.5 size-4 shrink-0 text-match" />
+                                {{ $feature }}
+                            </li>
+                        @endforeach
+                    </ul>
+
+                    <a href="mailto:contacto@adconsulting.cl" class="ad-btn-ghost ad-btn-sm ad-btn-block">Hablar con AD Consulting</a>
+                </article>
             </div>
         </div>
     </section>
@@ -350,8 +390,8 @@
                 <h2 class="mt-3 text-[40px] text-white sm:text-[48px]">Experiencia lista para entrar en acción.</h2>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="{{ route('registro') }}" class="ad-btn-light">Crear una cuenta</a>
                 <a href="{{ route('planes') }}" class="ad-btn bg-[#343638] text-white hover:bg-[#4C4F51]">Ver planes</a>
+                <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-light">Crear mi perfil profesional</a>
             </div>
         </div>
     </section>

@@ -4,6 +4,7 @@
             <a href="{{ route('home') }}" class="ad-logo ad-logo-panel" aria-label="AD+50 Talento Senior"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo"></a>
             <div class="flex items-center gap-3">
                 <a href="{{ route('home') }}" class="text-[13px] font-semibold text-gray-500">Volver al inicio</a>
+                <a href="{{ route('planes.postulantes') }}" class="text-[13px] font-semibold text-gray-500">Planes para postulantes</a>
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary ad-btn-sm">Crear cuenta</a>
             </div>
         </div>
@@ -18,7 +19,7 @@
 
         <div class="grid lg:grid-cols-3 gap-5 items-stretch">
             @foreach ($planes as $plan)
-                <article @class(['ad-card p-7 flex flex-col relative', 'border-2 border-orange-500 shadow-card-lg' => $plan->destacado])>
+                <article wire:key="empresa-plan-{{ $plan->id }}" @class(['ad-card p-7 flex flex-col relative', 'border-2 border-orange-500 shadow-card-lg' => $plan->destacado])>
                     @if ($plan->destacado)
                         <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 text-white px-3 py-1 text-[11px] font-bold uppercase tracking-wide">Más elegido</span>
                     @endif
@@ -27,7 +28,7 @@
                     <p class="text-[12.5px] text-gray-500 mb-6">por {{ $plan->periodo }}</p>
                     <ul class="space-y-3 flex-1 mb-7">
                         @foreach ($plan->features ?? [] as $feature)
-                            <li class="flex gap-2.5 text-[13.5px] text-gray-700"><flux:icon.check class="size-4 text-match flex-none mt-0.5" />{{ $feature }}</li>
+                            <li wire:key="empresa-plan-{{ $plan->id }}-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] text-gray-700"><flux:icon.check class="size-4 text-match flex-none mt-0.5" />{{ $feature }}</li>
                         @endforeach
                     </ul>
                     <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="{{ $plan->destacado ? 'ad-btn-primary' : 'ad-btn-ghost' }} ad-btn-sm ad-btn-block">Elegir {{ Str::after($plan->nombre, '· ') }}</a>
@@ -35,23 +36,16 @@
             @endforeach
 
             <article class="ad-card p-7 flex flex-col">
-                <h2 class="text-[19px] font-extrabold">Enterprise</h2>
+                <h2 class="text-[19px] font-extrabold">Premium</h2>
                 <div class="text-[30px] font-extrabold mt-4">A medida</div>
                 <p class="text-[12.5px] text-gray-500 mb-6">para equipos y procesos de alto volumen</p>
                 <ul class="space-y-3 flex-1 mb-7">
                     @foreach (['Búsquedas ilimitadas', 'Múltiples usuarios y áreas', 'Soporte prioritario', 'Onboarding dedicado'] as $feature)
-                        <li class="flex gap-2.5 text-[13.5px] text-gray-700"><flux:icon.check class="size-4 text-match flex-none mt-0.5" />{{ $feature }}</li>
+                        <li wire:key="premium-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] text-gray-700"><flux:icon.check class="size-4 text-match flex-none mt-0.5" />{{ $feature }}</li>
                     @endforeach
                 </ul>
                 <a href="mailto:contacto@adconsulting.cl" class="ad-btn-ghost ad-btn-sm ad-btn-block">Hablar con AD Consulting</a>
             </article>
         </div>
-
-        @if ($planPostulante)
-            <div class="ad-card p-5 mt-6 flex flex-wrap items-center justify-between gap-4">
-                <div><b class="text-[14px]">¿Eres postulante?</b><p class="text-[12.5px] text-gray-500 mt-1">Activa tu perfil profesional con un pago único de ${{ number_format($planPostulante->precio_clp, 0, ',', '.') }} CLP. Sin renovación.</p></div>
-                <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-ghost ad-btn-sm">Crear mi perfil</a>
-            </div>
-        @endif
     </main>
 </div>

@@ -28,11 +28,23 @@ class Ficha extends Component
 
     public ?int $anioNacimiento = null;
 
+    public string $genero = '';
+
+    public string $titular = '';
+
     public string $telefono = '';
 
     public string $linkedin = '';
 
     public string $ciudad = '';
+
+    public string $regionInteres = '';
+
+    public string $regionInteres2 = '';
+
+    public string $regionInteres3 = '';
+
+    public string $modalidadTrabajo = '';
 
     public string $cargoActual = '';
 
@@ -89,9 +101,15 @@ class Ficha extends Component
         $this->email = auth()->user()->email;
         $this->rut = Rut::formatear($postulante?->rut ?? '');
         $this->anioNacimiento = $postulante?->anio_nacimiento;
+        $this->genero = $postulante?->genero ?? '';
+        $this->titular = $postulante?->titular ?? '';
         $this->telefono = $postulante?->telefono ?? '';
         $this->linkedin = $postulante?->linkedin ?? '';
         $this->ciudad = $postulante?->ciudad ?? '';
+        $this->regionInteres = $postulante?->region_interes ?? '';
+        $this->regionInteres2 = $postulante?->region_interes_2 ?? '';
+        $this->regionInteres3 = $postulante?->region_interes_3 ?? '';
+        $this->modalidadTrabajo = $postulante?->modalidad_trabajo ?? '';
         $this->cargoActual = $postulante?->cargo_actual ?? '';
         $this->industria = $postulante?->industria ?? '';
         $this->industria2 = $postulante?->industria_2 ?? '';
@@ -208,9 +226,15 @@ class Ficha extends Component
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore(auth()->id())],
             'rut' => ['required', 'string', 'max:20', new RutValido],
             'anioNacimiento' => ['required', 'integer', 'min:1900', 'max:'.now()->year],
+            'genero' => ['nullable', Rule::in(CatalogosProfesionales::generos())],
+            'titular' => ['nullable', 'string', 'max:100'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'linkedin' => ['nullable', 'url:http,https', 'max:255'],
             'ciudad' => ['required', Rule::in(CatalogosProfesionales::ciudades())],
+            'regionInteres' => ['nullable', Rule::in(CatalogosProfesionales::regiones())],
+            'regionInteres2' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres'],
+            'regionInteres3' => ['nullable', Rule::in(CatalogosProfesionales::regiones()), 'different:regionInteres', 'different:regionInteres2'],
+            'modalidadTrabajo' => ['nullable', Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
             'industria' => ['required', Rule::in(CatalogosProfesionales::industrias())],
             'industria2' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria'],
             'industria3' => ['nullable', Rule::in(CatalogosProfesionales::industrias()), 'different:industria', 'different:industria2'],
@@ -333,9 +357,15 @@ class Ficha extends Component
                 return Postulante::query()->updateOrCreate(['user_id' => auth()->id()], [
                     'rut' => $validated['rut'],
                     'anio_nacimiento' => $validated['anioNacimiento'],
+                    'genero' => $validated['genero'],
+                    'titular' => $validated['titular'],
                     'telefono' => $validated['telefono'],
                     'linkedin' => $validated['linkedin'],
                     'ciudad' => $validated['ciudad'],
+                    'region_interes' => $validated['regionInteres'],
+                    'region_interes_2' => $validated['regionInteres2'],
+                    'region_interes_3' => $validated['regionInteres3'],
+                    'modalidad_trabajo' => $validated['modalidadTrabajo'],
                     'cargo_actual' => $principal['cargo'],
                     'industria' => $validated['industria'],
                     'industria_2' => $validated['industria2'],
@@ -513,6 +543,9 @@ class Ficha extends Component
         return view('livewire.postulante.ficha', [
             'industrias' => CatalogosProfesionales::industrias(),
             'ciudades' => CatalogosProfesionales::ciudades(),
+            'generos' => CatalogosProfesionales::generos(),
+            'regiones' => CatalogosProfesionales::regiones(),
+            'modalidadesTrabajoPreferidas' => CatalogosProfesionales::modalidadesTrabajoPreferidas(),
             'tiposTrabajo' => CatalogosProfesionales::tiposTrabajo(),
             'jerarquias' => CatalogosProfesionales::jerarquias(),
             'meses' => CatalogosProfesionales::meses(),

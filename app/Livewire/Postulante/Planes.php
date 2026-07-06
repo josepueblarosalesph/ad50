@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Postulante;
 
 use App\Models\Plan;
 use Illuminate\Contracts\View\View;
@@ -10,12 +10,12 @@ use Livewire\Component;
 
 class Planes extends Component
 {
-    #[Title('Planes · AD+50')]
+    #[Title('Plan para postulantes · AD+50')]
     #[Layout('components.layouts.marketing')]
     public function render(): View
     {
-        return view('livewire.planes', [
-            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_clp')->get(),
+        return view('livewire.postulante.planes', [
+            'plan' => Plan::query()->where('audiencia', 'postulante')->first(),
         ]);
     }
 }

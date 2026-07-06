@@ -54,7 +54,7 @@
     </header>
 
     {{-- ====== SHELL CON SIDEBAR ====== --}}
-    <div @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[230px_1fr]' => isset($sidebar)])>
+    <div @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[260px_1fr]' => isset($sidebar)])>
         @isset($sidebar)
             <aside class="hidden border-r border-line bg-white p-4 dark:bg-[#1D2022] md:block">
                 {{ $sidebar }}

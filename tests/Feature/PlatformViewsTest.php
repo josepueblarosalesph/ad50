@@ -13,9 +13,27 @@ use App\Models\User;
 use Livewire\Livewire;
 
 test('the landing page presents the experience-led visual direction', function () {
-    $this->get(route('home'))
+    Plan::query()->create([
+        'codigo' => 'postulante_landing',
+        'nombre' => 'Postulante visible',
+        'audiencia' => 'postulante',
+        'precio_clp' => 20000,
+        'periodo' => 'anual',
+    ]);
+    Plan::query()->create([
+        'codigo' => 'empresa_landing',
+        'nombre' => 'Empresa landing',
+        'audiencia' => 'empresa',
+        'precio_clp' => 89000,
+        'periodo' => 'mensual',
+    ]);
+
+    $response = $this->get(route('home'));
+
+    $response
         ->assertOk()
         ->assertSeeText('La experiencia no se archiva. Se activa.')
+        ->assertSee('min-h-[100svh]', false)
         ->assertSee('text-[44px] leading-[.98] text-ink sm:text-[56px] lg:text-[66px]', false)
         ->assertSee('fixed inset-x-0 top-0 z-40', false)
         ->assertSee('p-1.5 text-[15px] font-bold text-ink', false)
@@ -27,12 +45,25 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('id="planes"', false)
         ->assertSee('Cómo funciona para postulantes')
         ->assertSee('Cómo funciona para empresas')
+        ->assertSee('bg-[#252729]', false)
+        ->assertSee('lg:text-[72px]', false)
+        ->assertSee('shadow-[0_24px_60px_rgba(0,0,0,.22)]', false)
+        ->assertSee('absolute bottom-10 right-10 z-10', false)
         ->assertSee('Quiénes somos')
         ->assertSee('href="#quienes-somos"', false)
         ->assertDontSee('Acerca de')
         ->assertSee('href="#planes"', false)
-        ->assertSee('Planes AD+50')
-        ->assertSee('Ver todos los planes')
+        ->assertSee('Planes para empresas')
+        ->assertSee('Elige el alcance de tu búsqueda.')
+        ->assertSee('$89.000')
+        ->assertSee('Premium')
+        ->assertSee('A medida')
+        ->assertSee('Búsquedas ilimitadas')
+        ->assertSee('mailto:contacto@adconsulting.cl', false)
+        ->assertSee('Acceso al portal: $20.000 CLP al año.')
+        ->assertSee(route('planes.postulantes'), false)
+        ->assertDontSee('Postulante visible')
+        ->assertDontSee('Ver todos los planes')
         ->assertSee('Crea tu perfil profesional')
         ->assertSee('Configura la búsqueda')
         ->assertDontSee('id="como" class="hidden"', false)
@@ -48,10 +79,13 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Registrarse')
         ->assertSee('Postulante')
         ->assertSee('Empresa')
-        ->assertSee('Crear mi perfil')
+        ->assertSee('Crear mi perfil profesional')
         ->assertSee('href="#como-postulantes"', false)
         ->assertSee('href="#como-empresas"', false)
         ->assertSee('Cómo funciona');
+
+    expect(strpos($response->getContent(), '$20.000'))
+        ->toBeLessThan(strpos($response->getContent(), 'id="planes"'));
 
     $landing = file_get_contents(resource_path('views/livewire/landing.blade.php'));
 
@@ -59,8 +93,11 @@ test('the landing page presents the experience-led visual direction', function (
         ->toContain('gap-y-3 text-[15px]')
         ->toContain('pt-6 text-[14px]')
         ->and(strpos($landing, 'href="#quienes-somos"'))->toBeLessThan(strpos($landing, 'aria-label="Elegir cómo funciona AD+50"'))
-        ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
-        ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="planes"'));
+        ->and(strpos($landing, 'href="#como-empresas"'))->toBeLessThan(strpos($landing, 'href="#como-postulantes"'))
+        ->and(strpos($landing, "route('registro', ['tipo' => 'empresa'])"))->toBeLessThan(strpos($landing, "route('registro', ['tipo' => 'postulante'])"))
+        ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-empresas"'))
+        ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
+        ->and(strpos($landing, 'id="como-postulantes"'))->toBeLessThan(strpos($landing, 'id="planes"'));
 });
 
 test('the interface uses the official brand typography and color tokens', function () {
@@ -77,6 +114,11 @@ test('the interface uses the official brand typography and color tokens', functi
         ->toContain('.dark [class~="text-orange-700"]')
         ->toContain('.dark .ad-welcome-light [class~="text-orange-600"]')
         ->toContain('--color-gray-400:   #75787B')
+        ->toContain('body       { background: var(--color-paper); font-size: 18px; line-height: 1.6; }')
+        ->toContain('body [class~="text-[10px]"]')
+        ->toContain('body [class~="text-[14px]"]')
+        ->toContain('[data-flux-control]:not([data-flux-checkbox]):not([data-flux-switch])')
+        ->toContain('min-height: 44px')
         ->toContain('@custom-variant dark')
         ->toContain('border-color: #5A5F64 !important')
         ->toContain('.dark .ad-welcome-light .ad-chip')
@@ -99,6 +141,7 @@ test('authentication and application shells use the official logo without forcin
     expect($applicationLayout)
         ->toContain('/images/ad50-logo.png')
         ->toContain('class="ad-logo shrink-0"')
+        ->toContain("'md:grid-cols-[260px_1fr]' => isset(\$sidebar)")
         ->and($applicationStyles)
         ->toContain('.dark .ad-logo')
         ->toContain('background-color: #222528')
@@ -119,7 +162,8 @@ test('authentication and application shells use the official logo without forcin
         ->assertSee('/images/ad50-logo.png', false)
         ->assertSee('ad-auth-back', false)
         ->assertSee('absolute right-5 top-5', false)
-        ->assertSee('Volver al inicio');
+        ->assertSee('Volver al inicio')
+        ->assertDontSee('Registro seguro');
 });
 
 test('authenticated postulantes see mi perfil on the home page', function () {
@@ -147,15 +191,43 @@ test('authenticated empresas see panel de admin on the home page', function () {
 test('the plans page can be viewed', function () {
     Plan::query()->create([
         'codigo' => 'empresa_basic',
-        'nombre' => 'Empresa · Básico',
+        'nombre' => 'Básico',
         'audiencia' => 'empresa',
         'precio_clp' => 89000,
         'features' => ['Una búsqueda activa'],
     ]);
+    Plan::query()->create([
+        'codigo' => 'empresa_pro',
+        'nombre' => 'Profesional',
+        'audiencia' => 'empresa',
+        'precio_clp' => 189000,
+        'features' => ['Búsquedas ilimitadas'],
+    ]);
+    Plan::query()->create([
+        'codigo' => 'postulante',
+        'nombre' => 'Postulante visible',
+        'audiencia' => 'postulante',
+        'precio_clp' => 20000,
+        'periodo' => 'anual',
+        'features' => ['Perfil visible en el portal'],
+    ]);
 
     $this->get(route('planes'))
         ->assertOk()
-        ->assertSee('Elige el alcance de tu búsqueda');
+        ->assertSee('Elige el alcance de tu búsqueda')
+        ->assertSee('Básico')
+        ->assertSee('Profesional')
+        ->assertSee('Premium')
+        ->assertSee(route('planes.postulantes'), false)
+        ->assertDontSee('$20.000');
+
+    $this->get(route('planes.postulantes'))
+        ->assertOk()
+        ->assertSee('Haz visible tu experiencia')
+        ->assertSee('$20.000')
+        ->assertSee('por año')
+        ->assertSee('Perfil visible en el portal')
+        ->assertSee(route('planes'), false);
 });
 
 test('a postulante can view the panel and professional profile', function () {
@@ -174,6 +246,13 @@ test('a postulante can view the panel and professional profile', function () {
     $this->actingAs($user)->get(route('postulante.ficha'))
         ->assertOk()
         ->assertSee('Mi perfil profesional')
+        ->assertSee('Género')
+        ->assertSee('Prefiero no informar')
+        ->assertSee('Titular profesional')
+        ->assertSee('maxlength="100"', false)
+        ->assertSee('Medio')
+        ->assertSee('Alto')
+        ->assertDontSee('>Bajo<', false)
         ->assertSee('href="'.route('postulante.busquedas').'"', false)
         ->assertDontSee(route('postulante.panel').'#coincidencias', false)
         ->assertDontSee('Mi activación')
@@ -189,20 +268,23 @@ test('a postulante can view the panel and professional profile', function () {
     expect($ficha)
         ->toContain('sticky top-24')
         ->toContain('id="datos-personales" class="ad-card order-1')
-        ->toContain('id="experiencia" class="ad-card order-2')
-        ->toContain('id="educacion" class="ad-card order-3')
-        ->toContain('id="idiomas" class="ad-card order-4')
-        ->toContain('id="industrias" class="ad-card order-5')
+        ->toContain('id="intereses" class="ad-card order-2')
+        ->toContain('id="experiencia" class="ad-card order-3')
+        ->toContain('id="educacion" class="ad-card order-4')
+        ->toContain('id="idiomas" class="ad-card order-5')
         ->toContain('id="curriculum" class="ad-card mt-5')
+        ->toContain('Regiones de interés')
+        ->toContain('Industrias de interés')
+        ->toContain('Modalidad de trabajo')
         ->toContain('dark:bg-[#1C2B34]')
         ->toContain('dark:bg-[#202D24]')
         ->toContain('dark:bg-[#2B2532]')
         ->toContain('dark:bg-[#30291D]')
-        ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
+        ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Intereses'"))
+        ->and(strpos($ficha, "'Intereses'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
-        ->and(strpos($ficha, "'Idiomas'"))->toBeLessThan(strpos($ficha, "'Industrias de interés'"))
-        ->and(strpos($ficha, 'id="industrias"'))->toBeLessThan(strpos($ficha, 'id="curriculum"'))
+        ->and(strpos($ficha, 'id="intereses"'))->toBeLessThan(strpos($ficha, 'id="curriculum"'))
         ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
 });
 
@@ -249,6 +331,7 @@ test('a postulante can update every section of the professional profile', functi
         ->set('email', 'maria.fuentes@example.com')
         ->set('rut', '98421157')
         ->set('anioNacimiento', 1971)
+        ->set('genero', 'Mujer')
         ->set('telefono', '+56 9 5555 1234')
         ->set('linkedin', 'https://linkedin.com/in/maria-fuentes')
         ->set('ciudad', 'Concepción')
@@ -289,6 +372,10 @@ test('a postulante can update every section of the professional profile', functi
         ->set('industria', 'Banca y servicios financieros')
         ->set('industria2', 'Forestal / Papelera')
         ->set('industria3', 'Tecnología de la Información')
+        ->set('regionInteres', 'Biobío')
+        ->set('regionInteres2', 'Ñuble')
+        ->set('regionInteres3', 'La Araucanía')
+        ->set('modalidadTrabajo', 'Jornada Parcial')
         ->set('experiencias', [[
             'cargo' => 'Gerenta de Finanzas',
             'tipo_trabajo' => 'Jornada completa',
@@ -304,6 +391,10 @@ test('a postulante can update every section of the professional profile', functi
         ]])
         ->set('resumenProfesional', 'Experiencia liderando equipos financieros.')
         ->set('visible', true)
+        ->set('titular', str_repeat('a', 101))
+        ->call('save')
+        ->assertHasErrors(['titular' => 'max'])
+        ->set('titular', 'Gerenta de Finanzas y transformación empresarial')
         ->call('save')
         ->assertHasNoErrors()
         ->assertSet('completitud', 100);
@@ -316,6 +407,12 @@ test('a postulante can update every section of the professional profile', functi
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
         'rut' => '9.842.115-7',
+        'genero' => 'Mujer',
+        'titular' => 'Gerenta de Finanzas y transformación empresarial',
+        'region_interes' => 'Biobío',
+        'region_interes_2' => 'Ñuble',
+        'region_interes_3' => 'La Araucanía',
+        'modalidad_trabajo' => 'Jornada Parcial',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
         'empresa_actual' => 'Empresa de Prueba SpA',
@@ -371,6 +468,7 @@ test('an empresa can view its pages and create a search', function () {
     $empresa = Empresa::query()->create([
         'user_id' => $user->id,
         'razon_social' => 'Empresa de Prueba SpA',
+        'estado_activacion' => 'activa',
     ]);
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create([
@@ -411,6 +509,7 @@ test('an empresa can view its pages and create a search', function () {
         ->assertSee('ad-candidate-toolbar', false)
         ->assertSee('ad-candidate-sidebar-active', false)
         ->assertSee('ad-favorite-button', false)
+        ->assertSee('Intereses')
         ->assertSee('15 años de experiencia');
 
     Livewire::actingAs($user)

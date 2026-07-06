@@ -12,10 +12,10 @@
             <div class="space-y-1.5">
                 @foreach ([
                     ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
+                    ['heart', 'Intereses', 'intereses', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
                     ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5] dark:border-[#36566B] dark:bg-[#1C2B34] dark:text-[#91BDD5] dark:hover:bg-[#243843]'],
                     ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7] dark:border-[#3D5B45] dark:bg-[#202D24] dark:text-[#9BC2A3] dark:hover:bg-[#293A2E]'],
                     ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
-                    ['building-office-2', 'Industrias de interés', 'industrias', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
                     ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
                 ] as [$icon, $label, $anchor, $color])
                     <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
@@ -49,6 +49,13 @@
                 <flux:input wire:model="name" label="Nombre completo *" />
                 <flux:input wire:model.blur.live="rut" label="RUT *" placeholder="12.345.678-5" description="Puedes escribirlo sin puntos ni guion; lo formatearemos automáticamente." inputmode="text" autocomplete="off" />
                 <flux:input wire:model="anioNacimiento" type="number" min="1900" max="{{ now()->year }}" label="Año de nacimiento *" />
+                <flux:select wire:model="genero" label="Género">
+                    <flux:select.option value="">Selecciona una opción</flux:select.option>
+                    @foreach ($generos as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                </flux:select>
+                <div class="md:col-span-2">
+                    <flux:input wire:model="titular" label="Titular profesional" maxlength="100" placeholder="Ej. Gerente de Finanzas con experiencia en transformación y crecimiento" description="Resume tu propuesta profesional en un máximo de 100 caracteres." />
+                </div>
                 <flux:input wire:model="telefono" label="Teléfono" placeholder="+56 9 5555 1234" />
                 <flux:input wire:model="email" type="email" label="Email *" />
                 <flux:input wire:model="linkedin" type="url" label="LinkedIn" placeholder="https://linkedin.com/in/..." />
@@ -60,7 +67,7 @@
             <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
         </section>
 
-        <section id="educacion" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8] dark:border-l-[#6E9B78]">
+        <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#B3C9B8] dark:border-l-[#6E9B78]">
             <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5] dark:bg-[#202D24]"><div><h2 class="text-[20px] font-extrabold text-[#496451] dark:text-[#9BC2A3]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
             <div class="space-y-5 p-6">
                 @foreach ($educaciones as $index => $educacion)
@@ -102,7 +109,7 @@
             </div>
         </section>
 
-        <section id="idiomas" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4] dark:border-l-[#8A70A1]">
+        <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#C5B9D4] dark:border-l-[#8A70A1]">
             <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC] dark:bg-[#2B2532]"><div><h2 class="text-[20px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
             <div class="space-y-4 p-6">
                 @foreach ($idiomas as $index => $idioma)
@@ -123,19 +130,46 @@
             </div>
         </section>
 
-        <section id="industrias" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E] dark:border-l-[#A78A52]">
-            <div class="ad-card-head bg-[#FCFAF5] dark:bg-[#30291D]"><h2 class="text-[18px] font-extrabold text-[#75603B] dark:text-[#D7BA7D]">Industrias de interés</h2></div>
-            <div class="p-6 grid md:grid-cols-3 gap-4">
-                @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
-                    <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
-                        <flux:select.option value="">{{ $modelo === 'industria' ? 'Selecciona una industria' : 'Sin preferencia adicional' }}</flux:select.option>
-                        @foreach ($industrias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
-                    </flux:select>
-                @endforeach
+        <section id="intereses" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#D8C49E] dark:border-l-[#A78A52]">
+            <div class="ad-card-head bg-[#FCFAF5] dark:bg-[#30291D]"><div><h2 class="text-[20px] font-extrabold text-[#75603B] dark:text-[#D7BA7D]">Intereses</h2><p class="mt-1 text-[13px] text-gray-500">Cuéntanos dónde y cómo te gustaría desarrollar tu próximo desafío.</p></div></div>
+            <div class="space-y-7 p-6">
+                <fieldset>
+                    <legend class="mb-3 text-[14px] font-extrabold text-ink">Regiones de interés</legend>
+                    <div class="grid gap-4 md:grid-cols-3">
+                        @foreach (['regionInteres' => 'Región 1', 'regionInteres2' => 'Región 2', 'regionInteres3' => 'Región 3'] as $modelo => $label)
+                            <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="region-{{ $modelo }}">
+                                <flux:select.option value="">{{ $modelo === 'regionInteres' ? 'Selecciona una región' : 'Sin preferencia adicional' }}</flux:select.option>
+                                @foreach ($regiones as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                        @endforeach
+                    </div>
+                </fieldset>
+
+                <fieldset class="border-t border-line pt-6">
+                    <legend class="mb-3 text-[14px] font-extrabold text-ink">Industrias de interés</legend>
+                    <div class="grid gap-4 md:grid-cols-3">
+                        @foreach (['industria' => 'Industria 1 *', 'industria2' => 'Industria 2', 'industria3' => 'Industria 3'] as $modelo => $label)
+                            <flux:select wire:model="{{ $modelo }}" :label="$label" wire:key="industria-{{ $modelo }}">
+                                <flux:select.option value="">{{ $modelo === 'industria' ? 'Selecciona una industria' : 'Sin preferencia adicional' }}</flux:select.option>
+                                @foreach ($industrias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                            </flux:select>
+                        @endforeach
+                    </div>
+                </fieldset>
+
+                <fieldset class="border-t border-line pt-6">
+                    <legend class="mb-3 text-[14px] font-extrabold text-ink">Modalidad de trabajo</legend>
+                    <div class="max-w-md">
+                        <flux:select wire:model="modalidadTrabajo" label="Modalidad preferida">
+                            <flux:select.option value="">Selecciona una modalidad</flux:select.option>
+                            @foreach ($modalidadesTrabajoPreferidas as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+                        </flux:select>
+                    </div>
+                </fieldset>
             </div>
         </section>
 
-        <section id="experiencia" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5] dark:border-l-[#5D8CA7]">
+        <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-[#ABC4D5] dark:border-l-[#5D8CA7]">
             <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB] dark:bg-[#1C2B34]"><div><h2 class="text-[20px] font-extrabold text-[#45657A] dark:text-[#91BDD5]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)

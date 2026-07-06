@@ -59,29 +59,31 @@
                 ])>Soy empresa</button>
         </div>
 
-        <span class="text-[11px] font-extrabold uppercase tracking-[.18em] text-orange-600">Registro seguro</span>
         <h2 class="mt-3 text-[34px] sm:text-[40px]">Crea tu cuenta</h2>
         <p class="text-[14px] text-gray-500 mt-2 mb-6">
             Toma menos de 2 minutos. Luego completas tu {{ $role === 'postulante' ? 'perfil profesional' : 'perfil de empresa' }}.
         </p>
 
-        @if ($role === 'empresa')
-            <div class="grid gap-3.5 mb-3.5">
-                <flux:input wire:model="razon_social" label="Razón social *" placeholder="Forestal del Bío Bío S.A." />
-                <flux:input wire:model="telefono" type="tel" label="Teléfono de contacto *" placeholder="+56 9 1234 5678" autocomplete="tel" />
-            </div>
-        @endif
-
         <div class="grid gap-3.5 sm:grid-cols-2">
             <flux:input wire:model="nombre"    label="Nombre *"    placeholder="María José" />
             <flux:input wire:model="apellidos" label="Apellidos *" placeholder="Fuentes Rojas" />
         </div>
+        @if ($role === 'empresa')
+            <div class="mt-3.5">
+                <flux:input wire:model="telefono" type="tel" label="Teléfono de contacto *" placeholder="+56 9 1234 5678" autocomplete="tel" />
+            </div>
+        @endif
         <div class="mt-3.5">
             <flux:input wire:model="email" type="email" label="Email *" placeholder="tu@correo.cl" />
         </div>
         <div class="mt-3.5">
             <flux:input wire:model="password" type="password" label="Contraseña *" placeholder="••••••••••" viewable />
         </div>
+        @if ($role === 'empresa')
+            <div class="mt-3.5">
+                <flux:input wire:model="razon_social" label="Razón social *" placeholder="Forestal del Bío Bío S.A." />
+            </div>
+        @endif
 
         <label class="mt-5 mb-5 flex cursor-pointer items-start gap-3 rounded-[10px] border border-orange-200 bg-orange-50 p-4">
             <flux:switch wire:model.live="acepta" class="mt-0.5" />

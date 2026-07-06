@@ -118,6 +118,7 @@ test('candidate contact details require an active company subscription and acces
     $empresa = Empresa::query()->create([
         'user_id' => $empresaUser->id,
         'razon_social' => 'Empresa Activa',
+        'estado_activacion' => 'activa',
         'plan_id' => Plan::query()->create([
             'codigo' => 'empresa_test', 'nombre' => 'Empresa Test', 'audiencia' => 'empresa', 'precio_clp' => 1,
         ])->id,
@@ -204,7 +205,7 @@ test('a company can edit a search and recalculate its existing results', functio
 
 test('a company can modify search filters from the results sidebar', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
-    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Lateral']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Lateral', 'estado_activacion' => 'activa']);
 
     foreach (['Concepción', 'Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
@@ -255,7 +256,7 @@ test('a company cannot edit another company search', function () {
     $busqueda = $owner->busquedas()->create(['titulo' => 'Privada', 'criterios' => []]);
 
     $otherUser = User::factory()->create(['role' => 'empresa']);
-    Empresa::query()->create(['user_id' => $otherUser->id, 'razon_social' => 'Otra']);
+    Empresa::query()->create(['user_id' => $otherUser->id, 'razon_social' => 'Otra', 'estado_activacion' => 'activa']);
 
     $this->actingAs($otherUser)
         ->get(route('empresa.busquedas.edit', $busqueda))

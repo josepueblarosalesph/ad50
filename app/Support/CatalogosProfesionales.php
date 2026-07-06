@@ -59,6 +59,29 @@ class CatalogosProfesionales
     }
 
     /** @return array<int, string> */
+    public static function generos(): array
+    {
+        return ['Mujer', 'Hombre', 'No binario', 'Otro', 'Prefiero no informar'];
+    }
+
+    /** @return array<int, string> */
+    public static function regiones(): array
+    {
+        return [
+            'Arica y Parinacota', 'Tarapacá', 'Antofagasta', 'Atacama', 'Coquimbo',
+            'Valparaíso', 'Metropolitana de Santiago', "Libertador General Bernardo O'Higgins",
+            'Maule', 'Ñuble', 'Biobío', 'La Araucanía', 'Los Ríos', 'Los Lagos',
+            'Aysén del General Carlos Ibáñez del Campo', 'Magallanes y de la Antártica Chilena',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function modalidadesTrabajoPreferidas(): array
+    {
+        return ['Jornada Completa', 'Jornada Parcial', 'Honorarios'];
+    }
+
+    /** @return array<int, string> */
     public static function cargosAreas(): array
     {
         return [
@@ -137,7 +160,7 @@ class CatalogosProfesionales
     /** @return array<int, string> */
     public static function nivelesIdioma(): array
     {
-        return ['Bajo', 'Medio', 'Alto'];
+        return ['Medio', 'Alto'];
     }
 
     /** @return array<int, string> */
