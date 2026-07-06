@@ -391,6 +391,8 @@ test('a postulante can view the panel and professional profile', function () {
         'Femenino',
         'Prefiero no Informar',
     ]);
+
+    expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(6);
 });
 
 test('a postulante cannot save a gender outside the available options', function () {
