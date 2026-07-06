@@ -12,18 +12,41 @@
     </x-slot:nav>
     @unless ($modoOnboarding)
         <x-slot:sidebar>
-            <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4">
+            <div
+                class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pb-4"
+                x-data="{ activeSection: 'datos-personales' }"
+                x-init="
+                    const observer = new IntersectionObserver((entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) activeSection = entry.target.id
+                        })
+                    }, { rootMargin: '-20% 0px -65% 0px' })
+
+                    ;['datos-personales', 'intereses', 'experiencia', 'educacion', 'idiomas', 'curriculum'].forEach((id) => {
+                        const section = document.getElementById(id)
+                        if (section) observer.observe(section)
+                    })
+                "
+            >
                 <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Perfil profesional</div>
                 <div class="space-y-1.5">
                     @foreach ([
-                        ['user', 'Datos personales', 'datos-personales', 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-200 dark:bg-orange-50 dark:text-orange-500 dark:hover:bg-orange-100'],
-                        ['heart', 'Intereses', 'intereses', 'border-[#E5D8BD] bg-[#FAF7F0] text-[#75603B] hover:bg-[#F2EBDD] dark:border-[#655333] dark:bg-[#30291D] dark:text-[#D7BA7D] dark:hover:bg-[#3C3324]'],
-                        ['briefcase', 'Experiencia', 'experiencia', 'border-[#C9D9E5] bg-[#F2F6F9] text-[#45657A] hover:bg-[#E6EFF5] dark:border-[#36566B] dark:bg-[#1C2B34] dark:text-[#91BDD5] dark:hover:bg-[#243843]'],
-                        ['academic-cap', 'Educación', 'educacion', 'border-[#C9D8CD] bg-[#F1F5F2] text-[#496451] hover:bg-[#E5EEE7] dark:border-[#3D5B45] dark:bg-[#202D24] dark:text-[#9BC2A3] dark:hover:bg-[#293A2E]'],
-                        ['language', 'Idiomas', 'idiomas', 'border-[#D9D1E5] bg-[#F7F4FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
-                        ['document', 'Currículum Vitae', 'curriculum', 'border-[#D9D1E5] bg-[#F8F6FA] text-[#665579] hover:bg-[#EEE8F4] dark:border-[#584969] dark:bg-[#2B2532] dark:text-[#C3ABD4] dark:hover:bg-[#372E40]'],
-                    ] as [$icon, $label, $anchor, $color])
-                        <a href="#{{ $anchor }}" class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition {{ $color }}"><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
+                        ['user', 'Datos personales', 'datos-personales'],
+                        ['heart', 'Intereses', 'intereses'],
+                        ['briefcase', 'Experiencia', 'experiencia'],
+                        ['academic-cap', 'Educación', 'educacion'],
+                        ['language', 'Idiomas', 'idiomas'],
+                        ['document', 'Currículum Vitae', 'curriculum'],
+                    ] as [$icon, $label, $anchor])
+                        <a
+                            href="#{{ $anchor }}"
+                            x-on:click="activeSection = '{{ $anchor }}'"
+                            x-bind:aria-current="activeSection === '{{ $anchor }}' ? 'location' : null"
+                            x-bind:class="activeSection === '{{ $anchor }}'
+                                ? 'border-orange-500 bg-orange-100 text-orange-700 shadow-sm dark:border-orange-500 dark:bg-[#33251D] dark:text-[#F7C59E]'
+                                : 'border-line-2 bg-white text-gray-700 hover:border-orange-200 hover:bg-orange-50 dark:bg-[#25282A] dark:text-gray-300 dark:hover:bg-white/10'"
+                            class="flex items-center gap-3 rounded-[10px] border px-3 py-2.5 text-[14px] font-bold transition"
+                        ><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
                     @endforeach
                 </div>
             </div>

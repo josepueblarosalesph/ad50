@@ -360,6 +360,12 @@ test('a postulante can view the panel and professional profile', function () {
 
     expect($ficha)
         ->toContain('sticky top-24')
+        ->toContain("x-data=\"{ activeSection: 'datos-personales' }\"")
+        ->toContain('new IntersectionObserver')
+        ->toContain("rootMargin: '-20% 0px -65% 0px'")
+        ->toContain("x-bind:aria-current=\"activeSection === '{{ \$anchor }}' ? 'location' : null\"")
+        ->toContain('border-orange-500 bg-orange-100 text-orange-700 shadow-sm')
+        ->toContain('border-line-2 bg-white text-gray-700')
         ->toContain('id="datos-personales" class="ad-card order-1')
         ->toContain('id="intereses" class="ad-card order-2')
         ->toContain('id="experiencia" class="ad-card order-3')
