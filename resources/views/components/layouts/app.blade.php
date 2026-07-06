@@ -32,28 +32,46 @@
                 {{ $nav ?? '' }}
             </nav>
 
-            <div class="flex items-center gap-3">
+            <div class="ml-auto flex shrink-0 items-center gap-3">
+                <span class="hidden ad-chip ad-chip-green ad-chip-dot md:inline-flex">{{ $status ?? 'Perfil activo' }}</span>
+                <div class="hidden md:block">
+                    <flux:dropdown align="end">
+                        <flux:profile :name="auth()->user()?->name ?? 'MF'"
+                                      :initials="auth()->user() ? Str::of(auth()->user()->name)->explode(' ')->take(2)->map(fn($p)=>Str::substr($p,0,1))->join('') : 'MF'"
+                                      :avatar="false" />
+                        <flux:menu>
+                            <flux:menu.item :href="route('profile.edit')" icon="user">Mi cuenta</flux:menu.item>
+                            <flux:menu.item :href="route('appearance.edit')" icon="cog-6-tooth">Configuración</flux:menu.item>
+                            <flux:menu.separator />
+                            <form method="POST" action="{{ route('logout') }}">@csrf
+                                <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle" variant="danger">
+                                    Cerrar sesión
+                                </flux:menu.item>
+                            </form>
+                        </flux:menu>
+                    </flux:dropdown>
+                </div>
                 @if (isset($nav))
                     <x-mobile-menu id="application-mobile-navigation">
+                        <div class="mb-2 flex items-center gap-3 rounded-xl bg-paper px-4 py-3 dark:bg-white/10">
+                            <span class="grid size-10 shrink-0 place-items-center rounded-full bg-orange-100 text-[14px] font-extrabold text-orange-700">
+                                {{ auth()->user() ? Str::of(auth()->user()->name)->explode(' ')->take(2)->map(fn ($part) => Str::substr($part, 0, 1))->join('') : 'MF' }}
+                            </span>
+                            <div class="min-w-0">
+                                <strong class="block truncate text-[15px]">{{ auth()->user()?->name }}</strong>
+                                <span class="block truncate text-[12px] font-semibold text-gray-500">{{ auth()->user()?->email }}</span>
+                            </div>
+                        </div>
                         {{ $nav }}
+                        <div class="my-2 h-px bg-line"></div>
+                        <a href="{{ route('profile.edit') }}"><flux:icon.user class="mr-2 size-4" />Mi cuenta</a>
+                        <a href="{{ route('appearance.edit') }}"><flux:icon.cog-6-tooth class="mr-2 size-4" />Configuración</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="text-[#A93226] dark:text-red-400"><flux:icon.arrow-right-start-on-rectangle class="mr-2 size-4" />Cerrar sesión</button>
+                        </form>
                     </x-mobile-menu>
                 @endif
-                <span class="hidden ad-chip ad-chip-green ad-chip-dot sm:inline-flex">{{ $status ?? 'Perfil activo' }}</span>
-                <flux:dropdown align="end">
-                    <flux:profile :name="auth()->user()?->name ?? 'MF'"
-                                  :initials="auth()->user() ? Str::of(auth()->user()->name)->explode(' ')->take(2)->map(fn($p)=>Str::substr($p,0,1))->join('') : 'MF'"
-                                  :avatar="false" />
-                    <flux:menu>
-                        <flux:menu.item icon="user">Mi cuenta</flux:menu.item>
-                        <flux:menu.item icon="cog-6-tooth">Configuración</flux:menu.item>
-                        <flux:menu.separator />
-                        <form method="POST" action="{{ route('logout') }}">@csrf
-                            <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle" variant="danger">
-                                Cerrar sesión
-                            </flux:menu.item>
-                        </form>
-                    </flux:menu>
-                </flux:dropdown>
             </div>
         </div>
     </header>

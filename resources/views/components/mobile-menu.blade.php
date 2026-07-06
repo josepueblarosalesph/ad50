@@ -36,7 +36,7 @@
         <nav
             aria-label="Navegación móvil"
             x-on:click="if ($event.target.closest('a')) open = false"
-            class="grid gap-1 [&_a]:flex [&_a]:min-h-11 [&_a]:w-full [&_a]:items-center [&_a]:rounded-xl [&_a]:px-4 [&_a]:py-2.5 [&_a]:text-[15px] [&_a]:font-bold [&_a]:transition [&_a:hover]:bg-orange-50 [&_a:hover]:text-orange-700 dark:[&_a:hover]:bg-white/10 dark:[&_a:hover]:text-orange-300"
+            class="grid gap-1 [&_a]:flex [&_a]:min-h-11 [&_a]:w-full [&_a]:items-center [&_a]:rounded-xl [&_a]:px-4 [&_a]:py-2.5 [&_a]:text-[15px] [&_a]:font-bold [&_a]:transition [&_button]:flex [&_button]:min-h-11 [&_button]:w-full [&_button]:items-center [&_button]:rounded-xl [&_button]:px-4 [&_button]:py-2.5 [&_button]:text-left [&_button]:text-[15px] [&_button]:font-bold [&_button]:transition [&_a:hover]:bg-orange-50 [&_a:hover]:text-orange-700 [&_button:hover]:bg-orange-50 dark:[&_a:hover]:bg-white/10 dark:[&_a:hover]:text-orange-300 dark:[&_button:hover]:bg-white/10"
         >
             {{ $slot }}
         </nav>
