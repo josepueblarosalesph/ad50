@@ -277,8 +277,8 @@
         <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 6 ? 'hidden' : '' }}">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">
-                <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA] dark:border-[#584969] dark:bg-[#252129] dark:hover:border-[#8A70A1] dark:hover:bg-[#2B2532]">
-                    <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579] dark:text-[#C3ABD4]" />
+                <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-orange-200 bg-orange-50/60 p-6 text-center transition hover:border-orange-400 hover:bg-orange-100 dark:border-orange-700 dark:bg-[#33251D] dark:hover:border-orange-500 dark:hover:bg-[#3D2B20]">
+                    <flux:icon.document-arrow-up class="mx-auto size-8 text-orange-700 dark:text-[#F7C59E]" />
                     <span class="mt-3 block text-[14px] font-bold text-ink">Selecciona tu CV en PDF</span>
                     <span class="mt-1 block text-[12px] text-gray-500">Un archivo de hasta 10 MB</span>
                     <span class="ad-btn-ghost ad-btn-sm mt-4">Elegir archivo</span>

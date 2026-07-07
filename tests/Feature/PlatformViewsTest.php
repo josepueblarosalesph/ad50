@@ -391,6 +391,11 @@ test('a postulante can view the panel and professional profile', function () {
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(6);
     expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(6);
     expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(6);
+    expect($ficha)
+        ->toContain('border-dashed border-orange-200 bg-orange-50/60')
+        ->toContain('text-orange-700 dark:text-[#F7C59E]')
+        ->not->toContain('bg-[#FCFBFD]')
+        ->not->toContain('dark:bg-[#252129]');
 });
 
 test('a postulante cannot save a gender outside the available options', function () {
