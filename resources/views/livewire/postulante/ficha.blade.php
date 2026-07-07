@@ -111,7 +111,7 @@
         </section>
 
         <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 4 ? 'hidden' : '' }}">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#F5F8F5] dark:bg-[#202D24]"><div><h2 class="text-[20px] font-extrabold text-[#496451] dark:text-[#9BC2A3]">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
+            <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Agrega cada etapa de tu formación y completa únicamente los campos aplicables.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
             <div class="space-y-5 p-6">
                 @foreach ($educaciones as $index => $educacion)
                     @php($esEscolar = in_array($educacion['nivel'], $nivelesEscolares, true))
@@ -153,7 +153,7 @@
         </section>
 
         <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 5 ? 'hidden' : '' }}">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#FAF8FC] dark:bg-[#2B2532]"><div><h2 class="text-[20px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
+            <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Selecciona los idiomas que manejas y el nivel alcanzado.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
             <div class="space-y-4 p-6">
                 @foreach ($idiomas as $index => $idioma)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="idioma-{{ $index }}">
@@ -174,7 +174,7 @@
         </section>
 
         <section id="intereses" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 2 ? 'hidden' : '' }}">
-            <div class="ad-card-head bg-[#FCFAF5] dark:bg-[#30291D]"><div><h2 class="text-[20px] font-extrabold text-[#75603B] dark:text-[#D7BA7D]">Intereses</h2><p class="mt-1 text-[13px] text-gray-500">Cuéntanos dónde y cómo te gustaría desarrollar tu próximo desafío.</p></div></div>
+            <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Intereses</h2><p class="mt-1 text-[13px] text-gray-500">Cuéntanos dónde y cómo te gustaría desarrollar tu próximo desafío.</p></div></div>
             <div class="space-y-7 p-6">
                 <fieldset>
                     <legend class="mb-3 text-[14px] font-extrabold text-ink">Regiones de interés</legend>
@@ -213,7 +213,7 @@
         </section>
 
         <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 3 ? 'hidden' : '' }}">
-            <div class="ad-card-head flex-wrap gap-4 bg-[#F6F9FB] dark:bg-[#1C2B34]"><div><h2 class="text-[20px] font-extrabold text-[#45657A] dark:text-[#91BDD5]">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+            <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Completa tu trayectoria y agrega todas las experiencias que necesites.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
             <div class="p-6 space-y-5">
                 @foreach ($experiencias as $index => $experiencia)
                     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
@@ -275,7 +275,7 @@
         </div>
 
         <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $modoOnboarding && $pasoActual !== 6 ? 'hidden' : '' }}">
-            <div class="ad-card-head bg-[#F8F6FA] dark:bg-[#2B2532]"><div><h2 class="text-[18px] font-extrabold text-[#665579] dark:text-[#C3ABD4]">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
+            <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">
                 <label for="cv" class="block cursor-pointer rounded-[14px] border-2 border-dashed border-[#D9D1E5] bg-[#FCFBFD] p-6 text-center transition hover:border-[#A895BD] hover:bg-[#F8F6FA] dark:border-[#584969] dark:bg-[#252129] dark:hover:border-[#8A70A1] dark:hover:bg-[#2B2532]">
                     <flux:icon.document-arrow-up class="mx-auto size-8 text-[#665579] dark:text-[#C3ABD4]" />

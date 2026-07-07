@@ -375,10 +375,6 @@ test('a postulante can view the panel and professional profile', function () {
         ->toContain('Regiones de interés')
         ->toContain('Industrias de interés')
         ->toContain('Modalidad de trabajo')
-        ->toContain('dark:bg-[#1C2B34]')
-        ->toContain('dark:bg-[#202D24]')
-        ->toContain('dark:bg-[#2B2532]')
-        ->toContain('dark:bg-[#30291D]')
         ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Intereses'"))
         ->and(strpos($ficha, "'Intereses'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
@@ -393,6 +389,8 @@ test('a postulante can view the panel and professional profile', function () {
     ]);
 
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(6);
+    expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(6);
+    expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(6);
 });
 
 test('a postulante cannot save a gender outside the available options', function () {
