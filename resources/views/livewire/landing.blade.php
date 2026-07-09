@@ -346,14 +346,11 @@
 
     <section class="bg-orange-500 text-white">
         <div class="mx-auto flex max-w-[1240px] flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center lg:px-10">
-            <div class="max-w-[700px]">
+            <div class="max-w-[900px]">
                 <span class="text-[11px] font-extrabold uppercase tracking-[.18em] text-white/70">El siguiente desafío empieza aquí</span>
                 <h2 class="mt-3 text-[40px] text-white sm:text-[48px]">Experiencia lista para entrar en acción.</h2>
             </div>
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('planes') }}" class="ad-btn bg-[#343638] text-white hover:bg-[#4C4F51]">Ver planes</a>
-                <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-light">Crear mi perfil profesional</a>
-            </div>
+            
         </div>
     </section>
 
