@@ -384,22 +384,6 @@ body [class~="text-[15px]"] {
     color: #343638;
   }
 
-  .ad-welcome-light .ad-postulante-card {
-    background:
-      radial-gradient(circle at 92% 4%, rgba(232,119,34,.16), transparent 36%),
-      linear-gradient(145deg, #FFF9F5 0%, #FFF1E6 100%);
-    border-width: 1.5px;
-    border-color: rgba(232,119,34,.5);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,.8),
-      0 0 0 1px rgba(232,119,34,.05),
-      0 20px 48px rgba(52,54,56,.1);
-  }
-
-  .ad-welcome-light .ad-postulante-card .ad-postulante-orbit {
-    border-color: rgba(232,119,34,.12);
-  }
-
   .ad-welcome-light .ad-match-preview {
     background: linear-gradient(145deg, #FFFFFF 0%, #FBFBFA 100%);
     border-color: #D4D5D3;

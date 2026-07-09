@@ -87,24 +87,10 @@
                 <div class="mt-8 flex flex-wrap gap-3">
                     <a href="{{ route('registro') }}?tipo=empresa" class="ad-btn-primary">
                         Encontrar talento
-                        <flux:icon.arrow-right class="size-4" />
                     </a>
                     <a href="{{ route('registro') }}?tipo=postulante" class="ad-btn-primary">
                         Crear mi perfil profesional
                     </a>
-                </div>
-
-                <div class="mt-8 flex max-w-[590px] flex-wrap gap-x-8 gap-y-3 border-t border-line-2 pt-5">
-                    @foreach ([
-                        ['+50', 'experiencia que suma'],
-                        ['1', 'perfil profesional'],
-                        ['100%', 'datos bajo control'],
-                    ] as [$value, $label])
-                        <div class="min-w-[120px]">
-                            <strong class="block text-[24px] font-extrabold text-ink">{{ $value }}</strong>
-                            <span class="text-[12px] font-bold uppercase tracking-[.08em] text-gray-500">{{ $label }}</span>
-                        </div>
-                    @endforeach
                 </div>
             </div>
         </div>
@@ -115,78 +101,55 @@
         </div>
     </section>
 
-    {{-- Franja de confianza --}}
-    <section class="bg-[#75787B] text-white">
-        <div class="mx-auto grid max-w-[1240px] gap-6 px-6 py-7 md:grid-cols-[1.4fr_1fr_1fr] md:items-center lg:px-10">
-            <p class="font-display text-[24px] leading-tight">El futuro del trabajo también se construye con experiencia.</p>
-            <div class="flex items-center gap-3 text-[13px] font-bold text-white/70">
-                <flux:icon.shield-check class="size-5 text-orange-500" />
-                Datos gestionados por AD Consulting
-            </div>
-            <div class="flex items-center gap-3 text-[13px] font-bold text-white/70">
-                <flux:icon.check-circle class="size-5 text-orange-500" />
-                Matching según criterios reales
-            </div>
-        </div>
-    </section>
+    
 
-    {{-- Quiénes somos --}}
+    {{-- Quiénes somos · intro editorial centrada + pilares --}}
     <section id="quienes-somos" class="scroll-mt-24 border-b border-line bg-paper">
-        <div class="mx-auto grid max-w-[1240px] items-center gap-12 px-6 py-24 lg:grid-cols-[.9fr_1.1fr] lg:gap-20 lg:px-10 lg:py-28">
-            <div>
-                <span class="ad-eyebrow">Quiénes somos</span>
-                <h2 class="mt-5 max-w-[560px] text-[46px] sm:text-[56px]">Experiencia que abre nuevas oportunidades.</h2>
-                <p class="mt-5 max-w-[560px] text-[17px] leading-[1.75] text-gray-700">
+        <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
+            <div class="mx-auto max-w-[760px] text-center">
+                <span class="ad-eyebrow justify-center">Quiénes somos</span>
+                <h2 class="mt-6 text-[46px] leading-[1.02] sm:text-[56px]">Experiencia que abre <span class="text-orange-500">nuevas oportunidades</span>.</h2>
+                <p class="mt-6 text-[18px] leading-[1.75] text-gray-700">
                     AD+50 es una iniciativa de AD Consulting creada para conectar profesionales con amplia trayectoria y organizaciones que valoran el criterio, el oficio y la capacidad de seguir aportando.
                 </p>
-                <p class="mt-4 max-w-[560px] text-[15px] leading-[1.75] text-gray-500">
+                <p class="mx-auto mt-4 max-w-[620px] text-[15px] leading-[1.7] text-gray-500">
                     Diseñamos una experiencia clara y respetuosa para que cada perfil sea evaluado por su experiencia real y cada empresa pueda tomar decisiones con información relevante.
                 </p>
             </div>
 
-            <div class="rounded-[22px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card)] sm:p-8">
-                <div class="mb-7 flex items-center gap-4 border-b border-line pb-6">
-                    <span class="grid size-12 shrink-0 place-items-center rounded-[12px] bg-orange-100 text-orange-700">
-                        <flux:icon.sparkles class="size-6" />
-                    </span>
-                    <div>
-                        <p class="text-[11px] font-extrabold uppercase tracking-[.16em] text-orange-600">Nuestro enfoque</p>
-                        <h3 class="mt-1 text-[25px]">Talento senior en el centro.</h3>
+            <div class="mx-auto mt-16 grid max-w-[980px] gap-y-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-line">
+                @foreach ([
+                    ['academic-cap', 'Trayectoria primero', 'La experiencia se presenta con contexto y evidencia.'],
+                    ['scale', 'Decisiones con criterio', 'El matching prioriza afinidad por sobre volumen.'],
+                    ['shield-check', 'Datos bajo control', 'Cada persona administra su información y visibilidad.'],
+                ] as [$icon, $title, $description])
+                    <div class="sm:px-8 sm:first:pl-0 sm:last:pr-0">
+                        <span class="grid size-12 place-items-center rounded-[13px] bg-orange-100 text-orange-700">
+                            <flux:icon :name="$icon" class="size-6" />
+                        </span>
+                        <h3 class="mt-5 text-[20px] leading-[1.15] text-ink">{{ $title }}</h3>
+                        <p class="mt-2 text-[15px] leading-[1.65] text-gray-500">{{ $description }}</p>
                     </div>
-                </div>
-
-                <div class="grid gap-5 sm:grid-cols-3">
-                    @foreach ([
-                        ['academic-cap', 'Trayectoria primero', 'La experiencia se presenta con contexto y evidencia.'],
-                        ['scale', 'Decisiones con criterio', 'El matching prioriza afinidad por sobre volumen.'],
-                        ['shield-check', 'Datos bajo control', 'Cada persona administra su información y visibilidad.'],
-                    ] as [$icon, $title, $description])
-                        <div>
-                            <flux:icon :name="$icon" class="size-5 text-orange-500" />
-                            <h4 class="mt-3 text-[15px] font-extrabold text-ink">{{ $title }}</h4>
-                            <p class="mt-2 text-[13px] leading-[1.6] text-gray-500">{{ $description }}</p>
-                        </div>
-                    @endforeach
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
 
     {{-- Cómo funciona para empresas --}}
-    <section id="como-empresas" class="relative isolate scroll-mt-24 overflow-hidden bg-[#252729] text-white">
-        <div class="pointer-events-none absolute -right-24 -top-32 size-[520px] rounded-full bg-orange-500/20 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-56 -left-40 size-[560px] rounded-full border-[90px] border-white/[.035]"></div>
+    <section id="como-empresas" class="relative isolate scroll-mt-24 overflow-hidden bg-gradient-to-b from-orange-50 to-paper text-ink">
+        <div class="pointer-events-none absolute -right-24 -top-32 size-[520px] rounded-full bg-orange-500/10 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-56 -left-40 size-[560px] rounded-full border-[90px] border-orange-500/[.05]"></div>
         <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-700 via-orange-500 to-orange-200"></div>
 
         <div class="relative mx-auto max-w-[1240px] px-6 py-28 lg:px-10 lg:py-36">
-            <div class="grid items-start gap-14 lg:grid-cols-[1.02fr_.98fr] lg:gap-24">
-                <div class="lg:sticky lg:top-28">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200/35 bg-orange-500/10 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-200 shadow-[0_8px_30px_rgba(232,119,34,.12)] backdrop-blur-sm">
+            <div class="grid gap-14 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:gap-24">
+                <div>
+                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600 shadow-[0_8px_30px_rgba(232,119,34,.1)]">
                         <flux:icon.building-office-2 class="size-4" />
                         Cómo funciona para empresas
                     </span>
-                    <h2 class="mt-7 max-w-[610px] text-[50px] leading-[.98] text-white sm:text-[64px] lg:text-[72px]">Menos volumen. <span class="text-orange-200">Más evidencia</span> para decidir.</h2>
-                    <p class="mt-7 max-w-[560px] text-[18px] font-medium leading-[1.75] text-white/72">
+                    <h2 class="mt-7 max-w-[610px] text-[50px] leading-[.98] text-ink sm:text-[64px] lg:text-[72px]">Menos volumen. <span class="text-orange-500">Más evidencia</span> para decidir.</h2>
+                    <p class="mt-7 max-w-[560px] text-[18px] font-medium leading-[1.75] text-gray-700">
                         Define el desafío con criterios concretos y revisa únicamente profesionales cuya experiencia responde a lo que estás buscando.
                     </p>
                     <div class="mt-9 flex flex-wrap gap-3">
@@ -194,31 +157,31 @@
                             Registrar mi empresa
                             <flux:icon.arrow-right class="size-4" />
                         </a>
-                        <a href="{{ route('planes') }}" class="ad-btn-light">Ver planes</a>
+                        <a href="{{ route('planes') }}" class="ad-btn-ghost">Ver planes</a>
                     </div>
 
-                    <div class="mt-10 grid max-w-[560px] grid-cols-3 gap-3 border-t border-white/15 pt-6">
-                        @foreach ([['Criterios', 'configurables'], ['Resultados', 'relevantes'], ['Contacto', 'protegido']] as [$value, $label])
-                            <div><strong class="block text-[14px] font-extrabold text-white">{{ $value }}</strong><span class="mt-1 block text-[11px] font-bold uppercase tracking-wide text-white/45">{{ $label }}</span></div>
-                        @endforeach
-                    </div>
+                    
                 </div>
 
-                <ol class="grid gap-5">
+                <ol class="relative">
                     @foreach ([
                         ['adjustments-horizontal', '01', 'Configura la búsqueda', 'Define cargo, experiencia, industria y ubicación según las necesidades reales del desafío.'],
                         ['user-group', '02', 'Recibe una lista relevante', 'AD+50 muestra profesionales que cumplen los criterios, reduciendo revisión manual y ruido.'],
                         ['check-badge', '03', 'Evalúa y contacta', 'Compara perfiles profesionales, guarda favoritos y accede a sus datos de contacto con un plan activo.'],
                     ] as [$icon, $number, $title, $description])
-                        <li @class(['group relative overflow-hidden rounded-[22px] border p-7 backdrop-blur-md transition duration-300 sm:p-8', 'border-orange-200/50 bg-gradient-to-br from-orange-500/20 to-white/[.07] shadow-[0_24px_60px_rgba(0,0,0,.22)]' => $loop->first, 'border-white/15 bg-white/[.065] hover:border-orange-200/35 hover:bg-white/[.09]' => ! $loop->first])>
-                            <div class="absolute right-5 top-3 font-display text-[64px] text-white/[.045]">{{ $number }}</div>
-                            <div class="relative grid gap-5 sm:grid-cols-[56px_1fr] sm:items-start">
-                                <span class="grid size-12 place-items-center rounded-[13px] border border-orange-200/30 bg-orange-500/15 text-orange-200 shadow-[0_8px_24px_rgba(232,119,34,.12)]"><flux:icon :name="$icon" class="size-6" /></span>
-                                <div>
-                                    <span class="text-[11px] font-extrabold uppercase tracking-[.16em] text-orange-200/80">Paso {{ $number }}</span>
-                                    <h3 class="mt-2 text-[27px] leading-[1.08] text-white">{{ $title }}</h3>
-                                    <p class="mt-3 text-[15px] leading-[1.7] text-white/62">{{ $description }}</p>
+                        <li class="group relative grid grid-cols-[64px_1fr] gap-6 pb-9 last:pb-0">
+                            @unless ($loop->last)
+                                <span aria-hidden="true" class="absolute bottom-1 left-8 top-16 w-px -translate-x-1/2 bg-gradient-to-b from-orange-300 to-orange-200/30"></span>
+                            @endunless
+                            <span class="relative z-10 grid size-16 place-items-center rounded-full border border-orange-200 bg-white font-display text-[24px] font-black text-orange-600 shadow-[var(--shadow-card)] transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[var(--shadow-card-lg)]">
+                                {{ $number }}
+                            </span>
+                            <div class="pb-3 pt-2.5">
+                                <div class="flex items-center gap-2.5">
+                                    <flux:icon :name="$icon" class="size-5 text-orange-500" />
+                                    <h3 class="text-[24px] leading-[1.1] text-ink">{{ $title }}</h3>
                                 </div>
+                                <p class="mt-2.5 text-[15px] leading-[1.7] text-gray-700">{{ $description }}</p>
                             </div>
                         </li>
                     @endforeach
@@ -230,14 +193,19 @@
     {{-- Cómo funciona para postulantes --}}
     <section id="como-postulantes" class="scroll-mt-24 border-y border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
-            <div class="grid items-start gap-12 lg:grid-cols-[.78fr_1.22fr] lg:gap-20">
-                <div class="lg:sticky lg:top-28">
-                    <span class="ad-eyebrow">Cómo funciona para postulantes</span>
-                    <h2 class="mt-5 text-[46px] sm:text-[56px]">Tu experiencia encuentra nuevas oportunidades.</h2>
-                    <p class="mt-5 max-w-[470px] text-[17px] leading-[1.7] text-gray-700">
+            <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
+                <div class="max-w-[620px]">
+                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600">
+                        <flux:icon.user class="size-4" />
+                        Cómo funciona para postulantes
+                    </span>
+                    <h2 class="mt-7 text-[46px] leading-[.98] sm:text-[56px]">Tu experiencia encuentra <span class="text-orange-500">nuevas oportunidades</span>.</h2>
+                    <p class="mt-5 text-[17px] leading-[1.7] text-gray-700">
                         Construye un perfil profesional claro, decide cuándo estará visible y participa automáticamente en búsquedas compatibles con tu trayectoria.
                     </p>
-                    <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-primary mt-8">
+                </div>
+                <div class="shrink-0">
+                    <a href="{{ route('registro', ['tipo' => 'postulante']) }}" class="ad-btn-primary">
                         Crear mi perfil profesional
                         <flux:icon.arrow-right class="size-4" />
                     </a>
@@ -248,25 +216,24 @@
                         </p>
                     @endif
                 </div>
-
-                <ol class="grid gap-4">
-                    @foreach ([
-                        ['01', 'Crea tu perfil profesional', 'Reúne tu formación, experiencia, industrias e idiomas en un perfil único que puedes mantener actualizado.'],
-                        ['02', 'Tú decides cuándo estar visible', 'Activa o pausa tu perfil y conserva el control sobre tus datos personales durante todo el proceso.'],
-                        ['03', 'Aparece en búsquedas compatibles', 'Cuando tu experiencia cumple los criterios de una empresa, tu perfil se incorpora a una lista relevante.'],
-                    ] as [$number, $title, $description])
-                        <li class="ad-postulante-card relative overflow-hidden rounded-[18px] border border-orange-200 p-6 sm:p-7">
-                            <div class="relative grid gap-4 sm:grid-cols-[64px_1fr]">
-                                <span class="font-display text-[31px] text-orange-500">{{ $number }}</span>
-                                <div>
-                                    <h3 class="text-[25px] leading-[1.1] text-ink">{{ $title }}</h3>
-                                    <p class="mt-2 text-[15px] leading-[1.65] text-gray-700">{{ $description }}</p>
-                                </div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ol>
             </div>
+
+            <ol class="mt-14 grid gap-5 sm:grid-cols-3">
+                @foreach ([
+                    ['identification', '01', 'Crea tu perfil profesional', 'Reúne tu formación, experiencia, industrias e idiomas en un perfil único que puedes mantener actualizado.'],
+                    ['eye', '02', 'Tú decides cuándo estar visible', 'Activa o pausa tu perfil y conserva el control sobre tus datos personales durante todo el proceso.'],
+                    ['briefcase', '03', 'Aparece en búsquedas compatibles', 'Cuando tu experiencia cumple los criterios de una empresa, tu perfil se incorpora a una lista relevante.'],
+                ] as [$icon, $number, $title, $description])
+                    <li class="group relative flex flex-col overflow-hidden rounded-[22px] border border-line-2 bg-paper p-7 transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:bg-white hover:shadow-[var(--shadow-card-lg)] sm:p-8">
+                        <div class="flex items-start justify-between">
+                            <span class="grid size-12 place-items-center rounded-[13px] bg-orange-100 text-orange-700"><flux:icon :name="$icon" class="size-6" /></span>
+                            <span class="font-display text-[46px] font-black leading-none text-orange-500/20">{{ $number }}</span>
+                        </div>
+                        <h3 class="mt-6 text-[22px] leading-[1.12] text-ink">{{ $title }}</h3>
+                        <p class="mt-2.5 text-[15px] leading-[1.65] text-gray-500">{{ $description }}</p>
+                    </li>
+                @endforeach
+            </ol>
         </div>
     </section>
 
