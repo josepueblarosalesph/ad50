@@ -7,7 +7,11 @@
     'error' => null,
 ])
 
+{{-- wire:ignore.self: si el morph reescribe x-data (porque $valor cambió), Alpine reinicia el scope
+     y las directivas hijas quedan apuntando al scope viejo. Los hijos sí se siguen morfeando. --}}
 <div
+    wire:ignore.self
+    wire:key="combobox-{{ $model }}"
     class="relative"
     x-data="{
         abierto: false,
