@@ -31,7 +31,7 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
             'termino_anio' => 1995,
             'egreso_anio' => null,
         ]])
-        ->set('idiomas', [['idioma' => 'Español', 'nivel' => 'Alto']])
+        ->set('idiomas', [['idioma' => 'Español', 'nivel' => 'Avanzado']])
         ->set('experiencias', [[
             'cargo' => 'Gerenta de Finanzas',
             'tipo_trabajo' => 'Jornada completa',

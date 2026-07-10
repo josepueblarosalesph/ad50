@@ -244,7 +244,7 @@ class CatalogosProfesionales
     /** @return array<int, string> */
     public static function nivelesIdioma(): array
     {
-        return ['Medio', 'Alto'];
+        return ['Intermedio', 'Avanzado'];
     }
 
     /** @return array<int, string> */

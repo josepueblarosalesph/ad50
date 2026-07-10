@@ -141,7 +141,7 @@ class PostulanteSeeder extends Seeder
         return collect($idiomas)
             ->map(fn (string $idioma, int $index): array => [
                 'idioma' => $idioma,
-                'nivel' => $index === 0 || $idioma === 'Español' ? 'Alto' : 'Medio',
+                'nivel' => $index === 0 || $idioma === 'Español' ? 'Avanzado' : 'Intermedio',
             ])
             ->all();
     }

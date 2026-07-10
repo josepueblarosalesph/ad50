@@ -508,8 +508,8 @@ test('a postulante can update every section of the professional profile', functi
             ],
         ])
         ->set('idiomas', [
-            ['idioma' => 'Español', 'nivel' => 'Alto'],
-            ['idioma' => 'Inglés', 'nivel' => 'Medio'],
+            ['idioma' => 'Español', 'nivel' => 'Avanzado'],
+            ['idioma' => 'Inglés', 'nivel' => 'Intermedio'],
         ])
         ->set('industriasInteres', ['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información'])
         ->set('regionesInteres', ['Biobío', 'Ñuble', 'La Araucanía'])
@@ -589,8 +589,8 @@ test('a postulante can update every section of the professional profile', functi
             'situacion' => 'Titulado',
         ])
         ->and($idiomas)->toBe([
-            ['idioma' => 'Español', 'nivel' => 'Alto'],
-            ['idioma' => 'Inglés', 'nivel' => 'Medio'],
+            ['idioma' => 'Español', 'nivel' => 'Avanzado'],
+            ['idioma' => 'Inglés', 'nivel' => 'Intermedio'],
         ]);
 });
 
