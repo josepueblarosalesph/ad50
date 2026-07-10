@@ -63,15 +63,7 @@
 
                     <x-auth-session-status class="mt-5 rounded-[10px] border border-green-200 bg-green-50 px-4 py-3 text-left" :status="session('status')" />
 
-                    <div class="mt-7">
-                        <x-passkey-verify
-                            label="Ingresar con passkey"
-                            loading-label="Verificando identidad…"
-                            separator="O continúa con tu correo"
-                        />
-                    </div>
-
-                    <form method="POST" action="{{ route('login.store') }}" class="mt-1 grid gap-5">
+                    <form method="POST" action="{{ route('login.store') }}" class="mt-7 grid gap-5">
                         @csrf
 
                         <flux:input
