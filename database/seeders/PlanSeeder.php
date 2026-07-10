@@ -19,14 +19,6 @@ class PlanSeeder extends Seeder
     {
         return [
             [
-                'codigo' => 'postulante',
-                'nombre' => 'Postulante visible',
-                'audiencia' => 'postulante',
-                'precio_clp' => 20000,
-                'periodo' => 'anual',
-                'features' => ['Perfil visible en el portal', 'Acceso a tus coincidencias', 'Oportunidades de empresas asociadas', 'Soporte por email'],
-            ],
-            [
                 'codigo' => 'empresa_basic',
                 'nombre' => 'Básico',
                 'audiencia' => 'empresa',

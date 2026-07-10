@@ -209,12 +209,7 @@
                         Crear mi perfil profesional
                         <flux:icon.arrow-right class="size-4" />
                     </a>
-                    @if ($planPostulante)
-                        <p class="mt-3 text-[12px] font-semibold text-gray-400">
-                            Acceso al portal: ${{ number_format($planPostulante->precio_clp, 0, ',', '.') }} CLP al año.
-                            <a href="{{ route('planes.postulantes') }}" class="underline decoration-gray-300 underline-offset-2 transition hover:text-orange-600">Ver detalle</a>
-                        </p>
-                    @endif
+                    <p class="mt-3 text-[12px] font-semibold text-gray-400">Crear tu perfil profesional es gratis.</p>
                 </div>
             </div>
 

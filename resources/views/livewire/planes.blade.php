@@ -8,16 +8,10 @@
                     <span class="hidden sm:inline">Volver al inicio</span>
                     <span class="sr-only sm:hidden">Volver al inicio</span>
                 </a>
-                <a href="{{ route('planes.postulantes') }}" class="ad-btn-ghost ad-btn-sm gap-2">
-                    <flux:icon.user class="size-4" />
-                    <span class="hidden md:inline">Planes para postulantes</span>
-                    <span class="md:hidden">Postulantes</span>
-                </a>
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary ad-btn-sm">Crear cuenta</a>
             </div>
             <x-mobile-menu id="company-plans-mobile-navigation">
                 <a href="{{ route('home') }}"><flux:icon.arrow-left class="mr-2 size-4" />Volver al inicio</a>
-                <a href="{{ route('planes.postulantes') }}"><flux:icon.user class="mr-2 size-4" />Planes para postulantes</a>
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}">Crear cuenta empresa</a>
             </x-mobile-menu>
         </div>

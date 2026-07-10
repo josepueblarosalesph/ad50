@@ -15,13 +15,6 @@ use Livewire\Livewire;
 
 test('the landing page presents the experience-led visual direction', function () {
     Plan::query()->create([
-        'codigo' => 'postulante_landing',
-        'nombre' => 'Postulante visible',
-        'audiencia' => 'postulante',
-        'precio_clp' => 20000,
-        'periodo' => 'anual',
-    ]);
-    Plan::query()->create([
         'codigo' => 'empresa_basic',
         'nombre' => 'Básico',
         'audiencia' => 'empresa',
@@ -83,8 +76,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Accede a perfiles y currículums completos')
         ->assertSee('Reduce tiempos de búsqueda')
         ->assertSee('Encuentra talento con experiencia comprobada')
-        ->assertSee('Acceso al portal: $20.000 CLP al año.')
-        ->assertSee(route('planes.postulantes'), false)
+        ->assertSee('Crear tu perfil profesional es gratis.')
         ->assertDontSee('Postulante visible')
         ->assertDontSee('Ver todos los planes')
         ->assertSee('Crea tu perfil profesional')
@@ -262,14 +254,6 @@ test('the plans page can be viewed', function () {
         'features' => ['Publicaciones ilimitadas', '100 accesos a perfiles completos o desbloqueos de CV', 'Soporte técnico'],
         'recomendacion' => 'Recomendado para empresas con altas demandas de ofertas laborales',
     ]);
-    Plan::query()->create([
-        'codigo' => 'postulante',
-        'nombre' => 'Postulante visible',
-        'audiencia' => 'postulante',
-        'precio_clp' => 20000,
-        'periodo' => 'anual',
-        'features' => ['Perfil visible en el portal'],
-    ]);
 
     $this->get(route('planes'))
         ->assertOk()
@@ -287,31 +271,15 @@ test('the plans page can be viewed', function () {
         ->assertSee('Más elegido')
         ->assertSee('Recibe candidatos compatibles automáticamente')
         ->assertSee('Encuentra talento con experiencia comprobada')
-        ->assertSee(route('planes.postulantes'), false)
-        ->assertDontSee('$20.000');
-
-    $this->get(route('planes.postulantes'))
-        ->assertOk()
-        ->assertSee('Haz visible tu experiencia')
-        ->assertSee('Volver al inicio')
-        ->assertSee('id="candidate-plans-mobile-navigation"', false)
-        ->assertSee('class="ad-btn-ghost ad-btn-sm gap-2"', false)
-        ->assertSee('$20.000')
-        ->assertSee('por año')
-        ->assertSee('Perfil visible en el portal')
-        ->assertSee(route('planes'), false);
+        ->assertDontSee('$20.000')
+        ->assertDontSee('Planes para postulantes');
 
     expect(file_get_contents(resource_path('views/livewire/planes.blade.php')))
-        ->toContain('<flux:icon.arrow-left class="size-4" />')
-        ->toContain('<flux:icon.user class="size-4" />')
-        ->toContain('<span class="hidden md:inline">Planes para postulantes</span>')
-        ->toContain('<span class="md:hidden">Postulantes</span>');
+        ->toContain('<flux:icon.arrow-left class="size-4" />');
+});
 
-    expect(file_get_contents(resource_path('views/livewire/postulante/planes.blade.php')))
-        ->toContain('<flux:icon.arrow-left class="size-4" />')
-        ->toContain('<flux:icon.building-office-2 class="size-4" />')
-        ->toContain('<span class="hidden md:inline">Planes para empresas</span>')
-        ->toContain('<span class="md:hidden">Empresas</span>');
+test('the candidate plans page no longer exists', function () {
+    $this->get('/planes/postulantes')->assertNotFound();
 });
 
 test('a postulante can view the panel and professional profile', function () {

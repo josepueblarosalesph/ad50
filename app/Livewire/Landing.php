@@ -16,7 +16,6 @@ class Landing extends Component
     {
         return view('livewire.landing', [
             'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
-            'planPostulante' => Plan::query()->where('audiencia', 'postulante')->first(),
         ]);
     }
 }

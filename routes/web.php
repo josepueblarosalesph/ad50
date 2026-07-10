@@ -16,7 +16,6 @@ use App\Livewire\Planes;
 use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\Ficha;
 use App\Livewire\Postulante\Panel;
-use App\Livewire\Postulante\Planes as PostulantePlanes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +23,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', Landing::class)->name('home');
 Route::get('/registro', Register::class)->name('registro');
 Route::get('/planes', Planes::class)->name('planes');
-Route::get('/planes/postulantes', PostulantePlanes::class)->name('planes.postulantes');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/postulante/ficha', Ficha::class)->name('postulante.ficha');
