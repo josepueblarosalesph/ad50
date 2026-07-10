@@ -40,6 +40,15 @@
             />
             <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>{{ $maximoExperiencia }} años</span></div>
         </div>
+
+        <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
+            <x-slider-rango-edad
+                :min="$limitesEdad['min']"
+                :max="$limitesEdad['max']"
+                :desde="$edadMin"
+                :hasta="$edadMax"
+            />
+        </div>
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><x-palabras-clave :palabras="$palabrasClave" /></div>
         <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros.</p>
     </div>

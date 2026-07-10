@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\FiltraPorEdad;
 use App\Models\Busqueda;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
@@ -12,6 +13,8 @@ use Livewire\Component;
 
 class FiltrosBusqueda extends Component
 {
+    use FiltraPorEdad;
+
     public Busqueda $busqueda;
 
     /** @var list<string> */
@@ -56,6 +59,7 @@ class FiltrosBusqueda extends Component
         $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
         $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
+        $this->hidratarEdad($criterios);
     }
 
     /**
@@ -114,6 +118,7 @@ class FiltrosBusqueda extends Component
             'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
             'palabrasClave' => ['array', 'max:10'],
             'palabrasClave.*' => ['string', 'max:100', 'distinct'],
+            ...$this->reglasEdad(),
         ]);
 
         DB::transaction(function () use ($validated, $matching): void {
@@ -129,6 +134,7 @@ class FiltrosBusqueda extends Component
                     'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
                     'palabra_clave' => $validated['palabrasClave'],
+                    'edad' => $this->criterioEdad($validated['edadMin'], $validated['edadMax']),
                 ],
             ]);
 
@@ -144,6 +150,7 @@ class FiltrosBusqueda extends Component
 
         return view('livewire.empresa.filtros-busqueda', [
             'instituciones' => CatalogosProfesionales::instituciones(),
+            'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'minimoExperiencia' => min($rangos),
             'maximoExperiencia' => max($rangos),
             'grupos' => [

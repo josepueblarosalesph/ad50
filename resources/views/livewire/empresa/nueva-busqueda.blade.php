@@ -50,6 +50,9 @@
                             @foreach ($rangosExperiencia as $valor => $etiqueta)<flux:select.option :value="$valor">{{ $etiqueta }}</flux:select.option>@endforeach
                         </flux:select>
                     </div>
+                    <div class="self-start rounded-xl border border-line-2 p-4">
+                        <x-slider-rango-edad :min="$limitesEdad['min']" :max="$limitesEdad['max']" :desde="$edadMin" :hasta="$edadMax" />
+                    </div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4"><flux:input wire:model="empresa" label="Empresa" placeholder="Ej. Codelco" description="Basta que aparezca en alguna de sus experiencias." /></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter. Basta con que el perfil contenga una de ellas." /></div>

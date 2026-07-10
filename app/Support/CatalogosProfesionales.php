@@ -152,6 +152,17 @@ class CatalogosProfesionales
         return require __DIR__.'/carreras_estudio.php';
     }
 
+    /**
+     * Límites del filtro de edad. El tope se interpreta como "o más", así que un
+     * postulante de 90 años sigue calzando en una búsqueda que llega hasta el máximo.
+     *
+     * @return array{min: int, max: int}
+     */
+    public static function rangoEdad(): array
+    {
+        return ['min' => 50, 'max' => 80];
+    }
+
     /** @return array<int, string> */
     public static function rangosExperiencia(): array
     {

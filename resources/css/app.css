@@ -197,6 +197,31 @@ body [class~="text-[15px]"] {
     background-clip: padding-box;
   }
 
+  /* Slider de dos controles: los inputs se superponen, así que solo el thumb captura el puntero. */
+  .ad-range-dual {
+    @apply pointer-events-none absolute inset-x-0 top-0 m-0 h-5 w-full bg-transparent;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .ad-range-dual:focus { outline: none; }
+  .ad-range-dual::-webkit-slider-runnable-track { height: 1.25rem; background: transparent; }
+  .ad-range-dual::-moz-range-track { height: 1.25rem; background: transparent; }
+  .ad-range-dual::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    /* WebKit alinea el thumb al borde superior del track; Firefox ya lo centra. */
+    margin-top: 0.125rem;
+    @apply pointer-events-auto size-4 cursor-grab rounded-full border-2 border-white bg-orange-500
+           shadow-[0_1px_3px_rgba(0,0,0,.35)];
+  }
+  .ad-range-dual::-moz-range-thumb {
+    @apply pointer-events-auto size-4 cursor-grab rounded-full border-2 border-white bg-orange-500
+           shadow-[0_1px_3px_rgba(0,0,0,.35)];
+  }
+  .ad-range-dual:active::-webkit-slider-thumb { @apply cursor-grabbing; }
+  .ad-range-dual:focus-visible::-webkit-slider-thumb { @apply ring-2 ring-orange-400 ring-offset-1; }
+  .ad-range-dual:focus-visible::-moz-range-thumb { @apply ring-2 ring-orange-400 ring-offset-1; }
+
   .ad-chip        { @apply inline-flex items-center gap-2 text-[15px] font-semibold px-3 py-1.5 rounded-full
                           bg-paper border border-line-2 text-gray-700; }
   .ad-chip-orange { @apply bg-orange-100 border-orange-200 text-orange-600; }

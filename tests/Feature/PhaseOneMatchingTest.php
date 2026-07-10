@@ -7,6 +7,7 @@ use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Support\CatalogosProfesionales;
 use Livewire\Livewire;
 
 test('a structured search lists only candidates that fulfill every configured criterion', function () {
@@ -298,4 +299,88 @@ test('a company cannot edit another company search', function () {
     $this->actingAs($otherUser)
         ->get(route('empresa.busquedas.edit', $busqueda))
         ->assertForbidden();
+});
+
+test('the age range criterion keeps only candidates inside the bounds', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+
+    $crearPostulante = function (?int $anioNacimiento): Postulante {
+        return Postulante::query()->create([
+            'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+            'visible' => true,
+            'anio_nacimiento' => $anioNacimiento,
+        ]);
+    };
+
+    $anioActual = now()->year;
+    $cincuentaYCinco = $crearPostulante($anioActual - 55);
+    $sesentaYCinco = $crearPostulante($anioActual - 65);
+    $sinEdad = $crearPostulante(null);
+
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Con rango', 'criterios' => []]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('edadMin', 50)
+        ->set('edadMax', 60)
+        ->assertHasNoErrors();
+
+    $calzados = $busqueda->fresh()->candidatos()->where('estado_match', 'cumple')->pluck('postulante_id');
+
+    expect($calzados)->toContain($cincuentaYCinco->id)
+        ->not->toContain($sesentaYCinco->id)
+        ->not->toContain($sinEdad->id);
+});
+
+test('the age range criterion is not stored when it spans the full bounds', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Sin rango', 'criterios' => []]);
+
+    $limites = CatalogosProfesionales::rangoEdad();
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('edadMin', $limites['min'])
+        ->set('edadMax', $limites['max'])
+        ->assertHasNoErrors();
+
+    expect($busqueda->fresh()->criterios['edad'])->toBeNull();
+});
+
+test('the top of the age range has no upper bound', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+    $limites = CatalogosProfesionales::rangoEdad();
+
+    $nonagenario = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'anio_nacimiento' => now()->year - 90,
+    ]);
+
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Sin tope', 'criterios' => []]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('edadMin', 60)
+        ->set('edadMax', $limites['max'])
+        ->assertHasNoErrors();
+
+    expect($busqueda->fresh()->criterios['edad'])->toBe(['min' => 60, 'max' => null])
+        ->and($busqueda->fresh()->candidatos()->where('estado_match', 'cumple')->pluck('postulante_id'))
+        ->toContain($nonagenario->id);
+});
+
+test('the age range rejects a minimum above the maximum', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Inválida', 'criterios' => []]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('edadMax', 55)
+        ->set('edadMin', 70)
+        ->assertHasErrors(['edadMax' => 'gte']);
 });

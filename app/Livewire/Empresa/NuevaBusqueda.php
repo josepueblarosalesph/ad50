@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\FiltraPorEdad;
 use App\Models\Busqueda;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
@@ -14,6 +15,8 @@ use Livewire\Component;
 
 class NuevaBusqueda extends Component
 {
+    use FiltraPorEdad;
+
     public ?Busqueda $busqueda = null;
 
     public string $titulo = '';
@@ -49,6 +52,8 @@ class NuevaBusqueda extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
 
         if ($busqueda === null) {
+            $this->hidratarEdad([]);
+
             return;
         }
 
@@ -66,6 +71,7 @@ class NuevaBusqueda extends Component
         $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
         $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
+        $this->hidratarEdad($criterios);
     }
 
     public function updatedCarrera(): void
@@ -112,6 +118,7 @@ class NuevaBusqueda extends Component
             'institucion' => ['nullable', 'string', 'max:180'],
             'empresa' => ['nullable', 'string', 'max:180'],
             'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
+            ...$this->reglasEdad(),
         ]);
 
         $busqueda = DB::transaction(function () use ($validated, $matching): Busqueda {
@@ -128,6 +135,7 @@ class NuevaBusqueda extends Component
                     'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
                     'palabra_clave' => $validated['palabrasClave'],
+                    'edad' => $this->criterioEdad($validated['edadMin'], $validated['edadMax']),
                 ],
                 'estado' => 'activa',
             ];
@@ -162,6 +170,7 @@ class NuevaBusqueda extends Component
             'ciudades' => CatalogosProfesionales::regiones(),
             'instituciones' => CatalogosProfesionales::instituciones(),
             'rangosExperiencia' => CatalogosProfesionales::rangosExperiencia(),
+            'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'editando' => $this->busqueda !== null,
         ]);
     }

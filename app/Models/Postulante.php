@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property-read int|null $edad
+ */
 class Postulante extends Model
 {
     use HasFactory;
@@ -30,6 +34,19 @@ class Postulante extends Model
         'onboarding_paso' => 'integer',
         'onboarding_completado' => 'boolean',
     ];
+
+    /**
+     * Solo guardamos el año de nacimiento, así que la edad es aproximada:
+     * quien cumple años más adelante en el año figura con un año de más.
+     *
+     * @return Attribute<int|null, never>
+     */
+    protected function edad(): Attribute
+    {
+        return Attribute::get(fn (): ?int => $this->anio_nacimiento === null
+            ? null
+            : now()->year - $this->anio_nacimiento);
+    }
 
     public function user(): BelongsTo
     {

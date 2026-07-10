@@ -74,6 +74,14 @@ class MatchingService
                 return $empresas->contains(fn (string $empresa): bool => Str::contains(Str::lower($empresa), Str::lower($valor)));
             }],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
+            'edad' => ['Edad', function (array $valor) use ($postulante): bool {
+                if ($postulante->edad === null) {
+                    return false;
+                }
+
+                return $postulante->edad >= (int) $valor['min']
+                    && ($valor['max'] === null || $postulante->edad <= (int) $valor['max']);
+            }],
             'palabra_clave' => ['Palabra clave', function (array $valores) use ($postulante, $cargos): bool {
                 $responsabilidades = collect($postulante->experiencias ?? [])->pluck('responsabilidades');
                 $texto = $cargos
@@ -95,6 +103,16 @@ class MatchingService
                 continue;
             }
 
+            if ($clave === 'edad') {
+                $detalle[$clave] = [
+                    'criterio' => $etiqueta,
+                    'valor' => $this->rangoEdadLegible($valor),
+                    'cumple' => $evaluar($valor),
+                ];
+
+                continue;
+            }
+
             $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'especialidad', 'industria', 'ciudad', 'palabra_clave'], true);
             $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : (string) $valor;
             $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
@@ -111,6 +129,14 @@ class MatchingService
         }
 
         return $detalle;
+    }
+
+    /** @param  array{min: int, max: int|null}  $rango */
+    private function rangoEdadLegible(array $rango): string
+    {
+        return $rango['max'] === null
+            ? $rango['min'].' años o más'
+            : $rango['min'].' a '.$rango['max'].' años';
     }
 
     private function iguales(?string $actual, string $esperado): bool

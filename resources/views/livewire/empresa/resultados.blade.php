@@ -33,7 +33,6 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 md:pl-4 md:pt-0">
-                        <span @class(['ad-chip whitespace-nowrap', 'ad-chip-green' => $match->estado_match === 'cumple'])><flux:icon :name="$match->estado_match === 'cumple' ? 'check' : 'minus'" class="size-4" />{{ $match->estado_match === 'cumple' ? 'Cumple' : 'Parcial — cumple' }} {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
                         <div class="flex items-center gap-2">
                             <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
                                 <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30] dark:hover:bg-orange-100' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
