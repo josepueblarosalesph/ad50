@@ -24,7 +24,7 @@
                 <tbody>
                     @forelse ($busquedas as $busqueda)
                         <tr wire:key="busqueda-{{ $busqueda->id }}" class="border-b border-line last:border-0">
-                            <td class="p-4"><b class="block text-ink">{{ $busqueda->titulo }}</b><span class="mt-1 block text-[12px] text-gray-500">Creada {{ $busqueda->created_at->diffForHumans() }}</span></td>
+                            <td class="p-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="block rounded-lg font-bold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">{{ $busqueda->titulo }}</a><span class="mt-1 block text-[12px] text-gray-500">Creada {{ $busqueda->created_at->diffForHumans() }}</span></td>
                             <td class="p-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="font-bold text-orange-600 underline decoration-orange-200 underline-offset-4">{{ $busqueda->candidatos_count }}</a></td>
                             <td class="p-4 text-gray-600"><span class="inline-flex items-center gap-1.5"><flux:icon.star variant="solid" class="size-4 text-orange-500" />{{ $busqueda->favoritos_count }}</span></td>
                             <td class="p-4"><span @class(['ad-chip', 'ad-chip-green' => $busqueda->estado === 'activa'])>{{ ucfirst($busqueda->estado) }}</span></td>

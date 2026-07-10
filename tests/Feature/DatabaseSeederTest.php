@@ -14,7 +14,7 @@ test('database seeders create diverse and filterable demo data', function () {
         ->and(Empresa::query()->count())->toBe(5)
         ->and(Busqueda::query()->count())->toBe(11)
         ->and(Postulante::query()->distinct()->count('ciudad'))->toBeGreaterThanOrEqual(12)
-        ->and(Postulante::query()->distinct()->count('industria'))->toBeGreaterThanOrEqual(12)
+        ->and(Postulante::query()->distinct()->count('industrias_interes'))->toBeGreaterThanOrEqual(12)
         ->and(Postulante::query()->distinct()->count('genero'))->toBeGreaterThanOrEqual(3)
         ->and(Postulante::query()->whereNotNull('educaciones')->count())->toBe(18)
         ->and(Postulante::query()->whereNotNull('idiomas')->count())->toBe(18)

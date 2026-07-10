@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Postulante;
 use App\Models\User;
+use App\Support\CatalogosProfesionales;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -37,7 +38,7 @@ class PostulanteSeeder extends Seeder
             $atributos = $this->atributosPostulante($perfil, $index);
             $userId = $usuarios[$perfil['email']];
 
-            foreach (['educaciones', 'idiomas', 'experiencias'] as $atributoJson) {
+            foreach (['educaciones', 'idiomas', 'experiencias', 'modalidad_trabajo', 'regiones_interes', 'industrias_interes'] as $atributoJson) {
                 $atributos[$atributoJson] = json_encode($atributos[$atributoJson], JSON_THROW_ON_ERROR);
             }
 
@@ -64,8 +65,6 @@ class PostulanteSeeder extends Seeder
     private function atributosPostulante(array $perfil, int $index): array
     {
         $anioInicio = now()->year - $perfil['anios_experiencia'];
-        $industriaSecundaria = $perfil['industria_2'] ?? null;
-        $industriaTerciaria = $perfil['industria_3'] ?? null;
 
         return [
             'rut' => sprintf('1%d.%03d.%03d-%d', ($index % 8) + 1, 100 + $index, 200 + $index, $index % 10),
@@ -74,15 +73,11 @@ class PostulanteSeeder extends Seeder
             'titular' => $perfil['titular'],
             'telefono' => '+56 9 '.str_pad((string) (61000000 + $index), 8, '0', STR_PAD_LEFT),
             'linkedin' => 'https://linkedin.com/in/'.$perfil['slug'],
-            'ciudad' => $perfil['ciudad'],
-            'region_interes' => $perfil['regiones'][0],
-            'region_interes_2' => $perfil['regiones'][1] ?? null,
-            'region_interes_3' => $perfil['regiones'][2] ?? null,
-            'modalidad_trabajo' => $perfil['modalidad'],
+            'ciudad' => CatalogosProfesionales::regionPorCiudad()[$perfil['ciudad']] ?? null,
+            'regiones_interes' => array_values($perfil['regiones']),
+            'modalidad_trabajo' => [$perfil['modalidad']],
             'cargo_actual' => $perfil['cargo'],
-            'industria' => $perfil['industria'],
-            'industria_2' => $industriaSecundaria,
-            'industria_3' => $industriaTerciaria,
+            'industrias_interes' => array_values(array_filter([$perfil['industria'], $perfil['industria_2'] ?? null, $perfil['industria_3'] ?? null])),
             'carrera' => $perfil['carrera'],
             'universidad' => $perfil['institucion'],
             'especialidad' => $perfil['especialidad'],

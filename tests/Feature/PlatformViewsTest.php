@@ -64,7 +64,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Cómo funciona para empresas')
         ->assertSee('bg-[#252729]', false)
         ->assertSee('lg:text-[72px]', false)
-        ->assertSee('shadow-[0_24px_60px_rgba(0,0,0,.22)]', false)
+        ->assertSee('from-orange-700 via-orange-500 to-orange-200', false)
         ->assertSee('absolute bottom-10 right-10 z-10', false)
         ->assertSee('Quiénes somos')
         ->assertSee('href="#quienes-somos"', false)
@@ -341,7 +341,7 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertSee('Femenino')
         ->assertSee('Prefiero no Informar')
         ->assertDontSee('No binario')
-        ->assertSee('Titular profesional')
+        ->assertSee('Titular *')
         ->assertSee('maxlength="100"', false)
         ->assertSee('Medio')
         ->assertSee('Alto')
@@ -367,19 +367,22 @@ test('a postulante can view the panel and professional profile', function () {
         ->toContain('border-orange-500 bg-orange-100 text-orange-700 shadow-sm')
         ->toContain('border-line-2 bg-white text-gray-700')
         ->toContain('id="datos-personales" class="ad-card order-1')
-        ->toContain('id="intereses" class="ad-card order-2')
-        ->toContain('id="experiencia" class="ad-card order-3')
-        ->toContain('id="educacion" class="ad-card order-4')
-        ->toContain('id="idiomas" class="ad-card order-5')
+        ->toContain('id="experiencia" class="ad-card order-2')
+        ->toContain('id="educacion" class="ad-card order-3')
+        ->toContain('id="idiomas" class="ad-card order-4')
         ->toContain('id="curriculum" class="ad-card mt-5')
         ->toContain('Regiones de interés')
         ->toContain('Industrias de interés')
-        ->toContain('Modalidad de trabajo')
-        ->and(strpos($ficha, "'Datos personales'"))->toBeLessThan(strpos($ficha, "'Intereses'"))
-        ->and(strpos($ficha, "'Intereses'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
+        ->toContain('Modalidad preferida')
+        ->toContain('Situación laboral')
+        ->toContain('Expectativa de renta')
+        ->toContain('Nacionalidad *')
+        ->toContain('Años de experiencia *')
+        ->toContain('Escribe una breve presentación')
+        ->not->toContain('id="intereses"')
+        ->and(strpos($ficha, "'Mis Datos'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
-        ->and(strpos($ficha, 'id="intereses"'))->toBeLessThan(strpos($ficha, 'id="curriculum"'))
         ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
 
     expect(CatalogosProfesionales::generos())->toBe([
@@ -388,14 +391,26 @@ test('a postulante can view the panel and professional profile', function () {
         'Prefiero no Informar',
     ]);
 
-    expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(6);
-    expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(6);
-    expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(6);
+    expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(5);
+    expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(5);
+    expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(5);
     expect($ficha)
         ->toContain('border-dashed border-orange-200 bg-orange-50/60')
         ->toContain('text-orange-700 dark:text-[#F7C59E]')
         ->not->toContain('bg-[#FCFBFD]')
         ->not->toContain('dark:bg-[#252129]');
+});
+
+test('a postulante cannot select more than five regions or industries', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id]);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->set('regionesInteres', array_slice(CatalogosProfesionales::regiones(), 0, 6))
+        ->set('industriasInteres', array_slice(CatalogosProfesionales::industrias(), 0, 6))
+        ->call('save')
+        ->assertHasErrors(['regionesInteres' => 'max', 'industriasInteres' => 'max']);
 });
 
 test('a postulante cannot save a gender outside the available options', function () {
@@ -448,14 +463,20 @@ test('a postulante can update every section of the professional profile', functi
 
     Livewire::actingAs($user)
         ->test(Ficha::class)
-        ->set('name', 'María José Fuentes')
+        ->set('nombres', 'María José')
+        ->set('apellidos', 'Fuentes')
         ->set('email', 'maria.fuentes@example.com')
         ->set('rut', '98421157')
         ->set('anioNacimiento', 1971)
         ->set('genero', 'Femenino')
+        ->set('nacionalidad', 'Chilena')
+        ->set('aniosExperiencia', 17)
         ->set('telefono', '+56 9 5555 1234')
         ->set('linkedin', 'https://linkedin.com/in/maria-fuentes')
-        ->set('ciudad', 'Concepción')
+        ->set('sitioWeb', 'https://mariafuentes.cl')
+        ->set('situacionLaboral', 'Trabajando actualmente')
+        ->set('expectativaRenta', 2500000)
+        ->set('ciudad', 'Biobío')
         ->set('carrera', 'Ingeniería Civil / Ingeniería Comercial')
         ->set('universidad', 'Universidad de Concepción')
         ->set('especialidad', 'Finanzas')
@@ -490,13 +511,9 @@ test('a postulante can update every section of the professional profile', functi
             ['idioma' => 'Español', 'nivel' => 'Alto'],
             ['idioma' => 'Inglés', 'nivel' => 'Medio'],
         ])
-        ->set('industria', 'Banca y servicios financieros')
-        ->set('industria2', 'Forestal / Papelera')
-        ->set('industria3', 'Tecnología de la Información')
-        ->set('regionInteres', 'Biobío')
-        ->set('regionInteres2', 'Ñuble')
-        ->set('regionInteres3', 'La Araucanía')
-        ->set('modalidadTrabajo', 'Jornada Parcial')
+        ->set('industriasInteres', ['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información'])
+        ->set('regionesInteres', ['Biobío', 'Ñuble', 'La Araucanía'])
+        ->set('modalidadesTrabajo', ['Jornada Parcial', 'Honorarios'])
         ->set('experiencias', [[
             'cargo' => 'Gerenta de Finanzas',
             'tipo_trabajo' => 'Jornada completa',
@@ -523,6 +540,8 @@ test('a postulante can update every section of the professional profile', functi
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
         'name' => 'María José Fuentes',
+        'nombres' => 'María José',
+        'apellidos' => 'Fuentes',
         'email' => 'maria.fuentes@example.com',
     ]);
     $this->assertDatabaseHas('postulantes', [
@@ -530,10 +549,14 @@ test('a postulante can update every section of the professional profile', functi
         'rut' => '9.842.115-7',
         'genero' => 'Femenino',
         'titular' => 'Gerenta de Finanzas y transformación empresarial',
-        'region_interes' => 'Biobío',
-        'region_interes_2' => 'Ñuble',
-        'region_interes_3' => 'La Araucanía',
-        'modalidad_trabajo' => 'Jornada Parcial',
+        'regiones_interes' => json_encode(['Biobío', 'Ñuble', 'La Araucanía']),
+        'industrias_interes' => json_encode(['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información']),
+        'modalidad_trabajo' => json_encode(['Jornada Parcial', 'Honorarios']),
+        'nacionalidad' => 'Chilena',
+        'situacion_laboral' => 'Trabajando actualmente',
+        'expectativa_renta' => 2500000,
+        'anios_experiencia' => 17,
+        'sitio_web' => 'https://mariafuentes.cl',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
         'empresa_actual' => 'Empresa de Prueba SpA',
@@ -638,7 +661,7 @@ test('an empresa can view its pages and create a search', function () {
         ->set('titulo', 'Controller Senior')
         ->set('cargo', ['Control de Gestión'])
         ->set('industria', ['Forestal / Papelera'])
-        ->set('aniosMinimos', 8)
+        ->set('aniosMinimos', 5)
         ->call('save')
         ->assertHasNoErrors();
 

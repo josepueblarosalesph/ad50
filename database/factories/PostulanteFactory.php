@@ -21,7 +21,7 @@ class PostulanteFactory extends Factory
             'telefono' => $this->faker->phoneNumber(),
             'ciudad' => $this->faker->randomElement(['Santiago', 'Valparaíso', 'Concepción', 'Valdivia']),
             'cargo_actual' => $this->faker->randomElement(['Ingeniero de Software', 'Contador', 'Abogado', 'Ejecutivo de Ventas']),
-            'industria' => $this->faker->randomElement(['Tecnología', 'Finanzas', 'Retail', 'Salud']),
+            'industrias_interes' => [$this->faker->randomElement(['Tecnología', 'Finanzas', 'Retail', 'Salud'])],
             'anios_experiencia' => $this->faker->randomDigit(),
             'completitud' => 100,
             'visible' => true,

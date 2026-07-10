@@ -201,8 +201,8 @@ test('candidate detail navigation respects active criterion filters', function (
         ->assertSet('totalCandidatos', 2)
         ->assertSee('1 filtro activo')
         ->assertSee('Filtros activos')
-        ->assertSee('Ciudad / región')
-        ->assertSee('Santiago')
+        ->assertSee('Región')
+        ->assertSee('Metropolitana de Santiago')
         ->assertSee('Estás navegando solo entre candidatos que cumplen todos estos criterios.');
 });
 
@@ -247,21 +247,21 @@ function addFilterableCriteria(Busqueda $busqueda, array $matches): void
 {
     $busqueda->update([
         'criterios' => [
-            'ciudad' => 'Santiago',
+            'ciudad' => 'Metropolitana de Santiago',
             'industria' => 'Tecnología de la Información',
         ],
     ]);
 
     $matches[0]->update(['criterios_detalle' => [
         ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => true],
-        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => true],
+        ['criterio' => 'Región', 'valor' => 'Metropolitana de Santiago', 'cumple' => true],
     ]]);
     $matches[1]->update(['criterios_detalle' => [
         ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => false],
-        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => true],
+        ['criterio' => 'Región', 'valor' => 'Metropolitana de Santiago', 'cumple' => true],
     ]]);
     $matches[2]->update(['criterios_detalle' => [
         ['criterio' => 'Industria', 'valor' => 'Tecnología de la Información', 'cumple' => true],
-        ['criterio' => 'Ciudad / región', 'valor' => 'Santiago', 'cumple' => false],
+        ['criterio' => 'Región', 'valor' => 'Metropolitana de Santiago', 'cumple' => false],
     ]]);
 }

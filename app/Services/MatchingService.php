@@ -52,13 +52,29 @@ class MatchingService
             ->filter();
 
         $evaluadores = [
-            'cargo' => ['Cargo / especialidad', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor)))],
+            'cargo' => ['Cargo', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor)))],
             'carrera' => ['Carrera o título', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->carrera, $valor))],
             'especialidad' => ['Especialidad / área', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->especialidad, $valor))],
-            'industria' => ['Industria', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect([$postulante->industria, $postulante->industria_2, $postulante->industria_3])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor)))],
-            'ciudad' => ['Ciudad / región', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor))],
+            'industria' => ['Industria', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->industrias_interes ?? [])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor)))],
+            'ciudad' => ['Región', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor))],
+            'institucion' => ['Institución de estudio', function (string $valor) use ($postulante): bool {
+                $instituciones = collect($postulante->educaciones ?? [])
+                    ->pluck('institucion')
+                    ->push($postulante->universidad)
+                    ->filter();
+
+                return $instituciones->contains(fn (string $institucion): bool => Str::contains(Str::lower($institucion), Str::lower($valor)));
+            }],
+            'empresa' => ['Empresa', function (string $valor) use ($postulante): bool {
+                $empresas = collect($postulante->experiencias ?? [])
+                    ->pluck('empresa')
+                    ->push($postulante->empresa_actual)
+                    ->filter();
+
+                return $empresas->contains(fn (string $empresa): bool => Str::contains(Str::lower($empresa), Str::lower($valor)));
+            }],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
-            'palabra_clave' => ['Palabra clave', function (string $valor) use ($postulante, $cargos): bool {
+            'palabra_clave' => ['Palabra clave', function (array $valores) use ($postulante, $cargos): bool {
                 $responsabilidades = collect($postulante->experiencias ?? [])->pluck('responsabilidades');
                 $texto = $cargos
                     ->concat($responsabilidades)
@@ -66,7 +82,7 @@ class MatchingService
                     ->filter()
                     ->implode(' ');
 
-                return Str::contains(Str::lower($texto), Str::lower($valor));
+                return collect($valores)->contains(fn (string $valor): bool => Str::contains(Str::lower($texto), Str::lower($valor)));
             }],
         ];
 
@@ -79,9 +95,13 @@ class MatchingService
                 continue;
             }
 
-            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'especialidad', 'industria', 'ciudad'], true);
-            $valorEvaluado = $esSeleccionMultiple ? array_values((array) $valor) : (string) $valor;
+            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'especialidad', 'industria', 'ciudad', 'palabra_clave'], true);
+            $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : (string) $valor;
             $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
+
+            if ($valorEvaluado === []) {
+                continue;
+            }
 
             $detalle[$clave] = [
                 'criterio' => $etiqueta,

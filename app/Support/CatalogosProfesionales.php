@@ -58,10 +58,57 @@ class CatalogosProfesionales
         ];
     }
 
+    /**
+     * Equivalencia histórica: la ficha guardaba ciudades y ahora guarda regiones.
+     *
+     * @return array<string, string>
+     */
+    public static function regionPorCiudad(): array
+    {
+        return [
+            'Arica' => 'Arica y Parinacota',
+            'Iquique' => 'Tarapacá',
+            'Antofagasta' => 'Antofagasta',
+            'Copiapó' => 'Atacama',
+            'La Serena / Coquimbo' => 'Coquimbo',
+            'Valparaíso / Viña del Mar' => 'Valparaíso',
+            'Santiago' => 'Metropolitana de Santiago',
+            'Rancagua' => "Libertador General Bernardo O'Higgins",
+            'Talca' => 'Maule',
+            'Chillán' => 'Ñuble',
+            'Concepción' => 'Biobío',
+            'Temuco' => 'La Araucanía',
+            'Valdivia' => 'Los Ríos',
+            'Osorno' => 'Los Lagos',
+            'Puerto Montt' => 'Los Lagos',
+            'Coyhaique' => 'Aysén del General Carlos Ibáñez del Campo',
+            'Punta Arenas' => 'Magallanes y de la Antártica Chilena',
+        ];
+    }
+
     /** @return array<int, string> */
     public static function generos(): array
     {
         return ['Masculino', 'Femenino', 'Prefiero no Informar'];
+    }
+
+    /** @return array<int, string> */
+    public static function nacionalidades(): array
+    {
+        return [
+            'Chilena', 'Argentina', 'Boliviana', 'Brasileña', 'Colombiana', 'Cubana',
+            'Ecuatoriana', 'Española', 'Estadounidense', 'Haitiana', 'Mexicana',
+            'Paraguaya', 'Peruana', 'Uruguaya', 'Venezolana', 'Otra',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function situacionesLaborales(): array
+    {
+        return [
+            'Trabajando actualmente', 'Buscando trabajo',
+            'Independiente / Honorarios', 'Jubilado',
+        ];
     }
 
     /** @return array<int, string> */
@@ -90,6 +137,32 @@ class CatalogosProfesionales
             'Procesos', 'Mantención', 'Calidad', 'Medio Ambiente', 'Adquisiciones',
             'Comercial / Ventas / Marketing', 'Recursos Humanos', 'Legal', 'Consultoría',
             'Construcción', 'Tecnología / Transformación digital', 'Salud', 'Educación / Docencia',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function instituciones(): array
+    {
+        return require __DIR__.'/instituciones.php';
+    }
+
+    /** @return array<int, string> */
+    public static function carrerasEstudio(): array
+    {
+        return require __DIR__.'/carreras_estudio.php';
+    }
+
+    /** @return array<int, string> */
+    public static function rangosExperiencia(): array
+    {
+        return [
+            0 => 'Sin mínimo',
+            5 => '5 años o más',
+            10 => '10 años o más',
+            15 => '15 años o más',
+            20 => '20 años o más',
+            25 => '25 años o más',
+            30 => '30 años o más',
         ];
     }
 

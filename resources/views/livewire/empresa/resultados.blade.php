@@ -6,7 +6,7 @@
         <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nueva búsqueda</a>
     </x-slot:nav>
     <x-slot:sidebar>
-        <div class="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" /></div>
+        <div class="sticky top-24"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" /></div>
     </x-slot:sidebar>
 
     <div class="mb-6"><h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1><p class="mt-1.5 text-[14px] text-gray-500">Candidatos ordenados por nivel de coincidencia.</p></div>

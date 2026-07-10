@@ -17,10 +17,10 @@ test('a structured search lists only candidates that fulfill every configured cr
     $complete = Postulante::query()->create([
         'user_id' => $completeUser->id,
         'visible' => true,
-        'ciudad' => 'Concepción',
+        'ciudad' => 'Biobío',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'especialidad' => 'Finanzas',
-        'industria' => 'Banca y servicios financieros',
+        'industrias_interes' => ['Banca y servicios financieros'],
         'anios_experiencia' => 18,
         'resumen_profesional' => 'Lideró una transformación financiera regional.',
         'experiencias' => [[
@@ -33,10 +33,10 @@ test('a structured search lists only candidates that fulfill every configured cr
     $partial = Postulante::query()->create([
         'user_id' => $partialUser->id,
         'visible' => true,
-        'ciudad' => 'Santiago',
+        'ciudad' => 'Metropolitana de Santiago',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'especialidad' => 'Finanzas',
-        'industria' => 'Banca y servicios financieros',
+        'industrias_interes' => ['Banca y servicios financieros'],
         'anios_experiencia' => 12,
         'experiencias' => [[
             'cargo' => 'Finanzas', 'empresa' => 'Empresa B', 'area' => 'Finanzas',
@@ -51,9 +51,9 @@ test('a structured search lists only candidates that fulfill every configured cr
         ->set('carrera', ['Ingeniería Civil / Ingeniería Comercial'])
         ->set('especialidad', ['Finanzas'])
         ->set('industria', ['Banca y servicios financieros'])
-        ->set('ciudad', ['Concepción'])
+        ->set('ciudad', ['Biobío'])
         ->set('aniosMinimos', 15)
-        ->set('palabraClave', 'transformación')
+        ->set('palabrasClave', ['transformación'])
         ->call('save')
         ->assertHasNoErrors();
 
@@ -143,7 +143,7 @@ test('multiple values in one criterion include candidates matching any selected 
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Exigente']);
 
-    foreach (['Concepción', 'Santiago', 'Valdivia'] as $ciudad) {
+    foreach (['Biobío', 'Metropolitana de Santiago', 'Los Ríos'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
         Postulante::query()->create([
             'user_id' => $user->id,
@@ -155,22 +155,22 @@ test('multiple values in one criterion include candidates matching any selected 
     Livewire::actingAs($empresaUser)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Centro sur')
-        ->set('ciudad', ['Concepción', 'Santiago'])
+        ->set('ciudad', ['Biobío', 'Metropolitana de Santiago'])
         ->call('save')
         ->assertHasNoErrors();
 
     $busqueda = $empresaUser->empresa->busquedas()->sole();
 
-    expect($busqueda->criterios['ciudad'])->toBe(['Concepción', 'Santiago'])
+    expect($busqueda->criterios['ciudad'])->toBe(['Biobío', 'Metropolitana de Santiago'])
         ->and($busqueda->candidatos)->toHaveCount(2)
-        ->and($busqueda->candidatos->pluck('postulante.ciudad')->sort()->values()->all())->toBe(['Concepción', 'Santiago']);
+        ->and($busqueda->candidatos->pluck('postulante.ciudad')->sort()->values()->all())->toBe(['Biobío', 'Metropolitana de Santiago']);
 });
 
 test('a company can edit a search and recalculate its existing results', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Editora']);
 
-    foreach (['Concepción', 'Santiago'] as $ciudad) {
+    foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
         Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
     }
@@ -183,7 +183,7 @@ test('a company can edit a search and recalculate its existing results', functio
     $busqueda = $empresa->busquedas()->sole();
     expect($busqueda->candidatos)->toHaveCount(2);
     $busqueda->candidatos()
-        ->whereHas('postulante', fn ($query) => $query->where('ciudad', 'Santiago'))
+        ->whereHas('postulante', fn ($query) => $query->where('ciudad', 'Metropolitana de Santiago'))
         ->sole()
         ->update(['favorito' => true]);
 
@@ -191,15 +191,15 @@ test('a company can edit a search and recalculate its existing results', functio
         ->test(NuevaBusqueda::class, ['busqueda' => $busqueda])
         ->assertSet('titulo', 'Búsqueda original')
         ->set('titulo', 'Búsqueda ajustada')
-        ->set('ciudad', ['Santiago'])
+        ->set('ciudad', ['Metropolitana de Santiago'])
         ->call('save')
         ->assertHasNoErrors();
 
     expect($empresa->busquedas()->count())->toBe(1)
         ->and($busqueda->fresh()->titulo)->toBe('Búsqueda ajustada')
-        ->and($busqueda->fresh()->criterios['ciudad'])->toBe(['Santiago'])
+        ->and($busqueda->fresh()->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
         ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
-        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Santiago')
+        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Metropolitana de Santiago')
         ->and($busqueda->fresh()->candidatos->sole()->favorito)->toBeTrue();
 });
 
@@ -207,7 +207,7 @@ test('a company can modify search filters from the results sidebar', function ()
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Lateral', 'estado_activacion' => 'activa']);
 
-    foreach (['Concepción', 'Santiago'] as $ciudad) {
+    foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
         Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
     }
@@ -223,17 +223,54 @@ test('a company can modify search filters from the results sidebar', function ()
         ->get(route('empresa.resultados', $busqueda))
         ->assertOk()
         ->assertSee('Filtros de búsqueda')
-        ->assertSee('Guardar y recalcular');
+        ->assertSee('Los resultados se actualizan a medida que cambias los filtros.')
+        ->assertSee('Institución de estudio')
+        ->assertSee('Universidad de Concepción ( UDEC )')
+        ->assertDontSee('Actualizar Filtro');
 
     Livewire::actingAs($empresaUser)
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
-        ->set('ciudad', ['Santiago'])
-        ->call('guardar')
+        ->set('ciudad', ['Metropolitana de Santiago'])
         ->assertHasNoErrors();
 
-    expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Santiago'])
+    expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
         ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
-        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Santiago');
+        ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Metropolitana de Santiago');
+});
+
+test('the institution and company criteria match a fragment of any of their records', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Uno']);
+
+    $calzaUser = User::factory()->create(['role' => 'postulante']);
+    $calza = Postulante::query()->create([
+        'user_id' => $calzaUser->id,
+        'visible' => true,
+        'educaciones' => [['institucion' => 'Universidad de Concepción'], ['institucion' => 'Universidad Adolfo Ibáñez']],
+        'experiencias' => [['empresa' => 'Forestal del Biobío'], ['empresa' => 'Codelco Chile']],
+    ]);
+
+    $noCalzaUser = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create([
+        'user_id' => $noCalzaUser->id,
+        'visible' => true,
+        'educaciones' => [['institucion' => 'Universidad de Chile']],
+        'experiencias' => [['empresa' => 'Codelco Chile']],
+    ]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Egresados de Concepción con paso por Codelco')
+        ->set('institucion', 'concepción')
+        ->set('empresa', 'codelco')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $candidatos = $empresa->busquedas()->sole()->candidatos;
+
+    expect($candidatos)->toHaveCount(1)
+        ->and($candidatos->sole()->postulante_id)->toBe($calza->id)
+        ->and($candidatos->sole()->criterios_cumplidos)->toBe(2);
 });
 
 test('criteria without selections are ignored', function () {

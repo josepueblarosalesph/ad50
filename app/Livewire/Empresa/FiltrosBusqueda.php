@@ -29,9 +29,16 @@ class FiltrosBusqueda extends Component
     /** @var list<string> */
     public array $ciudad = [];
 
+    public string $institucion = '';
+
+    public string $empresa = '';
+
     public int $aniosMinimos = 0;
 
-    public string $palabraClave = '';
+    /** @var list<string> */
+    public array $palabrasClave = [];
+
+    public string $nuevaPalabraClave = '';
 
     public function mount(Busqueda $busqueda): void
     {
@@ -45,13 +52,48 @@ class FiltrosBusqueda extends Component
         $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
+        $this->institucion = $criterios['institucion'] ?? '';
+        $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
-        $this->palabraClave = $criterios['palabra_clave'] ?? '';
+        $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
     }
 
-    public function updatedCarrera(): void
+    /**
+     * Cada criterio se aplica apenas cambia; el texto en edición todavía no es un criterio.
+     */
+    public function updated(string $propiedad): void
     {
-        $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
+        if ($propiedad === 'nuevaPalabraClave') {
+            return;
+        }
+
+        if (str_starts_with($propiedad, 'carrera')) {
+            $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
+        }
+
+        $this->guardar(app(MatchingService::class));
+    }
+
+    public function agregarPalabraClave(): void
+    {
+        $palabra = trim($this->nuevaPalabraClave);
+
+        if ($palabra === '' || count($this->palabrasClave) >= 10 || in_array($palabra, $this->palabrasClave, true)) {
+            $this->nuevaPalabraClave = '';
+
+            return;
+        }
+
+        $this->palabrasClave[] = mb_substr($palabra, 0, 100);
+        $this->nuevaPalabraClave = '';
+        $this->guardar(app(MatchingService::class));
+    }
+
+    public function quitarPalabraClave(int $index): void
+    {
+        unset($this->palabrasClave[$index]);
+        $this->palabrasClave = array_values($this->palabrasClave);
+        $this->guardar(app(MatchingService::class));
     }
 
     public function guardar(MatchingService $matching): void
@@ -66,9 +108,12 @@ class FiltrosBusqueda extends Component
             'industria' => ['array'],
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
-            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::ciudades())],
-            'aniosMinimos' => ['required', 'integer', 'min:0', 'max:80'],
-            'palabraClave' => ['nullable', 'string', 'max:100'],
+            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regiones())],
+            'institucion' => ['nullable', 'string', 'max:180'],
+            'empresa' => ['nullable', 'string', 'max:180'],
+            'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
+            'palabrasClave' => ['array', 'max:10'],
+            'palabrasClave.*' => ['string', 'max:100', 'distinct'],
         ]);
 
         DB::transaction(function () use ($validated, $matching): void {
@@ -80,8 +125,10 @@ class FiltrosBusqueda extends Component
                     'especialidad' => $validated['especialidad'],
                     'industria' => $validated['industria'],
                     'ciudad' => $validated['ciudad'],
+                    'institucion' => $validated['institucion'],
+                    'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
-                    'palabra_clave' => $validated['palabraClave'],
+                    'palabra_clave' => $validated['palabrasClave'],
                 ],
             ]);
 
@@ -89,18 +136,22 @@ class FiltrosBusqueda extends Component
         });
 
         $this->dispatch('criterios-actualizados');
-        session()->flash('status', 'Filtros actualizados.');
     }
 
     public function render(): View
     {
+        $rangos = array_keys(CatalogosProfesionales::rangosExperiencia());
+
         return view('livewire.empresa.filtros-busqueda', [
+            'instituciones' => CatalogosProfesionales::instituciones(),
+            'minimoExperiencia' => min($rangos),
+            'maximoExperiencia' => max($rangos),
             'grupos' => [
                 ['Cargo', 'cargo', CatalogosProfesionales::cargosAreas()],
                 ['Carrera', 'carrera', array_keys(CatalogosProfesionales::carreras())],
                 ['Especialidad', 'especialidad', $this->especialidadesDisponibles()],
                 ['Industria', 'industria', CatalogosProfesionales::industrias()],
-                ['Ciudad', 'ciudad', CatalogosProfesionales::ciudades()],
+                ['Región', 'ciudad', CatalogosProfesionales::regiones()],
             ],
         ]);
     }

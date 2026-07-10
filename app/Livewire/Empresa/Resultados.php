@@ -116,11 +116,13 @@ class Resultados extends Component
     private function criteriosDisponibles(): array
     {
         $etiquetas = [
-            'cargo' => 'Cargo / especialidad',
+            'cargo' => 'Cargo',
             'carrera' => 'Carrera o título',
             'especialidad' => 'Especialidad / área',
             'industria' => 'Industria',
-            'ciudad' => 'Ciudad / región',
+            'ciudad' => 'Región',
+            'institucion' => 'Institución de estudio',
+            'empresa' => 'Empresa',
             'min_anios' => 'Experiencia mínima',
             'palabra_clave' => 'Palabra clave',
         ];

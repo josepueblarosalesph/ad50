@@ -46,6 +46,8 @@ class Register extends Component
 
         $user = User::create([
             'name' => trim($this->nombre.' '.$this->apellidos),
+            'nombres' => $this->nombre,
+            'apellidos' => $this->apellidos,
             'email' => $this->email,
             'password' => Hash::make($this->password),
             'role' => $this->role,

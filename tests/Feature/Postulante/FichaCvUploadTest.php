@@ -12,9 +12,13 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
 {
     return $component
         ->set('rut', '9.842.115-7')
+        ->set('telefono', '+56 9 5555 1234')
+        ->set('titular', 'Gerenta de Finanzas')
         ->set('anioNacimiento', 1971)
-        ->set('ciudad', 'Concepción')
-        ->set('industria', 'Banca y servicios financieros')
+        ->set('aniosExperiencia', 15)
+        ->set('genero', 'Femenino')
+        ->set('ciudad', 'Biobío')
+        ->set('industriasInteres', ['Banca y servicios financieros'])
         ->set('educaciones', [[
             'nivel' => 'Universitaria',
             'pais' => 'Chile',

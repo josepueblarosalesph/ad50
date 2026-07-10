@@ -33,7 +33,14 @@ class NuevaBusqueda extends Component
     /** @var list<string> */
     public array $ciudad = [];
 
-    public string $palabraClave = '';
+    /** @var list<string> */
+    public array $palabrasClave = [];
+
+    public string $nuevaPalabraClave = '';
+
+    public string $institucion = '';
+
+    public string $empresa = '';
 
     public int $aniosMinimos = 0;
 
@@ -55,13 +62,35 @@ class NuevaBusqueda extends Component
         $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
+        $this->institucion = $criterios['institucion'] ?? '';
+        $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
-        $this->palabraClave = $criterios['palabra_clave'] ?? '';
+        $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
     }
 
     public function updatedCarrera(): void
     {
         $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
+    }
+
+    public function agregarPalabraClave(): void
+    {
+        $palabra = trim($this->nuevaPalabraClave);
+
+        if ($palabra === '' || count($this->palabrasClave) >= 10 || in_array($palabra, $this->palabrasClave, true)) {
+            $this->nuevaPalabraClave = '';
+
+            return;
+        }
+
+        $this->palabrasClave[] = mb_substr($palabra, 0, 100);
+        $this->nuevaPalabraClave = '';
+    }
+
+    public function quitarPalabraClave(int $index): void
+    {
+        unset($this->palabrasClave[$index]);
+        $this->palabrasClave = array_values($this->palabrasClave);
     }
 
     public function save(MatchingService $matching): void
@@ -77,9 +106,12 @@ class NuevaBusqueda extends Component
             'industria' => ['array'],
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
-            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::ciudades())],
-            'palabraClave' => ['nullable', 'string', 'max:100'],
-            'aniosMinimos' => ['required', 'integer', 'min:0', 'max:80'],
+            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regiones())],
+            'palabrasClave' => ['array', 'max:10'],
+            'palabrasClave.*' => ['string', 'max:100', 'distinct'],
+            'institucion' => ['nullable', 'string', 'max:180'],
+            'empresa' => ['nullable', 'string', 'max:180'],
+            'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
         ]);
 
         $busqueda = DB::transaction(function () use ($validated, $matching): Busqueda {
@@ -92,8 +124,10 @@ class NuevaBusqueda extends Component
                     'especialidad' => $validated['especialidad'],
                     'industria' => $validated['industria'],
                     'ciudad' => $validated['ciudad'],
+                    'institucion' => $validated['institucion'],
+                    'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
-                    'palabra_clave' => $validated['palabraClave'],
+                    'palabra_clave' => $validated['palabrasClave'],
                 ],
                 'estado' => 'activa',
             ];
@@ -125,7 +159,9 @@ class NuevaBusqueda extends Component
             'carreras' => array_keys(CatalogosProfesionales::carreras()),
             'especialidades' => $this->especialidadesDisponibles(),
             'industrias' => CatalogosProfesionales::industrias(),
-            'ciudades' => CatalogosProfesionales::ciudades(),
+            'ciudades' => CatalogosProfesionales::regiones(),
+            'instituciones' => CatalogosProfesionales::instituciones(),
+            'rangosExperiencia' => CatalogosProfesionales::rangosExperiencia(),
             'editando' => $this->busqueda !== null,
         ]);
     }
