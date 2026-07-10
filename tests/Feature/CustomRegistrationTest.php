@@ -39,7 +39,10 @@ test('an empresa can create an account', function () {
 
     $registration = file_get_contents(resource_path('views/livewire/auth/register.blade.php'));
 
-    expect(strpos($registration, 'wire:model="nombre"'))->toBeLessThan(strpos($registration, 'wire:model="apellidos"'))
+    expect(strpos($registration, 'wire:model="razon_social"'))->toBeLessThan(strpos($registration, 'wire:model.blur="rut"'))
+        ->and(strpos($registration, 'wire:model.blur="rut"'))->toBeLessThan(strpos($registration, 'Datos de contacto'))
+        ->and(strpos($registration, 'Datos de contacto'))->toBeLessThan(strpos($registration, 'wire:model="nombre"'))
+        ->and(strpos($registration, 'wire:model="nombre"'))->toBeLessThan(strpos($registration, 'wire:model="apellidos"'))
         ->and(strpos($registration, 'wire:model="apellidos"'))->toBeLessThan(strpos($registration, 'wire:model="telefono"'))
         ->and(strpos($registration, 'wire:model="telefono"'))->toBeLessThan(strpos($registration, 'wire:model="email"'))
         ->and(strpos($registration, 'wire:model="email"'))->toBeLessThan(strpos($registration, 'wire:model="password"'));
@@ -51,6 +54,7 @@ test('an empresa can create an account', function () {
         ->set('email', 'ana@empresa.cl')
         ->set('password', 'password')
         ->set('razon_social', 'Empresa de Prueba SpA')
+        ->set('rut', '761234560')
         ->set('telefono', '+56 9 8765 4321')
         ->set('acepta', true)
         ->call('submit')
@@ -66,6 +70,7 @@ test('an empresa can create an account', function () {
     $this->assertDatabaseHas('empresas', [
         'user_id' => $user->id,
         'razon_social' => 'Empresa de Prueba SpA',
+        'rut' => '76.123.456-0',
         'telefono' => '+56 9 8765 4321',
         'estado_activacion' => 'inactiva',
     ]);

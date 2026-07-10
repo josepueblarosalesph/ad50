@@ -64,6 +64,18 @@
             Toma menos de 2 minutos. Luego completas tu {{ $role === 'postulante' ? 'perfil profesional' : 'perfil de empresa' }}.
         </p>
 
+        @if ($role === 'empresa')
+            <div class="grid gap-3.5">
+                <flux:input wire:model="razon_social" label="Razón social *" placeholder="Forestal del Bío Bío S.A." />
+                <flux:input wire:model.blur="rut" label="RUT de la empresa *" placeholder="76.123.456-0" />
+            </div>
+
+            <div class="mb-4 mt-6 flex items-center gap-3">
+                <span class="flex-none text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">Datos de contacto</span>
+                <span class="h-px flex-1 bg-line"></span>
+            </div>
+        @endif
+
         <div class="grid gap-3.5 sm:grid-cols-2">
             <flux:input wire:model="nombre"    label="Nombre *"    placeholder="María José" />
             <flux:input wire:model="apellidos" label="Apellidos *" placeholder="Fuentes Rojas" />
@@ -79,11 +91,6 @@
         <div class="mt-3.5">
             <flux:input wire:model="password" type="password" label="Contraseña *" placeholder="••••••••••" viewable />
         </div>
-        @if ($role === 'empresa')
-            <div class="mt-3.5">
-                <flux:input wire:model="razon_social" label="Razón social *" placeholder="Forestal del Bío Bío S.A." />
-            </div>
-        @endif
 
         <label class="mt-5 mb-5 flex cursor-pointer items-start gap-3 rounded-[10px] border border-orange-200 bg-orange-50 p-4">
             <flux:switch wire:model.live="acepta" class="mt-0.5" />

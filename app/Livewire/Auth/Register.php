@@ -5,6 +5,8 @@ namespace App\Livewire\Auth;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Rules\RutValido;
+use App\Support\Rut;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -29,6 +31,8 @@ class Register extends Component
 
     public string $razon_social = '';
 
+    public string $rut = '';
+
     public string $telefono = '';
 
     public bool $acepta = true;
@@ -38,8 +42,15 @@ class Register extends Component
         $this->role = in_array($role, ['postulante', 'empresa'], true) ? $role : 'postulante';
     }
 
+    public function updatedRut(): void
+    {
+        $this->rut = Rut::formatear($this->rut);
+    }
+
     public function submit(): void
     {
+        $this->rut = Rut::formatear($this->rut);
+
         $this->validate(messages: [
             'acepta.accepted' => 'Debes autorizar el tratamiento de datos.',
         ]);
@@ -66,6 +77,7 @@ class Register extends Component
             Empresa::create([
                 'user_id' => $user->id,
                 'razon_social' => $this->razon_social,
+                'rut' => $this->rut,
                 'telefono' => $this->telefono,
                 'estado_activacion' => 'inactiva',
                 'contacto_principal_nombre' => $user->name,
@@ -96,6 +108,7 @@ class Register extends Component
 
         if ($this->role === 'empresa') {
             $rules['razon_social'] = ['required', 'string', 'max:160'];
+            $rules['rut'] = ['required', 'string', 'max:20', new RutValido];
             $rules['telefono'] = ['required', 'string', 'max:30'];
         }
 
