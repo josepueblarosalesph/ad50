@@ -1,7 +1,7 @@
 <div class="ad-welcome-light">
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
     <section class="ad-light-surface relative min-h-[100svh] overflow-hidden border-b border-line bg-paper"
-        style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-experiencia-v2.webp'); background-position: center, 68% center; background-size: cover;">
+        style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-profesionales-trabajando.webp'); background-position: center, 68% center; background-size: cover;">
         <div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/65 to-transparent"></div>
         <div
             x-data="{ pastHero: false }"

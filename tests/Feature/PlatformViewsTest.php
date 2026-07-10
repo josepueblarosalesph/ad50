@@ -85,7 +85,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('<section class="hidden">', false)
         ->assertSee('ad-welcome-light', false)
         ->assertSee('/images/ad50-logo.png', false)
-        ->assertSee('/images/ad50-hero-experiencia-v2.webp', false)
+        ->assertSee('/images/ad50-hero-profesionales-trabajando.webp', false)
         ->assertSee('href="'.route('login').'"', false)
         ->assertSee('href="'.route('login').'" class="ad-btn-primary ad-btn-sm"', false)
         ->assertSee('Iniciar sesión')
