@@ -65,9 +65,12 @@
                 x-bind:aria-expanded="abierto"
                 class="w-full rounded-lg border border-line-2 bg-white py-2 pl-3 pr-9 text-[14px] text-ink placeholder:text-gray-400 focus:border-orange-400 focus:outline-none dark:bg-[#222528]"
             />
+            {{-- wire:ignore: el morph de Livewire borra el display:none que pone x-show. --}}
             <button
+                wire:ignore
                 type="button"
                 x-show="consulta !== ''"
+                x-cloak
                 x-on:click="limpiar()"
                 class="absolute inset-y-0 right-0 flex items-center px-2.5 text-gray-500 transition hover:text-ink"
                 aria-label="Limpiar {{ $label }}"
@@ -78,7 +81,9 @@
         @endif
     </flux:field>
 
+    {{-- wire:ignore: sin esto el morph elimina los <li> que genera el x-for y la lista queda vacía. --}}
     <ul
+        wire:ignore
         x-show="abierto"
         x-cloak
         class="absolute left-0 z-30 mt-1 max-h-64 w-[min(26rem,80vw)] min-w-full overflow-y-auto rounded-xl border border-line-2 bg-white py-1 shadow-xl dark:border-[#5A5F64] dark:bg-[#222528]"

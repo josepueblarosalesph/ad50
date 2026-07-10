@@ -23,7 +23,7 @@
     >
         <span class="flex-none text-[13px] font-bold text-ink">{{ $titulo }}</span>
         @if (filled($seleccion))
-            <span class="ad-chip ad-chip-orange flex-none">{{ count($seleccion) }}</span>
+            <span class="inline-flex size-5 flex-none items-center justify-center rounded-full bg-orange-100 text-[11px] font-bold leading-none text-orange-600 dark:bg-orange-500/15 dark:text-orange-300">{{ count($seleccion) }}</span>
         @endif
         <span class="min-w-0 flex-1 truncate text-[12px] text-gray-500">{{ filled($seleccion) ? implode(' · ', $seleccion) : 'Sin selección' }}</span>
         <flux:icon.chevron-down class="size-4 flex-none text-gray-500 transition" x-bind:class="abierto && 'rotate-180'" />
