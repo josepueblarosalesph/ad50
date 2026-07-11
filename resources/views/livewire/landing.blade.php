@@ -101,25 +101,6 @@
         </div>
     </section>
 
-    {{-- Confiaron en nosotros · franja de marcas (reemplazar por logos cuando estén disponibles) --}}
-    <section id="confiaron" class="border-b border-line bg-white dark:bg-[#1D2022]">
-        <div class="mx-auto max-w-[1240px] px-6 py-12 lg:px-10 lg:py-14">
-            <p class="text-center text-[12px] font-extrabold uppercase tracking-[.2em] text-gray-500">Confiaron en nosotros</p>
-            <ul class="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 sm:gap-x-14">
-                @foreach ([
-                    'Empresa Uno',
-                    'Empresa Dos',
-                    'Empresa Tres',
-                    'Empresa Cuatro',
-                    'Empresa Cinco',
-                    'Empresa Seis',
-                ] as $marca)
-                    <li class="font-display text-[22px] font-black tracking-tight text-gray-400 grayscale transition duration-300 hover:text-orange-500 hover:grayscale-0 sm:text-[26px]">{{ $marca }}</li>
-                @endforeach
-            </ul>
-        </div>
-    </section>
-
     {{-- Quiénes somos · intro editorial centrada + pilares --}}
     <section id="quienes-somos" class="scroll-mt-24 border-b border-line bg-paper">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
@@ -322,6 +303,33 @@
             </div>
 
             <x-plan-benefits class="mt-10" />
+        </div>
+    </section>
+
+    {{-- Confiaron en nosotros --}}
+    <section id="confiaron" class="border-y border-line bg-paper">
+        <div class="mx-auto max-w-[1240px] px-6 py-14 lg:px-10 lg:py-16">
+            <p class="text-center text-[12px] font-extrabold uppercase tracking-[.2em] text-gray-500">Confiaron en nosotros</p>
+            <ul class="mt-10 grid grid-cols-2 items-center gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-12">
+                @foreach ([
+                    ['Microsoft', 'microsoft'],
+                    ['IBM', 'ibm'],
+                    ['Siemens', 'siemens'],
+                    ['DHL', 'dhl'],
+                    ['SAP', 'sap'],
+                    ['Oracle', 'oracle'],
+                ] as [$marca, $slug])
+                    <li wire:key="trusted-brand-{{ $slug }}" class="flex h-14 items-center justify-center">
+                        <img
+                            src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/{{ $slug }}.svg"
+                            alt="{{ $marca }}"
+                            class="max-h-12 w-auto max-w-[144px] opacity-45 grayscale transition duration-300 hover:opacity-80 lg:max-w-[160px]"
+                            loading="lazy"
+                            decoding="async"
+                        >
+                    </li>
+                @endforeach
+            </ul>
         </div>
     </section>
 

@@ -72,6 +72,10 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Publicaciones ilimitadas')
         ->assertSee('Más elegido')
         ->assertSee('Beneficios para tu proceso de selección')
+        ->assertSee('Confiaron en nosotros')
+        ->assertSee('alt="Microsoft"', false)
+        ->assertSee('alt="IBM"', false)
+        ->assertDontSee('Empresa Uno')
         ->assertSee('Recibe candidatos compatibles automáticamente')
         ->assertSee('Accede a perfiles y currículums completos')
         ->assertSee('Reduce tiempos de búsqueda')
@@ -113,6 +117,9 @@ test('the landing page presents the experience-led visual direction', function (
         ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-empresas"'))
         ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
         ->and(strpos($landing, 'id="como-postulantes"'))->toBeLessThan(strpos($landing, 'id="planes"'));
+
+    expect(strpos($landing, 'id="planes"'))
+        ->toBeLessThan(strpos($landing, 'id="confiaron"'));
 });
 
 test('the interface uses the official brand typography and color tokens', function () {
