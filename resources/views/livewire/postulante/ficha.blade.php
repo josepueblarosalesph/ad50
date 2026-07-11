@@ -106,7 +106,7 @@
             </section>
 
             <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 3 ? 'hidden' : '' }}">
-                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una experiencia para aparecer en las búsquedas.</p></div><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una experiencia para aparecer en las búsquedas. Puedes agregar hasta 5.</p></div><button type="button" wire:click="addExperiencia" @disabled(count($experiencias) >= 5) class="ad-btn-ghost ad-btn-sm disabled:cursor-not-allowed disabled:opacity-50"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
                 <div class="p-6 space-y-5">@include('livewire.postulante.partials.form-experiencia')</div>
             </section>
 
@@ -155,7 +155,7 @@
                     <x-ficha-dato label="Año de nacimiento">{{ $anioNacimiento ?: '—' }}</x-ficha-dato>
                     <x-ficha-dato label="Años de experiencia">{{ $aniosExperiencia !== null ? $aniosExperiencia : '—' }}</x-ficha-dato>
                     <x-ficha-dato label="Género">{{ $genero ?: '—' }}</x-ficha-dato>
-                    <x-ficha-dato label="Región">{{ $ciudad ?: '—' }}</x-ficha-dato>
+                    <x-ficha-dato label="Lugar de residencia">{{ $ciudad ?: '—' }}</x-ficha-dato>
                 </dl>
         </section>
         <section id="acerca-de-mi" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
@@ -180,8 +180,8 @@
                 <div class="space-y-4 p-6">
                     @forelse ($experiencias as $exp)
                         <div class="rounded-[12px] border border-line-2 p-4">
-                            <div class="flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[15px] font-bold text-ink">{{ $exp['cargo'] ?: 'Cargo sin nombre' }}</h3><span class="text-[12px] font-semibold text-gray-500">{{ ($meses[$exp['inicio_mes']] ?? '') }} {{ $exp['inicio_anio'] }} — {{ $exp['actualmente'] ? 'Actualidad' : trim(($meses[$exp['fin_mes']] ?? '').' '.$exp['fin_anio']) }}</span></div>
-                            <p class="mt-0.5 text-[13px] font-semibold text-orange-600">{{ $exp['empresa'] }}</p>
+                            <div class="flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[15px] font-bold text-ink">{{ (($exp['cargo'] ?? '') === 'Otros' ? ($exp['cargo_otro'] ?? '') : $exp['cargo']) ?: 'Cargo sin nombre' }}</h3><span class="text-[12px] font-semibold text-gray-500">{{ ($meses[$exp['inicio_mes']] ?? '') }} {{ $exp['inicio_anio'] }} — {{ $exp['actualmente'] ? 'Actualidad' : trim(($meses[$exp['fin_mes']] ?? '').' '.$exp['fin_anio']) }}</span></div>
+                            <p class="mt-0.5 text-[13px] font-semibold text-orange-600">{{ ($exp['empresa'] ?? '') === 'Otros' ? ($exp['empresa_otro'] ?? '') : $exp['empresa'] }}</p>
                             @if (filled($exp['responsabilidades']))<p class="mt-2 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">{{ \Illuminate\Support\Str::limit($exp['responsabilidades'], 220) }}</p>@endif
                         </div>
                     @empty
@@ -253,7 +253,7 @@
                         @case ('datos') @include('livewire.postulante.partials.form-datos') @break
                         @case ('acerca') @include('livewire.postulante.partials.form-acerca') @break
                         @case ('experiencia')
-                            <div class="flex justify-end"><button type="button" wire:click="addExperiencia" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+                            <div class="flex justify-end"><button type="button" wire:click="addExperiencia" @disabled(count($experiencias) >= 5) class="ad-btn-ghost ad-btn-sm disabled:cursor-not-allowed disabled:opacity-50"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
                             @include('livewire.postulante.partials.form-experiencia')
                             @break
                         @case ('educacion')

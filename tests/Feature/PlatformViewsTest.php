@@ -382,9 +382,10 @@ test('a postulante can view the panel and professional profile', function () {
     $cargos = CatalogosProfesionales::cargos();
 
     expect($cargos)
-        ->toHaveCount(29956)
-        ->toContain('Abastecedor Logístico', 'Gerente Finanza')
-        ->and(array_unique($cargos))->toHaveCount(29956);
+        ->toHaveCount(29957)
+        ->toContain('Otros', 'Abastecedor Logístico', 'Gerente Finanza')
+        ->and($cargos[0])->toBe('Otros')
+        ->and(array_unique($cargos))->toHaveCount(29957);
 
     // Dos juegos de secciones (paso a paso + editor de solo lectura) comparten el mismo estilo.
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(12);

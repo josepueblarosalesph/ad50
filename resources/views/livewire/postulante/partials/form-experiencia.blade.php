@@ -2,11 +2,25 @@
     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
         <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
         <div class="grid md:grid-cols-2 gap-4">
-            <x-combobox model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" :opciones="$cargos" :valor="$experiencia['cargo'] ?? ''" error="experiencias.{{ $index }}.cargo" placeholder="Escribe para buscar" />
+            <div>
+                <x-combobox model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" :opciones="$cargos" :valor="$experiencia['cargo'] ?? ''" error="experiencias.{{ $index }}.cargo" placeholder="Escribe para buscar" />
+                @if (($experiencia['cargo'] ?? '') === 'Otros')
+                    <div class="mt-3">
+                        <flux:input wire:model.blur="experiencias.{{ $index }}.cargo_otro" label="Especifica el cargo u ocupación *" placeholder="Escribe el cargo u ocupación" />
+                    </div>
+                @endif
+            </div>
             <flux:select wire:model="experiencias.{{ $index }}.tipo_trabajo" label="Tipo de trabajo *">
                 @foreach ($tiposTrabajo as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
             </flux:select>
-            <x-combobox model="experiencias.{{ $index }}.empresa" label="Empresa *" :opciones="$empresas" :valor="$experiencia['empresa'] ?? ''" error="experiencias.{{ $index }}.empresa" placeholder="Escribe para buscar" />
+            <div>
+                <x-combobox model="experiencias.{{ $index }}.empresa" label="Empresa *" :opciones="$empresas" :valor="$experiencia['empresa'] ?? ''" error="experiencias.{{ $index }}.empresa" placeholder="Escribe para buscar" />
+                @if (($experiencia['empresa'] ?? '') === 'Otros')
+                    <div class="mt-3">
+                        <flux:input wire:model.blur="experiencias.{{ $index }}.empresa_otro" label="Especifica el nombre de la empresa *" placeholder="Escribe el nombre de la empresa" />
+                    </div>
+                @endif
+            </div>
             <flux:select wire:model="experiencias.{{ $index }}.jerarquia" label="Jerarquía *">
                 <flux:select.option value="">Selecciona una jerarquía</flux:select.option>
                 @foreach ($jerarquias as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach

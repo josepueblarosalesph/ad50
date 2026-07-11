@@ -50,8 +50,8 @@
             <flux:select.option value="">Selecciona una opción</flux:select.option>
             @foreach ($generos as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
         </flux:select>
-        <flux:select wire:model="ciudad" label="Región *">
-            <flux:select.option value="">Selecciona una región</flux:select.option>
+        <flux:select wire:model="ciudad" label="Lugar de residencia *">
+            <flux:select.option value="">Selecciona tu lugar de residencia</flux:select.option>
             @foreach ($regiones as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
         </flux:select>
     </div>

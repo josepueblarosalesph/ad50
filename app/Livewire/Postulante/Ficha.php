@@ -298,7 +298,7 @@ class Ficha extends Component
 
     public function addExperiencia(): void
     {
-        if (count($this->experiencias) >= 20) {
+        if (count($this->experiencias) >= 5) {
             return;
         }
 
@@ -550,10 +550,12 @@ class Ficha extends Component
     private function guardarExperiencias(): bool
     {
         $validated = $this->validate([
-            'experiencias' => ['required', 'array', 'min:1', 'max:20'],
+            'experiencias' => ['required', 'array', 'min:1', 'max:5'],
             'experiencias.*.cargo' => ['required', Rule::in(CatalogosProfesionales::cargos())],
+            'experiencias.*.cargo_otro' => ['nullable', 'string', 'max:120'],
             'experiencias.*.tipo_trabajo' => ['required', Rule::in(CatalogosProfesionales::tiposTrabajo())],
             'experiencias.*.empresa' => ['required', Rule::in(CatalogosProfesionales::empresas())],
+            'experiencias.*.empresa_otro' => ['nullable', 'string', 'max:160'],
             'experiencias.*.jerarquia' => ['required', Rule::in(CatalogosProfesionales::jerarquias())],
             'experiencias.*.actividad_empresa' => ['required', Rule::in(CatalogosProfesionales::industrias())],
             'experiencias.*.inicio_mes' => ['required', 'integer', 'between:1,12'],
@@ -565,6 +567,21 @@ class Ficha extends Component
         ]);
 
         foreach ($validated['experiencias'] as $index => $experiencia) {
+            $validated['experiencias'][$index]['cargo_otro'] = $experiencia['cargo'] === 'Otros'
+                ? trim((string) ($experiencia['cargo_otro'] ?? ''))
+                : null;
+            $validated['experiencias'][$index]['empresa_otro'] = $experiencia['empresa'] === 'Otros'
+                ? trim((string) ($experiencia['empresa_otro'] ?? ''))
+                : null;
+
+            if ($experiencia['cargo'] === 'Otros' && $validated['experiencias'][$index]['cargo_otro'] === '') {
+                $this->addError("experiencias.$index.cargo_otro", 'Especifica el cargo u ocupación.');
+            }
+
+            if ($experiencia['empresa'] === 'Otros' && $validated['experiencias'][$index]['empresa_otro'] === '') {
+                $this->addError("experiencias.$index.empresa_otro", 'Especifica el nombre de la empresa.');
+            }
+
             if ($experiencia['actualmente']) {
                 $validated['experiencias'][$index]['fin_mes'] = null;
                 $validated['experiencias'][$index]['fin_anio'] = null;
@@ -593,8 +610,8 @@ class Ficha extends Component
         $principal = $validated['experiencias'][0];
 
         auth()->user()->postulante()->update([
-            'cargo_actual' => $principal['cargo'],
-            'empresa_actual' => $principal['empresa'],
+            'cargo_actual' => $principal['cargo'] === 'Otros' ? ($principal['cargo_otro'] ?: 'Otros') : $principal['cargo'],
+            'empresa_actual' => $principal['empresa'] === 'Otros' ? ($principal['empresa_otro'] ?: 'Otros') : $principal['empresa'],
             'experiencia_area' => $principal['actividad_empresa'],
             'experiencia_inicio' => $principal['inicio_anio'],
             'experiencia_fin' => $principal['fin_anio'],
@@ -845,10 +862,12 @@ class Ficha extends Component
             'idiomas' => ['array', 'max:'.count(CatalogosProfesionales::idiomas())],
             'idiomas.*.idioma' => ['required', Rule::in(CatalogosProfesionales::idiomas()), 'distinct:strict'],
             'idiomas.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesIdioma())],
-            'experiencias' => ['required', 'array', 'min:1', 'max:20'],
+            'experiencias' => ['required', 'array', 'min:1', 'max:5'],
             'experiencias.*.cargo' => ['required', Rule::in(CatalogosProfesionales::cargos())],
+            'experiencias.*.cargo_otro' => ['nullable', 'string', 'max:120'],
             'experiencias.*.tipo_trabajo' => ['required', Rule::in(CatalogosProfesionales::tiposTrabajo())],
             'experiencias.*.empresa' => ['required', Rule::in(CatalogosProfesionales::empresas())],
+            'experiencias.*.empresa_otro' => ['nullable', 'string', 'max:160'],
             'experiencias.*.jerarquia' => ['required', Rule::in(CatalogosProfesionales::jerarquias())],
             'experiencias.*.actividad_empresa' => ['required', Rule::in(CatalogosProfesionales::industrias())],
             'experiencias.*.inicio_mes' => ['required', 'integer', 'between:1,12'],
@@ -894,6 +913,21 @@ class Ficha extends Component
         }
 
         foreach ($validated['experiencias'] as $index => $experiencia) {
+            $validated['experiencias'][$index]['cargo_otro'] = $experiencia['cargo'] === 'Otros'
+                ? trim((string) ($experiencia['cargo_otro'] ?? ''))
+                : null;
+            $validated['experiencias'][$index]['empresa_otro'] = $experiencia['empresa'] === 'Otros'
+                ? trim((string) ($experiencia['empresa_otro'] ?? ''))
+                : null;
+
+            if ($experiencia['cargo'] === 'Otros' && $validated['experiencias'][$index]['cargo_otro'] === '') {
+                $this->addError("experiencias.$index.cargo_otro", 'Especifica el cargo u ocupación.');
+            }
+
+            if ($experiencia['empresa'] === 'Otros' && $validated['experiencias'][$index]['empresa_otro'] === '') {
+                $this->addError("experiencias.$index.empresa_otro", 'Especifica el nombre de la empresa.');
+            }
+
             if ($experiencia['actualmente']) {
                 $validated['experiencias'][$index]['fin_mes'] = null;
                 $validated['experiencias'][$index]['fin_anio'] = null;
@@ -949,14 +983,14 @@ class Ficha extends Component
                 return Postulante::query()->updateOrCreate(['user_id' => auth()->id()], [
                     ...$this->atributosDatos($validated),
                     ...$this->atributosAcercaDeMi($validated),
-                    'cargo_actual' => $principal['cargo'],
+                    'cargo_actual' => $principal['cargo'] === 'Otros' ? ($principal['cargo_otro'] ?: 'Otros') : $principal['cargo'],
                     'carrera' => $educacionPrincipal['carrera'],
                     'universidad' => $educacionPrincipal['institucion'],
                     'especialidad' => $educacionPrincipal['mencion'],
                     'postgrado' => in_array($educacionPrincipal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $educacionPrincipal['carrera'] : null,
                     'educaciones' => $validated['educaciones'],
                     'idiomas' => $validated['idiomas'],
-                    'empresa_actual' => $principal['empresa'],
+                    'empresa_actual' => $principal['empresa'] === 'Otros' ? ($principal['empresa_otro'] ?: 'Otros') : $principal['empresa'],
                     'experiencia_area' => $principal['actividad_empresa'],
                     'experiencia_inicio' => $principal['inicio_anio'],
                     'experiencia_fin' => $principal['fin_anio'],
@@ -1015,8 +1049,10 @@ class Ficha extends Component
     {
         return [
             'cargo' => '',
+            'cargo_otro' => '',
             'tipo_trabajo' => 'Jornada completa',
             'empresa' => '',
+            'empresa_otro' => '',
             'jerarquia' => '',
             'actividad_empresa' => '',
             'inicio_mes' => null,
@@ -1070,8 +1106,10 @@ class Ficha extends Component
 
         return array_replace($this->nuevaExperiencia(), [
             'cargo' => $experiencia['cargo'] ?? '',
+            'cargo_otro' => $experiencia['cargo_otro'] ?? '',
             'tipo_trabajo' => $experiencia['tipo_trabajo'] ?? 'Jornada completa',
             'empresa' => $experiencia['empresa'] ?? '',
+            'empresa_otro' => $experiencia['empresa_otro'] ?? '',
             'jerarquia' => $experiencia['jerarquia'] ?? 'Profesional / Especialista',
             'actividad_empresa' => $experiencia['actividad_empresa'] ?? $experiencia['area'] ?? '',
             'inicio_mes' => $experiencia['inicio_mes'] ?? 1,

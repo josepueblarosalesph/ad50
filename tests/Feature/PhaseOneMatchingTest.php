@@ -384,3 +384,79 @@ test('the age range rejects a minimum above the maximum', function () {
         ->set('edadMin', 70)
         ->assertHasErrors(['edadMax' => 'gte']);
 });
+
+test('choosing "Otros" for cargo or empresa requires specifying the free-text value', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create(['user_id' => $user->id, 'onboarding_paso' => 3, 'onboarding_completado' => false]);
+
+    $experiencia = [
+        'cargo' => 'Otros', 'cargo_otro' => '',
+        'tipo_trabajo' => 'Jornada completa',
+        'empresa' => 'Otros', 'empresa_otro' => '',
+        'jerarquia' => 'Jefatura',
+        'actividad_empresa' => 'Banca y servicios financieros',
+        'inicio_mes' => 1, 'inicio_anio' => 2010,
+        'actualmente' => true, 'fin_mes' => null, 'fin_anio' => null,
+        'responsabilidades' => 'Lideré el área durante varios años.',
+    ];
+
+    $component = Livewire::actingAs($user)->test(Ficha::class)
+        ->set('experiencias', [$experiencia])
+        ->call('avanzar')
+        ->assertHasErrors(['experiencias.0.cargo_otro', 'experiencias.0.empresa_otro']);
+
+    $component
+        ->set('experiencias.0.cargo_otro', 'Analista de Riesgo')
+        ->set('experiencias.0.empresa_otro', 'Consultora Independiente')
+        ->call('avanzar')
+        ->assertHasNoErrors();
+
+    expect($user->postulante->fresh()->experiencias[0])
+        ->toMatchArray(['cargo' => 'Otros', 'cargo_otro' => 'Analista de Riesgo', 'empresa' => 'Otros', 'empresa_otro' => 'Consultora Independiente'])
+        ->and($user->postulante->fresh()->cargo_actual)->toBe('Analista de Riesgo')
+        ->and($user->postulante->fresh()->empresa_actual)->toBe('Consultora Independiente');
+});
+
+test('a cargo entered as "Otros" free text participates in the matching', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Otros']);
+
+    $matchUser = User::factory()->create(['role' => 'postulante']);
+    $match = Postulante::query()->create([
+        'user_id' => $matchUser->id,
+        'visible' => true,
+        'anios_experiencia' => 20,
+        'cargo_actual' => 'Analista de Finanzas Corporativas',
+        'experiencias' => [[
+            'cargo' => 'Otros', 'cargo_otro' => 'Analista de Finanzas Corporativas',
+            'empresa' => 'Otros', 'empresa_otro' => 'Consultora Independiente',
+            'actividad_empresa' => 'Finanzas', 'inicio' => 2010, 'fin' => 2026,
+        ]],
+    ]);
+
+    $noMatchUser = User::factory()->create(['role' => 'postulante']);
+    $noMatch = Postulante::query()->create([
+        'user_id' => $noMatchUser->id,
+        'visible' => true,
+        'anios_experiencia' => 20,
+        'cargo_actual' => 'Jefe de Bodega',
+        'experiencias' => [[
+            'cargo' => 'Otros', 'cargo_otro' => 'Jefe de Bodega',
+            'empresa' => 'Otros', 'empresa_otro' => 'Logística Sur',
+            'actividad_empresa' => 'Logística / Cadena de suministros', 'inicio' => 2010, 'fin' => 2026,
+        ]],
+    ]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Perfil financiero')
+        ->set('cargo', ['Finanzas'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
+    $ids = $busqueda->candidatos()->where('estado_match', 'cumple')->pluck('postulante_id');
+
+    expect($ids)->toContain($match->id)
+        ->and($ids)->not->toContain($noMatch->id);
+});

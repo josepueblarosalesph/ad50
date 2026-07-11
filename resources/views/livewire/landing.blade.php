@@ -101,7 +101,24 @@
         </div>
     </section>
 
-    
+    {{-- Confiaron en nosotros · franja de marcas (reemplazar por logos cuando estén disponibles) --}}
+    <section id="confiaron" class="border-b border-line bg-white dark:bg-[#1D2022]">
+        <div class="mx-auto max-w-[1240px] px-6 py-12 lg:px-10 lg:py-14">
+            <p class="text-center text-[12px] font-extrabold uppercase tracking-[.2em] text-gray-500">Confiaron en nosotros</p>
+            <ul class="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-6 sm:gap-x-14">
+                @foreach ([
+                    'Empresa Uno',
+                    'Empresa Dos',
+                    'Empresa Tres',
+                    'Empresa Cuatro',
+                    'Empresa Cinco',
+                    'Empresa Seis',
+                ] as $marca)
+                    <li class="font-display text-[22px] font-black tracking-tight text-gray-400 grayscale transition duration-300 hover:text-orange-500 hover:grayscale-0 sm:text-[26px]">{{ $marca }}</li>
+                @endforeach
+            </ul>
+        </div>
+    </section>
 
     {{-- Quiénes somos · intro editorial centrada + pilares --}}
     <section id="quienes-somos" class="scroll-mt-24 border-b border-line bg-paper">
@@ -115,6 +132,12 @@
                 <p class="mx-auto mt-4 max-w-[620px] text-[15px] leading-[1.7] text-gray-500">
                     Diseñamos una experiencia clara y respetuosa para que cada perfil sea evaluado por su experiencia real y cada empresa pueda tomar decisiones con información relevante.
                 </p>
+                <div class="mt-8 flex justify-center">
+                    <a href="{{ route('quienes-somos') }}" class="ad-btn-ghost" wire:navigate>
+                        Conoce más sobre AD+50
+                        <flux:icon.arrow-right class="size-4" />
+                    </a>
+                </div>
             </div>
 
             <div class="mx-auto mt-16 grid max-w-[980px] gap-y-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-line">
@@ -136,9 +159,9 @@
     </section>
 
     {{-- Cómo funciona para empresas --}}
-    <section id="como-empresas" class="relative isolate scroll-mt-24 overflow-hidden bg-gradient-to-b from-orange-50 to-paper text-ink">
-        <div class="pointer-events-none absolute -right-24 -top-32 size-[520px] rounded-full bg-orange-500/10 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-56 -left-40 size-[560px] rounded-full border-[90px] border-orange-500/[.05]"></div>
+    <section id="como-empresas" class="relative isolate scroll-mt-24 overflow-hidden bg-gradient-to-b from-orange-50/60 to-paper text-ink">
+        <div class="pointer-events-none absolute -right-40 -top-48 size-[620px] rounded-full bg-orange-500/[.05] blur-[130px]"></div>
+        <div class="pointer-events-none absolute -bottom-56 -left-40 size-[560px] rounded-full border-[90px] border-orange-500/[.03]"></div>
         <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-700 via-orange-500 to-orange-200"></div>
 
         <div class="relative mx-auto max-w-[1240px] px-6 py-28 lg:px-10 lg:py-36">

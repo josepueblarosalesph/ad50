@@ -47,7 +47,7 @@ class MatchingService
     {
         $experiencias = $postulante->experiencias ?? [];
         $cargos = collect($experiencias)
-            ->flatMap(fn (array $experiencia): array => [$experiencia['cargo'] ?? '', $experiencia['area'] ?? ''])
+            ->flatMap(fn (array $experiencia): array => [$experiencia['cargo'] ?? '', $experiencia['cargo_otro'] ?? '', $experiencia['area'] ?? ''])
             ->push($postulante->cargo_actual)
             ->filter();
 
@@ -67,7 +67,7 @@ class MatchingService
             }],
             'empresa' => ['Empresa', function (string $valor) use ($postulante): bool {
                 $empresas = collect($postulante->experiencias ?? [])
-                    ->pluck('empresa')
+                    ->flatMap(fn (array $experiencia): array => [$experiencia['empresa'] ?? '', $experiencia['empresa_otro'] ?? ''])
                     ->push($postulante->empresa_actual)
                     ->filter();
 
