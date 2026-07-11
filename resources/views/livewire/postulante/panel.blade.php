@@ -98,9 +98,7 @@
                             Cumples {{ $m->criterios_cumplidos }} de {{ $m->criterios_totales }} criterios · {{ $m->created_at->diffForHumans() }}
                         </span>
                     </div>
-                    @if ($m->estado_match === 'cumple')
-                        <span class="ad-chip ad-chip-green">Cumple</span>
-                    @else
+                    @if ($m->estado_match !== 'cumple')
                         <span class="ad-chip">Parcial</span>
                     @endif
                 </div>

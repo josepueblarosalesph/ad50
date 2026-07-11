@@ -47,14 +47,22 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
         ]]);
 }
 
-test('la ficha muestra el control para adjuntar el curriculum', function () {
+test('la ficha muestra el control para adjuntar el curriculum al abrir el modal', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id]);
 
+    // En el editor de solo lectura, el control de subida vive en el modal y carga bajo demanda.
     $this->actingAs($user)
         ->get(route('postulante.ficha'))
         ->assertOk()
         ->assertSee('Currículum Vitae')
+        ->assertDontSee('wire:model="cv"', false);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->call('editarSeccion', 'curriculum')
+        ->assertSet('seccionEditando', 'curriculum')
+        ->assertSee('Selecciona tu CV en PDF')
         ->assertSee('wire:model="cv"', false);
 });
 

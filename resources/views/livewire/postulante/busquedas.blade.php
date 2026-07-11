@@ -24,15 +24,12 @@
                         <p class="text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">Oportunidad profesional</p>
                         <h2 class="mt-1 text-[20px] font-bold text-ink">{{ $match->busqueda->titulo }}</h2>
                         <p class="mt-2 text-[13px] text-gray-500">Coincidencia detectada {{ $match->created_at->diffForHumans() }}</p>
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            @foreach ($match->criterios_detalle ?? [] as $detalle)
-                                @if ($detalle['cumple'] ?? false)
-                                    <span class="ad-chip ad-chip-green"><flux:icon.check class="size-4" />{{ $detalle['criterio'] }}: {{ $detalle['valor'] }}</span>
-                                @endif
-                            @endforeach
-                        </div>
                     </div>
-                    <span class="ad-chip ad-chip-green self-start md:self-auto"><flux:icon.check class="size-4" />Cumples {{ $match->criterios_cumplidos }} de {{ $match->criterios_totales }}</span>
+                    @if ($match->contactado_at)
+                        <span class="ad-chip ad-chip-green self-start md:self-auto"><flux:icon.eye class="size-4" />Visto</span>
+                    @else
+                        <span class="ad-chip self-start md:self-auto"><flux:icon.eye-slash class="size-4" />No visto</span>
+                    @endif
                 </div>
             </article>
         @empty

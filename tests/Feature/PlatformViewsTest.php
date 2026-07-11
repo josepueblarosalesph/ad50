@@ -301,22 +301,20 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertDontSee('Mi activación')
         ->assertDontSee('<aside class="hidden border-r', false);
 
+    // Perfil completo → editor de solo lectura: resumen + botones "Editar" (el formulario carga en el modal bajo demanda).
     $this->actingAs($user)->get(route('postulante.ficha'))
         ->assertOk()
         ->assertSee('Mi perfil profesional')
+        ->assertSee('Acerca de mí')
+        ->assertSee('Experiencia laboral')
+        ->assertSee('Currículum Vitae')
         ->assertSee('Género')
-        ->assertSee('Masculino')
-        ->assertSee('Femenino')
-        ->assertSee('Prefiero no Informar')
-        ->assertDontSee('No binario')
-        ->assertSee('Titular *')
-        ->assertSee('maxlength="100"', false)
-        ->assertSee('Medio')
-        ->assertSee('Alto')
-        ->assertDontSee('>Bajo<', false)
+        ->assertSee('Editar')
+        ->assertSee("wire:click=\"editarSeccion('datos')\"", false)
         ->assertSee('href="'.route('postulante.busquedas').'"', false)
         ->assertDontSee(route('postulante.panel').'#coincidencias', false)
         ->assertDontSee('Mi activación')
+        ->assertDontSee('Titular *')
         ->assertDontSee('Sección 1 de 5')
         ->assertDontSee('Sección 5 de 5');
 
@@ -335,23 +333,40 @@ test('a postulante can view the panel and professional profile', function () {
         ->toContain('border-orange-500 bg-orange-100 text-orange-700 shadow-sm')
         ->toContain('border-line-2 bg-white text-gray-700')
         ->toContain('id="datos-personales" class="ad-card order-1')
-        ->toContain('id="experiencia" class="ad-card order-2')
-        ->toContain('id="educacion" class="ad-card order-3')
-        ->toContain('id="idiomas" class="ad-card order-4')
+        ->toContain('id="acerca-de-mi" class="ad-card order-2')
+        ->toContain('id="experiencia" class="ad-card order-3')
+        ->toContain('id="educacion" class="ad-card order-4')
+        ->toContain('id="idiomas" class="ad-card order-5')
         ->toContain('id="curriculum" class="ad-card mt-5')
+        // Resumen de solo lectura del editor.
         ->toContain('Regiones de interés')
         ->toContain('Industrias de interés')
         ->toContain('Modalidad preferida')
         ->toContain('Situación laboral')
         ->toContain('Expectativa de renta')
-        ->toContain('Nacionalidad *')
-        ->toContain('Años de experiencia *')
-        ->toContain('Escribe una breve presentación')
+        // Edición por sección mediante un único modal compartido que reutiliza los partials.
+        ->toContain("wire:click=\"editarSeccion('datos')\"")
+        ->toContain("wire:click=\"editarSeccion('acerca')\"")
+        ->toContain('<flux:modal name="editor"')
+        ->toContain('wire:close="cancelarEdicion"')
+        ->toContain('wire:click="guardarSeccion')
+        ->toContain("@include('livewire.postulante.partials.form-datos')")
         ->not->toContain('id="intereses"')
         ->and(strpos($ficha, "'Mis Datos'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
         ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
+
+    // Los campos editables viven en partials, reutilizados por el onboarding y por los modales.
+    $formDatos = file_get_contents(resource_path('views/livewire/postulante/partials/form-datos.blade.php'));
+    $formAcerca = file_get_contents(resource_path('views/livewire/postulante/partials/form-acerca.blade.php'));
+    $formCv = file_get_contents(resource_path('views/livewire/postulante/partials/form-curriculum.blade.php'));
+
+    expect($formDatos)->toContain('Nacionalidad *')->toContain('Años de experiencia *');
+    expect($formAcerca)->toContain('Escribe una breve presentación');
+    expect($formCv)
+        ->toContain('border-dashed border-orange-200 bg-orange-50/60')
+        ->toContain('text-orange-700 dark:text-[#F7C59E]');
 
     expect(CatalogosProfesionales::generos())->toBe([
         'Masculino',
@@ -359,12 +374,11 @@ test('a postulante can view the panel and professional profile', function () {
         'Prefiero no Informar',
     ]);
 
-    expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(5);
-    expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(5);
-    expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(5);
+    // Dos juegos de secciones (paso a paso + editor de solo lectura) comparten el mismo estilo.
+    expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(12);
+    expect(substr_count($ficha, 'bg-orange-50/60 dark:bg-orange-50'))->toBe(12);
+    expect(substr_count($ficha, 'text-orange-700 dark:text-orange-500'))->toBe(12);
     expect($ficha)
-        ->toContain('border-dashed border-orange-200 bg-orange-50/60')
-        ->toContain('text-orange-700 dark:text-[#F7C59E]')
         ->not->toContain('bg-[#FCFBFD]')
         ->not->toContain('dark:bg-[#252129]');
 });
@@ -482,6 +496,7 @@ test('a postulante can update every section of the professional profile', functi
         ->set('industriasInteres', ['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información'])
         ->set('regionesInteres', ['Biobío', 'Ñuble', 'La Araucanía'])
         ->set('modalidadesTrabajo', ['Jornada Parcial', 'Honorarios'])
+        ->set('habilidades', ['Adobe Photoshop', 'Liderazgo'])
         ->set('experiencias', [[
             'cargo' => 'Gerenta de Finanzas',
             'tipo_trabajo' => 'Jornada completa',
@@ -512,14 +527,12 @@ test('a postulante can update every section of the professional profile', functi
         'apellidos' => 'Fuentes',
         'email' => 'maria.fuentes@example.com',
     ]);
+    // Las columnas json no admiten comparación por igualdad en PostgreSQL: se verifican vía el modelo.
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
         'rut' => '9.842.115-7',
         'genero' => 'Femenino',
         'titular' => 'Gerenta de Finanzas y transformación empresarial',
-        'regiones_interes' => json_encode(['Biobío', 'Ñuble', 'La Araucanía']),
-        'industrias_interes' => json_encode(['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información']),
-        'modalidad_trabajo' => json_encode(['Jornada Parcial', 'Honorarios']),
         'nacionalidad' => 'Chilena',
         'situacion_laboral' => 'Trabajando actualmente',
         'expectativa_renta' => 2500000,
@@ -530,6 +543,11 @@ test('a postulante can update every section of the professional profile', functi
         'empresa_actual' => 'Empresa de Prueba SpA',
         'completitud' => 100,
     ]);
+    expect($user->postulante->fresh())
+        ->regiones_interes->toBe(['Biobío', 'Ñuble', 'La Araucanía'])
+        ->industrias_interes->toBe(['Banca y servicios financieros', 'Forestal / Papelera', 'Tecnología de la Información'])
+        ->modalidad_trabajo->toBe(['Jornada Parcial', 'Honorarios'])
+        ->habilidades->toBe(['Adobe Photoshop', 'Liderazgo']);
 
     $experiencia = $user->postulante->fresh()->experiencias[0];
     $educaciones = $user->postulante->fresh()->educaciones;

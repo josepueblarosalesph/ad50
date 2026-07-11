@@ -10,7 +10,7 @@ Plataforma web (Chile) que conecta **postulantes mayores de 50 años** con **emp
 - **Livewire 4 + Flux UI (free)** — toda la UI dinámica es server-side en PHP; sin framework JS de front. Alpine.js para interacciones puntuales.
 - **Laravel Fortify** — autenticación (login, registro, verificación de email, 2FA, passkeys)
 - **Tailwind CSS 4** + **Vite** (bundling de `resources/css` y `resources/js`)
-- **SQLite** por defecto en desarrollo (`database/database.sqlite`)
+- **PostgreSQL** como motor de base de datos. La conexión (`DB_CONNECTION=pgsql`, host, base, usuario y contraseña) se define en `.env` y apunta a la instancia gestionada en **Laravel Cloud**.
 - **Pest 4** para tests; **Pint** para formateo; **Larastan/PHPStan** para análisis estático
 
 Comandos útiles: `composer dev` (levanta servidor + vite + cola), `composer setup` (instalación inicial), `php artisan test --compact`, `vendor/bin/pint --dirty`.
@@ -127,3 +127,11 @@ Convención Livewire: cada componente `App\Livewire\X\Y` tiene su vista en `reso
 ## Tests
 
 Los flujos críticos están cubiertos en `tests/Feature/`: [PhaseOneMatchingTest](tests/Feature/PhaseOneMatchingTest.php) (motor de matching), [EmpresaActivationWorkflowTest](tests/Feature/EmpresaActivationWorkflowTest.php), [CandidateFavoritesTest](tests/Feature/CandidateFavoritesTest.php), [CustomRegistrationTest](tests/Feature/CustomRegistrationTest.php). Ejecutar: `php artisan test --compact`.
+
+### Base de datos en las pruebas
+
+Los tests corren sobre **PostgreSQL local** (mismo motor que producción), en la base **`ad50testdb`**. La conexión está fijada en [phpunit.xml](phpunit.xml) con `force="true"` (`DB_CONNECTION=pgsql`, host `127.0.0.1`, base `ad50testdb`), de modo que la suite **nunca** hereda la conexión productiva del `.env` ni del shell. Los tests usan `RefreshDatabase`. Setup local: PostgreSQL como servicio de Homebrew + `createdb ad50testdb`.
+
+> ⚠️ **Nunca apuntes la suite a la base productiva** de `.env` (host `...pg.laravel.cloud`, base `ad50`): `RefreshDatabase` **elimina y recrea el esquema** y borraría los datos reales.
+
+**Ojo con las columnas `json` en PostgreSQL** (`experiencias`, `educaciones`, `idiomas`, `regiones_interes`, `industrias_interes`, `modalidad_trabajo`, `habilidades`, `criterios`, etc.): el tipo `json` de Postgres **no admite `=` ni `distinct`** (a diferencia de SQLite). No las compares por igualdad en `assertDatabaseHas(...)` ni uses `distinct()->count(...)` sobre ellas; verifícalas a través del modelo (`expect($postulante->fresh())->industrias_interes->toBe([...])`).

@@ -27,6 +27,7 @@ class Postulante extends Model
         'experiencia_fin' => 'integer',
         'regiones_interes' => 'array',
         'industrias_interes' => 'array',
+        'habilidades' => 'array',
         'modalidad_trabajo' => 'array',
         'educaciones' => 'array',
         'idiomas' => 'array',

@@ -10,6 +10,7 @@ use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -79,6 +80,14 @@ class Ficha extends Component
 
     public string $resumenProfesional = '';
 
+    /** @var array<int, string> */
+    public array $habilidades = [];
+
+    public string $buscarHabilidad = '';
+
+    /** Sección abierta en el modal de edición del editor (vacío = ninguna). */
+    public string $seccionEditando = '';
+
     public ?int $aniosExperiencia = null;
 
     /** @var array<int, array<string, mixed>> */
@@ -109,9 +118,16 @@ class Ficha extends Component
         $postulante = auth()->user()->postulante;
 
         $this->modoOnboarding = $postulante !== null && ! $postulante->onboarding_completado;
-        $this->pasoActual = min(5, max(1, $postulante?->onboarding_paso ?? 1));
+        $this->pasoActual = min(6, max(1, $postulante?->onboarding_paso ?? 1));
 
+        $this->hidratar();
+    }
+
+    /** Carga (o recarga) todos los campos del formulario desde la BD. */
+    private function hidratar(): void
+    {
         $user = auth()->user();
+        $postulante = $user->postulante;
         $partesNombre = preg_split('/\s+/', trim($user->name), 2);
         $this->nombres = $user->nombres ?? ($partesNombre[0] ?? '');
         $this->apellidos = $user->apellidos ?? ($partesNombre[1] ?? '');
@@ -157,6 +173,7 @@ class Ficha extends Component
         $this->experienciaInicio = $postulante?->experiencia_inicio;
         $this->experienciaFin = $postulante?->experiencia_fin;
         $this->resumenProfesional = $postulante?->resumen_profesional ?? '';
+        $this->habilidades = $postulante?->habilidades ?? [];
         $this->aniosExperiencia = $postulante?->anios_experiencia;
         $experienciasGuardadas = $postulante?->experiencias ?: [[
             'cargo' => $postulante?->cargo_actual ?? '',
@@ -183,6 +200,22 @@ class Ficha extends Component
         $this->validateOnly('rut', $this->reglasDocumento());
     }
 
+    /**
+     * En el editor no hay guardado global, así que la visibilidad se persiste al alternarla
+     * (y se resincroniza el matching, que quita las coincidencias si el perfil se pausa).
+     */
+    public function updatedVisible(bool $valor): void
+    {
+        if ($this->modoOnboarding) {
+            return;
+        }
+
+        $postulante = Postulante::query()->where('user_id', auth()->id())->firstOrFail();
+        $postulante->update(['visible' => $valor]);
+
+        app(MatchingService::class)->sincronizarPostulante($postulante->refresh());
+    }
+
     public function updatedTipoDocumento(): void
     {
         if (! in_array($this->tipoDocumento, ['rut', 'pasaporte'], true)) {
@@ -194,6 +227,60 @@ class Ficha extends Component
         }
 
         $this->resetValidation('rut');
+    }
+
+    /**
+     * Habilidades del catálogo que calzan con el texto buscado y aún no están seleccionadas.
+     *
+     * @return array<int, string>
+     */
+    public function habilidadesSugeridas(): array
+    {
+        $termino = trim($this->buscarHabilidad);
+
+        if (mb_strlen($termino) < 2) {
+            return [];
+        }
+
+        $consulta = (string) Str::of($termino)->ascii()->lower();
+        $seleccionadas = array_map(fn (string $h): string => mb_strtolower($h), $this->habilidades);
+
+        return collect(CatalogosProfesionales::habilidades())
+            ->reject(fn (string $h): bool => in_array(mb_strtolower($h), $seleccionadas, true))
+            ->filter(fn (string $h): bool => Str::of($h)->ascii()->lower()->contains($consulta))
+            ->take(20)
+            ->values()
+            ->all();
+    }
+
+    public function agregarHabilidad(string $nombre): void
+    {
+        $this->buscarHabilidad = '';
+
+        if (! in_array($nombre, CatalogosProfesionales::habilidades(), true)) {
+            return;
+        }
+
+        if (count($this->habilidades) >= 30 || in_array($nombre, $this->habilidades, true)) {
+            return;
+        }
+
+        $this->habilidades[] = $nombre;
+    }
+
+    public function agregarPrimeraHabilidad(): void
+    {
+        $primera = $this->habilidadesSugeridas()[0] ?? null;
+
+        if ($primera !== null) {
+            $this->agregarHabilidad($primera);
+        }
+    }
+
+    public function quitarHabilidad(int $index): void
+    {
+        unset($this->habilidades[$index]);
+        $this->habilidades = array_values($this->habilidades);
     }
 
     /**
@@ -279,7 +366,7 @@ class Ficha extends Component
 
     public function omitir(MatchingService $matching): void
     {
-        if (! $this->modoOnboarding || $this->pasoActual !== 5) {
+        if (! $this->modoOnboarding || $this->pasoActual !== 6) {
             return;
         }
 
@@ -294,17 +381,18 @@ class Ficha extends Component
 
         $guardado = match ($this->pasoActual) {
             1 => $this->guardarDatosPersonales(),
-            2 => $this->guardarExperiencias(),
-            3 => $this->guardarEducaciones(),
-            4 => $this->guardarIdiomas(),
-            5 => $this->guardarCurriculum(),
+            2 => $this->guardarAcercaDeMi(),
+            3 => $this->guardarExperiencias(),
+            4 => $this->guardarEducaciones(),
+            5 => $this->guardarIdiomas(),
+            6 => $this->guardarCurriculum(),
         };
 
         if (! $guardado) {
             return;
         }
 
-        if ($this->pasoActual < 5) {
+        if ($this->pasoActual < 6) {
             $this->continuarOnboarding();
 
             return;
@@ -317,7 +405,7 @@ class Ficha extends Component
     {
         $postulante = auth()->user()->postulante()->firstOrFail();
         $postulante->update([
-            'onboarding_paso' => 5,
+            'onboarding_paso' => 6,
             'onboarding_completado' => true,
             'completitud' => max(100, $postulante->completitud),
         ]);
@@ -361,7 +449,7 @@ class Ficha extends Component
     }
 
     /**
-     * Campos del bloque "Datos": personales, contacto, acerca de mí e información adicional.
+     * Campos del bloque "Mis datos": personales, contacto e información adicional.
      *
      * @return array<string, mixed>
      */
@@ -375,21 +463,35 @@ class Ficha extends Component
             'telefono' => ['required', 'string', 'max:30'],
             'linkedin' => ['nullable', 'url:http,https', 'max:100'],
             'sitioWeb' => ['nullable', 'url:http,https', 'max:100'],
-            'titular' => ['required', 'string', 'max:100'],
-            'resumenProfesional' => ['nullable', 'string', 'max:900'],
-            'regionesInteres' => ['array', 'max:5'],
-            'regionesInteres.*' => [Rule::in(CatalogosProfesionales::regiones()), 'distinct:strict'],
-            'industriasInteres' => ['required', 'array', 'min:1', 'max:5'],
-            'industriasInteres.*' => [Rule::in(CatalogosProfesionales::industrias()), 'distinct:strict'],
-            'modalidadesTrabajo' => ['array', 'max:'.count(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
-            'modalidadesTrabajo.*' => [Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas()), 'distinct:strict'],
-            'situacionLaboral' => ['nullable', Rule::in(CatalogosProfesionales::situacionesLaborales())],
-            'expectativaRenta' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'nacionalidad' => ['required', Rule::in(CatalogosProfesionales::nacionalidades())],
             'anioNacimiento' => ['required', 'integer', 'min:1900', 'max:'.now()->year],
             'aniosExperiencia' => ['required', 'integer', 'min:0', 'max:80'],
             'genero' => ['required', Rule::in(CatalogosProfesionales::generos())],
             'ciudad' => ['required', Rule::in(CatalogosProfesionales::regiones())],
+        ];
+    }
+
+    /**
+     * Campos del bloque "Acerca de mí": propuesta profesional, habilidades e intereses.
+     *
+     * @return array<string, mixed>
+     */
+    private function reglasAcercaDeMi(): array
+    {
+        return [
+            // "Acerca de mí" es opcional: el titular se recomienda para el matching, pero no se exige.
+            'titular' => ['nullable', 'string', 'max:100'],
+            'resumenProfesional' => ['nullable', 'string', 'max:900'],
+            'habilidades' => ['array', 'max:30'],
+            'habilidades.*' => [Rule::in(CatalogosProfesionales::habilidades()), 'distinct:strict'],
+            'regionesInteres' => ['array', 'max:5'],
+            'regionesInteres.*' => [Rule::in(CatalogosProfesionales::regiones()), 'distinct:strict'],
+            'industriasInteres' => ['array', 'max:5'],
+            'industriasInteres.*' => [Rule::in(CatalogosProfesionales::industrias()), 'distinct:strict'],
+            'modalidadesTrabajo' => ['array', 'max:'.count(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
+            'modalidadesTrabajo.*' => [Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas()), 'distinct:strict'],
+            'situacionLaboral' => ['nullable', Rule::in(CatalogosProfesionales::situacionesLaborales())],
+            'expectativaRenta' => ['nullable', 'integer', 'min:0', 'max:100000000'],
         ];
     }
 
@@ -405,19 +507,44 @@ class Ficha extends Component
             'telefono' => $validated['telefono'],
             'linkedin' => $validated['linkedin'],
             'sitio_web' => $validated['sitioWeb'],
-            'titular' => $validated['titular'],
-            'resumen_profesional' => $validated['resumenProfesional'],
-            'regiones_interes' => array_values($validated['regionesInteres'] ?? []),
-            'industrias_interes' => array_values($validated['industriasInteres'] ?? []),
-            'modalidad_trabajo' => array_values($validated['modalidadesTrabajo'] ?? []),
-            'situacion_laboral' => $validated['situacionLaboral'],
-            'expectativa_renta' => $validated['expectativaRenta'],
             'nacionalidad' => $validated['nacionalidad'],
             'anio_nacimiento' => $validated['anioNacimiento'],
             'anios_experiencia' => $validated['aniosExperiencia'],
             'genero' => $validated['genero'],
             'ciudad' => $validated['ciudad'],
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    private function atributosAcercaDeMi(array $validated): array
+    {
+        return [
+            'titular' => $validated['titular'],
+            'resumen_profesional' => $validated['resumenProfesional'],
+            'habilidades' => array_values($validated['habilidades'] ?? []),
+            'regiones_interes' => array_values($validated['regionesInteres'] ?? []),
+            'industrias_interes' => array_values($validated['industriasInteres'] ?? []),
+            'modalidad_trabajo' => array_values($validated['modalidadesTrabajo'] ?? []),
+            'situacion_laboral' => $validated['situacionLaboral'],
+            'expectativa_renta' => $validated['expectativaRenta'],
+        ];
+    }
+
+    private function guardarAcercaDeMi(): bool
+    {
+        $validated = $this->validate($this->reglasAcercaDeMi());
+
+        auth()->user()->postulante()->update([
+            ...$this->atributosAcercaDeMi($validated),
+            'completitud' => max(35, $this->completitud),
+        ]);
+
+        $this->completitud = max(35, $this->completitud);
+
+        return true;
     }
 
     private function guardarExperiencias(): bool
@@ -550,18 +677,26 @@ class Ficha extends Component
 
     private function guardarIdiomas(): bool
     {
+        // Idiomas es opcional: se descartan las filas vacías y se permite continuar sin ninguno.
+        $this->idiomas = collect($this->idiomas)
+            ->filter(fn (array $idioma): bool => filled($idioma['idioma']))
+            ->values()
+            ->all();
+
         $validated = $this->validate([
-            'idiomas' => ['required', 'array', 'min:1', 'max:'.count(CatalogosProfesionales::idiomas())],
+            'idiomas' => ['array', 'max:'.count(CatalogosProfesionales::idiomas())],
             'idiomas.*.idioma' => ['required', Rule::in(CatalogosProfesionales::idiomas()), 'distinct:strict'],
             'idiomas.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesIdioma())],
         ]);
 
         auth()->user()->postulante()->update([
-            'idiomas' => $validated['idiomas'],
-            'completitud' => 100,
+            'idiomas' => $validated['idiomas'] ?? [],
         ]);
 
-        $this->completitud = 100;
+        // La UI conserva al menos una fila para poder seguir agregando.
+        if ($this->idiomas === []) {
+            $this->idiomas = [$this->nuevoIdioma()];
+        }
 
         return true;
     }
@@ -597,6 +732,96 @@ class Ficha extends Component
         return true;
     }
 
+    /**
+     * Abre la edición en línea de una sección. Solo esa sección monta su formulario
+     * (DOM liviano); el resto sigue en modo lectura. Sin modal ni <dialog>.
+     */
+    public function editarSeccion(string $seccion): void
+    {
+        if ($this->modoOnboarding || ! in_array($seccion, ['datos', 'acerca', 'experiencia', 'educacion', 'idiomas', 'curriculum'], true)) {
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->seccionEditando = $seccion;
+        $this->modal('editor')->show();
+    }
+
+    /**
+     * Se dispara al cerrar el modal (wire:close). Descarta cambios no guardados
+     * recargando desde la BD. No vuelve a cerrar el modal para no entrar en bucle.
+     */
+    public function cancelarEdicion(): void
+    {
+        if ($this->seccionEditando === '') {
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->hidratar();
+        $this->seccionEditando = '';
+    }
+
+    /**
+     * Guarda una sola sección desde el editor (modal), fuera del onboarding.
+     * Reutiliza la validación por bloque, recalcula completitud y resincroniza el matching.
+     */
+    public function guardarSeccion(string $seccion): void
+    {
+        if ($this->modoOnboarding) {
+            return;
+        }
+
+        $guardado = match ($seccion) {
+            'datos' => $this->guardarDatosPersonales(),
+            'acerca' => $this->guardarAcercaDeMi(),
+            'experiencia' => $this->guardarExperiencias(),
+            'educacion' => $this->guardarEducaciones(),
+            'idiomas' => $this->guardarIdiomas(),
+            'curriculum' => $this->guardarCurriculum(),
+            default => false,
+        };
+
+        // Si la validación falla, los errores quedan en el bag y la sección sigue en edición.
+        if (! $guardado) {
+            return;
+        }
+
+        $postulante = Postulante::query()->where('user_id', auth()->id())->firstOrFail();
+        $this->completitud = $this->completitudEditor();
+        $postulante->update(['completitud' => $this->completitud]);
+        $postulante->refresh();
+
+        // El guardado ya está persistido; un caso borde del matching no debe bloquearlo.
+        try {
+            app(MatchingService::class)->sincronizarPostulante($postulante);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        $this->seccionEditando = '';
+        $this->modal('editor')->close();
+        session()->flash('status', 'Guardamos los cambios de esta sección.');
+    }
+
+    private function completitudEditor(): int
+    {
+        $campos = [
+            $this->nombres,
+            $this->email,
+            $this->rut,
+            $this->anioNacimiento,
+            $this->industriasInteres,
+            $this->educaciones,
+            $this->idiomas,
+            $this->experiencias,
+        ];
+
+        $completos = collect($campos)->filter(fn (mixed $valor): bool => filled($valor))->count();
+
+        return (int) round(($completos / count($campos)) * 100);
+    }
+
     public function save(MatchingService $matching): void
     {
         if ($this->tipoDocumento === 'rut') {
@@ -605,6 +830,7 @@ class Ficha extends Component
 
         $validated = $this->validate([
             ...$this->reglasDatos(),
+            ...$this->reglasAcercaDeMi(),
             'educaciones' => ['required', 'array', 'min:1', 'max:20'],
             'educaciones.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesEstudio())],
             'educaciones.*.pais' => ['required', 'string', 'max:100'],
@@ -616,7 +842,7 @@ class Ficha extends Component
             'educaciones.*.inicio_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
             'educaciones.*.termino_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
             'educaciones.*.egreso_anio' => ['nullable', 'integer', 'min:1900', 'max:'.now()->year],
-            'idiomas' => ['required', 'array', 'min:1', 'max:'.count(CatalogosProfesionales::idiomas())],
+            'idiomas' => ['array', 'max:'.count(CatalogosProfesionales::idiomas())],
             'idiomas.*.idioma' => ['required', Rule::in(CatalogosProfesionales::idiomas()), 'distinct:strict'],
             'idiomas.*.nivel' => ['required', Rule::in(CatalogosProfesionales::nivelesIdioma())],
             'experiencias' => ['required', 'array', 'min:1', 'max:20'],
@@ -722,6 +948,7 @@ class Ficha extends Component
 
                 return Postulante::query()->updateOrCreate(['user_id' => auth()->id()], [
                     ...$this->atributosDatos($validated),
+                    ...$this->atributosAcercaDeMi($validated),
                     'cargo_actual' => $principal['cargo'],
                     'carrera' => $educacionPrincipal['carrera'],
                     'universidad' => $educacionPrincipal['institucion'],

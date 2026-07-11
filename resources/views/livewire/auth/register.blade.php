@@ -82,7 +82,7 @@
         </div>
         @if ($role === 'empresa')
             <div class="mt-3.5">
-                <flux:input wire:model="telefono" type="tel" label="Teléfono de contacto *" placeholder="+56 9 1234 5678" autocomplete="tel" />
+                <x-input-telefono wire:model="telefono" label="Teléfono de contacto *" />
             </div>
         @endif
         <div class="mt-3.5">

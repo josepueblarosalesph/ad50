@@ -44,7 +44,7 @@
                     <flux:input wire:model="contactoPrincipalNombre" label="Nombre completo *" />
                     <flux:input wire:model="contactoPrincipalCargo" label="Cargo *" />
                     <flux:input wire:model="contactoPrincipalEmail" type="email" label="Email *" />
-                    <flux:input wire:model="contactoPrincipalTelefono" type="tel" label="Teléfono *" />
+                    <x-input-telefono wire:model="contactoPrincipalTelefono" label="Teléfono *" />
                 </div>
             </section>
 
@@ -53,7 +53,7 @@
                 <div class="grid gap-4 p-6 md:grid-cols-2">
                     <flux:input wire:model="contactoTecnicoNombre" label="Nombre completo *" />
                     <flux:input wire:model="contactoTecnicoEmail" type="email" label="Email *" />
-                    <flux:input wire:model="contactoTecnicoTelefono" type="tel" label="Teléfono *" />
+                    <x-input-telefono wire:model="contactoTecnicoTelefono" label="Teléfono *" />
                 </div>
             </section>
 
