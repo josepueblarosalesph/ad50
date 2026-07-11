@@ -360,10 +360,15 @@ test('a postulante can view the panel and professional profile', function () {
     // Los campos editables viven en partials, reutilizados por el onboarding y por los modales.
     $formDatos = file_get_contents(resource_path('views/livewire/postulante/partials/form-datos.blade.php'));
     $formAcerca = file_get_contents(resource_path('views/livewire/postulante/partials/form-acerca.blade.php'));
+    $formExperiencia = file_get_contents(resource_path('views/livewire/postulante/partials/form-experiencia.blade.php'));
     $formCv = file_get_contents(resource_path('views/livewire/postulante/partials/form-curriculum.blade.php'));
 
     expect($formDatos)->toContain('Nacionalidad *')->toContain('Años de experiencia *');
     expect($formAcerca)->toContain('Escribe una breve presentación');
+    expect($formExperiencia)
+        ->toContain('model="experiencias.{{ $index }}.cargo"')
+        ->toContain(':opciones="$cargos"')
+        ->toContain('error="experiencias.{{ $index }}.cargo"');
     expect($formCv)
         ->toContain('border-dashed border-orange-200 bg-orange-50/60')
         ->toContain('text-orange-700 dark:text-[#F7C59E]');
@@ -373,6 +378,13 @@ test('a postulante can view the panel and professional profile', function () {
         'Femenino',
         'Prefiero no Informar',
     ]);
+
+    $cargos = CatalogosProfesionales::cargos();
+
+    expect($cargos)
+        ->toHaveCount(29956)
+        ->toContain('Abastecedor Logístico', 'Gerente Finanza')
+        ->and(array_unique($cargos))->toHaveCount(29956);
 
     // Dos juegos de secciones (paso a paso + editor de solo lectura) comparten el mismo estilo.
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(12);
@@ -498,9 +510,9 @@ test('a postulante can update every section of the professional profile', functi
         ->set('modalidadesTrabajo', ['Jornada Parcial', 'Honorarios'])
         ->set('habilidades', ['Adobe Photoshop', 'Liderazgo'])
         ->set('experiencias', [[
-            'cargo' => 'Gerenta de Finanzas',
+            'cargo' => 'Gerente Finanza',
             'tipo_trabajo' => 'Jornada completa',
-            'empresa' => 'Empresa de Prueba SpA',
+            'empresa' => 'Codelco',
             'jerarquia' => 'Gerencia / Dirección',
             'actividad_empresa' => 'Banca y servicios financieros',
             'inicio_mes' => 3,
@@ -516,6 +528,10 @@ test('a postulante can update every section of the professional profile', functi
         ->call('save')
         ->assertHasErrors(['titular' => 'max'])
         ->set('titular', 'Gerenta de Finanzas y transformación empresarial')
+        ->set('experiencias.0.cargo', 'Cargo inexistente en catálogo')
+        ->call('save')
+        ->assertHasErrors(['experiencias.0.cargo' => 'in'])
+        ->set('experiencias.0.cargo', 'Gerente Finanza')
         ->call('save')
         ->assertHasNoErrors()
         ->assertSet('completitud', 100);
@@ -540,7 +556,7 @@ test('a postulante can update every section of the professional profile', functi
         'sitio_web' => 'https://mariafuentes.cl',
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
-        'empresa_actual' => 'Empresa de Prueba SpA',
+        'empresa_actual' => 'Codelco',
         'completitud' => 100,
     ]);
     expect($user->postulante->fresh())
@@ -555,7 +571,7 @@ test('a postulante can update every section of the professional profile', functi
 
     expect($experiencia)
         ->toMatchArray([
-            'cargo' => 'Gerenta de Finanzas',
+            'cargo' => 'Gerente Finanza',
             'tipo_trabajo' => 'Jornada completa',
             'jerarquia' => 'Gerencia / Dirección',
             'actividad_empresa' => 'Banca y servicios financieros',

@@ -33,9 +33,9 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
         ]])
         ->set('idiomas', [['idioma' => 'Español', 'nivel' => 'Avanzado']])
         ->set('experiencias', [[
-            'cargo' => 'Gerenta de Finanzas',
+            'cargo' => 'Gerente Finanza',
             'tipo_trabajo' => 'Jornada completa',
-            'empresa' => 'Empresa de Prueba SpA',
+            'empresa' => 'Codelco',
             'jerarquia' => 'Gerencia / Dirección',
             'actividad_empresa' => 'Banca y servicios financieros',
             'inicio_mes' => 3,

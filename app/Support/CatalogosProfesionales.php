@@ -147,6 +147,18 @@ class CatalogosProfesionales
     }
 
     /** @return array<int, string> */
+    public static function empresas(): array
+    {
+        return require __DIR__.'/empresas.php';
+    }
+
+    /** @return array<int, string> */
+    public static function cargos(): array
+    {
+        return require __DIR__.'/cargos.php';
+    }
+
+    /** @return array<int, string> */
     public static function habilidades(): array
     {
         return require __DIR__.'/habilidades.php';
