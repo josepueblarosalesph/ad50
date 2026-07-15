@@ -30,8 +30,7 @@ class NuevaBusqueda extends Component
     /** @var list<string> */
     public array $carrera = [];
 
-    /** @var list<string> */
-    public array $especialidad = [];
+    public string $especialidad = '';
 
     /** @var list<string> */
     public array $ciudad = [];
@@ -67,7 +66,7 @@ class NuevaBusqueda extends Component
         $this->titulo = $busqueda->titulo;
         $this->cargo = $this->normalizarSeleccion($criterios['cargo'] ?? []);
         $this->carrera = $this->normalizarSeleccion($criterios['carrera'] ?? []);
-        $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
+        $this->especialidad = is_array($criterios['especialidad'] ?? '') ? (string) ($criterios['especialidad'][0] ?? '') : (string) ($criterios['especialidad'] ?? '');
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
         $this->habilidad = $this->normalizarSeleccion($criterios['habilidad'] ?? []);
@@ -76,11 +75,6 @@ class NuevaBusqueda extends Component
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
         $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
         $this->hidratarEdad($criterios);
-    }
-
-    public function updatedCarrera(): void
-    {
-        $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
     }
 
     public function agregarPalabraClave(): void
@@ -108,11 +102,10 @@ class NuevaBusqueda extends Component
         $validated = $this->validate([
             'titulo' => ['required', 'string', 'max:180'],
             'cargo' => ['array'],
-            'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargosAreas())],
+            'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargos())],
             'carrera' => ['array'],
-            'carrera.*' => ['string', 'distinct', Rule::in(array_keys(CatalogosProfesionales::carreras()))],
-            'especialidad' => ['array'],
-            'especialidad.*' => ['string', 'distinct', Rule::in($this->especialidadesDisponibles())],
+            'carrera.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::carrerasEstudio())],
+            'especialidad' => ['nullable', 'string', 'max:180'],
             'industria' => ['array'],
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
@@ -170,9 +163,8 @@ class NuevaBusqueda extends Component
     public function render(): View
     {
         return view('livewire.empresa.nueva-busqueda', [
-            'cargosAreas' => CatalogosProfesionales::cargosAreas(),
-            'carreras' => array_keys(CatalogosProfesionales::carreras()),
-            'especialidades' => $this->especialidadesDisponibles(),
+            'cargos' => CatalogosProfesionales::cargos(),
+            'carreras' => CatalogosProfesionales::carrerasEstudio(),
             'industrias' => CatalogosProfesionales::industrias(),
             'ciudades' => CatalogosProfesionales::regiones(),
             'instituciones' => CatalogosProfesionales::instituciones(),
@@ -189,17 +181,6 @@ class NuevaBusqueda extends Component
     {
         return collect((array) $valor)
             ->filter(fn (mixed $item): bool => is_string($item) && filled($item))
-            ->values()
-            ->all();
-    }
-
-    /** @return list<string> */
-    private function especialidadesDisponibles(): array
-    {
-        return collect($this->carrera)
-            ->flatMap(fn (string $carrera): array => CatalogosProfesionales::especialidades($carrera))
-            ->unique()
-            ->sort()
             ->values()
             ->all();
     }

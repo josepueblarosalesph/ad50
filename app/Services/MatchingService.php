@@ -54,7 +54,7 @@ class MatchingService
         $evaluadores = [
             'cargo' => ['Cargo', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $cargos->contains(fn (?string $cargo): bool => $this->coincideCargo($cargo, $valor)))],
             'carrera' => ['Carrera o título', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->carrera, $valor))],
-            'especialidad' => ['Especialidad / área', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->especialidad, $valor))],
+            'especialidad' => ['Especialidad / área', fn (string $valor): bool => Str::contains(Str::lower(trim((string) $postulante->especialidad)), Str::lower(trim($valor)))],
             'industria' => ['Industria', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->industrias_interes ?? [])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor)))],
             'ciudad' => ['Región', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor))],
             'habilidad' => ['Habilidades', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->habilidades ?? [])->contains(fn (?string $habilidad): bool => $this->iguales($habilidad, $valor)))],
@@ -114,7 +114,7 @@ class MatchingService
                 continue;
             }
 
-            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'especialidad', 'industria', 'ciudad', 'habilidad', 'palabra_clave'], true);
+            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'industria', 'ciudad', 'habilidad', 'palabra_clave'], true);
             $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : (string) $valor;
             $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
 

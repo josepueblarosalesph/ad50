@@ -666,7 +666,7 @@ test('an empresa can view its pages and create a search', function () {
     Livewire::actingAs($user)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Controller Senior')
-        ->set('cargo', ['Control de Gestión'])
+        ->set('cargo', ['Gerente Finanza'])
         ->set('industria', ['Forestal / Papelera'])
         ->set('aniosMinimos', 5)
         ->call('save')

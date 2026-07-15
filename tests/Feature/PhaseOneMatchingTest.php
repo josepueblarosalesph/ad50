@@ -19,13 +19,13 @@ test('a structured search lists only candidates that fulfill every configured cr
         'user_id' => $completeUser->id,
         'visible' => true,
         'ciudad' => 'Biobío',
-        'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
+        'carrera' => 'Ingeniería Comercial',
         'especialidad' => 'Finanzas',
         'industrias_interes' => ['Banca y servicios financieros'],
         'anios_experiencia' => 18,
         'resumen_profesional' => 'Lideró una transformación financiera regional.',
         'experiencias' => [[
-            'cargo' => 'Finanzas', 'empresa' => 'Empresa A', 'area' => 'Finanzas',
+            'cargo' => 'Gerente Finanza', 'empresa' => 'Empresa A', 'area' => 'Gerente Finanza',
             'inicio' => 2008, 'fin' => 2026,
         ]],
     ]);
@@ -35,12 +35,12 @@ test('a structured search lists only candidates that fulfill every configured cr
         'user_id' => $partialUser->id,
         'visible' => true,
         'ciudad' => 'Metropolitana de Santiago',
-        'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
+        'carrera' => 'Ingeniería Comercial',
         'especialidad' => 'Finanzas',
         'industrias_interes' => ['Banca y servicios financieros'],
         'anios_experiencia' => 12,
         'experiencias' => [[
-            'cargo' => 'Finanzas', 'empresa' => 'Empresa B', 'area' => 'Finanzas',
+            'cargo' => 'Gerente Finanza', 'empresa' => 'Empresa B', 'area' => 'Gerente Finanza',
             'inicio' => 2014, 'fin' => 2026,
         ]],
     ]);
@@ -48,9 +48,9 @@ test('a structured search lists only candidates that fulfill every configured cr
     Livewire::actingAs($empresaUser)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Liderazgo financiero')
-        ->set('cargo', ['Finanzas'])
-        ->set('carrera', ['Ingeniería Civil / Ingeniería Comercial'])
-        ->set('especialidad', ['Finanzas'])
+        ->set('cargo', ['Gerente Finanza'])
+        ->set('carrera', ['Ingeniería Comercial'])
+        ->set('especialidad', 'Finanzas')
         ->set('industria', ['Banca y servicios financieros'])
         ->set('ciudad', ['Biobío'])
         ->set('aniosMinimos', 15)
@@ -481,9 +481,9 @@ test('a cargo entered as "Otros" free text participates in the matching', functi
         'user_id' => $matchUser->id,
         'visible' => true,
         'anios_experiencia' => 20,
-        'cargo_actual' => 'Analista de Finanzas Corporativas',
+        'cargo_actual' => 'Analista Finanzas Corporativas',
         'experiencias' => [[
-            'cargo' => 'Otros', 'cargo_otro' => 'Analista de Finanzas Corporativas',
+            'cargo' => 'Otros', 'cargo_otro' => 'Analista Finanzas Corporativas',
             'empresa' => 'Otros', 'empresa_otro' => 'Consultora Independiente',
             'actividad_empresa' => 'Finanzas', 'inicio' => 2010, 'fin' => 2026,
         ]],
@@ -505,7 +505,7 @@ test('a cargo entered as "Otros" free text participates in the matching', functi
     Livewire::actingAs($empresaUser)
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Perfil financiero')
-        ->set('cargo', ['Finanzas'])
+        ->set('cargo', ['Analista Finanzas'])
         ->call('save')
         ->assertHasNoErrors();
 

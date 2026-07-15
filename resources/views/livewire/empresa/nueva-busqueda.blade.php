@@ -20,13 +20,13 @@
                 <flux:input wire:model="titulo" label="Nombre interno de la búsqueda *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
                     <div class="rounded-xl border border-line-2 p-4">
-                        <x-multi-combobox model="cargo" label="Cargo" :opciones="$cargosAreas" :seleccion="$cargo" error="cargo" descripcion="Busca y agrega uno o varios cargos." />
+                        <x-multi-combobox model="cargo" label="Cargo" :opciones="$cargos" :seleccion="$cargo" error="cargo" descripcion="Busca y agrega uno o varios cargos." />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
                         <x-multi-combobox model="carrera" label="Carrera o título" :opciones="$carreras" :seleccion="$carrera" error="carrera" descripcion="Busca y agrega una o varias carreras." />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <x-multi-combobox model="especialidad" label="Especialidad o área" :opciones="$especialidades" :seleccion="$especialidad" error="especialidad" :descripcion="filled($especialidades) ? 'Depende de las carreras elegidas.' : 'Selecciona primero una carrera.'" vacio="Selecciona primero una carrera." />
+                        <flux:input wire:model="especialidad" label="Especialidad o mención" placeholder="Ej. Finanzas corporativas" description="Coincide si aparece en la mención del postulante." />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
                         <x-multi-combobox model="industria" label="Industria" :opciones="$industrias" :seleccion="$industria" error="industria" descripcion="Busca y agrega una o varias industrias." />

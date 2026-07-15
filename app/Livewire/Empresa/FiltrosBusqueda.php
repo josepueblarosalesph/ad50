@@ -23,14 +23,16 @@ class FiltrosBusqueda extends Component
     /** @var list<string> */
     public array $carrera = [];
 
-    /** @var list<string> */
-    public array $especialidad = [];
+    public string $especialidad = '';
 
     /** @var list<string> */
     public array $industria = [];
 
     /** @var list<string> */
     public array $ciudad = [];
+
+    /** @var list<string> */
+    public array $habilidad = [];
 
     public string $institucion = '';
 
@@ -52,9 +54,10 @@ class FiltrosBusqueda extends Component
         $criterios = $busqueda->criterios ?? [];
         $this->cargo = $this->normalizarSeleccion($criterios['cargo'] ?? []);
         $this->carrera = $this->normalizarSeleccion($criterios['carrera'] ?? []);
-        $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
+        $this->especialidad = is_array($criterios['especialidad'] ?? '') ? (string) ($criterios['especialidad'][0] ?? '') : (string) ($criterios['especialidad'] ?? '');
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
+        $this->habilidad = $this->normalizarSeleccion($criterios['habilidad'] ?? []);
         $this->institucion = $criterios['institucion'] ?? '';
         $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
@@ -69,10 +72,6 @@ class FiltrosBusqueda extends Component
     {
         if ($propiedad === 'nuevaPalabraClave') {
             return;
-        }
-
-        if (str_starts_with($propiedad, 'carrera')) {
-            $this->especialidad = array_values(array_intersect($this->especialidad, $this->especialidadesDisponibles()));
         }
 
         $this->guardar(app(MatchingService::class));
@@ -104,15 +103,16 @@ class FiltrosBusqueda extends Component
     {
         $validated = $this->validate([
             'cargo' => ['array'],
-            'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargosAreas())],
+            'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargos())],
             'carrera' => ['array'],
-            'carrera.*' => ['string', 'distinct', Rule::in(array_keys(CatalogosProfesionales::carreras()))],
-            'especialidad' => ['array'],
-            'especialidad.*' => ['string', 'distinct', Rule::in($this->especialidadesDisponibles())],
+            'carrera.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::carrerasEstudio())],
+            'especialidad' => ['nullable', 'string', 'max:180'],
             'industria' => ['array'],
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
             'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regiones())],
+            'habilidad' => ['array'],
+            'habilidad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::habilidades())],
             'institucion' => ['nullable', 'string', 'max:180'],
             'empresa' => ['nullable', 'string', 'max:180'],
             'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
@@ -130,6 +130,7 @@ class FiltrosBusqueda extends Component
                     'especialidad' => $validated['especialidad'],
                     'industria' => $validated['industria'],
                     'ciudad' => $validated['ciudad'],
+                    'habilidad' => $validated['habilidad'],
                     'institucion' => $validated['institucion'],
                     'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
@@ -150,15 +151,16 @@ class FiltrosBusqueda extends Component
 
         return view('livewire.empresa.filtros-busqueda', [
             'instituciones' => CatalogosProfesionales::instituciones(),
+            'empresas' => CatalogosProfesionales::empresas(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'minimoExperiencia' => min($rangos),
             'maximoExperiencia' => max($rangos),
             'grupos' => [
-                ['Cargo', 'cargo', CatalogosProfesionales::cargosAreas()],
-                ['Carrera', 'carrera', array_keys(CatalogosProfesionales::carreras())],
-                ['Especialidad', 'especialidad', $this->especialidadesDisponibles()],
+                ['Cargo', 'cargo', CatalogosProfesionales::cargos()],
+                ['Carrera', 'carrera', CatalogosProfesionales::carrerasEstudio()],
                 ['Industria', 'industria', CatalogosProfesionales::industrias()],
                 ['Región', 'ciudad', CatalogosProfesionales::regiones()],
+                ['Habilidades', 'habilidad', CatalogosProfesionales::habilidades()],
             ],
         ]);
     }
@@ -167,13 +169,5 @@ class FiltrosBusqueda extends Component
     private function normalizarSeleccion(mixed $valor): array
     {
         return collect((array) $valor)->filter(fn (mixed $item): bool => is_string($item) && filled($item))->values()->all();
-    }
-
-    /** @return list<string> */
-    private function especialidadesDisponibles(): array
-    {
-        return collect($this->carrera)
-            ->flatMap(fn (string $carrera): array => CatalogosProfesionales::especialidades($carrera))
-            ->unique()->sort()->values()->all();
     }
 }

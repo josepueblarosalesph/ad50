@@ -75,54 +75,54 @@ class BusquedaSeeder extends Seeder
         return [
             $this->busqueda('rrhh@empresa.cl', 'Liderazgo financiero centro sur', 'Servicios financieros', [
                 'cargo' => ['Finanzas'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Finanzas'], 'industria' => ['Banca y servicios financieros', 'Forestal / Papelera'],
+                'especialidad' => 'Finanzas', 'industria' => ['Banca y servicios financieros', 'Forestal / Papelera'],
                 'ciudad' => ['Biobío'], 'min_anios' => 15, 'palabra_clave' => ['transformación'],
             ]),
             $this->busqueda('rrhh@empresa.cl', 'Profesionales senior con experiencia comprobada', 'Empresa nacional', [
-                'cargo' => [], 'carrera' => [], 'especialidad' => [], 'industria' => [], 'ciudad' => [],
+                'cargo' => [], 'carrera' => [], 'especialidad' => '', 'industria' => [], 'ciudad' => [],
                 'min_anios' => 15, 'palabra_clave' => [],
             ]),
             $this->busqueda('rrhh@empresa.cl', 'Sostenibilidad y medio ambiente', 'Energía y recursos naturales', [
                 'cargo' => ['Medio Ambiente'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Medio Ambiente'], 'industria' => ['Generación de Energía', 'Silvicultura / Forestal'],
+                'especialidad' => 'Medio Ambiente', 'industria' => ['Generación de Energía', 'Silvicultura / Forestal'],
                 'ciudad' => ['Los Ríos'], 'min_anios' => 10, 'palabra_clave' => ['sostenibilidad'],
             ]),
             $this->busqueda('talento@andesmining.cl', 'Gerencia de operaciones mineras', 'Minería', [
                 'cargo' => ['Operaciones'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Operaciones'], 'industria' => ['Minería'],
+                'especialidad' => 'Operaciones', 'industria' => ['Minería'],
                 'ciudad' => ['Metropolitana de Santiago', 'Tarapacá'], 'min_anios' => 20, 'palabra_clave' => ['operacional'],
             ]),
             $this->busqueda('talento@andesmining.cl', 'Logística y abastecimiento zona norte', 'Servicios industriales', [
                 'cargo' => ['Logística / Cadena de suministros'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Logística / Cadena de suministros'], 'industria' => ['Transporte / Logística', 'Minería'],
+                'especialidad' => 'Logística / Cadena de suministros', 'industria' => ['Transporte / Logística', 'Minería'],
                 'ciudad' => ['Antofagasta'], 'min_anios' => 15, 'palabra_clave' => ['suministro'],
             ]),
             $this->busqueda('personas@saludsur.cl', 'Dirección y calidad clínica', 'Salud', [
-                'cargo' => ['Salud'], 'carrera' => ['Médico'], 'especialidad' => ['Gestión de salud'],
+                'cargo' => ['Salud'], 'carrera' => ['Médico'], 'especialidad' => 'Gestión de salud',
                 'industria' => ['Salud'], 'ciudad' => ['Biobío'], 'min_anios' => 15, 'palabra_clave' => ['calidad'],
             ]),
             $this->busqueda('personas@saludsur.cl', 'Gestión de personas y cultura', 'Servicios', [
-                'cargo' => ['Recursos Humanos'], 'carrera' => ['Psicólogo'], 'especialidad' => ['Organizacional / Trabajo'],
+                'cargo' => ['Recursos Humanos'], 'carrera' => ['Psicólogo'], 'especialidad' => 'Organizacional / Trabajo',
                 'industria' => ['Servicios Profesionales (Auditoría / Consultoría / Legales)'],
                 'ciudad' => ['Valparaíso'], 'min_anios' => 10, 'palabra_clave' => ['cultura'],
             ]),
             $this->busqueda('seleccion@novatech.cl', 'Transformación digital y datos', 'Tecnología', [
                 'cargo' => ['Tecnología / Transformación digital'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Innovación / Transformación digital'], 'industria' => ['Tecnología de la Información'],
+                'especialidad' => 'Innovación / Transformación digital', 'industria' => ['Tecnología de la Información'],
                 'ciudad' => ['Metropolitana de Santiago'], 'min_anios' => 15, 'palabra_clave' => ['digital'],
             ]),
             $this->busqueda('seleccion@novatech.cl', 'Consultoría de cambio organizacional', 'Consultoría', [
-                'cargo' => ['Consultoría'], 'carrera' => ['Psicólogo', 'Periodista'], 'especialidad' => [],
+                'cargo' => ['Consultoría'], 'carrera' => ['Psicólogo', 'Periodista'], 'especialidad' => '',
                 'industria' => ['Servicios Profesionales (Auditoría / Consultoría / Legales)'],
                 'ciudad' => ['Metropolitana de Santiago', 'Biobío'], 'min_anios' => 10, 'palabra_clave' => ['transformación'],
             ]),
             $this->busqueda('capitalhumano@logisticapacifico.cl', 'Jefaturas y gerencias de mantenimiento', 'Industria de alimentos', [
                 'cargo' => ['Mantención'], 'carrera' => ['Ingeniería Civil / Ingeniería Comercial'],
-                'especialidad' => ['Mantención'], 'industria' => ['Alimentos'], 'ciudad' => ['Maule'],
+                'especialidad' => 'Mantención', 'industria' => ['Alimentos'], 'ciudad' => ['Maule'],
                 'min_anios' => 20, 'palabra_clave' => ['mantenimiento'],
             ]),
             $this->busqueda('capitalhumano@logisticapacifico.cl', 'Talento senior disponible en regiones', 'Empresa nacional', [
-                'cargo' => [], 'carrera' => [], 'especialidad' => [], 'industria' => [],
+                'cargo' => [], 'carrera' => [], 'especialidad' => '', 'industria' => [],
                 'ciudad' => ['Biobío', 'Los Lagos', 'La Araucanía', 'Los Ríos'],
                 'min_anios' => 15, 'palabra_clave' => [],
             ]),

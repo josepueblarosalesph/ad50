@@ -5,24 +5,14 @@
     </div>
     <div class="space-y-2.5">
         @foreach ($grupos as [$label, $model, $opciones])
-            <details class="group rounded-xl border border-line-2 bg-white transition-colors dark:bg-[#222528]" @if ($model === 'cargo') open @endif>
-                <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-bold text-ink"><span>{{ $label }}</span><span class="flex items-center gap-1.5 text-[11px] text-gray-500">{{ count($this->{$model}) }} <flux:icon.chevron-down class="size-3.5 transition group-open:rotate-180" /></span></summary>
-                <div class="max-h-40 space-y-2 overflow-y-auto border-t border-line px-3 py-3">
-                    @forelse ($opciones as $opcion)
-                        @if ($model === 'carrera')
-                            <flux:checkbox wire:model.live="carrera" :value="$opcion" :label="$opcion" />
-                        @else
-                            <flux:checkbox wire:model.live="{{ $model }}" :value="$opcion" :label="$opcion" />
-                        @endif
-                    @empty
-                        <p class="text-[12px] text-gray-500">Selecciona primero una carrera.</p>
-                    @endforelse
-                </div>
-            </details>
+            <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
+                <x-multi-combobox :model="$model" :label="$label" :opciones="$opciones" :seleccion="$this->{$model}" :error="$model" />
+            </div>
         @endforeach
 
+        <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><flux:input wire:model.live.debounce.500ms="especialidad" label="Especialidad o mención" placeholder="Ej. Finanzas corporativas" /></div>
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
-        <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><flux:input wire:model.live.debounce.500ms="empresa" label="Empresa" placeholder="Ej. Codelco" /></div>
+        <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /></div>
 
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
             <label for="anios-minimos" class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">
