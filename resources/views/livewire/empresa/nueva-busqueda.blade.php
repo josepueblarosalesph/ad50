@@ -19,31 +19,24 @@
             <div class="p-6 space-y-5">
                 <flux:input wire:model="titulo" label="Nombre interno de la búsqueda *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
-                    <x-selector-colapsable titulo="Cargo" descripcion="Puedes marcar varias alternativas." :seleccion="$cargo" error="cargo">
-                        <flux:checkbox.group wire:model.live="cargo">
-                            <div class="max-h-48 space-y-1.5 overflow-y-auto pr-2">@foreach ($cargosAreas as $opcion)<flux:checkbox wire:key="cargo-{{ $loop->index }}" :value="$opcion" :label="$opcion" />@endforeach</div>
-                        </flux:checkbox.group>
-                    </x-selector-colapsable>
-                    <x-selector-colapsable titulo="Carrera o título" descripcion="Puedes marcar varias alternativas." :seleccion="$carrera" error="carrera">
-                        <flux:checkbox.group wire:model.live="carrera">
-                            <div class="max-h-48 space-y-1.5 overflow-y-auto pr-2">@foreach ($carreras as $opcion)<flux:checkbox wire:key="carrera-{{ $loop->index }}" :value="$opcion" :label="$opcion" />@endforeach</div>
-                        </flux:checkbox.group>
-                    </x-selector-colapsable>
-                    <x-selector-colapsable titulo="Especialidad o área" descripcion="Depende de las carreras elegidas." :seleccion="$especialidad" error="especialidad">
-                        <flux:checkbox.group wire:model.live="especialidad">
-                            <div class="max-h-48 space-y-1.5 overflow-y-auto pr-2">@forelse ($especialidades as $opcion)<flux:checkbox wire:key="especialidad-{{ $loop->index }}" :value="$opcion" :label="$opcion" />@empty<p class="text-[13px] text-gray-500">Selecciona primero una carrera.</p>@endforelse</div>
-                        </flux:checkbox.group>
-                    </x-selector-colapsable>
-                    <x-selector-colapsable titulo="Industria" descripcion="Puedes marcar varias alternativas." :seleccion="$industria" error="industria">
-                        <flux:checkbox.group wire:model.live="industria">
-                            <div class="max-h-48 space-y-1.5 overflow-y-auto pr-2">@foreach ($industrias as $opcion)<flux:checkbox wire:key="industria-{{ $loop->index }}" :value="$opcion" :label="$opcion" />@endforeach</div>
-                        </flux:checkbox.group>
-                    </x-selector-colapsable>
-                    <x-selector-colapsable titulo="Región" descripcion="Puedes marcar varias alternativas." :seleccion="$ciudad" error="ciudad">
-                        <flux:checkbox.group wire:model.live="ciudad">
-                            <div class="max-h-48 space-y-1.5 overflow-y-auto pr-2">@foreach ($ciudades as $opcion)<flux:checkbox wire:key="ciudad-{{ $loop->index }}" :value="$opcion" :label="$opcion" />@endforeach</div>
-                        </flux:checkbox.group>
-                    </x-selector-colapsable>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="cargo" label="Cargo" :opciones="$cargosAreas" :seleccion="$cargo" error="cargo" descripcion="Busca y agrega uno o varios cargos." />
+                    </div>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="carrera" label="Carrera o título" :opciones="$carreras" :seleccion="$carrera" error="carrera" descripcion="Busca y agrega una o varias carreras." />
+                    </div>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="especialidad" label="Especialidad o área" :opciones="$especialidades" :seleccion="$especialidad" error="especialidad" :descripcion="filled($especialidades) ? 'Depende de las carreras elegidas.' : 'Selecciona primero una carrera.'" vacio="Selecciona primero una carrera." />
+                    </div>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="industria" label="Industria" :opciones="$industrias" :seleccion="$industria" error="industria" descripcion="Busca y agrega una o varias industrias." />
+                    </div>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="ciudad" label="Región" :opciones="$ciudades" :seleccion="$ciudad" error="ciudad" descripcion="Busca y agrega una o varias regiones." />
+                    </div>
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <x-multi-combobox model="habilidad" label="Habilidades" :opciones="$habilidades" :seleccion="$habilidad" error="habilidad" descripcion="Busca y agrega una o varias habilidades." />
+                    </div>
                     <div class="flex items-center gap-3 self-start">
                         <span class="flex-none text-[13px] font-bold text-ink">Experiencia mínima</span>
                         <flux:select wire:model="aniosMinimos" class="flex-1" aria-label="Experiencia mínima">
@@ -53,7 +46,7 @@
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <x-slider-rango-edad :min="$limitesEdad['min']" :max="$limitesEdad['max']" :desde="$edadMin" :hasta="$edadMax" />
                     </div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><flux:input wire:model="empresa" label="Empresa" placeholder="Ej. Codelco" description="Basta que aparezca en alguna de sus experiencias." /></div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /><p class="text-[12px] text-gray-500">Basta que aparezca en alguna de sus experiencias.</p></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter. Basta con que el perfil contenga una de ellas." /></div>
                 </div>

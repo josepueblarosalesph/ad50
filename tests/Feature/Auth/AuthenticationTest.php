@@ -10,7 +10,7 @@ test('login screen can be rendered', function () {
         ->assertOk()
         ->assertSeeText('Tu experiencia sigue en movimiento.')
         ->assertSeeText('Ingresar a mi cuenta')
-        ->assertSee('/images/ad50-hero-experiencia-v2.webp', false)
+        ->assertSee('/images/ad50-hero-profesionales-trabajando.webp', false)
         ->assertSee('/images/ad50-logo.png', false);
 });
 

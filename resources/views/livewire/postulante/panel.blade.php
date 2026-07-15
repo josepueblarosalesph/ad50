@@ -5,7 +5,7 @@
 <x-slot:nav>
     @php($nav = [
         ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
-        ['label' => 'Mi perfil profesional', 'href' => route('postulante.ficha')],
+        ['label' => 'Mi perfil', 'href' => route('postulante.ficha')],
         ['label' => 'Búsquedas que me incluyen', 'href' => route('postulante.busquedas')],
     ])
     @foreach ($nav as $item)
@@ -26,10 +26,10 @@
     </div>
     <div class="flex flex-wrap items-center gap-3">
         <div class="ad-toggle-row py-2">
-            <div><b class="block text-[13px]">Visibilidad del perfil</b><span class="text-[12px] text-gray-500">{{ $postulante?->visible ? 'Visible para empresas' : 'Perfil pausado' }}</span></div>
+            <div><b class="block text-[13px]">{{ $postulante?->visible ? 'Visible para reclutadores' : 'Perfil pausado' }}</b></div>
             <flux:switch wire:click="toggleVisibilidad" :checked="$postulante?->visible ?? false" aria-label="Cambiar visibilidad del perfil" />
         </div>
-        <a href="{{ route('postulante.ficha') }}" class="ad-btn-primary ad-btn-sm">Editar mi perfil profesional</a>
+        <a href="{{ route('postulante.ficha') }}" class="ad-btn-primary ad-btn-sm">Editar mi perfil</a>
     </div>
 </div>
 
@@ -46,7 +46,11 @@
         <div class="h-2 rounded-full bg-line overflow-hidden mt-2">
             <div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $postulante?->completitud ?? 0 }}%"></div>
         </div>
-        <div class="mt-2 text-[13px] font-semibold text-match">Completa experiencia 2 para llegar a 100%</div>
+        @if (($postulante?->completitud ?? 0) >= 100)
+            <div class="mt-2 text-[13px] font-semibold text-match">¡Tu perfil está completo!</div>
+        @else
+            <div class="mt-2 text-[13px] font-semibold text-match">Completa tu perfil para llegar a 100%</div>
+        @endif
     </div>
 
     <div class="ad-card p-5">

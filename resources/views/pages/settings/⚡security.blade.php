@@ -184,6 +184,7 @@ new #[Title('Security settings')] #[Layout('components.layouts.app')] class exte
 }; ?>
 
 <section class="w-full">
+    @include('partials.panel-nav')
     @include('partials.settings-heading')
 
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>

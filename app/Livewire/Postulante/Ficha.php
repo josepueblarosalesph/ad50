@@ -216,6 +216,26 @@ class Ficha extends Component
         app(MatchingService::class)->sincronizarPostulante($postulante->refresh());
     }
 
+    public function updatedEducaciones(mixed $valor, ?string $clave = null): void
+    {
+        if ($clave === null) {
+            return;
+        }
+
+        // Al corregir el valor de un campo, limpiamos su error previo para que el mensaje no
+        // quede visible tras elegir una opción válida (los errores se agregan con addError()).
+        $this->resetErrorBag("educaciones.$clave");
+
+        // Al pasar una educación a "Estudiando" se limpia su año de término.
+        if (str_ends_with($clave, '.situacion') && $valor === 'Estudiando') {
+            $index = (int) explode('.', $clave)[0];
+
+            if (isset($this->educaciones[$index])) {
+                $this->educaciones[$index]['termino_anio'] = null;
+            }
+        }
+    }
+
     public function updatedTipoDocumento(): void
     {
         if (! in_array($this->tipoDocumento, ['rut', 'pasaporte'], true)) {
@@ -479,10 +499,10 @@ class Ficha extends Component
     private function reglasAcercaDeMi(): array
     {
         return [
-            // "Acerca de mí" es opcional: el titular se recomienda para el matching, pero no se exige.
-            'titular' => ['nullable', 'string', 'max:100'],
+            // El titular es obligatorio: es la primera información que ven las empresas.
+            'titular' => ['required', 'string', 'max:100'],
             'resumenProfesional' => ['nullable', 'string', 'max:900'],
-            'habilidades' => ['array', 'max:30'],
+            'habilidades' => ['array', 'max:10'],
             'habilidades.*' => [Rule::in(CatalogosProfesionales::habilidades()), 'distinct:strict'],
             'regionesInteres' => ['array', 'max:5'],
             'regionesInteres.*' => [Rule::in(CatalogosProfesionales::regiones()), 'distinct:strict'],
@@ -492,6 +512,49 @@ class Ficha extends Component
             'modalidadesTrabajo.*' => [Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas()), 'distinct:strict'],
             'situacionLaboral' => ['nullable', Rule::in(CatalogosProfesionales::situacionesLaborales())],
             'expectativaRenta' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    protected function messages(): array
+    {
+        return [
+            'titular.required' => 'Escribe un titular: es la primera información que verán las empresas de ti.',
+        ];
+    }
+
+    /**
+     * Nombres legibles para los mensajes de validación (evita mostrar claves como "educaciones.0.institucion").
+     *
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return [
+            'experiencias.*.cargo' => 'cargo',
+            'experiencias.*.cargo_otro' => 'cargo',
+            'experiencias.*.tipo_trabajo' => 'tipo de trabajo',
+            'experiencias.*.empresa' => 'empresa',
+            'experiencias.*.empresa_otro' => 'empresa',
+            'experiencias.*.jerarquia' => 'jerarquía',
+            'experiencias.*.actividad_empresa' => 'actividad de la empresa',
+            'experiencias.*.inicio_mes' => 'mes de inicio',
+            'experiencias.*.inicio_anio' => 'año de inicio',
+            'experiencias.*.fin_mes' => 'mes de término',
+            'experiencias.*.fin_anio' => 'año de término',
+            'experiencias.*.responsabilidades' => 'responsabilidades',
+            'educaciones.*.nivel' => 'nivel de estudios',
+            'educaciones.*.pais' => 'país',
+            'educaciones.*.institucion' => 'institución de educación',
+            'educaciones.*.carrera' => 'carrera',
+            'educaciones.*.mencion' => 'mención',
+            'educaciones.*.modalidad' => 'modalidad de estudios',
+            'educaciones.*.situacion' => 'situación',
+            'educaciones.*.inicio_anio' => 'año de inicio',
+            'educaciones.*.termino_anio' => 'año de término',
+            'educaciones.*.egreso_anio' => 'año de egreso',
+            'idiomas.*.idioma' => 'idioma',
+            'idiomas.*.nivel' => 'nivel',
         ];
     }
 
@@ -657,7 +720,18 @@ class Ficha extends Component
                 continue;
             }
 
-            foreach (['carrera', 'modalidad', 'situacion', 'inicio_anio', 'termino_anio'] as $campo) {
+            $estudiando = ($educacion['situacion'] ?? null) === 'Estudiando';
+            $camposObligatorios = ['carrera', 'modalidad', 'situacion', 'inicio_anio'];
+
+            if ($estudiando) {
+                // Mientras estudia no hay año de término: se limpia y no se exige.
+                $educacion['termino_anio'] = null;
+                $validated['educaciones'][$index]['termino_anio'] = null;
+            } else {
+                $camposObligatorios[] = 'termino_anio';
+            }
+
+            foreach ($camposObligatorios as $campo) {
                 if (blank($educacion[$campo])) {
                     $this->addError("educaciones.$index.$campo", 'Este campo es obligatorio para el nivel seleccionado.');
                 }
@@ -899,7 +973,18 @@ class Ficha extends Component
                 continue;
             }
 
-            foreach (['carrera', 'modalidad', 'situacion', 'inicio_anio', 'termino_anio'] as $campo) {
+            $estudiando = ($educacion['situacion'] ?? null) === 'Estudiando';
+            $camposObligatorios = ['carrera', 'modalidad', 'situacion', 'inicio_anio'];
+
+            if ($estudiando) {
+                // Mientras estudia no hay año de término: se limpia y no se exige.
+                $educacion['termino_anio'] = null;
+                $validated['educaciones'][$index]['termino_anio'] = null;
+            } else {
+                $camposObligatorios[] = 'termino_anio';
+            }
+
+            foreach ($camposObligatorios as $campo) {
                 if (blank($educacion[$campo])) {
                     $this->addError("educaciones.$index.$campo", 'Este campo es obligatorio para el nivel seleccionado.');
                 }

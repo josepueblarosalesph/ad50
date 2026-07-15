@@ -1,6 +1,6 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div class="md:col-span-2">
-            <flux:input wire:model="titular" label="Titular" maxlength="100" placeholder="Ej. Gerente de Finanzas con experiencia en transformación y crecimiento" description="Opcional, pero recomendado: mejora cómo apareces en las búsquedas. Máximo 100 caracteres." />
+            <flux:input wire:model="titular" label="Titular" maxlength="100" placeholder="Ej. Gerente de Finanzas con experiencia en transformación y crecimiento" description="Es la primera información que verán las empresas de ti. Máximo 100 caracteres." />
         </div>
         <div class="md:col-span-2">
             <flux:textarea wire:model="resumenProfesional" label="Escribe una breve presentación" maxlength="900" rows="5" placeholder="Resume el valor que aporta el conjunto de tu trayectoria." description="Máximo 900 caracteres." />

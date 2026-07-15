@@ -33,7 +33,6 @@
             </nav>
 
             <div class="ml-auto flex shrink-0 items-center gap-3">
-                <span class="hidden ad-chip ad-chip-green ad-chip-dot md:inline-flex">{{ $status ?? 'Perfil activo' }}</span>
                 <div class="hidden md:block">
                     <flux:dropdown align="end">
                         <flux:profile :name="auth()->user()?->name ?? 'MF'"

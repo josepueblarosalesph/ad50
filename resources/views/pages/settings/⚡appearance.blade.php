@@ -9,6 +9,7 @@ new #[Title('Appearance settings')] #[Layout('components.layouts.app')] class ex
 }; ?>
 
 <section class="w-full">
+    @include('partials.panel-nav')
     @include('partials.settings-heading')
 
     <flux:heading class="sr-only">{{ __('Appearance settings') }}</flux:heading>

@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Rules\EmailCorporativo;
 use App\Rules\RutValido;
 use App\Support\Rut;
 use Illuminate\Auth\Events\Registered;
@@ -107,6 +108,7 @@ class Register extends Component
         ];
 
         if ($this->role === 'empresa') {
+            $rules['email'][] = new EmailCorporativo;
             $rules['razon_social'] = ['required', 'string', 'max:160'];
             $rules['rut'] = ['required', 'string', 'max:20', new RutValido];
             $rules['telefono'] = ['required', 'string', 'max:30'];

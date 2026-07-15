@@ -31,7 +31,7 @@
 <fieldset class="rounded-[14px] border border-line-2 p-5">
     <div class="mb-4"><legend class="text-[14px] font-extrabold text-ink">Datos de contacto</legend></div>
     <div class="grid gap-4 md:grid-cols-2">
-        <flux:input wire:model="email" type="email" label="Email *" />
+        <flux:input wire:model="email" type="email" label="Email de contacto *" />
         <x-input-telefono wire:model="telefono" label="Teléfono *" />
         <flux:input wire:model="linkedin" type="url" label="LinkedIn" maxlength="100" placeholder="https://linkedin.com/in/..." />
         <flux:input wire:model="sitioWeb" type="url" label="Web / portafolio" maxlength="100" placeholder="https://..." />

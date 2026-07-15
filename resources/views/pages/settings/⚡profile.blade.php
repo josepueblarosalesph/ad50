@@ -133,6 +133,7 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
 }; ?>
 
 <section class="w-full">
+    @include('partials.panel-nav')
     @include('partials.settings-heading')
 
     <flux:heading class="sr-only">Configuración de perfil</flux:heading>
@@ -150,7 +151,7 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
                     <flux:input wire:model="name" label="Nombre" type="text" required autocomplete="name" />
 
                     <div>
-                        <flux:input wire:model="email" label="Correo electrónico" type="email" required autocomplete="email" />
+                        <flux:input wire:model="email" label="Email de registro" type="email" required autocomplete="email" />
 
                         {{-- @chisel-email-verification --}}
                         @if ($this->hasUnverifiedEmail)
@@ -197,7 +198,7 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
                     <div class="p-6">
                         <div class="ad-toggle-row">
                             <div>
-                                <b class="block text-[13.5px]">{{ $visible ? 'Perfil activo' : 'Perfil pausado' }}</b>
+                                <b class="block text-[13.5px]">{{ $visible ? 'Visible para reclutadores' : 'Perfil pausado' }}</b>
                                 <span class="text-[13px] text-gray-500">{{ $visible ? 'Apareces en las búsquedas compatibles de las empresas.' : 'Tu perfil no aparece en ninguna búsqueda.' }}</span>
                             </div>
                             <flux:switch wire:model.live="visible" />

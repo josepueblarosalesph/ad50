@@ -69,6 +69,61 @@ test('a structured search lists only candidates that fulfill every configured cr
         ->and($matches->contains('postulante_id', $partial->id))->toBeFalse();
 });
 
+test('a search with a skills criterion only matches candidates that have one of the skills', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Skills']);
+
+    $conHabilidad = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'habilidades' => ['Python', 'Liderazgo'],
+    ]);
+
+    $sinHabilidad = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'habilidades' => ['Liderazgo'],
+    ]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Perfil técnico')
+        ->set('habilidad', ['Python'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
+    $matches = $busqueda->candidatos()->get();
+
+    expect($matches)->toHaveCount(1)
+        ->and($matches->first()->postulante_id)->toBe($conHabilidad->id)
+        ->and($matches->first()->estado_match)->toBe('cumple')
+        ->and($matches->contains('postulante_id', $sinHabilidad->id))->toBeFalse();
+});
+
+test('the skills criterion is persisted and rejects values outside the catalog', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Cat']);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Con habilidad inválida')
+        ->set('habilidad', ['NoExisteEnCatalogo'])
+        ->call('save')
+        ->assertHasErrors('habilidad.0');
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Con habilidad válida')
+        ->set('habilidad', ['Python'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
+
+    expect($busqueda->criterios['habilidad'] ?? [])->toBe(['Python']);
+});
+
 test('a postulante can add and remove multiple work experiences', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id]);

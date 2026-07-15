@@ -201,12 +201,16 @@ test('a postulante can skip the curriculum and enter the panel', function () {
         ->assertOk();
 });
 
-test('the "acerca de mí" step is optional and can be advanced empty', function () {
+test('the "acerca de mí" step requires a titular before advancing', function () {
     $user = postulanteEnOnboarding(2);
 
     Livewire::actingAs($user)
         ->test(Ficha::class)
         ->assertSet('pasoActual', 2)
+        ->call('avanzar')
+        ->assertHasErrors(['titular' => 'required'])
+        ->assertSet('pasoActual', 2)
+        ->set('titular', 'Gerenta de Finanzas')
         ->call('avanzar')
         ->assertHasNoErrors()
         ->assertSet('pasoActual', 3);

@@ -5,7 +5,7 @@
         @unless ($modoOnboarding)
             <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
         @endunless
-        <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil profesional</a>
+        <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil</a>
         @unless ($modoOnboarding)
             <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
         @endunless
@@ -28,7 +28,7 @@
                     })
                 "
             >
-                <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Perfil profesional</div>
+                <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Mi perfil</div>
                 <div class="space-y-1.5">
                     @foreach ([
                         ['user', 'Mis datos', 'datos-personales'],
@@ -101,7 +101,7 @@
             </section>
 
             <section id="acerca-de-mi" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 2 ? 'hidden' : '' }}">
-                <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Acerca de mí</h2><p class="mt-1 text-[13px] text-gray-500">Opcional. Te recomendamos al menos un titular para mejorar tus coincidencias.</p></div></div>
+                <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Acerca de mí</h2><p class="mt-1 text-[13px] text-gray-500">Tu titular es la primera información que verán las empresas de ti.</p></div></div>
                 <div class="space-y-7 p-6">@include('livewire.postulante.partials.form-acerca')</div>
             </section>
 
@@ -224,8 +224,6 @@
                 @endif
             </div>
         </section>
-
-        <div class="ad-card mt-5 p-5 flex flex-wrap items-center gap-3"><flux:icon.shield-check class="size-6 text-gray-500 flex-none" /><div><b class="text-[14px]">Tú controlas tu información</b><p class="mt-1 text-[13px] text-gray-500">Edita cada sección cuando quieras, pausa tu visibilidad o solicita su eliminación.</p></div></div>
 
         {{-- Modal de edición único: solo la sección activa monta su formulario. --}}
         <flux:modal name="editor" class="w-full max-w-3xl" wire:close="cancelarEdicion">

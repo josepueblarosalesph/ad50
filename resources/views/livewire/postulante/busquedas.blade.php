@@ -3,7 +3,7 @@
 
     <x-slot:nav>
         <a wire:navigate href="{{ route('postulante.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi panel</a>
-        <a wire:navigate href="{{ route('postulante.ficha') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi perfil profesional</a>
+        <a wire:navigate href="{{ route('postulante.ficha') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi perfil</a>
         <a wire:navigate href="{{ route('postulante.busquedas') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Búsquedas que me incluyen</a>
     </x-slot:nav>
 

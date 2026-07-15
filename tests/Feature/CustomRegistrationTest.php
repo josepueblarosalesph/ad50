@@ -77,6 +77,37 @@ test('an empresa can create an account', function () {
     Notification::assertSentTo($user, VerifyEmail::class);
 });
 
+test('an empresa cannot register with a free personal email', function () {
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@gmail.com')
+        ->set('password', 'password')
+        ->set('razon_social', 'Empresa de Prueba SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasErrors('email');
+
+    expect(User::query()->where('email', 'ana@gmail.com')->exists())->toBeFalse();
+});
+
+test('a postulante can register with a free personal email', function () {
+    Notification::fake();
+
+    Livewire::test(Register::class)
+        ->set('role', 'postulante')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@gmail.com')
+        ->set('password', 'password')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasNoErrors();
+});
+
 test('an empresa must provide a contact phone number', function () {
     Livewire::test(Register::class)
         ->set('role', 'empresa')

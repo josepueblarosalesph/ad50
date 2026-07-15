@@ -10,8 +10,8 @@
     <flux:separator class="md:hidden" />
 
     <div class="flex-1 self-stretch max-md:pt-6">
-        <flux:heading>{{ $heading ?? '' }}</flux:heading>
-        <flux:subheading>{{ $subheading ?? '' }}</flux:subheading>
+        @if (($heading ?? '') !== '')<h2 class="text-[18px] font-extrabold">{{ $heading }}</h2>@endif
+        @if (($subheading ?? '') !== '')<p class="mt-1 text-[14px] text-gray-500">{{ $subheading }}</p>@endif
 
         <div class="mt-5 w-full max-w-2xl">
             {{ $slot }}

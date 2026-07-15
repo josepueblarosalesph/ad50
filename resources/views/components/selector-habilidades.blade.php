@@ -2,7 +2,7 @@
     'habilidades' => [],
     'sugerencias' => [],
     'buscar' => '',
-    'max' => 30,
+    'max' => 10,
 ])
 
 <div>
@@ -14,7 +14,7 @@
             maxlength="80"
             autocomplete="off"
             placeholder="Busca un software, herramienta o competencia"
-            :description="'Escribe para buscar y elige de la lista (hasta '.$max.').'"
+            :description="'¿Qué habilidades te gustaría destacar? (selecciona hasta '.$max.').'"
             :disabled="count($habilidades) >= $max"
         />
 

@@ -37,6 +37,9 @@ class NuevaBusqueda extends Component
     public array $ciudad = [];
 
     /** @var list<string> */
+    public array $habilidad = [];
+
+    /** @var list<string> */
     public array $palabrasClave = [];
 
     public string $nuevaPalabraClave = '';
@@ -67,6 +70,7 @@ class NuevaBusqueda extends Component
         $this->especialidad = $this->normalizarSeleccion($criterios['especialidad'] ?? []);
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
+        $this->habilidad = $this->normalizarSeleccion($criterios['habilidad'] ?? []);
         $this->institucion = $criterios['institucion'] ?? '';
         $this->empresa = $criterios['empresa'] ?? '';
         $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
@@ -113,6 +117,8 @@ class NuevaBusqueda extends Component
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
             'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regiones())],
+            'habilidad' => ['array'],
+            'habilidad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::habilidades())],
             'palabrasClave' => ['array', 'max:10'],
             'palabrasClave.*' => ['string', 'max:100', 'distinct'],
             'institucion' => ['nullable', 'string', 'max:180'],
@@ -131,6 +137,7 @@ class NuevaBusqueda extends Component
                     'especialidad' => $validated['especialidad'],
                     'industria' => $validated['industria'],
                     'ciudad' => $validated['ciudad'],
+                    'habilidad' => $validated['habilidad'],
                     'institucion' => $validated['institucion'],
                     'empresa' => $validated['empresa'],
                     'min_anios' => $validated['aniosMinimos'],
@@ -169,6 +176,8 @@ class NuevaBusqueda extends Component
             'industrias' => CatalogosProfesionales::industrias(),
             'ciudades' => CatalogosProfesionales::regiones(),
             'instituciones' => CatalogosProfesionales::instituciones(),
+            'empresas' => CatalogosProfesionales::empresas(),
+            'habilidades' => CatalogosProfesionales::habilidades(),
             'rangosExperiencia' => CatalogosProfesionales::rangosExperiencia(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'editando' => $this->busqueda !== null,

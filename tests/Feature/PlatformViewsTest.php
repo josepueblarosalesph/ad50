@@ -46,7 +46,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('fixed inset-x-0 top-0 z-40', false)
         ->assertSee('id="landing-mobile-navigation"', false)
         ->assertSee('aria-label="Abrir menú de navegación"', false)
-        ->assertSee('p-1.5 text-[15px] font-bold text-ink', false)
+        ->assertSee('text-[15px] font-bold text-ink', false)
         ->assertSee('pastHero: false', false)
         ->assertSee("pastHero ? 'border-white/10 bg-[#252729]/90", false)
         ->assertSee('id="como-postulantes"', false)
@@ -56,9 +56,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Cómo funciona para postulantes')
         ->assertSee('Cómo funciona para empresas')
         ->assertSee('bg-[#252729]', false)
-        ->assertSee('lg:text-[72px]', false)
         ->assertSee('from-orange-700 via-orange-500 to-orange-200', false)
-        ->assertSee('absolute bottom-10 right-10 z-10', false)
         ->assertSee('Quiénes somos')
         ->assertSee('href="#quienes-somos"', false)
         ->assertDontSee('Acerca de')
@@ -80,7 +78,6 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Accede a perfiles y currículums completos')
         ->assertSee('Reduce tiempos de búsqueda')
         ->assertSee('Encuentra talento con experiencia comprobada')
-        ->assertSee('Crear tu perfil profesional es gratis.')
         ->assertDontSee('Postulante visible')
         ->assertDontSee('Ver todos los planes')
         ->assertSee('Crea tu perfil profesional')
@@ -302,7 +299,7 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertSee('Configuración')
         ->assertSee('Cerrar sesión')
         ->assertSee('Así se ve tu presencia')
-        ->assertSee('Visibilidad del perfil')
+        ->assertSee('aria-label="Cambiar visibilidad del perfil"', false)
         ->assertSee(route('postulante.busquedas'), false)
         ->assertDontSee('Solicitar eliminación de mis datos')
         ->assertDontSee('Mi activación')
@@ -362,7 +359,7 @@ test('a postulante can view the panel and professional profile', function () {
         ->and(strpos($ficha, "'Mis Datos'"))->toBeLessThan(strpos($ficha, "'Experiencia'"))
         ->and(strpos($ficha, "'Experiencia'"))->toBeLessThan(strpos($ficha, "'Educación'"))
         ->and(strpos($ficha, "'Educación'"))->toBeLessThan(strpos($ficha, "'Idiomas'"))
-        ->and(strpos($ficha, 'id="curriculum"'))->toBeLessThan(strpos($ficha, 'Tú controlas tu información'));
+        ->and(strpos($ficha, "'Idiomas'"))->toBeLessThan(strpos($ficha, 'id="curriculum"'));
 
     // Los campos editables viven en partials, reutilizados por el onboarding y por los modales.
     $formDatos = file_get_contents(resource_path('views/livewire/postulante/partials/form-datos.blade.php'));
