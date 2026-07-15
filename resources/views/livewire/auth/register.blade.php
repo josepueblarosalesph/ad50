@@ -1,7 +1,7 @@
 <div class="grid min-h-screen bg-paper lg:grid-cols-[1fr_1.05fr]">
 
 {{-- ====== Panel marca ====== --}}
-<aside class="relative hidden items-center overflow-hidden bg-ink text-white lg:flex">
+<aside class="relative hidden items-start overflow-hidden bg-ink text-white lg:flex">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(232,119,34,.2),transparent_38%),linear-gradient(135deg,#4C4F51,#252729_65%)]"></div>
     <div class="relative px-10 py-14 xl:px-14">
         <a href="{{ route('home') }}" class="mb-10 inline-flex rounded-[14px] bg-black/15 px-3 py-2 ring-1 ring-white/10" aria-label="AD+50 Talento Senior">

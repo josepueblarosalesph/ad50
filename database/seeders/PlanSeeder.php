@@ -23,10 +23,10 @@ class PlanSeeder extends Seeder
                 'nombre' => 'Básico',
                 'audiencia' => 'empresa',
                 'precio_clp' => 0,
-                'precio_uf' => 2,
-                'periodo' => 'único',
+                'precio_uf' => 5,
+                'periodo' => 'anual',
                 'destacado' => false,
-                'features' => ['1 publicación', 'Match inteligente (candidatos que más se acercan al perfil buscado)', '5 accesos a perfiles completos o desbloqueos de CV'],
+                'features' => ['5 publicaciones', 'Match inteligente', '10 desbloqueos de perfiles'],
                 'recomendacion' => 'Recomendado para búsquedas puntuales',
             ],
             [
@@ -37,7 +37,7 @@ class PlanSeeder extends Seeder
                 'precio_uf' => 30,
                 'periodo' => 'anual',
                 'destacado' => false,
-                'features' => ['30 publicaciones', 'Match inteligente (candidatos que más se acercan al perfil buscado)', '15 accesos a perfiles completos o desbloqueos de CV', 'Soporte técnico'],
+                'features' => ['30 publicaciones', 'Match inteligente', '50 desbloqueos de perfiles', 'Soporte técnico'],
                 'recomendacion' => 'Recomendado para múltiples búsquedas',
             ],
             [
@@ -48,8 +48,8 @@ class PlanSeeder extends Seeder
                 'precio_uf' => 45,
                 'periodo' => 'anual',
                 'destacado' => true,
-                'features' => ['Publicaciones ilimitadas', 'Match inteligente (candidatos que más se acercan al perfil buscado)', '100 accesos a perfiles completos o desbloqueos de CV', 'Soporte técnico'],
-                'recomendacion' => 'Recomendado para empresas con altas demandas de ofertas laborales',
+                'features' => ['Publicaciones ilimitadas', 'Match inteligente', '100 desbloqueos de perfiles', 'Soporte técnico'],
+                'recomendacion' => 'Recomendado para empresas con alto volumen de publicaciones.',
             ],
         ];
     }

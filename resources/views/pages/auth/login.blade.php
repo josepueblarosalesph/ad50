@@ -2,15 +2,12 @@
     <main class="grid min-h-screen bg-paper lg:grid-cols-[1.08fr_.92fr]">
         <section
             class="relative hidden min-h-screen overflow-hidden bg-ink text-white lg:flex lg:flex-col lg:justify-between"
-            style="background-image: linear-gradient(180deg, rgba(52,54,56,.5) 0%, rgba(52,54,56,.76) 48%, rgba(52,54,56,.97) 100%), url('/images/ad50-hero-experiencia-v2.webp'); background-position: 66% center; background-size: cover;"
+            style="background-image: linear-gradient(180deg, rgba(52,54,56,.5) 0%, rgba(52,54,56,.76) 48%, rgba(52,54,56,.97) 100%), url('/images/ad50-hero-profesionales-trabajando.webp'); background-position: 66% center; background-size: cover;"
         >
             <div class="relative z-10 flex items-center justify-between px-10 py-8 xl:px-14 xl:py-10">
                 <a href="{{ route('home') }}" aria-label="Volver al inicio de AD+50">
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-[74px] w-auto">
                 </a>
-                <span class="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[.16em] text-white/75 backdrop-blur-sm">
-                    Plataforma de talento
-                </span>
             </div>
 
             <div class="relative z-10 max-w-[680px] px-10 pb-12 xl:px-14 xl:pb-16">
@@ -55,10 +52,7 @@
 
                 <div class="rounded-[24px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card-lg)] dark:bg-[#222528] sm:p-9 lg:p-10">
                     <div>
-                        <h2 class="mt-3 text-[38px] text-ink sm:text-[44px]">Ingresa a tu cuenta</h2>
-                        <p class="mt-3 text-[14px] font-medium leading-[1.65] text-gray-500">
-                            Usa las credenciales con las que creaste tu perfil.
-                        </p>
+                        <h2 class="mt-3 whitespace-nowrap text-[38px] text-ink sm:text-[44px]">Ingresa a tu cuenta</h2>
                     </div>
 
                     <x-auth-session-status class="mt-5 rounded-[10px] border border-green-200 bg-green-50 px-4 py-3 text-left" :status="session('status')" />

@@ -14,10 +14,10 @@
                     <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto sm:h-16">
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-[14px] border border-white/70 bg-white/75 p-1.5 text-[15px] font-bold text-ink shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md lg:flex">
-                    <a href="#quienes-somos" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Quiénes somos</a>
+                <div class="hidden items-center gap-3 text-[15px] font-bold text-ink lg:flex">
+                    <a href="#quienes-somos" class="rounded-[14px] border border-white/70 bg-white/75 px-4 py-2.5 shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Quiénes somos</a>
                     <flux:dropdown position="bottom" align="start">
-                        <button type="button" class="inline-flex items-center gap-1.5 rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Elegir cómo funciona AD+50">
+                        <button type="button" class="inline-flex items-center gap-1.5 rounded-[14px] border border-white/70 bg-white/75 px-4 py-2.5 shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Elegir cómo funciona AD+50">
                             Cómo funciona
                             <flux:icon.chevron-down class="size-4" />
                         </button>
@@ -26,7 +26,7 @@
                             <flux:menu.item href="#como-postulantes" icon="user">Postulantes</flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
-                    <a href="#planes" class="rounded-[10px] px-4 py-2.5 transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Planes</a>
+                    <a href="#planes" class="rounded-[14px] border border-white/70 bg-white/75 px-4 py-2.5 shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Planes</a>
                 </div>
 
                 @auth
@@ -37,11 +37,11 @@
                         {{ auth()->user()->dashboardLabel() }}
                     </a>
                 @else
-                    <div class="hidden items-center gap-2 lg:flex">
+                    <div class="hidden items-center gap-4 lg:flex">
                         <a href="{{ route('login') }}" class="ad-btn-primary ad-btn-sm">Iniciar sesión</a>
                         <flux:dropdown position="bottom" align="end">
                             <button type="button" class="ad-btn-primary ad-btn-sm" aria-label="Elegir tipo de registro">
-                                Registrarse
+                                Crear cuenta
                                 <flux:icon.chevron-down class="size-4" />
                             </button>
                             <flux:menu>
@@ -94,11 +94,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="absolute bottom-10 right-10 z-10 hidden max-w-[230px] rounded-[14px] border border-white/50 bg-white/80 p-4 shadow-[var(--shadow-card)] backdrop-blur-md lg:block">
-            <p class="font-display text-[19px] leading-[1.15] text-ink">Trayectorias reales. Nuevas oportunidades.</p>
-            <p class="mt-2 text-[12px] font-bold uppercase tracking-[.12em] text-orange-600">AD Consulting · Chile</p>
-        </div>
     </section>
 
     {{-- Quiénes somos · intro editorial centrada + pilares --}}
@@ -106,7 +101,7 @@
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
             <div class="mx-auto max-w-[760px] text-center">
                 <span class="ad-eyebrow justify-center">Quiénes somos</span>
-                <h2 class="mt-6 text-[46px] leading-[1.02] sm:text-[56px]">Experiencia que abre <span class="text-orange-500">nuevas oportunidades</span>.</h2>
+                <h2 class="mt-6 text-[46px] leading-[1.02] sm:text-[56px]">Experiencia que abre <span class="text-orange-500">nuevas oportunidades.</span></h2>
                 <p class="mt-6 text-[18px] leading-[1.75] text-gray-700">
                     AD+50 es una iniciativa de AD Consulting creada para conectar profesionales con amplia trayectoria y organizaciones que valoran el criterio, el oficio y la capacidad de seguir aportando.
                 </p>
@@ -114,25 +109,41 @@
                     Diseñamos una experiencia clara y respetuosa para que cada perfil sea evaluado por su experiencia real y cada empresa pueda tomar decisiones con información relevante.
                 </p>
                 <div class="mt-8 flex justify-center">
-                    <a href="{{ route('quienes-somos') }}" class="ad-btn-ghost" wire:navigate>
+                    <a href="https://www.adconsulting.cl/ad50/" class="ad-btn-ghost" target="_blank" rel="noopener noreferrer">
                         Conoce más sobre AD+50
                         <flux:icon.arrow-right class="size-4" />
                     </a>
                 </div>
             </div>
 
-            <div class="mx-auto mt-16 grid max-w-[980px] gap-y-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-line">
+            <div class="mt-16 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+                <div class="relative overflow-hidden rounded-[24px] border border-line-2 shadow-[var(--shadow-card-lg)]">
+                    <img src="/images/ad50-quienes-somos.svg" alt="AD+50 conecta la experiencia senior con nuevas oportunidades" class="h-full min-h-[320px] w-full object-cover lg:min-h-[420px]" loading="lazy">
+                </div>
+                <div>
+                    <span class="ad-eyebrow">Propuesta de valor</span>
+                    <p class="mt-5 text-[22px] font-semibold leading-[1.45] text-ink sm:text-[26px]">
+                        Una plataforma integral que conecta personas y organizaciones a través de soluciones concretas en <span class="text-orange-500">empleabilidad, formación, reclutamiento e integración generacional.</span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-6">
                 @foreach ([
-                    ['academic-cap', 'Trayectoria primero', 'La experiencia se presenta con contexto y evidencia.'],
-                    ['scale', 'Decisiones con criterio', 'El matching prioriza afinidad por sobre volumen.'],
-                    ['shield-check', 'Datos bajo control', 'Cada persona administra su información y visibilidad.'],
-                ] as [$icon, $title, $description])
-                    <div class="sm:px-8 sm:first:pl-0 sm:last:pr-0">
-                        <span class="grid size-12 place-items-center rounded-[13px] bg-orange-100 text-orange-700">
-                            <flux:icon :name="$icon" class="size-6" />
-                        </span>
+                    ['01', 'Empleabilidad y reinvención +50', 'Plataforma AD para procesos de empleabilidad, outplacement y mentoría especializada para profesionales mayores de 50 años.'],
+                    ['02', 'Actualización digital e inteligencia artificial', 'Academia AD para el fortalecimiento de competencias digitales, IA y herramientas que el mercado laboral exige hoy.'],
+                    ['03', 'Integración intergeneracional', 'Consultoría para la transformación cultural y gestión de la inclusión etaria en las organizaciones.'],
+                    ['04', 'Reclutamiento senior y jornadas flexibles', 'Esquemas fraccionados, parciales o completos, adaptados a las necesidades operacionales de cada organización.'],
+                    ['05', 'SelloMayor', 'Estrategias de adaptación organizacional alineadas a los nuevos desafíos demográficos y laborales.'],
+                ] as [$number, $title, $description])
+                    <div @class([
+                        'group relative flex flex-col overflow-hidden rounded-[22px] border border-line-2 bg-white p-7 transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-[var(--shadow-card-lg)] sm:p-8',
+                        'lg:col-span-2' => in_array($number, ['01', '02', '03'], true),
+                        'sm:col-span-2 lg:col-span-3' => in_array($number, ['04', '05'], true),
+                    ])>
+                        <span class="font-display text-[46px] font-black leading-none text-orange-500/60">{{ $number }}</span>
                         <h3 class="mt-5 text-[20px] leading-[1.15] text-ink">{{ $title }}</h3>
-                        <p class="mt-2 text-[15px] leading-[1.65] text-gray-500">{{ $description }}</p>
+                        <p class="mt-2.5 text-[15px] leading-[1.65] text-gray-500">{{ $description }}</p>
                     </div>
                 @endforeach
             </div>
@@ -148,23 +159,19 @@
         <div class="relative mx-auto max-w-[1240px] px-6 py-28 lg:px-10 lg:py-36">
             <div class="grid gap-14 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:gap-24">
                 <div>
-                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600 shadow-[0_8px_30px_rgba(232,119,34,.1)]">
-                        <flux:icon.building-office-2 class="size-4" />
+                    <span class="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600">
                         Cómo funciona para empresas
                     </span>
-                    <h2 class="mt-7 max-w-[610px] text-[50px] leading-[.98] text-ink sm:text-[64px] lg:text-[72px]">Menos volumen. <span class="text-orange-500">Más evidencia</span> para decidir.</h2>
+                    <h2 class="mt-7 max-w-[610px] text-[46px] leading-[.98] text-ink sm:text-[56px]">Menos volumen.<br><span class="text-orange-500">Más evidencia</span><br>para decidir.</h2>
                     <p class="mt-7 max-w-[560px] text-[18px] font-medium leading-[1.75] text-gray-700">
                         Define el desafío con criterios concretos y revisa únicamente profesionales cuya experiencia responde a lo que estás buscando.
                     </p>
                     <div class="mt-9 flex flex-wrap gap-3">
                         <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="ad-btn-primary">
-                            Registrar mi empresa
+                            Crear cuenta
                             <flux:icon.arrow-right class="size-4" />
                         </a>
-                        <a href="{{ route('planes') }}" class="ad-btn-ghost">Ver planes</a>
                     </div>
-
-                    
                 </div>
 
                 <ol class="relative">
@@ -198,12 +205,11 @@
     <section id="como-postulantes" class="scroll-mt-24 border-y border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
             <div class="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-                <div class="max-w-[620px]">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600">
-                        <flux:icon.user class="size-4" />
+                <div class="max-w-[740px]">
+                    <span class="inline-flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-[.18em] text-orange-600">
                         Cómo funciona para postulantes
                     </span>
-                    <h2 class="mt-7 text-[46px] leading-[.98] sm:text-[56px]">Tu experiencia encuentra <span class="text-orange-500">nuevas oportunidades</span>.</h2>
+                    <h2 class="mt-7 text-[46px] leading-[.98] sm:whitespace-nowrap sm:text-[56px]">Tu experiencia encuentra<br><span class="text-orange-500">nuevas oportunidades</span>.</h2>
                     <p class="mt-5 text-[17px] leading-[1.7] text-gray-700">
                         Construye un perfil profesional claro, decide cuándo estará visible y participa automáticamente en búsquedas compatibles con tu trayectoria.
                     </p>
@@ -213,7 +219,6 @@
                         Crear mi perfil profesional
                         <flux:icon.arrow-right class="size-4" />
                     </a>
-                    <p class="mt-3 text-[12px] font-semibold text-gray-400">Crear tu perfil profesional es gratis.</p>
                 </div>
             </div>
 
@@ -226,7 +231,7 @@
                     <li class="group relative flex flex-col overflow-hidden rounded-[22px] border border-line-2 bg-paper p-7 transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:bg-white hover:shadow-[var(--shadow-card-lg)] sm:p-8">
                         <div class="flex items-start justify-between">
                             <span class="grid size-12 place-items-center rounded-[13px] bg-orange-100 text-orange-700"><flux:icon :name="$icon" class="size-6" /></span>
-                            <span class="font-display text-[46px] font-black leading-none text-orange-500/20">{{ $number }}</span>
+                            <span class="font-display text-[46px] font-black leading-none text-orange-500/60">{{ $number }}</span>
                         </div>
                         <h3 class="mt-6 text-[22px] leading-[1.12] text-ink">{{ $title }}</h3>
                         <p class="mt-2.5 text-[15px] leading-[1.65] text-gray-500">{{ $description }}</p>
@@ -240,9 +245,9 @@
     <section id="planes" class="scroll-mt-24 border-t border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
             <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-                <div class="max-w-[720px]">
+                <div class="max-w-[720px] lg:max-w-none">
                     <span class="ad-eyebrow">Planes para empresas</span>
-                    <h2 class="mt-5 text-[46px] sm:text-[56px]">Elige el alcance de tu búsqueda.</h2>
+                    <h2 class="mt-5 text-[46px] sm:text-[56px] lg:whitespace-nowrap">Elige el alcance de tu búsqueda.</h2>
                     <p class="mt-5 max-w-[620px] text-[17px] leading-[1.7] text-gray-700">
                         Publica tus vacantes, recibe candidatos compatibles mediante nuestro sistema de matching y accede a los currículums que mejor se ajustan a tu búsqueda.
                     </p>
@@ -263,7 +268,7 @@
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <span class="text-[11px] font-extrabold uppercase tracking-[.14em] text-orange-600">
-                                    Para empresas
+                                    {{ Str::after($plan->nombre, '· ') === 'Básico' ? 'Para Pymes' : 'Para empresas' }}
                                 </span>
                                 <h3 class="mt-2 text-[24px]">{{ Str::after($plan->nombre, '· ') }}</h3>
                             </div>
@@ -370,16 +375,6 @@
         </div>
     </section>
 
-    <section class="bg-orange-500 text-white">
-        <div class="mx-auto flex max-w-[1240px] flex-col items-start justify-between gap-8 px-6 py-16 md:flex-row md:items-center lg:px-10">
-            <div class="max-w-[900px]">
-                <span class="text-[11px] font-extrabold uppercase tracking-[.18em] text-white/70">El siguiente desafío empieza aquí</span>
-                <h2 class="mt-3 text-[40px] text-white sm:text-[48px]">Experiencia lista para entrar en acción.</h2>
-            </div>
-            
-        </div>
-    </section>
-
     <footer id="seguridad" class="bg-[#4C4F51] text-white/85">
         <div class="mx-auto max-w-[1240px] px-6 py-14 lg:px-10">
             <div class="flex flex-wrap items-start justify-between gap-10 border-b border-white/10 pb-10">
@@ -388,13 +383,19 @@
                     <p class="mt-5 text-[15px] leading-[1.7]">Una iniciativa de AD Consulting para conectar experiencia, criterio y nuevas oportunidades laborales.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-x-12 gap-y-3 text-[15px] font-bold sm:grid-cols-3">
-                    <a href="#como-postulantes" class="hover:text-white">Cómo funciona</a>
-                    <a href="#como-empresas" class="hover:text-white">Para empresas</a>
-                    <a href="#como-postulantes" class="hover:text-white">Para postulantes</a>
-                    <a href="#quienes-somos" class="hover:text-white">Quiénes somos</a>
-                    <a href="#planes" class="hover:text-white">Planes</a>
-                    <a href="#seguridad" class="hover:text-white">Privacidad</a>
-                    <a href="#seguridad" class="hover:text-white">Contacto</a>
+                    <div class="flex flex-col gap-3">
+                        <a href="#quienes-somos" class="hover:text-white">Quiénes somos</a>
+                        <a href="#planes" class="hover:text-white">Nuestros planes</a>
+                        <a href="mailto:contacto@adconsulting.cl" class="hover:text-white">Contáctanos</a>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <a href="#como-postulantes" class="hover:text-white">Cómo funciona</a>
+                        <a href="#como-empresas" class="hover:text-white">Para empresas</a>
+                        <a href="#como-postulantes" class="hover:text-white">Para postulantes</a>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <a href="#seguridad" class="hover:text-white">Política de privacidad</a>
+                    </div>
                 </div>
             </div>
             <div class="flex flex-wrap justify-between gap-3 pt-6 text-[14px]">

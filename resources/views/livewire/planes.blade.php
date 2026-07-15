@@ -1,7 +1,7 @@
 <div class="min-h-screen bg-paper">
     <header class="border-b border-line bg-white dark:bg-[#1D2022]">
         <div class="max-w-[1180px] mx-auto px-6 md:px-11 py-4 flex items-center justify-between gap-4">
-            <a href="{{ route('home') }}" class="ad-logo ad-logo-panel" aria-label="AD+50 Talento Senior"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo"></a>
+            <a href="{{ route('home') }}" class="ad-logo" aria-label="AD+50 Talento Senior"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="ad-brand-logo"></a>
             <div class="hidden flex-wrap items-center justify-end gap-2 md:flex sm:gap-3">
                 <a href="{{ route('home') }}" class="ad-btn-ghost ad-btn-sm gap-2">
                     <flux:icon.arrow-left class="size-4" />
