@@ -26,7 +26,7 @@ class BusquedaSeeder extends Seeder
                 [
                     'rubro_oculto' => $datos['rubro_oculto'],
                     'criterios' => $datos['criterios'],
-                    'estado' => 'activa',
+                    'estado' => 'long_list',
                 ],
             );
 

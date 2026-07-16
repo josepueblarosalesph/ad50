@@ -7,7 +7,7 @@
         @endunless
         <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil</a>
         @unless ($modoOnboarding)
-            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas que me incluyen</a>
+            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Procesos que me incluyen</a>
         @endunless
     </x-slot:nav>
     @unless ($modoOnboarding)
@@ -106,12 +106,12 @@
             </section>
 
             <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 3 ? 'hidden' : '' }}">
-                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una experiencia para aparecer en las búsquedas. Puedes agregar hasta 5.</p></div><button type="button" wire:click="addExperiencia" @disabled(count($experiencias) >= 5) class="ad-btn-ghost ad-btn-sm disabled:cursor-not-allowed disabled:opacity-50"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
+                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una experiencia para aparecer en los procesos. Puedes agregar hasta 5.</p></div><button type="button" wire:click="addExperiencia" @disabled(count($experiencias) >= 5) class="ad-btn-ghost ad-btn-sm disabled:cursor-not-allowed disabled:opacity-50"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
                 <div class="p-6 space-y-5">@include('livewire.postulante.partials.form-experiencia')</div>
             </section>
 
             <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 4 ? 'hidden' : '' }}">
-                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una formación para aparecer en las búsquedas.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
+                <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una formación para aparecer en los procesos.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
                 <div class="space-y-5 p-6">@include('livewire.postulante.partials.form-educacion')</div>
             </section>
 

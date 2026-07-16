@@ -10,11 +10,13 @@
             <div>
                 <span class="ad-eyebrow">Validación de empresa</span>
                 <h1 class="mt-3 text-[30px] font-extrabold">Completa los antecedentes de tu empresa</h1>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Revisaremos esta información manualmente antes de habilitar búsquedas y acceso a perfiles profesionales.</p>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Revisaremos esta información manualmente antes de habilitar procesos y acceso a perfiles profesionales.</p>
             </div>
-            <span @class(['ad-chip', 'ad-chip-orange' => $empresa->estado_activacion !== 'activa', 'ad-chip-green' => $empresa->estado_activacion === 'activa'])>
-                {{ $empresa->estado_activacion === 'pendiente' ? 'Revisión pendiente' : ucfirst($empresa->estado_activacion) }}
-            </span>
+            @unless ($empresa->estado_activacion === 'inactiva')
+                <span @class(['ad-chip', 'ad-chip-orange' => $empresa->estado_activacion !== 'activa', 'ad-chip-green' => $empresa->estado_activacion === 'activa'])>
+                    {{ $empresa->estado_activacion === 'pendiente' ? 'Revisión pendiente' : ucfirst($empresa->estado_activacion) }}
+                </span>
+            @endunless
         </div>
 
         @if (session('status'))
@@ -45,15 +47,19 @@
                     <flux:input wire:model="contactoPrincipalCargo" label="Cargo *" />
                     <flux:input wire:model="contactoPrincipalEmail" type="email" label="Email *" />
                     <x-input-telefono wire:model="contactoPrincipalTelefono" label="Teléfono *" />
+                    <div class="md:col-span-2">
+                        <flux:textarea wire:model="contactoPrincipalDescripcion" label="Descripción" rows="3" maxlength="1000" placeholder="Cuéntanos brevemente sobre la empresa o el contacto." />
+                    </div>
                 </div>
             </section>
 
             <section class="ad-card">
-                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contacto técnico</h2><p class="mt-1 text-[13px] text-gray-500">Persona a quien contactar ante temas de acceso, seguridad o integración.</p></div></div>
+                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contacto técnico <span class="text-[13px] font-semibold text-gray-400">(opcional)</span></h2><p class="mt-1 text-[13px] text-gray-500">Persona a quien contactar ante temas de acceso, seguridad o integración.</p></div></div>
                 <div class="grid gap-4 p-6 md:grid-cols-2">
-                    <flux:input wire:model="contactoTecnicoNombre" label="Nombre completo *" />
-                    <flux:input wire:model="contactoTecnicoEmail" type="email" label="Email *" />
-                    <x-input-telefono wire:model="contactoTecnicoTelefono" label="Teléfono *" />
+                    <flux:input wire:model="contactoTecnicoNombre" label="Nombre completo" />
+                    <flux:input wire:model="contactoTecnicoCargo" label="Cargo" />
+                    <flux:input wire:model="contactoTecnicoEmail" type="email" label="Email" />
+                    <x-input-telefono wire:model="contactoTecnicoTelefono" label="Teléfono" />
                 </div>
             </section>
 

@@ -18,6 +18,23 @@ class Busquedas extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
     }
 
+    public function borrar(Busqueda $busqueda): void
+    {
+        abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
+
+        $busqueda->delete();
+
+        session()->flash('status', 'El proceso fue eliminado.');
+    }
+
+    public function cambiarEstado(Busqueda $busqueda, string $estado): void
+    {
+        abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
+        abort_unless(array_key_exists($estado, Busqueda::ESTADOS), 422);
+
+        $busqueda->update(['estado' => $estado]);
+    }
+
     #[Title('Mis búsquedas · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
@@ -31,6 +48,7 @@ class Busquedas extends Component
                 ])
                 ->latest()
                 ->paginate(12),
+            'estados' => Busqueda::ESTADOS,
         ]);
     }
 }

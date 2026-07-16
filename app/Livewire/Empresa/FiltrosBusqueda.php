@@ -3,6 +3,7 @@
 namespace App\Livewire\Empresa;
 
 use App\Concerns\FiltraPorEdad;
+use App\Concerns\FiltraPorExperiencia;
 use App\Models\Busqueda;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
@@ -14,6 +15,7 @@ use Livewire\Component;
 class FiltrosBusqueda extends Component
 {
     use FiltraPorEdad;
+    use FiltraPorExperiencia;
 
     public Busqueda $busqueda;
 
@@ -34,11 +36,29 @@ class FiltrosBusqueda extends Component
     /** @var list<string> */
     public array $habilidad = [];
 
+    /** @var list<string> */
+    public array $situacionLaboral = [];
+
+    /** @var list<string> */
+    public array $genero = [];
+
+    /** @var list<string> */
+    public array $nivelEstudios = [];
+
+    /** @var list<string> */
+    public array $situacionEstudios = [];
+
+    /** @var list<string> */
+    public array $idioma = [];
+
+    /** @var list<string> */
+    public array $actividadEconomica = [];
+
+    public int $rentaMax = 0;
+
     public string $institucion = '';
 
     public string $empresa = '';
-
-    public int $aniosMinimos = 0;
 
     /** @var list<string> */
     public array $palabrasClave = [];
@@ -58,9 +78,16 @@ class FiltrosBusqueda extends Component
         $this->industria = $this->normalizarSeleccion($criterios['industria'] ?? []);
         $this->ciudad = $this->normalizarSeleccion($criterios['ciudad'] ?? []);
         $this->habilidad = $this->normalizarSeleccion($criterios['habilidad'] ?? []);
+        $this->situacionLaboral = $this->normalizarSeleccion($criterios['situacion_laboral'] ?? []);
+        $this->genero = $this->normalizarSeleccion($criterios['genero'] ?? []);
+        $this->nivelEstudios = $this->normalizarSeleccion($criterios['nivel_estudios'] ?? []);
+        $this->situacionEstudios = $this->normalizarSeleccion($criterios['situacion_estudios'] ?? []);
+        $this->idioma = $this->normalizarSeleccion($criterios['idioma'] ?? []);
+        $this->actividadEconomica = $this->normalizarSeleccion($criterios['actividad_economica'] ?? []);
+        $this->rentaMax = (int) ($criterios['renta_max'] ?? 0);
         $this->institucion = $criterios['institucion'] ?? '';
         $this->empresa = $criterios['empresa'] ?? '';
-        $this->aniosMinimos = (int) ($criterios['min_anios'] ?? 0);
+        $this->hidratarExperiencia($criterios);
         $this->palabrasClave = $this->normalizarSeleccion($criterios['palabra_clave'] ?? []);
         $this->hidratarEdad($criterios);
     }
@@ -110,14 +137,27 @@ class FiltrosBusqueda extends Component
             'industria' => ['array'],
             'industria.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'ciudad' => ['array'],
-            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regiones())],
+            'ciudad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::regionesInteres())],
             'habilidad' => ['array'],
             'habilidad.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::habilidades())],
+            'situacionLaboral' => ['array'],
+            'situacionLaboral.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::situacionesLaborales())],
+            'genero' => ['array'],
+            'genero.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::generos())],
+            'nivelEstudios' => ['array'],
+            'nivelEstudios.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::nivelesEstudio())],
+            'situacionEstudios' => ['array'],
+            'situacionEstudios.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::situacionesEstudio())],
+            'idioma' => ['array'],
+            'idioma.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::idiomas())],
+            'actividadEconomica' => ['array'],
+            'actividadEconomica.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
+            'rentaMax' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'institucion' => ['nullable', 'string', 'max:180'],
             'empresa' => ['nullable', 'string', 'max:180'],
-            'aniosMinimos' => ['required', 'integer', Rule::in(array_keys(CatalogosProfesionales::rangosExperiencia()))],
             'palabrasClave' => ['array', 'max:10'],
             'palabrasClave.*' => ['string', 'max:100', 'distinct'],
+            ...$this->reglasExperiencia(),
             ...$this->reglasEdad(),
         ]);
 
@@ -131,9 +171,16 @@ class FiltrosBusqueda extends Component
                     'industria' => $validated['industria'],
                     'ciudad' => $validated['ciudad'],
                     'habilidad' => $validated['habilidad'],
+                    'situacion_laboral' => $validated['situacionLaboral'],
+                    'genero' => $validated['genero'],
+                    'nivel_estudios' => $validated['nivelEstudios'],
+                    'situacion_estudios' => $validated['situacionEstudios'],
+                    'idioma' => $validated['idioma'],
+                    'actividad_economica' => $validated['actividadEconomica'],
+                    'renta_max' => (int) ($validated['rentaMax'] ?? 0),
                     'institucion' => $validated['institucion'],
                     'empresa' => $validated['empresa'],
-                    'min_anios' => $validated['aniosMinimos'],
+                    'experiencia' => $this->criterioExperiencia($validated['expMin'], $validated['expMax']),
                     'palabra_clave' => $validated['palabrasClave'],
                     'edad' => $this->criterioEdad($validated['edadMin'], $validated['edadMax']),
                 ],
@@ -147,20 +194,23 @@ class FiltrosBusqueda extends Component
 
     public function render(): View
     {
-        $rangos = array_keys(CatalogosProfesionales::rangosExperiencia());
-
         return view('livewire.empresa.filtros-busqueda', [
             'instituciones' => CatalogosProfesionales::instituciones(),
             'empresas' => CatalogosProfesionales::empresas(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
-            'minimoExperiencia' => min($rangos),
-            'maximoExperiencia' => max($rangos),
+            'limitesExperiencia' => CatalogosProfesionales::rangoExperiencia(),
             'grupos' => [
-                ['Cargo', 'cargo', CatalogosProfesionales::cargos()],
-                ['Carrera', 'carrera', CatalogosProfesionales::carrerasEstudio()],
-                ['Industria', 'industria', CatalogosProfesionales::industrias()],
-                ['Región', 'ciudad', CatalogosProfesionales::regiones()],
-                ['Habilidades', 'habilidad', CatalogosProfesionales::habilidades()],
+                ['Cargo', 'cargo', 'cargo'],
+                ['Carrera', 'carrera', 'carrera'],
+                ['Industria', 'industria', 'industria'],
+                ['Región', 'ciudad', 'ciudad'],
+                ['Habilidades', 'habilidad', 'habilidad'],
+                ['Situación laboral', 'situacionLaboral', 'situacion_laboral'],
+                ['Género', 'genero', 'genero'],
+                ['Nivel de estudios', 'nivelEstudios', 'nivel_estudios'],
+                ['Situación de estudios', 'situacionEstudios', 'situacion_estudios'],
+                ['Idioma', 'idioma', 'idioma'],
+                ['Actividad económica', 'actividadEconomica', 'actividad_economica'],
             ],
         ]);
     }

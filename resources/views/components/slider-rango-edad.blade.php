@@ -5,6 +5,7 @@
     'hasta',
     'modelDesde' => 'edadMin',
     'modelHasta' => 'edadMax',
+    'label' => 'Rango de edad',
 ])
 
 {{-- wire:ignore.self: el morph reescribiría x-data (desde/hasta cambian en cada render) y Alpine
@@ -36,8 +37,8 @@
         },
     }"
 >
-    <div class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">
-        <span id="rango-edad-label">Rango de edad</span>
+    <div class="flex items-center justify-between gap-2 text-sm font-medium text-zinc-800 dark:text-white">
+        <span id="rango-{{ $modelDesde }}-label">{{ $label }}</span>
         <span class="text-[12px] font-bold" x-text="etiqueta" x-bind:class="filtrando ? 'text-orange-600' : 'text-gray-500'"></span>
     </div>
 
@@ -59,8 +60,8 @@
             x-on:change="aplicarDesde()"
             {{-- Con ambos thumbs en el tope, el input de arriba tapa a este; lo subimos para poder tomarlo. --}}
             x-bind:style="desde >= max ? 'z-index: 2' : ''"
-            aria-labelledby="rango-edad-label"
-            aria-label="Edad mínima"
+            aria-labelledby="rango-{{ $modelDesde }}-label"
+            aria-label="{{ $label }} — mínimo"
         />
         <input
             type="range"
@@ -71,8 +72,8 @@
             x-model.number="hasta"
             x-on:input="hasta = Math.max(hasta, desde)"
             x-on:change="aplicarHasta()"
-            aria-labelledby="rango-edad-label"
-            aria-label="Edad máxima"
+            aria-labelledby="rango-{{ $modelDesde }}-label"
+            aria-label="{{ $label }} — máximo"
         />
     </div>
 

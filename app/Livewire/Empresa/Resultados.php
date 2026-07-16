@@ -4,6 +4,7 @@ namespace App\Livewire\Empresa;
 
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
+use App\Models\NotaCandidato;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -25,6 +26,10 @@ class Resultados extends Component
     #[Url(history: true)]
     public array $criterios = [];
 
+    public bool $editandoTitulo = false;
+
+    public string $tituloEditado = '';
+
     public function mount(Busqueda $busqueda): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
@@ -32,6 +37,29 @@ class Resultados extends Component
 
         $this->busqueda = $busqueda;
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
+    }
+
+    public function editarTitulo(): void
+    {
+        $this->tituloEditado = $this->busqueda->titulo;
+        $this->editandoTitulo = true;
+    }
+
+    public function guardarTitulo(): void
+    {
+        $validated = $this->validate([
+            'tituloEditado' => ['required', 'string', 'max:180'],
+        ]);
+
+        $this->busqueda->update(['titulo' => $validated['tituloEditado']]);
+        $this->busqueda->refresh();
+        $this->editandoTitulo = false;
+    }
+
+    public function cancelarTitulo(): void
+    {
+        $this->editandoTitulo = false;
+        $this->resetErrorBag('tituloEditado');
     }
 
     public function mostrar(string $filtro): void
@@ -98,13 +126,22 @@ class Resultados extends Component
             $query->whereKey($candidatosFiltrados);
         }
 
+        $candidatos = $query
+            ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
+            ->with('postulante.user')
+            ->orderByDesc('criterios_cumplidos')
+            ->orderBy('postulante_id')
+            ->paginate(20, pageName: 'candidatos');
+
+        $postulantesConNota = NotaCandidato::query()
+            ->where('empresa_id', $this->busqueda->empresa_id)
+            ->whereIn('postulante_id', $candidatos->pluck('postulante_id'))
+            ->pluck('postulante_id')
+            ->all();
+
         return view('livewire.empresa.resultados', [
-            'candidatos' => $query
-                ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
-                ->with('postulante.user')
-                ->orderByDesc('criterios_cumplidos')
-                ->orderBy('postulante_id')
-                ->paginate(20, pageName: 'candidatos'),
+            'candidatos' => $candidatos,
+            'postulantesConNota' => $postulantesConNota,
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
         ]);
@@ -121,17 +158,28 @@ class Resultados extends Component
             'especialidad' => 'Especialidad / área',
             'industria' => 'Industria',
             'ciudad' => 'Región',
+            'situacion_laboral' => 'Situación laboral',
+            'genero' => 'Género',
+            'nivel_estudios' => 'Nivel de estudios',
+            'situacion_estudios' => 'Situación de estudios',
+            'idioma' => 'Idioma',
+            'actividad_economica' => 'Actividad económica',
             'institucion' => 'Institución de estudio',
             'empresa' => 'Empresa',
             'min_anios' => 'Experiencia mínima',
+            'renta_max' => 'Expectativa de renta',
             'palabra_clave' => 'Palabra clave',
         ];
 
         return collect($this->busqueda->criterios ?? [])
-            ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! ($clave === 'min_anios' && (int) $valor === 0))
+            ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! (in_array($clave, ['min_anios', 'renta_max'], true) && (int) $valor === 0))
             ->mapWithKeys(fn (mixed $valor, string $clave): array => isset($etiquetas[$clave]) ? [$clave => [
                 'etiqueta' => $etiquetas[$clave],
-                'valor' => $clave === 'min_anios' ? $valor.' años' : (is_array($valor) ? implode(', ', $valor) : $valor),
+                'valor' => match ($clave) {
+                    'min_anios' => $valor.' años',
+                    'renta_max' => 'hasta $'.number_format((int) $valor, 0, ',', '.'),
+                    default => is_array($valor) ? implode(', ', $valor) : $valor,
+                },
             ]] : [])
             ->all();
     }

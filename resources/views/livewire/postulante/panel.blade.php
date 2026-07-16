@@ -6,7 +6,7 @@
     @php($nav = [
         ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
         ['label' => 'Mi perfil', 'href' => route('postulante.ficha')],
-        ['label' => 'Búsquedas que me incluyen', 'href' => route('postulante.busquedas')],
+        ['label' => 'Procesos que me incluyen', 'href' => route('postulante.busquedas')],
     ])
     @foreach ($nav as $item)
         <a href="{{ $item['href'] }}"
@@ -55,7 +55,7 @@
 
     <div class="ad-card p-5">
         <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Búsquedas que me incluyen</span>
+            <span class="text-[13px] text-gray-500 font-semibold">Procesos que me incluyen</span>
             <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
                 <flux:icon.check class="size-4" />
             </span>
@@ -90,7 +90,7 @@
 {{-- ====== Coincidencias recientes ====== --}}
 <div id="coincidencias" class="ad-card">
         <div class="ad-card-head">
-            <h3 class="text-[16px] font-bold">Búsquedas que me incluyen</h3>
+            <h3 class="text-[16px] font-bold">Procesos que me incluyen</h3>
             <div class="flex items-center gap-3"><span class="ad-chip ad-chip-green ad-chip-dot">{{ $totalMatches }} coincidencias</span><a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[14px] font-bold text-orange-600 hover:text-orange-700">Ver más</a></div>
         </div>
         <div class="p-5 pt-2 space-y-2.5">
@@ -107,7 +107,7 @@
                     @endif
                 </div>
             @empty
-                <p class="py-6 text-center text-[14px] text-gray-500">Aún no apareces en búsquedas.</p>
+                <p class="py-6 text-center text-[14px] text-gray-500">Aún no apareces en procesos.</p>
             @endforelse
 
             <div class="mt-3 flex items-start gap-2 text-[13px] text-gray-500">

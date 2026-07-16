@@ -650,7 +650,7 @@ test('an empresa can view its pages and create a search', function () {
         ->assertDontSee('<aside class="hidden border-r', false);
     $this->actingAs($user)->get(route('empresa.busquedas.index'))
         ->assertOk()
-        ->assertSee('Mis búsquedas')
+        ->assertSee('Mis procesos')
         ->assertSee('Gerente de Finanzas');
     $this->actingAs($user)->get(route('empresa.busquedas.create'))->assertOk();
     $this->actingAs($user)->get(route('empresa.resultados', $busqueda))->assertOk();
@@ -660,7 +660,7 @@ test('an empresa can view its pages and create a search', function () {
         ->assertSee('ad-candidate-toolbar', false)
         ->assertSee('ad-candidate-sidebar-active', false)
         ->assertSee('ad-favorite-button', false)
-        ->assertSee('Intereses')
+        ->assertSee('Información adicional')
         ->assertSee('15 años de experiencia');
 
     Livewire::actingAs($user)
@@ -668,7 +668,7 @@ test('an empresa can view its pages and create a search', function () {
         ->set('titulo', 'Controller Senior')
         ->set('cargo', ['Gerente Finanza'])
         ->set('industria', ['Forestal / Papelera'])
-        ->set('aniosMinimos', 5)
+        ->set('expMin', 5)
         ->call('save')
         ->assertHasNoErrors();
 

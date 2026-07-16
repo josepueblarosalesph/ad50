@@ -15,7 +15,7 @@
 
     <div class="mb-6"><h1 class="text-[27px] font-extrabold">Resumen de la plataforma</h1><p class="text-[14px] text-gray-500 mt-1.5">Estado general de AD+50.</p></div>
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        @foreach ([['Empresas activas', $totalEmpresas, $empresasPendientes.' pendientes de revisión'], ['Postulantes', $totalPostulantes, 'Perfiles profesionales'], ['Búsquedas activas', $totalBusquedas, 'Procesos en curso'], ['Coincidencias generadas', $totalCoincidencias, 'Matches acumulados']] as [$label, $value, $detail])
+        @foreach ([['Empresas activas', $totalEmpresas, $empresasPendientes.' pendientes de revisión'], ['Postulantes', $totalPostulantes, 'Perfiles profesionales'], ['Procesos activos', $totalBusquedas, 'Procesos en curso'], ['Coincidencias generadas', $totalCoincidencias, 'Matches acumulados']] as [$label, $value, $detail])
             <div class="ad-card p-5"><div class="flex"><span class="text-[12px] text-gray-500 font-semibold">{{ $label }}</span><span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center"><flux:icon.chart-bar class="size-4" /></span></div><div class="text-[30px] font-extrabold mt-2">{{ number_format($value, 0, ',', '.') }}</div><div class="text-[11.5px] font-semibold text-match mt-1">{{ $detail }}</div></div>
         @endforeach
     </div>

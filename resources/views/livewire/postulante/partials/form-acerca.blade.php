@@ -22,7 +22,7 @@
         >
             <flux:checkbox.group wire:model.live="regionesInteres">
                 <div class="max-h-44 space-y-1.5 overflow-y-auto pr-2">
-                    @foreach ($regiones as $opcion)<flux:checkbox wire:key="region-{{ $loop->index }}" :value="$opcion" :label="$opcion" :disabled="count($regionesInteres) >= 5 && ! in_array($opcion, $regionesInteres, true)" />@endforeach
+                    @foreach ($regionesInteresOpciones as $opcion)<flux:checkbox wire:key="region-{{ $loop->index }}" :value="$opcion" :label="$opcion" :disabled="count($regionesInteres) >= 5 && ! in_array($opcion, $regionesInteres, true)" />@endforeach
                 </div>
             </flux:checkbox.group>
         </x-selector-colapsable>
@@ -58,5 +58,7 @@
             <flux:select.option value="">Selecciona una situación</flux:select.option>
             @foreach ($situacionesLaborales as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
         </flux:select>
-        <flux:input wire:model="expectativaRenta" type="number" min="0" step="1" label="Expectativa de renta" placeholder="Ej. 2500000" description="Monto en CLP — renta líquida mensual." />
+        <div class="[&_[data-flux-label]]:!block">
+            <flux:input wire:model="expectativaRenta" type="number" min="0" step="1" label="Expectativa de renta" placeholder="Ej. 2500000" description="Monto en CLP — renta líquida mensual." />
+        </div>
     </div>

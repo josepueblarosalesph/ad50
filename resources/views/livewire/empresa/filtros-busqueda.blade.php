@@ -1,12 +1,12 @@
 <div id="filtros-busqueda" class="pb-5 pr-1">
     <div class="mb-3 flex items-center justify-between gap-2 px-1">
-        <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Filtros de búsqueda</span>
+        <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Filtros del proceso</span>
         <span wire:loading class="text-[11px] font-bold text-orange-600">Actualizando…</span>
     </div>
     <div class="space-y-2.5">
-        @foreach ($grupos as [$label, $model, $opciones])
+        @foreach ($grupos as [$label, $model, $campo])
             <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
-                <x-multi-combobox :model="$model" :label="$label" :opciones="$opciones" :seleccion="$this->{$model}" :error="$model" />
+                <livewire:empresa.selector-criterio wire:model="{{ $model }}" campo="{{ $campo }}" etiqueta="{{ $label }}" wire:key="filtro-sel-{{ $model }}" />
             </div>
         @endforeach
 
@@ -15,20 +15,24 @@
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /></div>
 
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
-            <label for="anios-minimos" class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">
-                Experiencia mínima
-                <span @class(['text-[12px] font-bold', 'text-orange-600' => $aniosMinimos > 0, 'text-gray-500' => $aniosMinimos === 0])>{{ $aniosMinimos > 0 ? $aniosMinimos.' años o más' : 'Sin filtrar' }}</span>
+            <x-slider-rango-edad label="Años de experiencia" :min="$limitesExperiencia['min']" :max="$limitesExperiencia['max']" :desde="$expMin" :hasta="$expMax" model-desde="expMin" model-hasta="expMax" />
+        </div>
+
+        <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
+            <label for="renta-max" class="flex items-center justify-between gap-2 text-sm font-medium text-zinc-800 dark:text-white">
+                Expectativa de renta
+                <span @class(['text-[12px] font-bold', 'text-orange-600' => $rentaMax > 0, 'text-gray-500' => $rentaMax === 0])>{{ $rentaMax > 0 ? '$'.number_format($rentaMax, 0, ',', '.').' o menos' : 'Sin filtrar' }}</span>
             </label>
             <input
-                id="anios-minimos"
+                id="renta-max"
                 type="range"
-                wire:model.live.debounce.400ms="aniosMinimos"
-                min="{{ $minimoExperiencia }}"
-                max="{{ $maximoExperiencia }}"
-                step="5"
+                wire:model.live.debounce.400ms="rentaMax"
+                min="0"
+                max="8000000"
+                step="200000"
                 class="mt-3 w-full accent-orange-500"
             />
-            <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>{{ $maximoExperiencia }} años</span></div>
+            <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>$8.000.000</span></div>
         </div>
 
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">

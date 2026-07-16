@@ -369,7 +369,7 @@
                     @foreach (['Banca', '18 años', 'Concepción', 'MBA'] as $tag)
                         <span class="ad-chip">{{ $tag }}</span>
                     @endforeach
-                    <a href="{{ route('registro') }}?tipo=empresa" class="ad-btn-primary ad-btn-sm ml-auto">Ver perfil profesional</a>
+                    <a href="{{ route('registro') }}?tipo=empresa" class="ad-btn-primary ad-btn-sm ml-auto">Ver perfil</a>
                 </div>
             </article>
         </div>

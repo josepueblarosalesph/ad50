@@ -27,7 +27,7 @@ class MatchingService
     public function sincronizarPostulante(Postulante $postulante): void
     {
         Busqueda::query()
-            ->where('estado', 'activa')
+            ->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)
             ->each(function (Busqueda $busqueda) use ($postulante): void {
                 if (! $postulante->visible) {
                     $busqueda->candidatos()->whereBelongsTo($postulante)->delete();
@@ -56,7 +56,19 @@ class MatchingService
             'carrera' => ['Carrera o título', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->carrera, $valor))],
             'especialidad' => ['Especialidad / área', fn (string $valor): bool => Str::contains(Str::lower(trim((string) $postulante->especialidad)), Str::lower(trim($valor)))],
             'industria' => ['Industria', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->industrias_interes ?? [])->contains(fn (?string $industria): bool => $this->iguales($industria, $valor)))],
-            'ciudad' => ['Región', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->ciudad, $valor))],
+            'ciudad' => ['Región', function (array $valores) use ($postulante): bool {
+                $interes = collect($postulante->regiones_interes ?? []);
+                $abiertoNacional = $interes->contains(fn (?string $region): bool => $this->iguales($region, 'Nacional'));
+
+                return collect($valores)->contains(function (string $valor) use ($interes, $abiertoNacional): bool {
+                    // "Nacional" en las regiones de interés cubre cualquier región chilena, pero no "Internacional".
+                    if ($abiertoNacional && ! $this->iguales($valor, 'Internacional')) {
+                        return true;
+                    }
+
+                    return $interes->contains(fn (?string $region): bool => $this->iguales($region, $valor));
+                });
+            }],
             'habilidad' => ['Habilidades', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->habilidades ?? [])->contains(fn (?string $habilidad): bool => $this->iguales($habilidad, $valor)))],
             'institucion' => ['Institución de estudio', function (string $valor) use ($postulante): bool {
                 $instituciones = collect($postulante->educaciones ?? [])
@@ -74,7 +86,16 @@ class MatchingService
 
                 return $empresas->contains(fn (string $empresa): bool => Str::contains(Str::lower($empresa), Str::lower($valor)));
             }],
+            'situacion_laboral' => ['Situación laboral', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->situacion_laboral, $valor))],
+            'genero' => ['Género', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->genero, $valor))],
+            'nivel_estudios' => ['Nivel de estudios', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->educaciones ?? [])->contains(fn (array $educacion): bool => $this->iguales($educacion['nivel'] ?? null, $valor)))],
+            'situacion_estudios' => ['Situación de estudios', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->educaciones ?? [])->contains(fn (array $educacion): bool => $this->iguales($educacion['situacion'] ?? null, $valor)))],
+            'idioma' => ['Idioma', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->idiomas ?? [])->contains(fn (array $idioma): bool => $this->iguales($idioma['idioma'] ?? null, $valor)))],
+            'actividad_economica' => ['Actividad económica', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->experiencias ?? [])->contains(fn (array $experiencia): bool => $this->iguales($experiencia['actividad_empresa'] ?? null, $valor)))],
+            'renta_max' => ['Expectativa de renta', fn (string $valor): bool => $postulante->expectativa_renta !== null && $postulante->expectativa_renta <= (int) $valor],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
+            'experiencia' => ['Años de experiencia', fn (array $valor): bool => $postulante->anios_experiencia >= (int) $valor['min']
+                && ($valor['max'] === null || $postulante->anios_experiencia <= (int) $valor['max'])],
             'edad' => ['Edad', function (array $valor) use ($postulante): bool {
                 if ($postulante->edad === null) {
                     return false;
@@ -100,11 +121,11 @@ class MatchingService
         foreach ($evaluadores as $clave => [$etiqueta, $evaluar]) {
             $valor = $criterios[$clave] ?? null;
 
-            if ($valor === null || $valor === '' || $valor === [] || ($clave === 'min_anios' && (int) $valor === 0)) {
+            if ($valor === null || $valor === '' || $valor === [] || (in_array($clave, ['min_anios', 'renta_max'], true) && (int) $valor === 0)) {
                 continue;
             }
 
-            if ($clave === 'edad') {
+            if (in_array($clave, ['edad', 'experiencia'], true)) {
                 $detalle[$clave] = [
                     'criterio' => $etiqueta,
                     'valor' => $this->rangoEdadLegible($valor),
@@ -114,7 +135,7 @@ class MatchingService
                 continue;
             }
 
-            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'industria', 'ciudad', 'habilidad', 'palabra_clave'], true);
+            $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'industria', 'ciudad', 'habilidad', 'situacion_laboral', 'genero', 'nivel_estudios', 'situacion_estudios', 'idioma', 'actividad_economica', 'palabra_clave'], true);
             $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : (string) $valor;
             $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
 
@@ -124,7 +145,11 @@ class MatchingService
 
             $detalle[$clave] = [
                 'criterio' => $etiqueta,
-                'valor' => $clave === 'min_anios' ? $valor.' años' : $valorMostrado,
+                'valor' => match ($clave) {
+                    'min_anios' => $valor.' años',
+                    'renta_max' => 'hasta $'.number_format((int) $valor, 0, ',', '.'),
+                    default => $valorMostrado,
+                },
                 'cumple' => $evaluar($valorEvaluado),
             ];
         }

@@ -3,6 +3,7 @@
 namespace App\Livewire\Empresa;
 
 use App\Models\BusquedaCandidato;
+use App\Models\NotaCandidato;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Storage;
@@ -35,6 +36,10 @@ class Candidato extends Component
 
     public int $totalCandidatos = 1;
 
+    public string $nota = '';
+
+    public bool $notaGuardada = false;
+
     public function mount(BusquedaCandidato $match): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
@@ -44,6 +49,10 @@ class Candidato extends Component
         $this->filtro = in_array($this->filtro, ['todos', 'favoritos'], true) ? $this->filtro : 'todos';
 
         $this->match = $match->load('busqueda', 'postulante.user');
+        $this->nota = NotaCandidato::query()
+            ->where('empresa_id', $match->busqueda->empresa_id)
+            ->where('postulante_id', $match->postulante_id)
+            ->value('contenido') ?? '';
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
         $this->puedeVerContacto = $this->empresaTieneAccesoActivo();
         $this->cvDisponible = filled($this->match->postulante->cv_ruta)
@@ -60,6 +69,31 @@ class Candidato extends Component
     {
         $this->match->update(['favorito' => ! $this->match->favorito]);
         $this->match->refresh();
+    }
+
+    public function guardarNota(): void
+    {
+        $validated = $this->validate([
+            'nota' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $clave = [
+            'empresa_id' => $this->match->busqueda->empresa_id,
+            'postulante_id' => $this->match->postulante_id,
+        ];
+
+        if (blank($validated['nota'])) {
+            NotaCandidato::query()->where($clave)->delete();
+        } else {
+            NotaCandidato::query()->updateOrCreate($clave, ['contenido' => $validated['nota']]);
+        }
+
+        $this->notaGuardada = true;
+    }
+
+    public function updatedNota(): void
+    {
+        $this->notaGuardada = false;
     }
 
     public function descargarCv(): StreamedResponse
@@ -124,17 +158,28 @@ class Candidato extends Component
             'especialidad' => 'Especialidad / área',
             'industria' => 'Industria',
             'ciudad' => 'Región',
+            'situacion_laboral' => 'Situación laboral',
+            'genero' => 'Género',
+            'nivel_estudios' => 'Nivel de estudios',
+            'situacion_estudios' => 'Situación de estudios',
+            'idioma' => 'Idioma',
+            'actividad_economica' => 'Actividad económica',
             'institucion' => 'Institución de estudio',
             'empresa' => 'Empresa',
             'min_anios' => 'Experiencia mínima',
+            'renta_max' => 'Expectativa de renta',
             'palabra_clave' => 'Palabra clave',
         ];
 
         return collect($this->match->busqueda->criterios ?? [])
-            ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! ($clave === 'min_anios' && (int) $valor === 0))
+            ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! (in_array($clave, ['min_anios', 'renta_max'], true) && (int) $valor === 0))
             ->mapWithKeys(fn (mixed $valor, string $clave): array => isset($etiquetas[$clave]) ? [$clave => [
                 'etiqueta' => $etiquetas[$clave],
-                'valor' => $clave === 'min_anios' ? $valor.' años' : (is_array($valor) ? implode(', ', $valor) : $valor),
+                'valor' => match ($clave) {
+                    'min_anios' => $valor.' años',
+                    'renta_max' => 'hasta $'.number_format((int) $valor, 0, ',', '.'),
+                    default => is_array($valor) ? implode(', ', $valor) : $valor,
+                },
             ]] : [])
             ->all();
     }

@@ -132,7 +132,7 @@ test('saving a section re-syncs the matching for active searches', function () {
     $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa']);
     $busqueda = $empresa->busquedas()->create([
         'titulo' => 'Finanzas senior',
-        'estado' => 'activa',
+        'estado' => 'long_list',
         'criterios' => ['carrera' => ['Ingeniería Civil / Ingeniería Comercial']],
     ]);
 

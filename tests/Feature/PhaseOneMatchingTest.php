@@ -19,6 +19,7 @@ test('a structured search lists only candidates that fulfill every configured cr
         'user_id' => $completeUser->id,
         'visible' => true,
         'ciudad' => 'Biobío',
+        'regiones_interes' => ['Biobío'],
         'carrera' => 'Ingeniería Comercial',
         'especialidad' => 'Finanzas',
         'industrias_interes' => ['Banca y servicios financieros'],
@@ -53,7 +54,7 @@ test('a structured search lists only candidates that fulfill every configured cr
         ->set('especialidad', 'Finanzas')
         ->set('industria', ['Banca y servicios financieros'])
         ->set('ciudad', ['Biobío'])
-        ->set('aniosMinimos', 15)
+        ->set('expMin', 15)
         ->set('palabrasClave', ['transformación'])
         ->call('save')
         ->assertHasNoErrors();
@@ -122,6 +123,113 @@ test('the skills criterion is persisted and rejects values outside the catalog',
     $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
 
     expect($busqueda->criterios['habilidad'] ?? [])->toBe(['Python']);
+});
+
+test('the region criterion matches interest regions and treats "Nacional" as any chilean region', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Región']);
+
+    $nacional = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true, 'ciudad' => 'Los Lagos', 'regiones_interes' => ['Nacional'],
+    ]);
+    $biobio = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true, 'ciudad' => 'Los Lagos', 'regiones_interes' => ['Biobío'],
+    ]);
+    $internacional = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true, 'ciudad' => 'Los Lagos', 'regiones_interes' => ['Internacional'],
+    ]);
+
+    // Búsqueda por Biobío: calzan quien marcó Biobío y quien marcó Nacional; no el de solo Internacional.
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Región Biobío')
+        ->set('ciudad', ['Biobío'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $ids = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail()->candidatos()->pluck('postulante_id');
+    expect($ids->all())->toContain($nacional->id)->toContain($biobio->id)
+        ->and($ids->all())->not->toContain($internacional->id);
+
+    // Búsqueda por Internacional: solo calza quien marcó Internacional (Nacional no cubre el extranjero).
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Región Internacional')
+        ->set('ciudad', ['Internacional'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $ids = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail()->candidatos()->pluck('postulante_id');
+    expect($ids->all())->toContain($internacional->id)
+        ->and($ids->all())->not->toContain($nacional->id)
+        ->and($ids->all())->not->toContain($biobio->id);
+});
+
+test('new criteria (idioma, nivel de estudios, situación laboral, expectativa de renta) filter candidates', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Multi']);
+
+    $calza = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'situacion_laboral' => 'Buscando trabajo',
+        'expectativa_renta' => 2000000,
+        'idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Avanzado']],
+        'educaciones' => [['nivel' => 'Universitaria', 'situacion' => 'Titulado']],
+    ]);
+
+    $noCalza = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'situacion_laboral' => 'Jubilado',
+        'expectativa_renta' => 5000000,
+        'idiomas' => [['idioma' => 'Francés', 'nivel' => 'Básico']],
+        'educaciones' => [['nivel' => 'Media', 'situacion' => 'Egresado']],
+    ]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Perfil exigente')
+        ->set('situacionLaboral', ['Buscando trabajo'])
+        ->set('idioma', ['Inglés'])
+        ->set('nivelEstudios', ['Universitaria'])
+        ->set('rentaMax', 3000000)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $ids = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail()->candidatos()->pluck('postulante_id');
+
+    expect($ids->all())->toContain($calza->id)
+        ->and($ids->all())->not->toContain($noCalza->id);
+});
+
+test('the experience criterion filters by a range (min and max)', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Rango']);
+
+    $dentro = Postulante::query()->create(['user_id' => User::factory()->create(['role' => 'postulante'])->id, 'visible' => true, 'anios_experiencia' => 15]);
+    $muyPoca = Postulante::query()->create(['user_id' => User::factory()->create(['role' => 'postulante'])->id, 'visible' => true, 'anios_experiencia' => 5]);
+    $demasiada = Postulante::query()->create(['user_id' => User::factory()->create(['role' => 'postulante'])->id, 'visible' => true, 'anios_experiencia' => 30]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Entre 10 y 20 años')
+        ->set('expMin', 10)
+        ->set('expMax', 20)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $busqueda = $empresaUser->empresa->busquedas()->latest('id')->firstOrFail();
+
+    expect($busqueda->criterios['experiencia'])->toBe(['min' => 10, 'max' => 20]);
+
+    $ids = $busqueda->candidatos()->pluck('postulante_id');
+    expect($ids->all())->toContain($dentro->id)
+        ->and($ids->all())->not->toContain($muyPoca->id)
+        ->and($ids->all())->not->toContain($demasiada->id);
 });
 
 test('a postulante can add and remove multiple work experiences', function () {
@@ -205,6 +313,7 @@ test('multiple values in one criterion include candidates matching any selected 
             'user_id' => $user->id,
             'visible' => true,
             'ciudad' => $ciudad,
+            'regiones_interes' => [$ciudad],
         ]);
     }
 
@@ -228,7 +337,7 @@ test('a company can edit a search and recalculate its existing results', functio
 
     foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
-        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
+        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad, 'regiones_interes' => [$ciudad]]);
     }
 
     Livewire::actingAs($empresaUser)
@@ -265,7 +374,7 @@ test('a company can modify search filters from the results sidebar', function ()
 
     foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
-        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad]);
+        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad, 'regiones_interes' => [$ciudad]]);
     }
 
     Livewire::actingAs($empresaUser)
@@ -278,7 +387,7 @@ test('a company can modify search filters from the results sidebar', function ()
     $this->actingAs($empresaUser)
         ->get(route('empresa.resultados', $busqueda))
         ->assertOk()
-        ->assertSee('Filtros de búsqueda')
+        ->assertSee('Filtros del proceso')
         ->assertSee('Los resultados se actualizan a medida que cambias los filtros.')
         ->assertSee('Institución de estudio')
         ->assertSee('Universidad de Concepción ( UDEC )')

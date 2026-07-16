@@ -25,7 +25,11 @@ class Activacion extends Component
 
     public string $contactoPrincipalTelefono = '';
 
+    public string $contactoPrincipalDescripcion = '';
+
     public string $contactoTecnicoNombre = '';
+
+    public string $contactoTecnicoCargo = '';
 
     public string $contactoTecnicoEmail = '';
 
@@ -50,7 +54,9 @@ class Activacion extends Component
         $this->contactoPrincipalCargo = $empresa?->contacto_principal_cargo ?? '';
         $this->contactoPrincipalEmail = $empresa?->contacto_principal_email ?? auth()->user()->email;
         $this->contactoPrincipalTelefono = $empresa?->contacto_principal_telefono ?? $empresa?->telefono ?? '';
+        $this->contactoPrincipalDescripcion = $empresa?->contacto_principal_descripcion ?? '';
         $this->contactoTecnicoNombre = $empresa?->contacto_tecnico_nombre ?? '';
+        $this->contactoTecnicoCargo = $empresa?->contacto_tecnico_cargo ?? '';
         $this->contactoTecnicoEmail = $empresa?->contacto_tecnico_email ?? '';
         $this->contactoTecnicoTelefono = $empresa?->contacto_tecnico_telefono ?? '';
     }
@@ -67,9 +73,11 @@ class Activacion extends Component
             'contactoPrincipalCargo' => ['required', 'string', 'max:120'],
             'contactoPrincipalEmail' => ['required', 'email', 'max:255'],
             'contactoPrincipalTelefono' => ['required', 'string', 'max:30'],
-            'contactoTecnicoNombre' => ['required', 'string', 'max:160'],
-            'contactoTecnicoEmail' => ['required', 'email', 'max:255'],
-            'contactoTecnicoTelefono' => ['required', 'string', 'max:30'],
+            'contactoPrincipalDescripcion' => ['nullable', 'string', 'max:1000'],
+            'contactoTecnicoNombre' => ['nullable', 'string', 'max:160'],
+            'contactoTecnicoCargo' => ['nullable', 'string', 'max:120'],
+            'contactoTecnicoEmail' => ['nullable', 'email', 'max:255'],
+            'contactoTecnicoTelefono' => ['nullable', 'string', 'max:30'],
         ]);
 
         auth()->user()->empresa()->update([
@@ -80,7 +88,9 @@ class Activacion extends Component
             'contacto_principal_cargo' => $validated['contactoPrincipalCargo'],
             'contacto_principal_email' => $validated['contactoPrincipalEmail'],
             'contacto_principal_telefono' => $validated['contactoPrincipalTelefono'],
+            'contacto_principal_descripcion' => $validated['contactoPrincipalDescripcion'],
             'contacto_tecnico_nombre' => $validated['contactoTecnicoNombre'],
+            'contacto_tecnico_cargo' => $validated['contactoTecnicoCargo'],
             'contacto_tecnico_email' => $validated['contactoTecnicoEmail'],
             'contacto_tecnico_telefono' => $validated['contactoTecnicoTelefono'],
             'estado_activacion' => 'pendiente',

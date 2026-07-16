@@ -60,6 +60,47 @@ test('an empresa can submit its details for manual review', function () {
     ]);
 });
 
+test('the technical contact is optional and its cargo is stored', function () {
+    $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa Sin Técnico SpA',
+        'telefono' => '+56 9 1111 1111',
+        'estado_activacion' => 'inactiva',
+    ]);
+
+    // Sin ningún dato de contacto técnico: debe poder enviarse.
+    Livewire::actingAs($user)
+        ->test(Activacion::class)
+        ->set('rut', '98421157')
+        ->set('rubro', 'Servicios profesionales')
+        ->set('contactoPrincipalCargo', 'Gerenta de Personas')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    expect($empresa->fresh()->estado_activacion)->toBe('pendiente')
+        ->and($empresa->fresh()->contacto_tecnico_nombre)->toBe('');
+
+    // Con contacto técnico incluido su cargo: se guarda.
+    Livewire::actingAs($user)
+        ->test(Activacion::class)
+        ->set('rut', '98421157')
+        ->set('rubro', 'Servicios profesionales')
+        ->set('contactoPrincipalCargo', 'Gerenta de Personas')
+        ->set('contactoTecnicoNombre', 'Tomás Pérez')
+        ->set('contactoTecnicoCargo', 'Jefe de TI')
+        ->set('contactoTecnicoEmail', 'ti@empresa.cl')
+        ->call('guardar')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('empresas', [
+        'id' => $empresa->id,
+        'contacto_tecnico_nombre' => 'Tomás Pérez',
+        'contacto_tecnico_cargo' => 'Jefe de TI',
+        'contacto_tecnico_email' => 'ti@empresa.cl',
+    ]);
+});
+
 test('an admin can review and activate a pending empresa', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $empresaUser = User::factory()->create(['role' => 'empresa']);

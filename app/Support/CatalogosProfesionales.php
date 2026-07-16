@@ -122,6 +122,20 @@ class CatalogosProfesionales
         ];
     }
 
+    /**
+     * Opciones para "regiones de interés" del postulante: primero Nacional e Internacional,
+     * luego las regiones más demandadas y el resto en el orden geográfico habitual.
+     *
+     * @return list<string>
+     */
+    public static function regionesInteres(): array
+    {
+        $prioritarias = ['Metropolitana de Santiago', 'Biobío', 'Valparaíso'];
+        $resto = array_values(array_diff(self::regiones(), $prioritarias));
+
+        return array_merge(['Nacional', 'Internacional'], $prioritarias, $resto);
+    }
+
     /** @return array<int, string> */
     public static function modalidadesTrabajoPreferidas(): array
     {
@@ -179,6 +193,12 @@ class CatalogosProfesionales
     public static function rangoEdad(): array
     {
         return ['min' => 50, 'max' => 80];
+    }
+
+    /** @return array{min: int, max: int} */
+    public static function rangoExperiencia(): array
+    {
+        return ['min' => 0, 'max' => 40];
     }
 
     /** @return array<int, string> */
