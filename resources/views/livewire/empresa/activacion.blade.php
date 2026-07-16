@@ -19,6 +19,35 @@
             @endunless
         </div>
 
+        @if ($empresa->estado_activacion === 'inactiva')
+            <div class="mb-6 overflow-hidden rounded-[20px] border border-orange-200 bg-gradient-to-br from-orange-50 to-paper p-6 sm:p-8">
+                <h2 class="text-[22px] font-extrabold">¡Bienvenido! 👋</h2>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-600">Para comenzar a usar la plataforma solo necesitas completar <b class="text-ink">2 pasos</b>:</p>
+
+                <div class="mt-6 flex flex-col items-stretch gap-4 sm:flex-row">
+                    <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
+                        <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">1</span>
+                        <div>
+                            <div class="flex items-center gap-2"><flux:icon.building-office-2 class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Completa los datos de tu empresa</h3></div>
+                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Razón social, RUT y datos de contacto.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center text-orange-300"><flux:icon.arrow-right class="size-7 rotate-90 sm:rotate-0" /></div>
+
+                    <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
+                        <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">2</span>
+                        <div>
+                            <div class="flex items-center gap-2"><flux:icon.envelope class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Valida tu email de contacto</h3></div>
+                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Te enviaremos un enlace de verificación.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mt-6 text-[15px] font-extrabold text-orange-600">¡Comencemos! 🚀</p>
+            </div>
+        @endif
+
         @if (session('status'))
             <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
         @endif

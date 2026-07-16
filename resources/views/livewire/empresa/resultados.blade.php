@@ -6,7 +6,7 @@
         <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nuevo proceso</a>
     </x-slot:nav>
     <x-slot:sidebar>
-        <div class="sticky top-24"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" /></div>
+        <div class="sticky top-24"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" wire:key="filtros-desktop" /></div>
     </x-slot:sidebar>
 
     <div class="max-w-3xl">
@@ -14,6 +14,17 @@
         <flux:icon.arrow-left class="size-4" />
         Volver a Procesos
     </a>
+
+    {{-- Filtros en móvil: el sidebar del layout se oculta bajo md, así que aquí van colapsables. --}}
+    <details class="group mb-4 rounded-xl border border-line-2 bg-white dark:bg-[#222528] md:hidden">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[14px] font-bold text-ink">
+            <span class="inline-flex items-center gap-2"><flux:icon.funnel class="size-4 text-orange-500" />Filtros</span>
+            <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
+        </summary>
+        <div class="border-t border-line px-3 pb-3 pt-1">
+            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" lazy wire:key="filtros-movil" />
+        </div>
+    </details>
 
     <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div class="min-w-0">
