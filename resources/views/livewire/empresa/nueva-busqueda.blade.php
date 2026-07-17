@@ -74,7 +74,7 @@
                     <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter. Basta con que el perfil contenga una de ellas." /></div>
                 </div>
 
-                <div class="pt-2 flex justify-end gap-3"><a href="{{ $editando ? route('empresa.resultados', $busqueda) : route('empresa.panel') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a><button type="submit" class="ad-btn-primary ad-btn-sm">{{ $editando ? 'Sólo Guardar' : 'Buscar candidatos' }} <flux:icon.arrow-right class="size-4" /></button></div>
+                <div class="pt-2 flex justify-end gap-3"><a href="{{ $editando ? route('empresa.resultados', $busqueda) : route('empresa.panel') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a><button type="submit" class="ad-btn-primary ad-btn-sm">{{ $editando ? 'Guardar' : 'Buscar candidatos' }} <flux:icon.arrow-right class="size-4" /></button></div>
             </div>
         </form>
     </div>
