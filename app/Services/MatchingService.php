@@ -3,25 +3,64 @@
 namespace App\Services;
 
 use App\Models\Busqueda;
+use App\Models\BusquedaCandidato;
 use App\Models\Postulante;
 use Illuminate\Support\Str;
 
 class MatchingService
 {
+    /**
+     * Recalcula las coincidencias de un proceso contra todos los postulantes visibles.
+     *
+     * Evalúa en memoria y escribe en lote (un upsert + un delete) para no hacer una
+     * consulta por postulante: con volúmenes grandes esto es órdenes de magnitud más rápido.
+     */
     public function sincronizar(Busqueda $busqueda): void
     {
-        $postulanteIds = [];
+        $criterios = $busqueda->criterios ?? [];
+        $ahora = now();
+        $filas = [];
+        $cumpleIds = [];
 
         Postulante::query()
             ->where('visible', true)
-            ->with('user')
-            ->each(function (Postulante $postulante) use ($busqueda, &$postulanteIds): void {
-                $this->guardarCoincidencia($busqueda, $postulante);
+            ->chunkById(500, function ($postulantes) use ($busqueda, $criterios, $ahora, &$filas, &$cumpleIds): void {
+                foreach ($postulantes as $postulante) {
+                    $detalle = $this->evaluar($postulante, $criterios);
 
-                $postulanteIds[] = $postulante->id;
+                    if (collect($detalle)->contains(fn (array $criterio): bool => ! $criterio['cumple'])) {
+                        continue;
+                    }
+
+                    $total = count($detalle);
+                    $cumpleIds[] = $postulante->id;
+                    $filas[] = [
+                        'busqueda_id' => $busqueda->id,
+                        'postulante_id' => $postulante->id,
+                        'match_score' => 100,
+                        'criterios_cumplidos' => $total,
+                        'criterios_totales' => $total,
+                        'criterios_detalle' => json_encode(array_values($detalle), JSON_THROW_ON_ERROR),
+                        'estado_match' => 'cumple',
+                        'created_at' => $ahora,
+                        'updated_at' => $ahora,
+                    ];
+                }
             });
 
-        $busqueda->candidatos()->whereNotIn('postulante_id', $postulanteIds)->delete();
+        // Upsert de las coincidencias por tandas (preserva favorito y contactado_at existentes).
+        foreach (array_chunk($filas, 500) as $tanda) {
+            BusquedaCandidato::query()->upsert(
+                $tanda,
+                ['busqueda_id', 'postulante_id'],
+                ['match_score', 'criterios_cumplidos', 'criterios_totales', 'criterios_detalle', 'estado_match', 'updated_at'],
+            );
+        }
+
+        // Quitar de este proceso a los postulantes que dejaron de cumplir (o ya no son visibles).
+        $busqueda->candidatos()
+            ->when($cumpleIds !== [], fn ($query) => $query->whereNotIn('postulante_id', $cumpleIds))
+            ->delete();
     }
 
     public function sincronizarPostulante(Postulante $postulante): void
