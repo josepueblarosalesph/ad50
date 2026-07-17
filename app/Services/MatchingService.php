@@ -141,8 +141,10 @@ class MatchingService
             }
 
             $esSeleccionMultiple = in_array($clave, ['cargo', 'carrera', 'industria', 'ciudad', 'habilidad', 'situacion_laboral', 'genero', 'nivel_estudios', 'situacion_estudios', 'idioma', 'actividad_economica', 'palabra_clave'], true);
-            $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : (string) $valor;
-            $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : (string) $valor;
+            // Los criterios de valor único que quedaron guardados como array (dato legacy) toman su primer valor.
+            $valorUnico = is_array($valor) ? (string) (collect($valor)->first() ?? '') : (string) $valor;
+            $valorEvaluado = $esSeleccionMultiple ? array_values(array_filter((array) $valor, filled(...))) : $valorUnico;
+            $valorMostrado = $esSeleccionMultiple ? implode(', ', $valorEvaluado) : $valorUnico;
 
             if ($valorEvaluado === []) {
                 continue;
