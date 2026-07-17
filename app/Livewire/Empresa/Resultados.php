@@ -4,6 +4,7 @@ namespace App\Livewire\Empresa;
 
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
+use App\Models\Desbloqueo;
 use App\Models\NotaCandidato;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -133,15 +134,24 @@ class Resultados extends Component
             ->orderBy('postulante_id')
             ->paginate(20, pageName: 'candidatos');
 
+        $idsPagina = $candidatos->pluck('postulante_id');
+
         $postulantesConNota = NotaCandidato::query()
             ->where('empresa_id', $this->busqueda->empresa_id)
-            ->whereIn('postulante_id', $candidatos->pluck('postulante_id'))
+            ->whereIn('postulante_id', $idsPagina)
+            ->pluck('postulante_id')
+            ->all();
+
+        $postulantesDesbloqueados = Desbloqueo::query()
+            ->where('empresa_id', $this->busqueda->empresa_id)
+            ->whereIn('postulante_id', $idsPagina)
             ->pluck('postulante_id')
             ->all();
 
         return view('livewire.empresa.resultados', [
             'candidatos' => $candidatos,
             'postulantesConNota' => $postulantesConNota,
+            'postulantesDesbloqueados' => $postulantesDesbloqueados,
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
         ]);

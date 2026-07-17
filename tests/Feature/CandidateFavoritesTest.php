@@ -32,7 +32,7 @@ test('candidate cards show career name and professional summary instead of crite
     $postulante = $matches[0]->postulante;
     $resumenProfesional = str_repeat('Experiencia ejecutiva. ', 8);
 
-    $postulante->user->update(['name' => 'María José Fuentes']);
+    $postulante->user->update(['name' => 'María José Fuentes', 'nombres' => 'María José', 'apellidos' => 'Fuentes']);
     $postulante->update([
         'carrera' => 'Ingeniería Comercial',
         'cargo_actual' => 'Subgerente de Finanzas',
@@ -47,7 +47,8 @@ test('candidate cards show career name and professional summary instead of crite
     Livewire::actingAs($empresaUser)
         ->test(Resultados::class, ['busqueda' => $busqueda])
         ->assertSee('Ingeniería Comercial')
-        ->assertSee('María José Fuentes')
+        ->assertSee('María José')
+        ->assertDontSee('Fuentes')
         ->assertSee(Str::limit($resumenProfesional, 100, '…'))
         ->assertDontSee($resumenProfesional)
         ->assertDontSee('Perfil profesional #'.$postulante->id)
@@ -61,12 +62,13 @@ test('candidate cards show career name and professional summary instead of crite
 
 test('candidate detail navigation follows the search result ranking', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
-    $matches[1]->postulante->user->update(['name' => 'María José Fuentes']);
+    $matches[1]->postulante->user->update(['name' => 'María José Fuentes', 'nombres' => 'María José', 'apellidos' => 'Fuentes']);
     $matches[1]->postulante->update(['carrera' => 'Ingeniería Comercial']);
 
     Livewire::actingAs($empresaUser)
         ->test(Candidato::class, ['match' => $matches[1]])
-        ->assertSee('María José Fuentes')
+        ->assertSee('María José')
+        ->assertDontSee('Fuentes')
         ->assertSee('Ingeniería Comercial')
         ->assertDontSee('Perfil profesional #'.$matches[1]->postulante_id)
         ->assertSet('anteriorId', $matches[0]->id)

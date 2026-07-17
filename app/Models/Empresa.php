@@ -40,4 +40,37 @@ class Empresa extends Model
     {
         return $this->hasMany(Busqueda::class);
     }
+
+    public function desbloqueos(): HasMany
+    {
+        return $this->hasMany(Desbloqueo::class);
+    }
+
+    /** El plan está vigente (permite desbloquear perfiles). */
+    public function planVigente(): bool
+    {
+        return $this->plan_id !== null
+            && $this->plan_hasta !== null
+            && $this->plan_hasta->endOfDay()->isFuture();
+    }
+
+    public function desbloqueosTotales(): int
+    {
+        return (int) ($this->plan?->desbloqueos ?? 0);
+    }
+
+    public function desbloqueosUsados(): int
+    {
+        return $this->desbloqueos()->count();
+    }
+
+    public function desbloqueosDisponibles(): int
+    {
+        return max(0, $this->desbloqueosTotales() - $this->desbloqueosUsados());
+    }
+
+    public function haDesbloqueado(int $postulanteId): bool
+    {
+        return $this->desbloqueos()->where('postulante_id', $postulanteId)->exists();
+    }
 }

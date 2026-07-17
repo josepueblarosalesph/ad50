@@ -42,7 +42,7 @@
         <div class="flex items-start gap-4">
             <div class="size-16 flex-none rounded-full bg-orange-100 text-orange-600 grid place-items-center" aria-hidden="true"><flux:icon.user class="size-7" /></div>
             <div class="min-w-0">
-                <h1 class="text-[24px] font-extrabold">{{ $postulante->user->name }}</h1>
+                <h1 class="text-[24px] font-extrabold">{{ $desbloqueado ? $postulante->user->name : ($postulante->user->nombres ?: \Illuminate\Support\Str::before($postulante->user->name, ' ')) }}</h1>
                 <p class="text-[14px] text-gray-500 mt-1">{{ $postulante->titular ?: ($postulante->carrera ?: 'Titular profesional no informado') }}</p>
                 @if (filled($postulante->habilidades))
                     <div class="mt-2.5 flex flex-wrap gap-1.5">
@@ -117,7 +117,20 @@
             @endif
             <p class="flex gap-2 text-[13px] leading-relaxed text-gray-500"><flux:icon.information-circle class="mt-0.5 size-4 flex-none" />El acceso queda registrado para fines de privacidad y auditoría.</p>
             @else
-            <p class="text-[13px] text-gray-700">Necesitas una suscripción de empresa activa para revelar RUT, teléfono y correo.</p>
+            <div class="text-center">
+                <span class="mx-auto grid size-12 place-items-center rounded-full bg-orange-100 text-orange-600"><flux:icon.lock-closed class="size-6" /></span>
+                <p class="mt-3 text-[13px] leading-relaxed text-gray-600">Desbloquea este perfil para ver el nombre completo, los datos de contacto (RUT, teléfono, correo, LinkedIn) y descargar su CV.</p>
+                @if ($planVigente)
+                    <p class="mt-3 text-[12px] font-bold text-orange-600">{{ $desbloqueosDisponibles }} {{ $desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles' }}</p>
+                    <button type="button" wire:click="desbloquear" wire:confirm="Desbloquear este perfil descontará 1 desbloqueo de tu plan. ¿Continuar?" @disabled($desbloqueosDisponibles < 1) class="ad-btn-primary ad-btn-sm mt-3 w-full justify-center disabled:opacity-60"><flux:icon.lock-open class="size-4" />Desbloquear perfil</button>
+                    @if ($desbloqueosDisponibles < 1)
+                        <p class="mt-2 text-[12px] text-gray-500">No te quedan desbloqueos en tu plan. Revisa tus planes para ampliar el cupo.</p>
+                    @endif
+                @else
+                    <p class="mt-3 text-[12px] text-gray-500">Necesitas una suscripción de empresa activa para desbloquear perfiles.</p>
+                @endif
+                @error('desbloqueo')<p class="mt-2 text-[12px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+            </div>
             @endif
         </div></aside>
         </div>

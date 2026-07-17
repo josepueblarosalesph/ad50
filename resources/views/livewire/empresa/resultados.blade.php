@@ -66,7 +66,7 @@
                             <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $match->postulante->carrera ?: 'Carrera no informada' }}</p>
                             <div class="mt-0.5 flex items-center gap-1.5">
                                 <h2 class="truncate text-[20px] font-extrabold text-ink">
-                                    <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="rounded decoration-orange-300 decoration-2 underline-offset-4 transition hover:text-orange-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">{{ $match->postulante->user->name }}</a>
+                                    <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="rounded decoration-orange-300 decoration-2 underline-offset-4 transition hover:text-orange-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">{{ in_array($match->postulante_id, $postulantesDesbloqueados) ? $match->postulante->user->name : ($match->postulante->user->nombres ?: \Illuminate\Support\Str::before($match->postulante->user->name, ' ')) }}</a>
                                 </h2>
                                 @if (in_array($match->postulante_id, $postulantesConNota))
                                     <flux:tooltip content="Tienes una nota sobre este candidato">

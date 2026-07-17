@@ -277,30 +277,54 @@ test('a postulante can add and remove multiple languages', function () {
     expect($component->get('idiomas'))->toHaveCount(2);
 });
 
-test('candidate contact details require an active company subscription and access is audited', function () {
+test('unlocking a candidate reveals contact details and consumes a plan quota', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create([
         'user_id' => $empresaUser->id,
         'razon_social' => 'Empresa Activa',
         'estado_activacion' => 'activa',
         'plan_id' => Plan::query()->create([
-            'codigo' => 'empresa_test', 'nombre' => 'Empresa Test', 'audiencia' => 'empresa', 'precio_clp' => 1,
+            'codigo' => 'empresa_test', 'nombre' => 'Empresa Test', 'audiencia' => 'empresa', 'precio_clp' => 1, 'desbloqueos' => 2,
         ])->id,
         'plan_hasta' => now()->addMonth(),
     ]);
     $postulanteUser = User::factory()->create(['role' => 'postulante', 'email' => 'privado@example.com']);
-    $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'rut' => '1-9', 'telefono' => '+56911111111']);
+    $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true, 'rut' => '1-9', 'telefono' => '+56911111111']);
     $busqueda = $empresa->busquedas()->create(['titulo' => 'Búsqueda', 'criterios' => []]);
     $match = $busqueda->candidatos()->create([
         'postulante_id' => $postulante->id, 'estado_match' => 'cumple',
     ]);
 
-    $this->actingAs($empresaUser)
-        ->get(route('empresa.candidatos.show', $match))
-        ->assertOk()
+    Livewire::actingAs($empresaUser)
+        ->test(App\Livewire\Empresa\Candidato::class, ['match' => $match])
+        ->assertDontSee('privado@example.com')
+        ->assertSet('desbloqueosDisponibles', 2)
+        ->call('desbloquear')
+        ->assertSet('desbloqueado', true)
         ->assertSee('privado@example.com');
 
-    expect($match->fresh()->contactado_at)->not->toBeNull();
+    expect($match->fresh()->contactado_at)->not->toBeNull()
+        ->and($empresa->fresh()->desbloqueosDisponibles())->toBe(1);
+});
+
+test('unlocking is blocked when the plan has no available quota', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $empresaUser->id, 'razon_social' => 'Empresa Sin Cupo', 'estado_activacion' => 'activa',
+        'plan_id' => Plan::query()->create(['codigo' => 'empresa_sin_cupo', 'nombre' => 'Sin cupo', 'audiencia' => 'empresa', 'precio_clp' => 1, 'desbloqueos' => 0])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+    $postulante = Postulante::query()->create(['user_id' => User::factory()->create(['role' => 'postulante', 'email' => 'oculto@example.com'])->id, 'visible' => true]);
+    $match = $empresa->busquedas()->create(['titulo' => 'B', 'criterios' => []])->candidatos()->create(['postulante_id' => $postulante->id, 'estado_match' => 'cumple']);
+
+    Livewire::actingAs($empresaUser)
+        ->test(App\Livewire\Empresa\Candidato::class, ['match' => $match])
+        ->call('desbloquear')
+        ->assertHasErrors('desbloqueo')
+        ->assertSet('desbloqueado', false)
+        ->assertDontSee('oculto@example.com');
+
+    expect(App\Models\Desbloqueo::query()->count())->toBe(0);
 });
 
 test('multiple values in one criterion include candidates matching any selected value', function () {

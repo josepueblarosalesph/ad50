@@ -15,6 +15,7 @@ function crearMatchConCvParaEmpresa(bool $planActivo = true): array
         'nombre' => 'Empresa CV',
         'audiencia' => 'empresa',
         'precio_clp' => 1,
+        'desbloqueos' => 5,
     ]);
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create([
@@ -38,13 +39,16 @@ function crearMatchConCvParaEmpresa(bool $planActivo = true): array
     return [$empresaUser, $match];
 }
 
-test('una empresa con acceso puede descargar el cv privado de un candidato', function () {
+test('una empresa con acceso puede desbloquear y descargar el cv privado de un candidato', function () {
     Storage::fake('local');
     Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
     [$empresaUser, $match] = crearMatchConCvParaEmpresa();
 
     Livewire::actingAs($empresaUser)
         ->test(Candidato::class, ['match' => $match])
+        ->assertDontSee('Descargar CV en PDF')
+        ->call('desbloquear')
+        ->assertSet('desbloqueado', true)
         ->assertSee('Descargar CV en PDF')
         ->call('descargarCv')
         ->assertFileDownloaded('cv-postulante-'.$match->postulante_id.'.pdf');

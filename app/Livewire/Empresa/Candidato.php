@@ -3,6 +3,7 @@
 namespace App\Livewire\Empresa;
 
 use App\Models\BusquedaCandidato;
+use App\Models\Empresa;
 use App\Models\NotaCandidato;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
@@ -25,6 +26,12 @@ class Candidato extends Component
     public array $criterios = [];
 
     public bool $puedeVerContacto = false;
+
+    public bool $desbloqueado = false;
+
+    public bool $planVigente = false;
+
+    public int $desbloqueosDisponibles = 0;
 
     public bool $cvDisponible = false;
 
@@ -54,13 +61,9 @@ class Candidato extends Component
             ->where('postulante_id', $match->postulante_id)
             ->value('contenido') ?? '';
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
-        $this->puedeVerContacto = $this->empresaTieneAccesoActivo();
         $this->cvDisponible = filled($this->match->postulante->cv_ruta)
             && Storage::disk('local')->exists($this->match->postulante->cv_ruta);
-
-        if ($this->puedeVerContacto && $this->match->contactado_at === null) {
-            $this->match->update(['contactado_at' => now()]);
-        }
+        $this->hidratarAcceso(auth()->user()->empresa);
 
         $this->cargarNavegacion();
     }
@@ -69,6 +72,47 @@ class Candidato extends Component
     {
         $this->match->update(['favorito' => ! $this->match->favorito]);
         $this->match->refresh();
+    }
+
+    /** Desbloquea el perfil consumiendo un cupo del plan de la empresa. */
+    public function desbloquear(): void
+    {
+        $empresa = auth()->user()->empresa;
+        abort_unless($empresa !== null && $empresa->id === $this->match->busqueda->empresa_id, 403);
+
+        if ($empresa->haDesbloqueado($this->match->postulante_id)) {
+            $this->hidratarAcceso($empresa);
+
+            return;
+        }
+
+        if (! $empresa->planVigente()) {
+            $this->addError('desbloqueo', 'Necesitas una suscripción activa para desbloquear perfiles.');
+
+            return;
+        }
+
+        if ($empresa->desbloqueosDisponibles() < 1) {
+            $this->addError('desbloqueo', 'No te quedan desbloqueos disponibles en tu plan.');
+
+            return;
+        }
+
+        $empresa->desbloqueos()->create(['postulante_id' => $this->match->postulante_id]);
+
+        if ($this->match->contactado_at === null) {
+            $this->match->update(['contactado_at' => now()]);
+        }
+
+        $this->hidratarAcceso($empresa->fresh());
+    }
+
+    private function hidratarAcceso(?Empresa $empresa): void
+    {
+        $this->desbloqueado = $empresa !== null && $empresa->haDesbloqueado($this->match->postulante_id);
+        $this->puedeVerContacto = $this->desbloqueado;
+        $this->planVigente = $empresa !== null && $empresa->planVigente();
+        $this->desbloqueosDisponibles = $empresa?->desbloqueosDisponibles() ?? 0;
     }
 
     public function guardarNota(): void
@@ -101,7 +145,7 @@ class Candidato extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
         abort_unless($this->match->busqueda->empresa_id === auth()->user()->empresa?->id, 403);
         abort_unless($this->match->postulante->visible, 404);
-        abort_unless($this->empresaTieneAccesoActivo(), 403);
+        abort_unless(auth()->user()->empresa?->haDesbloqueado($this->match->postulante_id), 403);
 
         $cvRuta = $this->match->postulante->cv_ruta;
 
@@ -112,15 +156,6 @@ class Candidato extends Component
             'cv-postulante-'.$this->match->postulante_id.'.pdf',
             ['Content-Type' => 'application/pdf'],
         );
-    }
-
-    private function empresaTieneAccesoActivo(): bool
-    {
-        $empresa = auth()->user()->empresa;
-
-        return $empresa?->plan_id !== null
-            && $empresa->plan_hasta !== null
-            && $empresa->plan_hasta->endOfDay()->isFuture();
     }
 
     public function cambiarFiltro(string $filtro): void
