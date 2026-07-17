@@ -35,11 +35,22 @@ class SelectorCriterio extends Component
         }
 
         $this->buscar = '';
+        $this->notificarCambio();
     }
 
     public function quitar(string $opcion): void
     {
         $this->seleccion = array_values(array_filter($this->seleccion, fn (string $valor): bool => $valor !== $opcion));
+        $this->notificarCambio();
+    }
+
+    /**
+     * Avisa al componente padre que la selección cambió. El binding wire:model no dispara el
+     * hook updated() del padre, así que sin esto los filtros no se guardarían al tocar los tags.
+     */
+    private function notificarCambio(): void
+    {
+        $this->dispatch('criterio-actualizado', campo: $this->campo, valores: $this->seleccion);
     }
 
     /** @return list<string> */

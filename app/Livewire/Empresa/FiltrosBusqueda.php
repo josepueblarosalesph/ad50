@@ -10,6 +10,7 @@ use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class FiltrosBusqueda extends Component
@@ -99,6 +100,24 @@ class FiltrosBusqueda extends Component
     {
         if ($propiedad === 'nuevaPalabraClave') {
             return;
+        }
+
+        $this->guardar(app(MatchingService::class));
+    }
+
+    /**
+     * Los selectores múltiples (cargo, carrera, etc.) actualizan la propiedad vía wire:model,
+     * lo que no dispara updated(); avisan por evento con su valor para reaplicar el filtro.
+     *
+     * @param  list<string>  $valores
+     */
+    #[On('criterio-actualizado')]
+    public function aplicarDesdeSelector(string $campo, array $valores): void
+    {
+        $propiedad = \Illuminate\Support\Str::camel($campo);
+
+        if (property_exists($this, $propiedad)) {
+            $this->{$propiedad} = array_values(array_filter($valores, fn (mixed $valor): bool => is_string($valor) && $valor !== ''));
         }
 
         $this->guardar(app(MatchingService::class));
