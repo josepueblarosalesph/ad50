@@ -90,7 +90,12 @@ class MatchingService
             'genero' => ['Género', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => $this->iguales($postulante->genero, $valor))],
             'nivel_estudios' => ['Nivel de estudios', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->educaciones ?? [])->contains(fn (array $educacion): bool => $this->iguales($educacion['nivel'] ?? null, $valor)))],
             'situacion_estudios' => ['Situación de estudios', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->educaciones ?? [])->contains(fn (array $educacion): bool => $this->iguales($educacion['situacion'] ?? null, $valor)))],
-            'idioma' => ['Idioma', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->idiomas ?? [])->contains(fn (array $idioma): bool => $this->iguales($idioma['idioma'] ?? null, $valor)))],
+            'idioma' => ['Idioma', function (array $valores) use ($postulante): bool {
+                $combos = collect($postulante->idiomas ?? [])
+                    ->map(fn (array $idioma): string => trim(($idioma['idioma'] ?? '').' · '.($idioma['nivel'] ?? '')));
+
+                return collect($valores)->contains(fn (string $valor): bool => $combos->contains(fn (string $combo): bool => $this->iguales($combo, $valor)));
+            }],
             'actividad_economica' => ['Actividad económica', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->experiencias ?? [])->contains(fn (array $experiencia): bool => $this->iguales($experiencia['actividad_empresa'] ?? null, $valor)))],
             'renta_max' => ['Expectativa de renta', fn (string $valor): bool => $postulante->expectativa_renta !== null && $postulante->expectativa_renta <= (int) $valor],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],

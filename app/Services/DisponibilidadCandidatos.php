@@ -56,7 +56,7 @@ class DisponibilidadCandidatos
             'genero' => $this->porColumna('genero'),
             'nivel_estudios' => $this->porPropiedadJson('educaciones', 'nivel'),
             'situacion_estudios' => $this->porPropiedadJson('educaciones', 'situacion'),
-            'idioma' => $this->porPropiedadJson('idiomas', 'idioma'),
+            'idioma' => $this->porParPropiedadesJson('idiomas', 'idioma', 'nivel', ' · '),
             'actividad_economica' => $this->porPropiedadJson('experiencias', 'actividad_empresa'),
             default => [],
         };
@@ -115,6 +115,30 @@ class DisponibilidadCandidatos
         $desdeJson = DB::table('postulantes')
             ->crossJoin(DB::raw("jsonb_array_elements({$columnaJson}::jsonb) AS obj"))
             ->selectRaw("id, (obj->>'{$propiedad}') AS valor")
+            ->where('visible', true)
+            ->whereNotNull($columnaJson);
+
+        return DB::query()
+            ->fromSub($desdeJson, 't')
+            ->selectRaw('valor, COUNT(DISTINCT id) AS total')
+            ->whereNotNull('valor')
+            ->where('valor', '<>', '')
+            ->groupBy('valor')
+            ->get()
+            ->all();
+    }
+
+    /**
+     * Conteo por la concatenación de dos propiedades dentro de un array JSON de objetos.
+     * Ej.: "Inglés · Avanzado" a partir de idioma y nivel.
+     *
+     * @return list<object>
+     */
+    private function porParPropiedadesJson(string $columnaJson, string $prop1, string $prop2, string $separador): array
+    {
+        $desdeJson = DB::table('postulantes')
+            ->crossJoin(DB::raw("jsonb_array_elements({$columnaJson}::jsonb) AS obj"))
+            ->selectRaw("id, ((obj->>'{$prop1}') || ? || (obj->>'{$prop2}')) AS valor", [$separador])
             ->where('visible', true)
             ->whereNotNull($columnaJson);
 

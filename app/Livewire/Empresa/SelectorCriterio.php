@@ -55,7 +55,7 @@ class SelectorCriterio extends Component
             'genero' => CatalogosProfesionales::generos(),
             'nivel_estudios' => CatalogosProfesionales::nivelesEstudio(),
             'situacion_estudios' => CatalogosProfesionales::situacionesEstudio(),
-            'idioma' => CatalogosProfesionales::idiomas(),
+            'idioma' => CatalogosProfesionales::idiomasConNivel(),
             'actividad_economica' => CatalogosProfesionales::industrias(),
             default => [],
         };

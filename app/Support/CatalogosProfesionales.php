@@ -285,6 +285,24 @@ class CatalogosProfesionales
         return ['Intermedio', 'Avanzado'];
     }
 
+    /**
+     * Combinaciones "Idioma · Nivel" para filtrar procesos por idioma y nivel a la vez.
+     *
+     * @return list<string>
+     */
+    public static function idiomasConNivel(): array
+    {
+        $combos = [];
+
+        foreach (self::idiomas() as $idioma) {
+            foreach (self::nivelesIdioma() as $nivel) {
+                $combos[] = $idioma.' · '.$nivel;
+            }
+        }
+
+        return $combos;
+    }
+
     /** @return array<int, string> */
     public static function especialidades(?string $carrera): array
     {

@@ -194,7 +194,7 @@ test('new criteria (idioma, nivel de estudios, situación laboral, expectativa d
         ->test(NuevaBusqueda::class)
         ->set('titulo', 'Perfil exigente')
         ->set('situacionLaboral', ['Buscando trabajo'])
-        ->set('idioma', ['Inglés'])
+        ->set('idioma', ['Inglés · Avanzado'])
         ->set('nivelEstudios', ['Universitaria'])
         ->set('rentaMax', 3000000)
         ->call('save')

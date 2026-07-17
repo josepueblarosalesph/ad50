@@ -63,6 +63,18 @@ test('cuenta cargos y empresas desde experiencias sin doble-contar', function ()
         ->and($servicio->conteos('empresa')['BHP'] ?? 0)->toBe(1);
 });
 
+test('cuenta idiomas por combinación idioma y nivel', function () {
+    postulanteVisible(['idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Avanzado'], ['idioma' => 'Español', 'nivel' => 'Avanzado']]]);
+    postulanteVisible(['idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Avanzado']]]);
+    postulanteVisible(['idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Intermedio']]]);
+
+    $conteos = app(DisponibilidadCandidatos::class)->conteos('idioma');
+
+    expect($conteos['Inglés · Avanzado'] ?? 0)->toBe(2)
+        ->and($conteos['Inglés · Intermedio'] ?? 0)->toBe(1)
+        ->and($conteos['Español · Avanzado'] ?? 0)->toBe(1);
+});
+
 test('cuenta instituciones desde educaciones y universidad', function () {
     postulanteVisible([
         'universidad' => 'Universidad de Concepción',

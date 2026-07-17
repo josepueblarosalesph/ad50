@@ -149,7 +149,7 @@ class FiltrosBusqueda extends Component
             'situacionEstudios' => ['array'],
             'situacionEstudios.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::situacionesEstudio())],
             'idioma' => ['array'],
-            'idioma.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::idiomas())],
+            'idioma.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::idiomasConNivel())],
             'actividadEconomica' => ['array'],
             'actividadEconomica.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
             'rentaMax' => ['nullable', 'integer', 'min:0', 'max:100000000'],
