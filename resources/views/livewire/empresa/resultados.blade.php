@@ -9,7 +9,7 @@
         <div class="sticky top-24"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" wire:key="filtros-desktop" /></div>
     </x-slot:sidebar>
 
-    <div class="max-w-3xl">
+    <div>
     <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm mb-4 inline-flex items-center gap-2">
         <flux:icon.arrow-left class="size-4" />
         Volver a Procesos
