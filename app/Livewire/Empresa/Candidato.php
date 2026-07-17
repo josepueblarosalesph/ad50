@@ -123,7 +123,35 @@ class Candidato extends Component
             && $empresa->plan_hasta->endOfDay()->isFuture();
     }
 
-    private function cargarNavegacion(): void
+    public function cambiarFiltro(string $filtro): void
+    {
+        abort_unless(in_array($filtro, ['todos', 'favoritos'], true), 404);
+
+        if ($filtro === $this->filtro) {
+            return;
+        }
+
+        $this->filtro = $filtro;
+        $ids = $this->idsNavegacion();
+
+        // Si el candidato actual no está en el nuevo filtro, saltamos al primero del set (o a resultados).
+        if (! $ids->contains($this->match->id)) {
+            if ($ids->isEmpty()) {
+                $this->redirectRoute('empresa.resultados', ['busqueda' => $this->match->busqueda, 'filtro' => $filtro, 'criterios' => $this->criterios], navigate: true);
+
+                return;
+            }
+
+            $this->redirectRoute('empresa.candidatos.show', ['match' => $ids->first(), 'filtro' => $filtro, 'criterios' => $this->criterios], navigate: true);
+
+            return;
+        }
+
+        $this->cargarNavegacion();
+    }
+
+    /** @return \Illuminate\Support\Collection<int, int> */
+    private function idsNavegacion(): \Illuminate\Support\Collection
     {
         $matches = $this->match->busqueda->candidatos()
             ->where('estado_match', 'cumple')
@@ -137,7 +165,12 @@ class Candidato extends Component
             $matches = $matches->filter(fn (BusquedaCandidato $match): bool => $this->cumpleCriterios($match));
         }
 
-        $ids = $matches->pluck('id')->values();
+        return $matches->pluck('id')->values();
+    }
+
+    private function cargarNavegacion(): void
+    {
+        $ids = $this->idsNavegacion();
 
         $indice = $ids->search($this->match->id);
 

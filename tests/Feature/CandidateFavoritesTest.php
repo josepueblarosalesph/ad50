@@ -92,7 +92,7 @@ test('candidate detail preserves the favorites filter while navigating and retur
         ->assertSet('siguienteId', $matches[2]->id)
         ->assertSet('posicion', 1)
         ->assertSet('totalCandidatos', 2)
-        ->assertSee('Revisando favoritos')
+        ->assertSee("cambiarFiltro('favoritos')", escape: false)
         ->assertSee(route('empresa.candidatos.show', [
             'match' => $matches[2],
             'filtro' => 'favoritos',
@@ -101,6 +101,34 @@ test('candidate detail preserves the favorites filter while navigating and retur
             'busqueda' => $busqueda,
             'filtro' => 'favoritos',
         ]), escape: false);
+});
+
+test('changing the filter from the candidate detail recomputes the navigation', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    $matches[0]->update(['favorito' => true]);
+    $matches[2]->update(['favorito' => true]);
+
+    // Estando en "todos" sobre un candidato favorito, cambiar a "favoritos" mantiene el candidato
+    // y recalcula el set (2 favoritos).
+    Livewire::actingAs($empresaUser)
+        ->test(Candidato::class, ['match' => $matches[0]])
+        ->assertSet('filtro', 'todos')
+        ->assertSet('totalCandidatos', 3)
+        ->call('cambiarFiltro', 'favoritos')
+        ->assertSet('filtro', 'favoritos')
+        ->assertSet('totalCandidatos', 2)
+        ->assertSet('siguienteId', $matches[2]->id);
+});
+
+test('changing to favorites on a non-favorite candidate redirects to the first favorite', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+    $matches[2]->update(['favorito' => true]);
+
+    // matches[0] no es favorito: al cambiar a "favoritos" salta al primer favorito.
+    Livewire::actingAs($empresaUser)
+        ->test(Candidato::class, ['match' => $matches[0]])
+        ->call('cambiarFiltro', 'favoritos')
+        ->assertRedirect(route('empresa.candidatos.show', ['match' => $matches[2]->id, 'filtro' => 'favoritos']));
 });
 
 test('a company cannot favorite a candidate from another company search', function () {
