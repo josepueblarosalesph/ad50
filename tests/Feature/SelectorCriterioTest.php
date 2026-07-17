@@ -36,7 +36,7 @@ test('a value outside the catalog is ignored', function () {
         ->assertSet('seleccion', []);
 });
 
-test('each option shows the number of available candidates', function () {
+test('the candidate count is hidden while temporarily disabled', function () {
     foreach ([['Biobío'], ['Biobío'], ['Valparaíso']] as $regiones) {
         Postulante::query()->create([
             'user_id' => User::factory()->create(['role' => 'postulante'])->id,
@@ -47,7 +47,7 @@ test('each option shows the number of available candidates', function () {
     Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad'])
         ->set('buscar', 'Biobío')
         ->assertSee('Biobío')
-        ->assertSee('2 candidatos disponibles');
+        ->assertDontSee('candidatos disponibles');
 });
 
 test('the selector feeds its selection back to the parent filters component', function () {

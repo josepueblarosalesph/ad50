@@ -16,6 +16,12 @@ use Livewire\Component;
  */
 class SelectorCriterio extends Component
 {
+    /**
+     * Temporalmente deshabilitado: el conteo por opción no reflejaba números reales.
+     * Cambiar a true para volver a mostrar "N candidatos" en cada opción.
+     */
+    private const MOSTRAR_CONTEO = false;
+
     /** @var list<string> */
     #[Modelable]
     public array $seleccion = [];
@@ -78,20 +84,21 @@ class SelectorCriterio extends Component
     }
 
     /**
-     * Hasta 50 opciones que calzan con la búsqueda, anotadas con su conteo de candidatos.
+     * Hasta 50 opciones que calzan con la búsqueda. El conteo de candidatos por opción está
+     * deshabilitado temporalmente (self::MOSTRAR_CONTEO); cuando lo está, no se hace la consulta.
      *
-     * @return list<array{valor: string, total: int}>
+     * @return list<array{valor: string, total: int|null}>
      */
     private function resultados(DisponibilidadCandidatos $disponibilidad): array
     {
         $consulta = self::normalizar($this->buscar);
-        $conteos = $disponibilidad->conteos($this->campo);
+        $conteos = self::MOSTRAR_CONTEO ? $disponibilidad->conteos($this->campo) : [];
 
         return collect($this->catalogo())
             ->reject(fn (string $opcion): bool => in_array($opcion, $this->seleccion, true))
             ->filter(fn (string $opcion): bool => $consulta === '' || str_contains(self::normalizar($opcion), $consulta))
             ->take(50)
-            ->map(fn (string $opcion): array => ['valor' => $opcion, 'total' => $conteos[$opcion] ?? 0])
+            ->map(fn (string $opcion): array => ['valor' => $opcion, 'total' => self::MOSTRAR_CONTEO ? ($conteos[$opcion] ?? 0) : null])
             ->values()
             ->all();
     }
@@ -100,6 +107,7 @@ class SelectorCriterio extends Component
     {
         return view('livewire.empresa.selector-criterio', [
             'resultados' => $this->resultados($disponibilidad),
+            'mostrarConteo' => self::MOSTRAR_CONTEO,
         ]);
     }
 }
