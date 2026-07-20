@@ -9,6 +9,7 @@ use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -66,13 +67,31 @@ class FiltrosBusqueda extends Component
 
     public string $nuevaPalabraClave = '';
 
+    /**
+     * Criterios tal como están guardados en la búsqueda. Sirve para detectar
+     * cambios pendientes y para descartarlos volviendo a este estado.
+     *
+     * @var array<string, mixed>
+     */
+    public array $criteriosGuardados = [];
+
     public function mount(Busqueda $busqueda): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;
-        $criterios = $busqueda->criterios ?? [];
+        $this->hidratarDesde($busqueda->criterios ?? []);
+        $this->criteriosGuardados = $this->armarCriterios();
+    }
+
+    /**
+     * Deja el formulario reflejando el mapa de criterios recibido.
+     *
+     * @param  array<string, mixed>  $criterios
+     */
+    private function hidratarDesde(array $criterios): void
+    {
         $this->cargo = $this->normalizarSeleccion($criterios['cargo'] ?? []);
         $this->carrera = $this->normalizarSeleccion($criterios['carrera'] ?? []);
         $this->especialidad = is_array($criterios['especialidad'] ?? '') ? (string) ($criterios['especialidad'][0] ?? '') : (string) ($criterios['especialidad'] ?? '');
@@ -94,7 +113,38 @@ class FiltrosBusqueda extends Component
     }
 
     /**
-     * Cada criterio se aplica apenas cambia; el texto en edición todavía no es un criterio.
+     * El panel se monta dos veces (barra lateral en escritorio, desplegable en móvil).
+     * Cuando una instancia previsualiza, la otra adopta el mismo borrador para no
+     * quedar mostrando valores viejos ni un "sin guardar" que no corresponde.
+     *
+     * @param  array<string, mixed>  $criterios
+     */
+    #[On('criterios-previsualizados')]
+    public function sincronizarBorrador(array $criterios): void
+    {
+        if ($criterios === $this->armarCriterios()) {
+            return;
+        }
+
+        $this->resetErrorBag();
+        $this->hidratarDesde($criterios);
+    }
+
+    /**
+     * Tras guardar (o descartar) en cualquiera de las dos instancias, ambas vuelven
+     * a los criterios persistidos y renuevan su instantánea de "guardado".
+     */
+    #[On('criterios-guardados')]
+    public function sincronizarGuardado(): void
+    {
+        $this->resetErrorBag();
+        $this->busqueda->refresh();
+        $this->hidratarDesde($this->busqueda->criterios ?? []);
+        $this->criteriosGuardados = $this->armarCriterios();
+    }
+
+    /**
+     * Cada criterio se previsualiza apenas cambia; el texto en edición todavía no es un criterio.
      */
     public function updated(string $propiedad): void
     {
@@ -102,7 +152,7 @@ class FiltrosBusqueda extends Component
             return;
         }
 
-        $this->guardar(app(MatchingService::class));
+        $this->previsualizar();
     }
 
     /**
@@ -114,13 +164,13 @@ class FiltrosBusqueda extends Component
     #[On('criterio-actualizado')]
     public function aplicarDesdeSelector(string $campo, array $valores): void
     {
-        $propiedad = \Illuminate\Support\Str::camel($campo);
+        $propiedad = Str::camel($campo);
 
         if (property_exists($this, $propiedad)) {
             $this->{$propiedad} = array_values(array_filter($valores, fn (mixed $valor): bool => is_string($valor) && $valor !== ''));
         }
 
-        $this->guardar(app(MatchingService::class));
+        $this->previsualizar();
     }
 
     public function agregarPalabraClave(): void
@@ -135,19 +185,60 @@ class FiltrosBusqueda extends Component
 
         $this->palabrasClave[] = mb_substr($palabra, 0, 100);
         $this->nuevaPalabraClave = '';
-        $this->guardar(app(MatchingService::class));
+        $this->previsualizar();
     }
 
     public function quitarPalabraClave(int $index): void
     {
         unset($this->palabrasClave[$index]);
         $this->palabrasClave = array_values($this->palabrasClave);
-        $this->guardar(app(MatchingService::class));
+        $this->previsualizar();
+    }
+
+    /**
+     * Muestra el resultado de los criterios actuales sin tocar la base de datos:
+     * el listado los evalúa al vuelo. Solo guardar() los persiste.
+     */
+    public function previsualizar(): void
+    {
+        $this->validate($this->reglas());
+
+        $this->dispatch('criterios-previsualizados', criterios: $this->armarCriterios());
+    }
+
+    /**
+     * Vuelve a los criterios guardados y saca al listado del modo previsualización.
+     */
+    public function descartar(): void
+    {
+        $this->sincronizarGuardado();
+
+        $this->dispatch('criterios-guardados');
     }
 
     public function guardar(MatchingService $matching): void
     {
-        $validated = $this->validate([
+        $this->validate($this->reglas());
+        $criterios = $this->armarCriterios();
+
+        DB::transaction(function () use ($criterios, $matching): void {
+            $this->busqueda->update([
+                'rubro_oculto' => $criterios['industria'][0] ?? null,
+                'criterios' => $criterios,
+            ]);
+
+            $matching->sincronizar($this->busqueda->fresh());
+        });
+
+        $this->criteriosGuardados = $criterios;
+
+        $this->dispatch('criterios-guardados');
+    }
+
+    /** @return array<string, list<mixed>> */
+    private function reglas(): array
+    {
+        return [
             'cargo' => ['array'],
             'cargo.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::cargos())],
             'carrera' => ['array'],
@@ -178,42 +269,43 @@ class FiltrosBusqueda extends Component
             'palabrasClave.*' => ['string', 'max:100', 'distinct'],
             ...$this->reglasExperiencia(),
             ...$this->reglasEdad(),
-        ]);
+        ];
+    }
 
-        DB::transaction(function () use ($validated, $matching): void {
-            $this->busqueda->update([
-                'rubro_oculto' => $validated['industria'][0] ?? null,
-                'criterios' => [
-                    'cargo' => $validated['cargo'],
-                    'carrera' => $validated['carrera'],
-                    'especialidad' => $validated['especialidad'],
-                    'industria' => $validated['industria'],
-                    'ciudad' => $validated['ciudad'],
-                    'habilidad' => $validated['habilidad'],
-                    'situacion_laboral' => $validated['situacionLaboral'],
-                    'genero' => $validated['genero'],
-                    'nivel_estudios' => $validated['nivelEstudios'],
-                    'situacion_estudios' => $validated['situacionEstudios'],
-                    'idioma' => $validated['idioma'],
-                    'actividad_economica' => $validated['actividadEconomica'],
-                    'renta_max' => (int) ($validated['rentaMax'] ?? 0),
-                    'institucion' => $validated['institucion'],
-                    'empresa' => $validated['empresa'],
-                    'experiencia' => $this->criterioExperiencia($validated['expMin'], $validated['expMax']),
-                    'palabra_clave' => $validated['palabrasClave'],
-                    'edad' => $this->criterioEdad($validated['edadMin'], $validated['edadMax']),
-                ],
-            ]);
-
-            $matching->sincronizar($this->busqueda->fresh());
-        });
-
-        $this->dispatch('criterios-actualizados');
+    /**
+     * Arma el mapa de criterios desde el estado del formulario. Se usa tanto para
+     * previsualizar como para guardar, así ambos evalúan exactamente lo mismo.
+     *
+     * @return array<string, mixed>
+     */
+    private function armarCriterios(): array
+    {
+        return [
+            'cargo' => $this->cargo,
+            'carrera' => $this->carrera,
+            'especialidad' => $this->especialidad,
+            'industria' => $this->industria,
+            'ciudad' => $this->ciudad,
+            'habilidad' => $this->habilidad,
+            'situacion_laboral' => $this->situacionLaboral,
+            'genero' => $this->genero,
+            'nivel_estudios' => $this->nivelEstudios,
+            'situacion_estudios' => $this->situacionEstudios,
+            'idioma' => $this->idioma,
+            'actividad_economica' => $this->actividadEconomica,
+            'renta_max' => $this->rentaMax,
+            'institucion' => $this->institucion,
+            'empresa' => $this->empresa,
+            'experiencia' => $this->criterioExperiencia($this->expMin, $this->expMax),
+            'palabra_clave' => $this->palabrasClave,
+            'edad' => $this->criterioEdad($this->edadMin, $this->edadMax),
+        ];
     }
 
     public function render(): View
     {
         return view('livewire.empresa.filtros-busqueda', [
+            'sinGuardar' => $this->armarCriterios() !== $this->criteriosGuardados,
             'instituciones' => CatalogosProfesionales::instituciones(),
             'empresas' => CatalogosProfesionales::empresas(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),

@@ -1,8 +1,10 @@
 <?php
 
+use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\FiltrosBusqueda;
 use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Postulante\Ficha;
+use App\Models\Desbloqueo;
 use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
@@ -296,7 +298,7 @@ test('unlocking a candidate reveals contact details and consumes a plan quota', 
     ]);
 
     Livewire::actingAs($empresaUser)
-        ->test(App\Livewire\Empresa\Candidato::class, ['match' => $match])
+        ->test(Candidato::class, ['match' => $match])
         ->assertDontSee('privado@example.com')
         ->assertSet('desbloqueosDisponibles', 2)
         ->call('desbloquear')
@@ -318,13 +320,13 @@ test('unlocking is blocked when the plan has no available quota', function () {
     $match = $empresa->busquedas()->create(['titulo' => 'B', 'criterios' => []])->candidatos()->create(['postulante_id' => $postulante->id, 'estado_match' => 'cumple']);
 
     Livewire::actingAs($empresaUser)
-        ->test(App\Livewire\Empresa\Candidato::class, ['match' => $match])
+        ->test(Candidato::class, ['match' => $match])
         ->call('desbloquear')
         ->assertHasErrors('desbloqueo')
         ->assertSet('desbloqueado', false)
         ->assertDontSee('oculto@example.com');
 
-    expect(App\Models\Desbloqueo::query()->count())->toBe(0);
+    expect(Desbloqueo::query()->count())->toBe(0);
 });
 
 test('multiple values in one criterion include candidates matching any selected value', function () {
@@ -412,7 +414,7 @@ test('a company can modify search filters from the results sidebar', function ()
         ->get(route('empresa.resultados', $busqueda))
         ->assertOk()
         ->assertSee('Filtros del proceso')
-        ->assertSee('Los resultados se actualizan a medida que cambias los filtros.')
+        ->assertSee('Guardar filtro')
         ->assertSee('Institución de estudio')
         ->assertSee('Universidad de Concepción ( UDEC )')
         ->assertDontSee('Actualizar Filtro');
@@ -420,6 +422,7 @@ test('a company can modify search filters from the results sidebar', function ()
     Livewire::actingAs($empresaUser)
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->set('ciudad', ['Metropolitana de Santiago'])
+        ->call('guardar')
         ->assertHasNoErrors();
 
     expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
@@ -512,6 +515,7 @@ test('the age range criterion keeps only candidates inside the bounds', function
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->set('edadMin', 50)
         ->set('edadMax', 60)
+        ->call('guardar')
         ->assertHasNoErrors();
 
     $calzados = $busqueda->fresh()->candidatos()->where('estado_match', 'cumple')->pluck('postulante_id');
@@ -532,6 +536,7 @@ test('the age range criterion is not stored when it spans the full bounds', func
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->set('edadMin', $limites['min'])
         ->set('edadMax', $limites['max'])
+        ->call('guardar')
         ->assertHasNoErrors();
 
     expect($busqueda->fresh()->criterios['edad'])->toBeNull();
@@ -554,6 +559,7 @@ test('the top of the age range has no upper bound', function () {
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->set('edadMin', 60)
         ->set('edadMax', $limites['max'])
+        ->call('guardar')
         ->assertHasNoErrors();
 
     expect($busqueda->fresh()->criterios['edad'])->toBe(['min' => 60, 'max' => null])

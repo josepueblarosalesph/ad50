@@ -44,6 +44,32 @@
             />
         </div>
         <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]"><x-palabras-clave :palabras="$palabrasClave" /></div>
-        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros.</p>
+        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros, pero solo quedan guardados al usar el botón Guardar filtro.</p>
+    </div>
+
+    {{-- Barra de guardado: los cambios solo se persisten aquí. --}}
+    <div class="sticky bottom-0 z-10 -mx-1 mt-3 border-t border-line bg-white/95 px-1 pb-1 pt-3 backdrop-blur dark:bg-[#1B1E20]/95">
+        @if ($sinGuardar)
+            <p class="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-orange-600">
+                <flux:icon.exclamation-circle class="size-4" />
+                Cambios sin guardar
+            </p>
+        @endif
+        <div class="flex items-center gap-2">
+            <button
+                type="button"
+                wire:click="guardar"
+                wire:loading.attr="disabled"
+                wire:target="guardar"
+                @disabled(! $sinGuardar)
+                class="ad-btn-primary ad-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+                <span wire:loading.remove wire:target="guardar">Guardar filtro</span>
+                <span wire:loading wire:target="guardar">Guardando…</span>
+            </button>
+            @if ($sinGuardar)
+                <button type="button" wire:click="descartar" wire:loading.attr="disabled" wire:target="descartar" class="ad-btn-ghost ad-btn-sm">Descartar</button>
+            @endif
+        </div>
     </div>
 </div>

@@ -6,7 +6,12 @@ use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
 use App\Models\NotaCandidato;
+use App\Models\Postulante;
+use App\Services\MatchingService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -30,6 +35,15 @@ class Resultados extends Component
     public bool $editandoTitulo = false;
 
     public string $tituloEditado = '';
+
+    /**
+     * Criterios en edición que aún no se guardan. Cuando está presente, el listado se
+     * calcula al vuelo contra los postulantes visibles en vez de leer la tabla pivote.
+     * No es #[Url], así que un refresco de página descarta la previsualización.
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $previsualizacion = null;
 
     public function mount(Busqueda $busqueda): void
     {
@@ -99,9 +113,21 @@ class Resultados extends Component
         $this->resetPage(pageName: 'candidatos');
     }
 
-    #[On('criterios-actualizados')]
+    /**
+     * @param  array<string, mixed>  $criterios
+     */
+    #[On('criterios-previsualizados')]
+    public function previsualizar(array $criterios): void
+    {
+        $this->previsualizacion = $criterios;
+        $this->criterios = [];
+        $this->resetPage(pageName: 'candidatos');
+    }
+
+    #[On('criterios-guardados')]
     public function actualizarResultados(): void
     {
+        $this->previsualizacion = null;
         $this->busqueda->refresh();
         $this->criterios = [];
         $this->resetPage(pageName: 'candidatos');
@@ -110,6 +136,41 @@ class Resultados extends Component
     #[Title('Resultados de búsqueda · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
+    {
+        [$candidatos, $totalCandidatos, $totalFavoritos] = $this->previsualizacion !== null
+            ? $this->listadoPrevisualizado()
+            : $this->listadoGuardado();
+
+        $idsPagina = $candidatos->pluck('postulante_id');
+
+        $postulantesConNota = NotaCandidato::query()
+            ->where('empresa_id', $this->busqueda->empresa_id)
+            ->whereIn('postulante_id', $idsPagina)
+            ->pluck('postulante_id')
+            ->all();
+
+        $postulantesDesbloqueados = Desbloqueo::query()
+            ->where('empresa_id', $this->busqueda->empresa_id)
+            ->whereIn('postulante_id', $idsPagina)
+            ->pluck('postulante_id')
+            ->all();
+
+        return view('livewire.empresa.resultados', [
+            'candidatos' => $candidatos,
+            'postulantesConNota' => $postulantesConNota,
+            'postulantesDesbloqueados' => $postulantesDesbloqueados,
+            'totalCandidatos' => $totalCandidatos,
+            'totalFavoritos' => $totalFavoritos,
+            'previsualizando' => $this->previsualizacion !== null,
+        ]);
+    }
+
+    /**
+     * Listado a partir de las coincidencias ya materializadas en la tabla pivote.
+     *
+     * @return array{0: LengthAwarePaginator<int, BusquedaCandidato>, 1: int, 2: int}
+     */
+    private function listadoGuardado(): array
     {
         $query = $this->busqueda->candidatos()
             ->where('estado_match', 'cumple')
@@ -134,27 +195,79 @@ class Resultados extends Component
             ->orderBy('postulante_id')
             ->paginate(20, pageName: 'candidatos');
 
-        $idsPagina = $candidatos->pluck('postulante_id');
+        return [$candidatos, $totalCandidatos, $totalFavoritos];
+    }
 
-        $postulantesConNota = NotaCandidato::query()
-            ->where('empresa_id', $this->busqueda->empresa_id)
-            ->whereIn('postulante_id', $idsPagina)
-            ->pluck('postulante_id')
-            ->all();
+    /**
+     * Listado de los criterios en edición, evaluado en memoria y sin escribir nada.
+     * Reutiliza la fila pivote existente cuando la hay (conserva favorito y el enlace
+     * al perfil); los candidatos nuevos se representan con un modelo sin persistir.
+     *
+     * @return array{0: LengthAwarePaginator<int, BusquedaCandidato>, 1: int, 2: int}
+     */
+    private function listadoPrevisualizado(): array
+    {
+        $matching = app(MatchingService::class);
+        $criterios = $this->previsualizacion ?? [];
+        $existentes = $this->busqueda->candidatos()->get()->keyBy('postulante_id');
 
-        $postulantesDesbloqueados = Desbloqueo::query()
-            ->where('empresa_id', $this->busqueda->empresa_id)
-            ->whereIn('postulante_id', $idsPagina)
-            ->pluck('postulante_id')
-            ->all();
+        /** @var Collection<int, BusquedaCandidato> $coincidencias */
+        $coincidencias = collect();
 
-        return view('livewire.empresa.resultados', [
-            'candidatos' => $candidatos,
-            'postulantesConNota' => $postulantesConNota,
-            'postulantesDesbloqueados' => $postulantesDesbloqueados,
-            'totalCandidatos' => $totalCandidatos,
-            'totalFavoritos' => $totalFavoritos,
-        ]);
+        Postulante::query()
+            ->where('visible', true)
+            ->with('user')
+            ->chunkById(500, function (Collection $postulantes) use ($matching, $criterios, $existentes, $coincidencias): void {
+                foreach ($postulantes as $postulante) {
+                    $detalle = $matching->evaluar($postulante, $criterios);
+
+                    if (collect($detalle)->contains(fn (array $criterio): bool => ! $criterio['cumple'])) {
+                        continue;
+                    }
+
+                    $match = $existentes->get($postulante->id) ?? new BusquedaCandidato([
+                        'busqueda_id' => $this->busqueda->id,
+                        'postulante_id' => $postulante->id,
+                        'favorito' => false,
+                    ]);
+
+                    $match->criterios_detalle = array_values($detalle);
+                    $match->setRelation('postulante', $postulante);
+
+                    $coincidencias->push($match);
+                }
+            });
+
+        $totalCandidatos = $coincidencias->count();
+        $totalFavoritos = $coincidencias->where('favorito', true)->count();
+
+        $visibles = $coincidencias
+            ->when($this->criterios !== [], fn (Collection $items): Collection => $items->filter(fn (BusquedaCandidato $match): bool => $this->cumpleCriterios($match)))
+            ->when($this->filtro === 'favoritos', fn (Collection $items): Collection => $items->where('favorito', true))
+            ->sortBy('postulante_id')
+            ->values();
+
+        $pagina = Paginator::resolveCurrentPage('candidatos');
+
+        $candidatos = new LengthAwarePaginator(
+            $visibles->forPage($pagina, 20),
+            $visibles->count(),
+            20,
+            $pagina,
+            ['path' => Paginator::resolveCurrentPath(), 'pageName' => 'candidatos'],
+        );
+
+        return [$candidatos, $totalCandidatos, $totalFavoritos];
+    }
+
+    /**
+     * Los criterios que se están mostrando: los del borrador si hay previsualización.
+     *
+     * @return array<string, mixed>
+     */
+    private function criteriosVigentes(): array
+    {
+        return $this->previsualizacion ?? $this->busqueda->criterios ?? [];
     }
 
     /**
@@ -181,7 +294,7 @@ class Resultados extends Component
             'palabra_clave' => 'Palabra clave',
         ];
 
-        return collect($this->busqueda->criterios ?? [])
+        return collect($this->criteriosVigentes())
             ->filter(fn (mixed $valor, string $clave): bool => filled($valor) && ! (in_array($clave, ['min_anios', 'renta_max'], true) && (int) $valor === 0))
             ->mapWithKeys(fn (mixed $valor, string $clave): array => isset($etiquetas[$clave]) ? [$clave => [
                 'etiqueta' => $etiquetas[$clave],

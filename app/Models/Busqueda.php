@@ -49,6 +49,7 @@ class Busqueda extends Model
         return $this->belongsTo(Empresa::class);
     }
 
+    /** @return HasMany<BusquedaCandidato, $this> */
     public function candidatos(): HasMany
     {
         return $this->hasMany(BusquedaCandidato::class);

@@ -55,9 +55,19 @@
         </div>
     </div>
 
+    @if ($previsualizando)
+        <div class="mb-4 flex items-start gap-2.5 rounded-xl border border-orange-300 bg-orange-100/70 px-4 py-3 dark:bg-orange-100/10">
+            <flux:icon.eye class="mt-0.5 size-4 flex-none text-orange-600" />
+            <p class="text-[13px] leading-relaxed text-ink">
+                <span class="font-bold">Vista previa.</span>
+                Así quedaría el proceso con los filtros que estás editando. Usa <span class="font-bold">Guardar filtro</span> para dejarlos aplicados; hasta entonces no se guarda nada y los candidatos nuevos no se pueden marcar ni abrir.
+            </p>
+        </div>
+    @endif
+
     <div class="space-y-3">
         @forelse ($candidatos as $match)
-            <article wire:key="candidato-{{ $match->id }}" class="ad-card relative overflow-hidden p-4 md:p-5">
+            <article wire:key="candidato-{{ $match->postulante_id }}" class="ad-card relative overflow-hidden p-4 md:p-5">
                 <div class="absolute inset-y-0 left-0 w-1 bg-orange-500"></div>
                 <div class="grid items-stretch gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-0">
                     <div class="flex min-w-0 items-center gap-4 md:pr-6">
@@ -65,8 +75,13 @@
                         <div class="min-w-0">
                             <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $match->postulante->carrera ?: 'Carrera no informada' }}</p>
                             <div class="mt-0.5 flex items-center gap-1.5">
+                                @php($nombreCandidato = in_array($match->postulante_id, $postulantesDesbloqueados) ? $match->postulante->user->name : ($match->postulante->user->nombres ?: \Illuminate\Support\Str::before($match->postulante->user->name, ' ')))
                                 <h2 class="truncate text-[20px] font-extrabold text-ink">
-                                    <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="rounded decoration-orange-300 decoration-2 underline-offset-4 transition hover:text-orange-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">{{ in_array($match->postulante_id, $postulantesDesbloqueados) ? $match->postulante->user->name : ($match->postulante->user->nombres ?: \Illuminate\Support\Str::before($match->postulante->user->name, ' ')) }}</a>
+                                    @if ($match->exists)
+                                        <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="rounded decoration-orange-300 decoration-2 underline-offset-4 transition hover:text-orange-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">{{ $nombreCandidato }}</a>
+                                    @else
+                                        {{ $nombreCandidato }}
+                                    @endif
                                 </h2>
                                 @if (in_array($match->postulante_id, $postulantesConNota))
                                     <flux:tooltip content="Tienes una nota sobre este candidato">
@@ -79,10 +94,16 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 md:pl-4 md:pt-0">
                         <div class="flex items-center gap-2">
-                            <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
-                                <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30] dark:hover:bg-orange-100' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
-                            </flux:tooltip>
-                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
+                            @if ($match->exists)
+                                <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
+                                    <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30] dark:hover:bg-orange-100' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
+                                </flux:tooltip>
+                                <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
+                            @else
+                                <flux:tooltip content="Guarda el filtro para poder abrir y marcar este candidato">
+                                    <span class="rounded-lg bg-sage-100 px-2.5 py-1.5 text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-500">Nuevo con este filtro</span>
+                                </flux:tooltip>
+                            @endif
                         </div>
                     </div>
                 </div>

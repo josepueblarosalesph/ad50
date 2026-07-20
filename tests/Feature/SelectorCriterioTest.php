@@ -63,6 +63,7 @@ test('the selector feeds its selection back to the parent filters component', fu
     Livewire::actingAs($empresaUser)
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->set('ciudad', ['Biobío'])
+        ->call('guardar')
         ->assertHasNoErrors();
 
     expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Biobío'])
@@ -88,7 +89,8 @@ test('the parent filters apply a multi-select criterion from the selector event'
         ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
         ->call('aplicarDesdeSelector', 'carrera', ['Ingeniería Comercial'])
         ->assertHasNoErrors()
-        ->assertSet('carrera', ['Ingeniería Comercial']);
+        ->assertSet('carrera', ['Ingeniería Comercial'])
+        ->call('guardar');
 
     expect($busqueda->fresh()->criterios['carrera'])->toBe(['Ingeniería Comercial'])
         ->and($busqueda->fresh()->candidatos()->count())->toBe(1);
