@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DisponibilidadCandidatos;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,24 @@ class Postulante extends Model
         'onboarding_paso' => 'integer',
         'onboarding_completado' => 'boolean',
     ];
+
+    /**
+     * Cualquier cambio de ficha puede mover los conteos que anotan las opciones de los
+     * combobox de búsqueda, así que se descartan de la caché.
+     *
+     * Ojo: las escrituras masivas por query builder (seeders, MatchingService) no
+     * disparan eventos de modelo; para esas queda el TTL de DisponibilidadCandidatos.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            DisponibilidadCandidatos::olvidar();
+        });
+
+        static::deleted(function (): void {
+            DisponibilidadCandidatos::olvidar();
+        });
+    }
 
     /**
      * Solo guardamos el año de nacimiento, así que la edad es aproximada:

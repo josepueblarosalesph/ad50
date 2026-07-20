@@ -20,40 +20,40 @@
                 <flux:input wire:model="titulo" label="Nombre de la postulación *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="cargo" campo="cargo" etiqueta="Cargo" descripcion="Busca y agrega uno o varios cargos." wire:key="sel-cargo" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="cargo" campo="cargo" etiqueta="Cargo" descripcion="Busca y agrega uno o varios cargos." wire:key="sel-cargo" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="carrera" campo="carrera" etiqueta="Carrera o título" descripcion="Busca y agrega una o varias carreras." wire:key="sel-carrera" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="carrera" campo="carrera" etiqueta="Carrera o título" descripcion="Busca y agrega una o varias carreras." wire:key="sel-carrera" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
                         <flux:input wire:model="especialidad" label="Especialidad o mención" placeholder="Ej. Finanzas corporativas" description="Coincide si aparece en la mención del postulante." />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="industria" campo="industria" etiqueta="Industria" descripcion="Busca y agrega una o varias industrias." wire:key="sel-industria" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="industria" campo="industria" etiqueta="Industria" descripcion="Busca y agrega una o varias industrias." wire:key="sel-industria" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="ciudad" campo="ciudad" etiqueta="Región" descripcion="Busca y agrega una o varias regiones." wire:key="sel-ciudad" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="ciudad" campo="ciudad" etiqueta="Región" descripcion="Busca y agrega una o varias regiones." wire:key="sel-ciudad" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="habilidad" campo="habilidad" etiqueta="Habilidades" descripcion="Busca y agrega una o varias habilidades." wire:key="sel-habilidad" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="habilidad" campo="habilidad" etiqueta="Habilidades" descripcion="Busca y agrega una o varias habilidades." wire:key="sel-habilidad" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="situacionLaboral" campo="situacion_laboral" etiqueta="Situación laboral" wire:key="sel-situacion-laboral" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="situacionLaboral" campo="situacion_laboral" etiqueta="Situación laboral" wire:key="sel-situacion-laboral" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="genero" campo="genero" etiqueta="Género" wire:key="sel-genero" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="genero" campo="genero" etiqueta="Género" wire:key="sel-genero" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="nivelEstudios" campo="nivel_estudios" etiqueta="Nivel de estudios" wire:key="sel-nivel-estudios" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="nivelEstudios" campo="nivel_estudios" etiqueta="Nivel de estudios" wire:key="sel-nivel-estudios" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="situacionEstudios" campo="situacion_estudios" etiqueta="Situación de estudios" wire:key="sel-situacion-estudios" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="situacionEstudios" campo="situacion_estudios" etiqueta="Situación de estudios" wire:key="sel-situacion-estudios" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="idioma" campo="idioma" etiqueta="Idioma" wire:key="sel-idioma" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="idioma" campo="idioma" etiqueta="Idioma" wire:key="sel-idioma" />
                     </div>
                     <div class="rounded-xl border border-line-2 p-4">
-                        <livewire:empresa.selector-criterio wire:model="actividadEconomica" campo="actividad_economica" etiqueta="Actividad económica" wire:key="sel-actividad-economica" />
+                        <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="actividadEconomica" campo="actividad_economica" etiqueta="Actividad económica" wire:key="sel-actividad-economica" />
                     </div>
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <label for="renta-max-form" class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">

@@ -57,16 +57,16 @@
                     role="option"
                 >
                     <span class="truncate">{{ $resultado['valor'] }}</span>
-                    @if ($mostrarConteo)
-                        <span
-                            @class([
-                                'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
-                                'bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]' => $resultado['total'] > 0,
-                                'bg-gray-100 text-gray-400 dark:bg-white/5' => $resultado['total'] === 0,
-                            ])
-                            title="{{ $resultado['total'] }} candidatos disponibles"
-                        >{{ $resultado['total'] }}</span>
-                    @endif
+                    {{-- Conteo contextual: cuántas fichas quedarían al agregar esta opción
+                         manteniendo el resto de los filtros ya elegidos. --}}
+                    <span
+                        @class([
+                            'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
+                            'bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]' => $resultado['total'] > 0,
+                            'bg-gray-100 text-gray-400 dark:bg-white/5' => $resultado['total'] === 0,
+                        ])
+                        title="Quedan {{ $resultado['total'] }} {{ Str::plural('candidato', $resultado['total']) }} si agregas esta opción a los filtros actuales"
+                    >{{ $resultado['total'] }}</span>
                 </button>
             </li>
         @empty

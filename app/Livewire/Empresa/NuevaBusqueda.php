@@ -161,30 +161,13 @@ class NuevaBusqueda extends Component
             ...$this->reglasEdad(),
         ]);
 
-        $busqueda = DB::transaction(function () use ($validated, $matching): Busqueda {
+        $criterios = $this->armarCriterios();
+
+        $busqueda = DB::transaction(function () use ($validated, $criterios, $matching): Busqueda {
             $atributos = [
                 'titulo' => $validated['titulo'],
-                'rubro_oculto' => $validated['industria'][0] ?? null,
-                'criterios' => [
-                    'cargo' => $validated['cargo'],
-                    'carrera' => $validated['carrera'],
-                    'especialidad' => $validated['especialidad'],
-                    'industria' => $validated['industria'],
-                    'ciudad' => $validated['ciudad'],
-                    'habilidad' => $validated['habilidad'],
-                    'situacion_laboral' => $validated['situacionLaboral'],
-                    'genero' => $validated['genero'],
-                    'nivel_estudios' => $validated['nivelEstudios'],
-                    'situacion_estudios' => $validated['situacionEstudios'],
-                    'idioma' => $validated['idioma'],
-                    'actividad_economica' => $validated['actividadEconomica'],
-                    'renta_max' => (int) ($validated['rentaMax'] ?? 0),
-                    'institucion' => $validated['institucion'],
-                    'empresa' => $validated['empresa'],
-                    'experiencia' => $this->criterioExperiencia($validated['expMin'], $validated['expMax']),
-                    'palabra_clave' => $validated['palabrasClave'],
-                    'edad' => $this->criterioEdad($validated['edadMin'], $validated['edadMax']),
-                ],
+                'rubro_oculto' => $criterios['industria'][0] ?? null,
+                'criterios' => $criterios,
             ];
 
             if ($this->busqueda) {
@@ -207,6 +190,36 @@ class NuevaBusqueda extends Component
         $this->redirectRoute('empresa.resultados', ['busqueda' => $busqueda], navigate: true);
     }
 
+    /**
+     * Arma el mapa de criterios desde el estado del formulario. Lo usan tanto save()
+     * como el conteo contextual de los selectores, así ambos miran lo mismo.
+     *
+     * @return array<string, mixed>
+     */
+    public function armarCriterios(): array
+    {
+        return [
+            'cargo' => $this->cargo,
+            'carrera' => $this->carrera,
+            'especialidad' => $this->especialidad,
+            'industria' => $this->industria,
+            'ciudad' => $this->ciudad,
+            'habilidad' => $this->habilidad,
+            'situacion_laboral' => $this->situacionLaboral,
+            'genero' => $this->genero,
+            'nivel_estudios' => $this->nivelEstudios,
+            'situacion_estudios' => $this->situacionEstudios,
+            'idioma' => $this->idioma,
+            'actividad_economica' => $this->actividadEconomica,
+            'renta_max' => (int) $this->rentaMax,
+            'institucion' => $this->institucion,
+            'empresa' => $this->empresa,
+            'experiencia' => $this->criterioExperiencia($this->expMin, $this->expMax),
+            'palabra_clave' => $this->palabrasClave,
+            'edad' => $this->criterioEdad($this->edadMin, $this->edadMax),
+        ];
+    }
+
     #[Title('Configurar búsqueda · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
@@ -217,6 +230,7 @@ class NuevaBusqueda extends Component
             'limitesExperiencia' => CatalogosProfesionales::rangoExperiencia(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'editando' => $this->busqueda !== null,
+            'criteriosActuales' => $this->armarCriterios(),
         ]);
     }
 

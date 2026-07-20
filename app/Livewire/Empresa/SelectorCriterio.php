@@ -7,21 +7,16 @@ use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Modelable;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Combobox de selección múltiple con búsqueda en el servidor y conteo de candidatos
- * disponibles por opción. El catálogo NO se guarda como propiedad (se resuelve por
- * campo en cada request), así el snapshot de Livewire y la página quedan livianos.
+ * Combobox de selección múltiple con búsqueda en el servidor y conteo de candidatos por
+ * opción. El catálogo NO se guarda como propiedad (se resuelve por campo en cada
+ * request), así el snapshot de Livewire y la página quedan livianos.
  */
 class SelectorCriterio extends Component
 {
-    /**
-     * Temporalmente deshabilitado: el conteo por opción no reflejaba números reales.
-     * Cambiar a true para volver a mostrar "N candidatos" en cada opción.
-     */
-    private const MOSTRAR_CONTEO = false;
-
     /** @var list<string> */
     #[Modelable]
     public array $seleccion = [];
@@ -33,6 +28,29 @@ class SelectorCriterio extends Component
     public string $descripcion = '';
 
     public string $buscar = '';
+
+    /**
+     * Criterios actuales de la búsqueda completa. Hacen que el conteo por opción sea
+     * contextual ("cuántas quedan si agrego esto") en vez de global.
+     *
+     * El padre los pasa como parámetro al montar, pero Livewire NO re-envía parámetros a
+     * un hijo ya montado: los cambios posteriores llegan por el evento de más abajo.
+     *
+     * @var array<string, mixed>
+     */
+    public array $criterios = [];
+
+    /**
+     * Cada vez que el panel de filtros cambia un criterio anuncia el mapa completo.
+     * Sin esto, el conteo se quedaría congelado en los criterios del montaje.
+     *
+     * @param  array<string, mixed>  $criterios
+     */
+    #[On('criterios-previsualizados')]
+    public function sincronizarCriterios(array $criterios): void
+    {
+        $this->criterios = $criterios;
+    }
 
     public function agregar(string $opcion): void
     {
@@ -84,21 +102,24 @@ class SelectorCriterio extends Component
     }
 
     /**
-     * Hasta 50 opciones que calzan con la búsqueda. El conteo de candidatos por opción está
-     * deshabilitado temporalmente (self::MOSTRAR_CONTEO); cuando lo está, no se hace la consulta.
+     * Hasta 50 opciones que calzan con el texto buscado, anotadas con cuántas fichas
+     * quedarían al agregar esa opción a los criterios actuales.
      *
-     * @return list<array{valor: string, total: int|null}>
+     * @return list<array{valor: string, total: int}>
      */
     private function resultados(DisponibilidadCandidatos $disponibilidad): array
     {
         $consulta = self::normalizar($this->buscar);
-        $conteos = self::MOSTRAR_CONTEO ? $disponibilidad->conteos($this->campo) : [];
+        $conteos = $disponibilidad->conteos($this->campo, $this->criterios);
 
         return collect($this->catalogo())
             ->reject(fn (string $opcion): bool => in_array($opcion, $this->seleccion, true))
             ->filter(fn (string $opcion): bool => $consulta === '' || str_contains(self::normalizar($opcion), $consulta))
             ->take(50)
-            ->map(fn (string $opcion): array => ['valor' => $opcion, 'total' => self::MOSTRAR_CONTEO ? ($conteos[$opcion] ?? 0) : null])
+            ->map(fn (string $opcion): array => [
+                'valor' => $opcion,
+                'total' => $conteos[DisponibilidadCandidatos::clave($opcion)] ?? 0,
+            ])
             ->values()
             ->all();
     }
@@ -107,7 +128,6 @@ class SelectorCriterio extends Component
     {
         return view('livewire.empresa.selector-criterio', [
             'resultados' => $this->resultados($disponibilidad),
-            'mostrarConteo' => self::MOSTRAR_CONTEO,
         ]);
     }
 }

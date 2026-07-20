@@ -203,6 +203,16 @@ class FiltrosBusqueda extends Component
     {
         $this->validate($this->reglas());
 
+        $this->anunciarCriterios();
+    }
+
+    /**
+     * Anuncia el mapa de criterios vigente. Lo escuchan el panel gemelo (para adoptar el
+     * mismo borrador) y los selectores (para recalcular su conteo por opción), así que se
+     * emite en TODO cambio: previsualizar, guardar y descartar.
+     */
+    private function anunciarCriterios(): void
+    {
         $this->dispatch('criterios-previsualizados', criterios: $this->armarCriterios());
     }
 
@@ -214,6 +224,7 @@ class FiltrosBusqueda extends Component
         $this->sincronizarGuardado();
 
         $this->dispatch('criterios-guardados');
+        $this->anunciarCriterios();
     }
 
     public function guardar(MatchingService $matching): void
@@ -233,6 +244,7 @@ class FiltrosBusqueda extends Component
         $this->criteriosGuardados = $criterios;
 
         $this->dispatch('criterios-guardados');
+        $this->anunciarCriterios();
     }
 
     /** @return array<string, list<mixed>> */
@@ -306,6 +318,8 @@ class FiltrosBusqueda extends Component
     {
         return view('livewire.empresa.filtros-busqueda', [
             'sinGuardar' => $this->armarCriterios() !== $this->criteriosGuardados,
+            // Se re-pasan a cada selector para que su conteo por opción sea contextual.
+            'criteriosActuales' => $this->armarCriterios(),
             'instituciones' => CatalogosProfesionales::instituciones(),
             'empresas' => CatalogosProfesionales::empresas(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),

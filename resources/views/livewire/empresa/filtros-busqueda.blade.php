@@ -6,7 +6,7 @@
     <div class="space-y-2.5">
         @foreach ($grupos as [$label, $model, $campo])
             <div class="rounded-xl border border-line-2 bg-white p-3 transition-colors dark:bg-[#222528]">
-                <livewire:empresa.selector-criterio wire:model="{{ $model }}" campo="{{ $campo }}" etiqueta="{{ $label }}" wire:key="filtro-sel-{{ $model }}" />
+                <livewire:empresa.selector-criterio wire:model="{{ $model }}" campo="{{ $campo }}" etiqueta="{{ $label }}" :criterios="$criteriosActuales" wire:key="filtro-sel-{{ $model }}" />
             </div>
         @endforeach
 

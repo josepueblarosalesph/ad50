@@ -32,7 +32,7 @@ class BusquedaSeeder extends Seeder
         $postulantes = Postulante::query()->where('visible', true)->orderBy('id')->get();
 
         if ($postulantes->isEmpty()) {
-            $this->command?->warn('BusquedaSeeder: no hay postulantes visibles, no se crean procesos.');
+            $this->avisar('BusquedaSeeder: no hay postulantes visibles, no se crean procesos.');
 
             return;
         }
@@ -40,7 +40,7 @@ class BusquedaSeeder extends Seeder
         $empresas = $this->empresasActivas();
 
         if ($empresas->isEmpty()) {
-            $this->command?->warn('BusquedaSeeder: no hay empresas activas, ejecuta antes EmpresaSeeder.');
+            $this->avisar('BusquedaSeeder: no hay empresas activas, ejecuta antes EmpresaSeeder.');
 
             return;
         }
@@ -65,7 +65,16 @@ class BusquedaSeeder extends Seeder
             $matching->sincronizar($busqueda);
         }
 
-        $this->command?->info('BusquedaSeeder: '.count($recetas).' procesos creados con criterios derivados de fichas reales.');
+        $this->avisar('BusquedaSeeder: '.count($recetas).' procesos creados con criterios derivados de fichas reales.');
+    }
+
+    /**
+     * Mensaje por consola. Igual que el propio Seeder de Laravel, el comando solo existe
+     * cuando se corre vía `db:seed`, no al instanciar el seeder a mano.
+     */
+    private function avisar(string $mensaje): void
+    {
+        $this->command?->info($mensaje);
     }
 
     /**
@@ -198,12 +207,11 @@ class BusquedaSeeder extends Seeder
      */
     private function lista(array $valores): array
     {
-        return collect($valores)
+        return array_values(collect($valores)
             ->filter(fn (mixed $valor): bool => is_string($valor) && filled(trim($valor)))
             ->map(fn (string $valor): string => trim($valor))
             ->unique()
-            ->values()
-            ->all();
+            ->all());
     }
 
     private function titulo(string $base, Postulante $ancla): string
