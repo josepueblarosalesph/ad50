@@ -66,6 +66,11 @@ class Register extends Component
             'acepta_ley_21719' => true,
         ]);
 
+        // TEMPORAL: se omite la verificación de correo. Los usuarios nuevos
+        // quedan verificados automáticamente. Para reactivar la verificación,
+        // elimina esta línea y restaura el redirect a verification.notice.
+        $user->markEmailAsVerified();
+
         if ($this->role === 'postulante') {
             Postulante::create([
                 'user_id' => $user->id,
@@ -90,7 +95,8 @@ class Register extends Component
         event(new Registered($user));
         Auth::login($user, remember: true);
 
-        $this->redirect(route('verification.notice'), navigate: true);
+        // TEMPORAL: sin verificación de correo, se va directo al panel.
+        $this->redirect(route('dashboard'), navigate: true);
     }
 
     /**
