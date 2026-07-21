@@ -226,6 +226,7 @@ body [class~="text-[15px]"] {
                           bg-paper border border-line-2 text-gray-700; }
   .ad-chip-orange { @apply bg-orange-100 border-orange-200 text-orange-600; }
   .ad-chip-green  { @apply bg-match-100 border-[#BFE6CD] text-match; }
+  .ad-chip-gray   { @apply bg-gray-100 border-line-2 text-gray-500; }
   .ad-chip-dot::before { content:""; @apply w-1.5 h-1.5 rounded-full bg-current inline-block; }
 
   .ad-candidate-value {
@@ -377,6 +378,10 @@ body [class~="text-[15px]"] {
 
   .dark .ad-chip-green {
     @apply bg-match-100 border-[#28613D] text-[#72D397];
+  }
+
+  .dark .ad-chip-gray {
+    @apply bg-[#2A2D30] border-line-2 text-gray-400;
   }
 
   .dark .ad-btn-ghost {

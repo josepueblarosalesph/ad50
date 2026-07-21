@@ -6,6 +6,7 @@
     'modelDesde' => 'edadMin',
     'modelHasta' => 'edadMax',
     'label' => 'Rango de edad',
+    'hideLabel' => false,
 ])
 
 {{-- wire:ignore.self: el morph reescribiría x-data (desde/hasta cambian en cada render) y Alpine
@@ -38,8 +39,8 @@
     }"
 >
     <div class="flex items-center justify-between gap-2 text-sm font-medium text-zinc-800 dark:text-white">
-        <span id="rango-{{ $modelDesde }}-label">{{ $label }}</span>
-        <span class="text-[12px] font-bold" x-text="etiqueta" x-bind:class="filtrando ? 'text-orange-600' : 'text-gray-500'"></span>
+        <span id="rango-{{ $modelDesde }}-label" @class(['sr-only' => $hideLabel])>{{ $label }}</span>
+        <span class="ms-auto text-[12px] font-bold" x-text="etiqueta" x-bind:class="filtrando ? 'text-orange-600' : 'text-gray-500'"></span>
     </div>
 
     <div class="relative mt-4 h-5">

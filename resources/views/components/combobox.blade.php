@@ -5,6 +5,7 @@
     'valor' => '',
     'placeholder' => 'Escribe para buscar',
     'error' => null,
+    'hideLabel' => false,
 ])
 
 {{-- wire:ignore.self: si el morph reescribe x-data (porque $valor cambió), Alpine reinicia el scope
@@ -51,7 +52,7 @@
     x-on:keydown.escape="abierto = false"
 >
     <flux:field>
-        <flux:label>{{ $label }}</flux:label>
+        @unless ($hideLabel)<flux:label>{{ $label }}</flux:label>@endunless
         <div class="relative">
             <input
                 type="text"

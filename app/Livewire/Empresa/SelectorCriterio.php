@@ -27,6 +27,12 @@ class SelectorCriterio extends Component
 
     public string $descripcion = '';
 
+    /**
+     * Permite ocultar la etiqueta/descripción internas cuando el título ya lo
+     * muestra un contenedor externo (p. ej. el header de un acordeón de filtros).
+     */
+    public bool $mostrarEtiqueta = true;
+
     public string $buscar = '';
 
     /**

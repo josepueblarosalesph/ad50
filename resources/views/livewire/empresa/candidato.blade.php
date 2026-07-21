@@ -97,7 +97,7 @@
             </div>
         </section>
 
-        <aside id="contacto" class="ad-card border-[#BFE6CD] overflow-hidden"><div class="ad-card-head bg-match-100/50"><h2 class="text-[16px] font-bold flex items-center gap-2"><flux:icon :name="$puedeVerContacto ? 'lock-open' : 'lock-closed'" class="size-4 text-match" />Datos de contacto</h2><span class="ad-chip ad-chip-green ad-chip-dot">{{ $puedeVerContacto ? 'Visible' : 'Restringido' }}</span></div><div class="p-5 space-y-3">
+        <aside id="contacto" @class(['ad-card overflow-hidden', 'border-[#BFE6CD]' => $puedeVerContacto, 'border-line-2' => ! $puedeVerContacto])><div @class(['ad-card-head', 'bg-match-100/50' => $puedeVerContacto, 'bg-paper' => ! $puedeVerContacto])><h2 class="text-[16px] font-bold flex items-center gap-2"><flux:icon :name="$puedeVerContacto ? 'lock-open' : 'lock-closed'" class="{{ $puedeVerContacto ? 'size-4 text-match' : 'size-4 text-gray-500' }}" />Datos de contacto</h2><span @class(['ad-chip ad-chip-dot', 'ad-chip-green' => $puedeVerContacto, 'ad-chip-gray' => ! $puedeVerContacto])>{{ $puedeVerContacto ? 'Visible' : 'Restringido' }}</span></div><div class="p-5 space-y-3">
             @if ($puedeVerContacto)
             <div class="ad-toggle-row"><flux:icon.identification class="size-4 text-gray-500" /><span class="flex-1 text-[13px]"><b>{{ $postulante->rut ?: 'Sin RUT informado' }}</b></span></div>
             <div class="ad-toggle-row"><flux:icon.phone class="size-4 text-gray-500" /><span class="flex-1 text-[13px]"><b>{{ $postulante->telefono ?: 'Sin teléfono informado' }}</b></span></div>

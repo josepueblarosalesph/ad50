@@ -1,15 +1,17 @@
 <div class="relative" x-data="{ abierto: false }" x-on:click.outside="abierto = false" x-on:keydown.escape="abierto = false">
     <flux:field>
-        <flux:label>{{ $etiqueta }}</flux:label>
-        @if ($descripcion)
-            <flux:description>{{ $descripcion }}</flux:description>
+        @if ($mostrarEtiqueta)
+            <flux:label>{{ $etiqueta }}</flux:label>
+            @if ($descripcion)
+                <flux:description>{{ $descripcion }}</flux:description>
+            @endif
         @endif
 
         @if (count($seleccion))
-            <div class="mb-2 flex flex-wrap gap-1.5">
+            <div class="mb-2 flex flex-wrap gap-1">
                 @foreach ($seleccion as $valor)
                     <span
-                        class="ad-chip ad-chip-orange relative max-w-[160px] shrink-0 gap-1 px-2 py-0.5 pr-1 text-[12px]"
+                        class="ad-chip ad-chip-orange relative max-w-[130px] shrink-0 gap-1 px-1.5 py-0 pr-0.5 text-[10.5px]"
                         wire:key="chip-{{ $campo }}-{{ $loop->index }}"
                         x-data="{ tip: false }"
                         x-on:mouseenter="tip = true"
