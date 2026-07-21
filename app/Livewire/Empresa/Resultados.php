@@ -8,9 +8,11 @@ use App\Models\Desbloqueo;
 use App\Models\NotaCandidato;
 use App\Models\Postulante;
 use App\Services\MatchingService;
+use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
@@ -27,6 +29,13 @@ class Resultados extends Component
 
     #[Url(history: true)]
     public string $filtro = 'todos';
+
+    /**
+     * Filtro por antigüedad de la última actualización de la ficha del postulante.
+     * Valores: todas | mes | 1a3 | 3a6 | mas6.
+     */
+    #[Url(history: true)]
+    public string $actualizacion = 'todas';
 
     /** @var list<string> */
     #[Url(history: true)]
@@ -52,6 +61,15 @@ class Resultados extends Component
 
         $this->busqueda = $busqueda;
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
+
+        if (! in_array($this->actualizacion, ['todas', 'mes', '1a3', '3a6', 'mas6'], true)) {
+            $this->actualizacion = 'todas';
+        }
+    }
+
+    public function updatedActualizacion(): void
+    {
+        $this->resetPage(pageName: 'candidatos');
     }
 
     public function editarTitulo(): void
@@ -174,7 +192,10 @@ class Resultados extends Component
     {
         $query = $this->busqueda->candidatos()
             ->where('estado_match', 'cumple')
-            ->whereHas('postulante', fn ($query) => $query->where('visible', true));
+            ->whereHas('postulante', function ($query): void {
+                $query->where('visible', true);
+                $this->aplicarRangoActualizacion($query);
+            });
 
         $totalCandidatos = (clone $query)->count();
         $totalFavoritos = (clone $query)->where('favorito', true)->count();
@@ -238,6 +259,10 @@ class Resultados extends Component
                 }
             });
 
+        $coincidencias = $coincidencias
+            ->filter(fn (BusquedaCandidato $match): bool => $this->enRangoActualizacion($match->postulante))
+            ->values();
+
         $totalCandidatos = $coincidencias->count();
         $totalFavoritos = $coincidencias->where('favorito', true)->count();
 
@@ -258,6 +283,69 @@ class Resultados extends Component
         );
 
         return [$candidatos, $totalCandidatos, $totalFavoritos];
+    }
+
+    /**
+     * Límites [desde, hasta) de updated_at para el filtro de antigüedad de ficha.
+     * Cualquiera de los dos extremos puede ser null (sin cota). Null total = sin filtro.
+     *
+     * @return array{0: Carbon|null, 1: Carbon|null}|null
+     */
+    private function rangoActualizacion(): ?array
+    {
+        return match ($this->actualizacion) {
+            'mes' => [now()->subMonth(), null],
+            '1a3' => [now()->subMonths(3), now()->subMonth()],
+            '3a6' => [now()->subMonths(6), now()->subMonths(3)],
+            'mas6' => [null, now()->subMonths(6)],
+            default => null,
+        };
+    }
+
+    /**
+     * Aplica el rango de antigüedad a una consulta sobre postulantes.
+     *
+     * @param  Builder  $query
+     */
+    private function aplicarRangoActualizacion($query): void
+    {
+        $rango = $this->rangoActualizacion();
+
+        if ($rango === null) {
+            return;
+        }
+
+        [$desde, $hasta] = $rango;
+
+        if ($desde !== null) {
+            $query->where('updated_at', '>=', $desde);
+        }
+
+        if ($hasta !== null) {
+            $query->where('updated_at', '<', $hasta);
+        }
+    }
+
+    /**
+     * Versión en memoria del rango para el listado previsualizado.
+     */
+    private function enRangoActualizacion(Postulante $postulante): bool
+    {
+        $rango = $this->rangoActualizacion();
+
+        if ($rango === null) {
+            return true;
+        }
+
+        [$desde, $hasta] = $rango;
+        $actualizado = $postulante->updated_at;
+
+        if ($actualizado === null) {
+            return false;
+        }
+
+        return ($desde === null || $actualizado->greaterThanOrEqualTo($desde))
+            && ($hasta === null || $actualizado->lessThan($hasta));
     }
 
     /**

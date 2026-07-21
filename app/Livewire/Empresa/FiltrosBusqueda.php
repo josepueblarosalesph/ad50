@@ -75,6 +75,13 @@ class FiltrosBusqueda extends Component
      */
     public array $criteriosGuardados = [];
 
+    /**
+     * Controla el panel que pregunta si actualizar el proceso actual o crear uno nuevo.
+     */
+    public bool $mostrandoGuardado = false;
+
+    public string $tituloNuevo = '';
+
     public function mount(Busqueda $busqueda): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
@@ -227,6 +234,27 @@ class FiltrosBusqueda extends Component
         $this->anunciarCriterios();
     }
 
+    /**
+     * Abre el panel que ofrece actualizar el proceso actual o crear uno nuevo.
+     * Valida primero los filtros para no ofrecer guardar algo inválido.
+     */
+    public function abrirGuardado(): void
+    {
+        $this->validate($this->reglas());
+
+        $this->tituloNuevo = trim($this->busqueda->titulo.' (copia)');
+        $this->mostrandoGuardado = true;
+    }
+
+    public function cerrarGuardado(): void
+    {
+        $this->mostrandoGuardado = false;
+        $this->resetErrorBag('tituloNuevo');
+    }
+
+    /**
+     * Actualiza el proceso actual con los filtros en edición.
+     */
     public function guardar(MatchingService $matching): void
     {
         $this->validate($this->reglas());
@@ -242,9 +270,40 @@ class FiltrosBusqueda extends Component
         });
 
         $this->criteriosGuardados = $criterios;
+        $this->mostrandoGuardado = false;
 
         $this->dispatch('criterios-guardados');
         $this->anunciarCriterios();
+    }
+
+    /**
+     * Crea un proceso nuevo con los filtros en edición, sin tocar el actual, y
+     * redirige a sus resultados.
+     */
+    public function guardarComoNuevo(MatchingService $matching): void
+    {
+        $validated = $this->validate([
+            'tituloNuevo' => ['required', 'string', 'max:180'],
+            ...$this->reglas(),
+        ]);
+
+        $criterios = $this->armarCriterios();
+
+        $nueva = DB::transaction(function () use ($validated, $criterios, $matching): Busqueda {
+            $busqueda = Busqueda::query()->create([
+                'empresa_id' => auth()->user()->empresa->id,
+                'estado' => 'long_list',
+                'titulo' => $validated['tituloNuevo'],
+                'rubro_oculto' => $criterios['industria'][0] ?? null,
+                'criterios' => $criterios,
+            ]);
+
+            $matching->sincronizar($busqueda);
+
+            return $busqueda;
+        });
+
+        $this->redirectRoute('empresa.resultados', ['busqueda' => $nueva], navigate: true);
     }
 
     /** @return array<string, list<mixed>> */

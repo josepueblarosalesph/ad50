@@ -56,11 +56,55 @@
             <x-palabras-clave :palabras="$palabrasClave" :hide-label="true" />
         </x-filtro-acordeon>
 
-        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros, pero solo quedan guardados al usar el botón Guardar filtro.</p>
+        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros, pero solo quedan guardados al usar el botón Guardar Proceso.</p>
     </div>
 
     {{-- Barra de guardado: los cambios solo se persisten aquí. --}}
     <div class="sticky bottom-0 z-10 -mx-1 mt-3 border-t border-line bg-white/95 px-1 pb-1 pt-3 backdrop-blur dark:bg-[#1B1E20]/95">
+        @if ($mostrandoGuardado)
+            <div class="rounded-xl border border-line-2 bg-paper p-3 dark:bg-[#222528]">
+                <p class="mb-2.5 text-[12.5px] font-bold text-ink">¿Cómo quieres guardar los filtros?</p>
+
+                <button
+                    type="button"
+                    wire:click="guardar"
+                    wire:loading.attr="disabled"
+                    wire:target="guardar"
+                    class="ad-btn-primary ad-btn-sm w-full justify-center disabled:opacity-50"
+                >
+                    <span wire:loading.remove wire:target="guardar">Actualizar este proceso</span>
+                    <span wire:loading wire:target="guardar">Actualizando…</span>
+                </button>
+
+                <div class="my-2.5 flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-wide text-gray-400">
+                    <span class="h-px flex-1 bg-line-2"></span>o<span class="h-px flex-1 bg-line-2"></span>
+                </div>
+
+                <label for="titulo-nuevo-proceso" class="mb-1 block text-[12px] font-semibold text-gray-600 dark:text-gray-300">Nombre del nuevo proceso</label>
+                <input
+                    id="titulo-nuevo-proceso"
+                    type="text"
+                    wire:model="tituloNuevo"
+                    maxlength="180"
+                    placeholder="Ej. Analistas senior — RM"
+                    class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13px] text-ink placeholder:text-gray-400 focus:border-orange-400 focus:outline-none dark:bg-[#1B1E20]"
+                />
+                @error('tituloNuevo')<p class="mt-1 text-[11.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+
+                <button
+                    type="button"
+                    wire:click="guardarComoNuevo"
+                    wire:loading.attr="disabled"
+                    wire:target="guardarComoNuevo"
+                    class="ad-btn-ghost ad-btn-sm mt-2 w-full justify-center disabled:opacity-50"
+                >
+                    <span wire:loading.remove wire:target="guardarComoNuevo">Crear proceso nuevo</span>
+                    <span wire:loading wire:target="guardarComoNuevo">Creando…</span>
+                </button>
+
+                <button type="button" wire:click="cerrarGuardado" class="mt-2 w-full text-[12px] font-semibold text-gray-500 transition hover:text-ink">Cancelar</button>
+            </div>
+        @else
         @if ($sinGuardar)
             <p class="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-orange-600">
                 <flux:icon.exclamation-circle class="size-4" />
@@ -70,18 +114,18 @@
         <div class="flex items-center gap-2">
             <button
                 type="button"
-                wire:click="guardar"
+                wire:click="abrirGuardado"
                 wire:loading.attr="disabled"
-                wire:target="guardar"
+                wire:target="abrirGuardado"
                 @disabled(! $sinGuardar)
                 class="ad-btn-primary ad-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                <span wire:loading.remove wire:target="guardar">Guardar filtro</span>
-                <span wire:loading wire:target="guardar">Guardando…</span>
+                Guardar Proceso
             </button>
             @if ($sinGuardar)
                 <button type="button" wire:click="descartar" wire:loading.attr="disabled" wire:target="descartar" class="ad-btn-ghost ad-btn-sm">Descartar</button>
             @endif
         </div>
+        @endif
     </div>
 </div>

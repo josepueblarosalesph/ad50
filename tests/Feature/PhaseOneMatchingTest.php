@@ -414,7 +414,7 @@ test('a company can modify search filters from the results sidebar', function ()
         ->get(route('empresa.resultados', $busqueda))
         ->assertOk()
         ->assertSee('Filtros del proceso')
-        ->assertSee('Guardar filtro')
+        ->assertSee('Guardar Proceso')
         ->assertSee('Institución de estudio')
         ->assertSee('Universidad de Concepción ( UDEC )')
         ->assertDontSee('Actualizar Filtro');
@@ -428,6 +428,42 @@ test('a company can modify search filters from the results sidebar', function ()
     expect($busqueda->fresh()->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
         ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
         ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Metropolitana de Santiago');
+});
+
+test('saving filters as a new process leaves the current one untouched', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Duplica', 'estado_activacion' => 'activa']);
+
+    foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
+        $user = User::factory()->create(['role' => 'postulante']);
+        Postulante::query()->create(['user_id' => $user->id, 'visible' => true, 'ciudad' => $ciudad, 'regiones_interes' => [$ciudad]]);
+    }
+
+    Livewire::actingAs($empresaUser)
+        ->test(NuevaBusqueda::class)
+        ->set('titulo', 'Proceso original')
+        ->call('save');
+
+    $original = $empresa->busquedas()->sole();
+
+    Livewire::actingAs($empresaUser)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $original])
+        ->set('ciudad', ['Metropolitana de Santiago'])
+        ->call('abrirGuardado')
+        ->assertSet('mostrandoGuardado', true)
+        ->set('tituloNuevo', 'Proceso solo RM')
+        ->call('guardarComoNuevo')
+        ->assertHasNoErrors()
+        ->assertRedirect();
+
+    $nueva = $empresa->busquedas()->where('titulo', 'Proceso solo RM')->sole();
+
+    // El proceso original queda intacto (sin el filtro de región recién agregado).
+    expect($empresa->busquedas()->count())->toBe(2)
+        ->and($original->fresh()->criterios['ciudad'] ?? [])->toBe([])
+        ->and($nueva->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
+        ->and($nueva->candidatos)->toHaveCount(1)
+        ->and($nueva->candidatos->sole()->postulante->ciudad)->toBe('Metropolitana de Santiago');
 });
 
 test('the institution and company criteria match a fragment of any of their records', function () {

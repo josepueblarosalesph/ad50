@@ -27,6 +27,29 @@ test('a company can mark and filter favorite candidates within a search', functi
         ->and($matches[0]->fresh()->favorito)->toBeFalse();
 });
 
+test('candidates can be filtered by how recently their profile was updated', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+
+    // Antigüedad de la última actualización de cada ficha.
+    $matches[0]->postulante->update(['updated_at' => now()->subDays(10)]);   // hasta 1 mes
+    $matches[1]->postulante->update(['updated_at' => now()->subMonths(2)]);  // entre 1 y 3 meses
+    $matches[2]->postulante->update(['updated_at' => now()->subMonths(8)]);  // más de 6 meses
+
+    $component = Livewire::actingAs($empresaUser)->test(Resultados::class, ['busqueda' => $busqueda]);
+
+    $totalPara = fn (string $rango): int => $component->set('actualizacion', $rango)->viewData('candidatos')->total();
+
+    expect($totalPara('todas'))->toBe(3)
+        ->and($totalPara('mes'))->toBe(1)
+        ->and($totalPara('1a3'))->toBe(1)
+        ->and($totalPara('3a6'))->toBe(0)
+        ->and($totalPara('mas6'))->toBe(1);
+
+    // El único visible en "hasta 1 mes" es el postulante actualizado hace 10 días.
+    $component->set('actualizacion', 'mes')
+        ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->pluck('postulante_id')->all() === [$matches[0]->postulante_id]);
+});
+
 test('candidate cards show career name and professional summary instead of criteria tags', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
     $postulante = $matches[0]->postulante;

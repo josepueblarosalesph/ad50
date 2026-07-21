@@ -51,19 +51,21 @@
                 <button type="button" wire:click="mostrar('todos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-ink text-white dark:bg-orange-600 dark:text-white' => $filtro === 'todos', 'text-gray-500 hover:text-ink dark:hover:bg-white/5' => $filtro !== 'todos'])>Todos <span class="ml-1 opacity-70">{{ $totalCandidatos }}</span></button>
                 <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
             </div>
+            <div class="relative inline-flex items-center">
+                <flux:icon.clock class="pointer-events-none absolute left-2.5 size-4 text-gray-400" />
+                <select wire:model.live="actualizacion" aria-label="Filtrar por actualización de la ficha" class="cursor-pointer appearance-none rounded-lg border border-line-2 bg-white py-1.5 pl-8 pr-8 text-[12.5px] font-semibold text-ink transition focus:border-orange-400 focus:outline-none dark:bg-[#222528]">
+                    <option value="todas">Actualización: todas</option>
+                    <option value="mes">Actualizada hasta 1 mes</option>
+                    <option value="1a3">Entre 1 y 3 meses</option>
+                    <option value="3a6">Entre 3 y 6 meses</option>
+                    <option value="mas6">Más de 6 meses</option>
+                </select>
+                <flux:icon.chevron-down class="pointer-events-none absolute right-2.5 size-4 text-gray-400" />
+            </div>
             <p class="max-w-xs text-[13px] text-gray-500 sm:text-right">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
         </div>
     </div>
 
-    @if ($previsualizando)
-        <div class="mb-4 flex items-start gap-2.5 rounded-xl border border-orange-300 bg-orange-100/70 px-4 py-3 dark:bg-orange-100/10">
-            <flux:icon.eye class="mt-0.5 size-4 flex-none text-orange-600" />
-            <p class="text-[13px] leading-relaxed text-ink">
-                <span class="font-bold">Vista previa.</span>
-                Así quedaría el proceso con los filtros que estás editando. Usa <span class="font-bold">Guardar filtro</span> para dejarlos aplicados; hasta entonces no se guarda nada y los candidatos nuevos no se pueden marcar ni abrir.
-            </p>
-        </div>
-    @endif
 
     <div class="space-y-3">
         @forelse ($candidatos as $match)
@@ -89,7 +91,20 @@
                                     </flux:tooltip>
                                 @endif
                             </div>
+                            @php($ultimaExp = $match->postulante->ultimaExperiencia())
+                            @if ($ultimaExp)
+                                <p class="mt-1 flex items-center gap-1.5 text-[13px] text-gray-600 dark:text-gray-300">
+                                    <flux:icon.briefcase class="size-3.5 flex-none text-gray-400" />
+                                    <span class="truncate"><span class="font-semibold text-ink">{{ $ultimaExp['cargo'] }}</span>@if ($ultimaExp['empresa']) · {{ $ultimaExp['empresa'] }}@endif@if ($ultimaExp['duracion']) · {{ $ultimaExp['duracion'] }}@endif</span>
+                                </p>
+                            @endif
                             <p class="mt-2 max-w-4xl text-[13px] leading-relaxed text-gray-500">{{ Str::limit($match->postulante->resumen_profesional ?: 'Sin descripción profesional disponible.', 100, '…') }}</p>
+                            @if ($match->postulante->updated_at)
+                                <p class="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-gray-400">
+                                    <flux:icon.clock class="size-3.5 flex-none" />
+                                    Ficha actualizada el {{ $match->postulante->updated_at->translatedFormat('d M Y') }}
+                                </p>
+                            @endif
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 md:pl-4 md:pt-0">
