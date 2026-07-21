@@ -6,7 +6,10 @@
         <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nuevo proceso</a>
     </x-slot:nav>
     <x-slot:sidebar>
-        <div class="sticky top-24"><livewire:empresa.filtros-busqueda :busqueda="$busqueda" wire:key="filtros-desktop" /></div>
+        <div class="sticky top-24 space-y-3">
+            <livewire:empresa.filtro-actualizacion :actual="$actualizacion" wire:key="actualizacion-desktop" />
+            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" wire:key="filtros-desktop" />
+        </div>
     </x-slot:sidebar>
 
     <div>
@@ -21,7 +24,8 @@
             <span class="inline-flex items-center gap-2"><flux:icon.funnel class="size-4 text-orange-500" />Filtros</span>
             <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
         </summary>
-        <div class="border-t border-line px-3 pb-3 pt-1">
+        <div class="space-y-3 border-t border-line px-3 pb-3 pt-3">
+            <livewire:empresa.filtro-actualizacion :actual="$actualizacion" wire:key="actualizacion-movil" />
             <livewire:empresa.filtros-busqueda :busqueda="$busqueda" lazy wire:key="filtros-movil" />
         </div>
     </details>
@@ -50,17 +54,6 @@
             <div class="inline-flex rounded-xl border border-line-2 bg-white p-1 transition-colors dark:bg-[#222528]" aria-label="Filtrar candidatos">
                 <button type="button" wire:click="mostrar('todos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-ink text-white dark:bg-orange-600 dark:text-white' => $filtro === 'todos', 'text-gray-500 hover:text-ink dark:hover:bg-white/5' => $filtro !== 'todos'])>Todos <span class="ml-1 opacity-70">{{ $totalCandidatos }}</span></button>
                 <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
-            </div>
-            <div class="relative inline-flex items-center">
-                <flux:icon.clock class="pointer-events-none absolute left-2.5 size-4 text-gray-400" />
-                <select wire:model.live="actualizacion" aria-label="Filtrar por actualización de la ficha" class="cursor-pointer appearance-none rounded-lg border border-line-2 bg-white py-1.5 pl-8 pr-8 text-[12.5px] font-semibold text-ink transition focus:border-orange-400 focus:outline-none dark:bg-[#222528]">
-                    <option value="todas">Actualización: todas</option>
-                    <option value="mes">Actualizada hasta 1 mes</option>
-                    <option value="1a3">Entre 1 y 3 meses</option>
-                    <option value="3a6">Entre 3 y 6 meses</option>
-                    <option value="mas6">Más de 6 meses</option>
-                </select>
-                <flux:icon.chevron-down class="pointer-events-none absolute right-2.5 size-4 text-gray-400" />
             </div>
             <p class="max-w-xs text-[13px] text-gray-500 sm:text-right">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
         </div>

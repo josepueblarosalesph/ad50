@@ -50,6 +50,27 @@ test('candidates can be filtered by how recently their profile was updated', fun
         ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->pluck('postulante_id')->all() === [$matches[0]->postulante_id]);
 });
 
+test('the sidebar recency control drives the results filter through an event', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+
+    $matches[0]->postulante->update(['updated_at' => now()->subDays(5)]);
+    $matches[1]->postulante->update(['updated_at' => now()->subMonths(2)]);
+    $matches[2]->postulante->update(['updated_at' => now()->subMonths(8)]);
+
+    // El control del menú lateral emite el evento con el rango elegido.
+    Livewire::actingAs($empresaUser)
+        ->test(App\Livewire\Empresa\FiltroActualizacion::class, ['actual' => 'todas'])
+        ->set('actualizacion', 'mes')
+        ->assertDispatched('actualizacion-cambiada', valor: 'mes');
+
+    // Resultados reacciona al evento y acota el listado.
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->dispatch('actualizacion-cambiada', valor: 'mes')
+        ->assertSet('actualizacion', 'mes')
+        ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->pluck('postulante_id')->all() === [$matches[0]->postulante_id]);
+});
+
 test('candidate cards show career name and professional summary instead of criteria tags', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
     $postulante = $matches[0]->postulante;

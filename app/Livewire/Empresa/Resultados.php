@@ -72,6 +72,17 @@ class Resultados extends Component
         $this->resetPage(pageName: 'candidatos');
     }
 
+    /**
+     * El filtro de antigüedad vive en el menú lateral (FiltroActualizacion) y avisa
+     * por evento porque se renderiza fuera del root de este componente.
+     */
+    #[On('actualizacion-cambiada')]
+    public function cambiarActualizacion(string $valor): void
+    {
+        $this->actualizacion = in_array($valor, ['todas', 'mes', '1a3', '3a6', 'mas6'], true) ? $valor : 'todas';
+        $this->resetPage(pageName: 'candidatos');
+    }
+
     public function editarTitulo(): void
     {
         $this->tituloEditado = $this->busqueda->titulo;
