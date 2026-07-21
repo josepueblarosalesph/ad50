@@ -1,9 +1,8 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav>
-        <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Procesos</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Nuevo proceso</a>
+        <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
+        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Mis Procesos</a>
     </x-slot:nav>
 
     <x-slot:sidebar>
