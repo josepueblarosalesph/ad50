@@ -166,10 +166,10 @@
                         <p class="mt-2 text-[14px] leading-relaxed text-gray-600 dark:text-gray-300">{{ $resumenProfesional ?: 'Aún no has escrito una presentación.' }}</p>
                     </div>
                     <div class="grid gap-5 sm:grid-cols-2">
-                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Habilidades</dt><div class="flex flex-wrap gap-1.5">@forelse ($habilidades as $item)<span class="ad-chip ad-chip-orange">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin habilidades</span>@endforelse</div></div>
-                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Industrias de interés</dt><div class="flex flex-wrap gap-1.5">@forelse ($industriasInteres as $item)<span class="ad-chip ad-chip-orange">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin industrias</span>@endforelse</div></div>
-                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Regiones de interés</dt><div class="flex flex-wrap gap-1.5">@forelse ($regionesInteres as $item)<span class="ad-chip ad-chip-orange">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin regiones</span>@endforelse</div></div>
-                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Modalidad preferida</dt><div class="flex flex-wrap gap-1.5">@forelse ($modalidadesTrabajo as $item)<span class="ad-chip ad-chip-orange">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin preferencia</span>@endforelse</div></div>
+                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Habilidades</dt><div class="flex flex-wrap gap-1.5">@forelse ($habilidades as $item)<span class="ad-tag">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin habilidades</span>@endforelse</div></div>
+                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Industrias de interés</dt><div class="flex flex-wrap gap-1.5">@forelse ($industriasInteres as $item)<span class="ad-tag">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin industrias</span>@endforelse</div></div>
+                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Regiones de interés</dt><div class="flex flex-wrap gap-1.5">@forelse ($regionesInteres as $item)<span class="ad-tag">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin regiones</span>@endforelse</div></div>
+                        <div><dt class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-400">Modalidad preferida</dt><div class="flex flex-wrap gap-1.5">@forelse ($modalidadesTrabajo as $item)<span class="ad-tag">{{ $item }}</span>@empty<span class="text-[13px] text-gray-500">Sin preferencia</span>@endforelse</div></div>
                         <x-ficha-dato label="Situación laboral">{{ $situacionLaboral ?: '—' }}</x-ficha-dato>
                         <x-ficha-dato label="Expectativa de renta">{{ $expectativaRenta ? '$'.number_format($expectativaRenta, 0, ',', '.') : '—' }}</x-ficha-dato>
                     </div>
@@ -206,7 +206,7 @@
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Idiomas que manejas y su nivel.</p></div><button type="button" wire:click="editarSeccion('idiomas')" class="ad-btn-ghost ad-btn-sm"><flux:icon.pencil-square class="size-4" />Editar</button></div>
                 <div class="flex flex-wrap gap-2 p-6">
                     @forelse ($idiomas as $idi)
-                        @if (filled($idi['idioma']))<span class="ad-chip ad-chip-orange">{{ $idi['idioma'] }}@if (filled($idi['nivel'])) · {{ $idi['nivel'] }}@endif</span>@endif
+                        @if (filled($idi['idioma']))<span class="ad-tag">{{ $idi['idioma'] }}@if (filled($idi['nivel'])) · {{ $idi['nivel'] }}@endif</span>@endif
                     @empty
                         <p class="text-[13px] text-gray-500">Sin idiomas.</p>
                     @endforelse

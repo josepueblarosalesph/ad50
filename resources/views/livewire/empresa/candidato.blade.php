@@ -3,6 +3,9 @@
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mis Procesos</a>
+        @if (auth()->user()->esPrincipalEmpresa())
+            <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
+        @endif
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Candidato</div>
@@ -46,7 +49,7 @@
                 @if (filled($postulante->habilidades))
                     <div class="mt-2.5 flex flex-wrap gap-1.5">
                         @foreach ($postulante->habilidades as $habilidad)
-                            <span class="ad-chip ad-chip-orange px-2.5 py-0.5 text-[12px]">{{ $habilidad }}</span>
+                            <span class="ad-tag">{{ $habilidad }}</span>
                         @endforeach
                     </div>
                 @endif
@@ -66,7 +69,7 @@
             <section class="ad-card"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Educación</h2></div><div class="divide-y divide-line px-6">@forelse ($postulante->educaciones ?? [] as $educacion)<div class="py-4"><b class="text-[14px]">{{ $educacion['nivel'] }}{{ filled($educacion['carrera'] ?? null) ? ' · '.$educacion['carrera'] : '' }}</b><p class="mt-1 text-[13px] text-gray-500">{{ collect([$educacion['institucion'] ?? null, $educacion['pais'] ?? null, $educacion['mencion'] ?? null])->filter()->implode(' · ') }}</p><p class="mt-1 text-[13px] text-gray-500">@if (filled($educacion['egreso_anio'] ?? null))Egreso {{ $educacion['egreso_anio'] }}@elseif (filled($educacion['inicio_anio'] ?? null)){{ $educacion['inicio_anio'] }}–{{ $educacion['termino_anio'] ?? 'actualidad' }} · {{ $educacion['situacion'] ?? '' }}@endif</p></div>@empty<div class="p-6"><b class="text-[14px]">{{ $postulante->carrera ?: 'Sin título informado' }}</b><p class="mt-1 text-[13px] text-gray-500">{{ collect([$postulante->especialidad, $postulante->universidad])->filter()->implode(' · ') }}</p></div>@endforelse</div></section>
 
             @if (filled($postulante->idiomas))
-                <section class="ad-card"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Idiomas</h2></div><div class="flex flex-wrap gap-2 p-6">@foreach ($postulante->idiomas as $idioma)<span class="ad-chip ad-chip-orange">{{ $idioma['idioma'] }} · {{ $idioma['nivel'] }}</span>@endforeach</div></section>
+                <section class="ad-card"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Idiomas</h2></div><div class="flex flex-wrap gap-2 p-6">@foreach ($postulante->idiomas as $idioma)<span class="ad-tag">{{ $idioma['idioma'] }} · {{ $idioma['nivel'] }}</span>@endforeach</div></section>
             @endif
 
             <section class="ad-card"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Información adicional</h2></div><div class="space-y-5 p-6">
@@ -74,14 +77,14 @@
                     <div><h3 class="mb-1.5 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Situación laboral</h3><p class="text-[14px] text-ink">{{ $postulante->situacion_laboral ?: 'No informada' }}</p></div>
                     <div><h3 class="mb-1.5 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Expectativa de renta</h3><p class="text-[14px] text-ink">{{ $postulante->expectativa_renta ? '$'.number_format($postulante->expectativa_renta, 0, ',', '.') : 'No informada' }}</p></div>
                 </div>
-                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Regiones de interés</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->regiones_interes ?? [] as $region)<span class="ad-candidate-value"><flux:icon.map-pin />{{ $region }}</span>@empty<span class="text-[13px] text-gray-500">Sin regiones informadas</span>@endforelse</div></div>
-                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Industrias de interés</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->industrias_interes ?? [] as $industria)<span class="ad-candidate-value"><flux:icon.building-office-2 />{{ $industria }}</span>@empty<span class="text-[13px] text-gray-500">Sin industrias informadas</span>@endforelse</div></div>
-                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Modalidad de trabajo</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->modalidad_trabajo ?? [] as $modalidad)<span class="ad-candidate-value"><flux:icon.clock />{{ $modalidad }}</span>@empty<span class="text-[13px] text-gray-500">Sin modalidad informada</span>@endforelse</div></div>
+                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Regiones de interés</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->regiones_interes ?? [] as $region)<span class="ad-tag">{{ $region }}</span>@empty<span class="text-[13px] text-gray-500">Sin regiones informadas</span>@endforelse</div></div>
+                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Industrias de interés</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->industrias_interes ?? [] as $industria)<span class="ad-tag">{{ $industria }}</span>@empty<span class="text-[13px] text-gray-500">Sin industrias informadas</span>@endforelse</div></div>
+                <div><h3 class="mb-2 text-[12px] font-extrabold uppercase tracking-wide text-gray-400">Modalidad de trabajo</h3><div class="flex flex-wrap gap-2">@forelse ($postulante->modalidad_trabajo ?? [] as $modalidad)<span class="ad-tag">{{ $modalidad }}</span>@empty<span class="text-[13px] text-gray-500">Sin modalidad informada</span>@endforelse</div></div>
             </div></section>
         </div>
 
         <div class="space-y-5">
-        <section class="ad-card border-orange-200">
+        <section id="notas" class="ad-card scroll-mt-24 border-orange-200">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[16px] font-bold text-orange-700 dark:text-orange-600 flex items-center gap-2"><flux:icon.pencil-square class="size-4" />Notas privadas</h2><p class="mt-1 text-[13px] text-gray-500">Solo tu empresa puede verlas. El postulante no las ve.</p></div></div>
             <div class="p-5">
                 <flux:textarea wire:model.blur="nota" rows="4" maxlength="2000" placeholder="Anota aquí tus comentarios sobre este candidato…" />

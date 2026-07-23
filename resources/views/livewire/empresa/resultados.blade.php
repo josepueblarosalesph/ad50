@@ -3,6 +3,9 @@
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mis Procesos</a>
+        @if (auth()->user()->esPrincipalEmpresa())
+            <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
+        @endif
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="sticky top-24 space-y-3">
@@ -99,7 +102,7 @@
                             @endif
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:border-l md:border-t-0 md:pl-4 md:pt-0">
+                    <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:gap-2.5 md:border-l md:border-t-0 md:pl-4 md:pt-0">
                         <div class="flex items-center gap-2">
                             @if ($match->exists)
                                 <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
@@ -112,6 +115,31 @@
                                 </flux:tooltip>
                             @endif
                         </div>
+
+                        {{-- Accesos rápidos para candidatos desbloqueados: CV, notas y LinkedIn. --}}
+                        @if ($match->exists && in_array($match->postulante_id, $postulantesDesbloqueados))
+                            <div class="flex items-center gap-1.5">
+                                @if (in_array($match->postulante_id, $postulantesConCv))
+                                    <flux:tooltip content="Descargar CV">
+                                        <button type="button" wire:click="descargarCv({{ $match->postulante_id }})" wire:loading.attr="disabled" wire:target="descargarCv({{ $match->postulante_id }})" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Descargar CV de {{ $nombreCandidato }}">
+                                            <flux:icon.arrow-down-tray class="size-4" />
+                                        </button>
+                                    </flux:tooltip>
+                                @endif
+                                <flux:tooltip content="Notas del candidato">
+                                    <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}#notas" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]" aria-label="Ver notas de {{ $nombreCandidato }}">
+                                        <flux:icon.pencil-square class="size-4" />
+                                    </a>
+                                </flux:tooltip>
+                                @if (filled($match->postulante->linkedin))
+                                    <flux:tooltip content="Abrir LinkedIn">
+                                        <a href="{{ $match->postulante->linkedin }}" target="_blank" rel="noopener noreferrer" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]" aria-label="Abrir LinkedIn de {{ $nombreCandidato }}">
+                                            <flux:icon.link class="size-4" />
+                                        </a>
+                                    </flux:tooltip>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </div>
             </article>

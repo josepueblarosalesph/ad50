@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Empresa\Candidato;
+use App\Livewire\Empresa\Resultados;
 use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
@@ -65,4 +66,50 @@ test('una empresa sin suscripcion activa no puede descargar el cv', function () 
         ->set('puedeVerContacto', true)
         ->call('descargarCv')
         ->assertForbidden();
+});
+
+test('desde el listado se puede descargar el cv de un candidato desbloqueado', function () {
+    Storage::fake('local');
+    Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa();
+
+    $empresaUser->empresa->desbloqueos()->create(['postulante_id' => $match->postulante_id]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('descargarCv', $match->postulante_id)
+        ->assertFileDownloaded('cv-postulante-'.$match->postulante_id.'.pdf');
+});
+
+test('desde el listado no se puede descargar el cv de un candidato sin desbloquear', function () {
+    Storage::fake('local');
+    Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa();
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('descargarCv', $match->postulante_id)
+        ->assertForbidden();
+});
+
+test('el listado muestra accesos rapidos de cv, notas y linkedin solo al desbloquear', function () {
+    Storage::fake('local');
+    Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa();
+    $match->postulante->update(['linkedin' => 'https://linkedin.com/in/candidato']);
+
+    // Sin desbloquear: no aparecen los accesos rápidos.
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->assertDontSeeHtml('descargarCv('.$match->postulante_id.')')
+        ->assertDontSee('https://linkedin.com/in/candidato');
+
+    $empresaUser->empresa->desbloqueos()->create(['postulante_id' => $match->postulante_id]);
+
+    // Desbloqueado: aparecen CV, notas y LinkedIn.
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->assertSeeHtml('descargarCv('.$match->postulante_id.')')
+        ->assertSee('https://linkedin.com/in/candidato')
+        ->assertSee('#notas');
 });

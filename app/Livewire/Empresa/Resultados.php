@@ -14,12 +14,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Resultados extends Component
 {
@@ -123,6 +125,36 @@ class Resultados extends Component
         $match->update(['favorito' => ! $match->favorito]);
     }
 
+    /**
+     * Descarga rápida del CV desde el listado. Solo para candidatos desbloqueados
+     * cuyo perfil pertenece a esta búsqueda; espeja la validación de Candidato::descargarCv.
+     */
+    public function descargarCv(int $postulanteId): StreamedResponse
+    {
+        $empresa = auth()->user()->empresa;
+
+        abort_unless(auth()->user()->role === 'empresa' && $empresa?->id === $this->busqueda->empresa_id, 403);
+        abort_unless($empresa->haDesbloqueado($postulanteId), 403);
+
+        $match = $this->busqueda->candidatos()
+            ->where('postulante_id', $postulanteId)
+            ->with('postulante')
+            ->first();
+
+        abort_if($match === null, 404);
+        abort_unless($match->postulante->visible, 404);
+
+        $cvRuta = $match->postulante->cv_ruta;
+
+        abort_unless(filled($cvRuta) && Storage::disk('local')->exists($cvRuta), 404);
+
+        return Storage::disk('local')->download(
+            $cvRuta,
+            'cv-postulante-'.$postulanteId.'.pdf',
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
     public function toggleCriterio(string $criterio): void
     {
         abort_unless(array_key_exists($criterio, $this->criteriosDisponibles()), 404);
@@ -184,10 +216,20 @@ class Resultados extends Component
             ->pluck('postulante_id')
             ->all();
 
+        // Solo se comprueba la existencia física del CV de los perfiles desbloqueados
+        // de esta página, que son los únicos que muestran el botón de descarga.
+        $postulantesConCv = $candidatos->getCollection()
+            ->filter(fn (BusquedaCandidato $match): bool => in_array($match->postulante_id, $postulantesDesbloqueados, true)
+                && filled($match->postulante->cv_ruta)
+                && Storage::disk('local')->exists($match->postulante->cv_ruta))
+            ->pluck('postulante_id')
+            ->all();
+
         return view('livewire.empresa.resultados', [
             'candidatos' => $candidatos,
             'postulantesConNota' => $postulantesConNota,
             'postulantesDesbloqueados' => $postulantesDesbloqueados,
+            'postulantesConCv' => $postulantesConCv,
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
             'previsualizando' => $this->previsualizacion !== null,

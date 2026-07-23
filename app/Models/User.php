@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -33,7 +34,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'nombres', 'apellidos', 'email', 'password', 'role', 'acepta_ley_21719'])]
+#[Fillable(['name', 'nombres', 'apellidos', 'email', 'password', 'role', 'empresa_id', 'acepta_ley_21719'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -91,8 +92,40 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->hasOne(Postulante::class);
     }
 
+    /**
+     * Empresa de la que este usuario es contacto principal (dueño), vía empresas.user_id.
+     * Se conserva como relación para poder hacer `->empresa()->update(...)`.
+     */
     public function empresa(): HasOne
     {
         return $this->hasOne(Empresa::class);
+    }
+
+    /** Empresa a la que el usuario fue agregado como miembro adicional, vía users.empresa_id. */
+    public function empresaMembresia(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id');
+    }
+
+    /**
+     * La empresa efectiva del usuario: la que posee (principal) o, si es un usuario
+     * adicional, aquella a la que pertenece. Resolver la del principal por ownership
+     * (no por empresa_id) evita depender de que la columna esté cargada en memoria.
+     */
+    public function getEmpresaAttribute(): ?Empresa
+    {
+        if (! array_key_exists('empresa', $this->relations)) {
+            $this->setRelation('empresa', $this->empresa()->first() ?? $this->empresaMembresia()->first());
+        }
+
+        return $this->getRelation('empresa');
+    }
+
+    /** Es el contacto principal (dueño) de su empresa. */
+    public function esPrincipalEmpresa(): bool
+    {
+        return $this->role === 'empresa'
+            && $this->empresa !== null
+            && $this->empresa->user_id === $this->id;
     }
 }

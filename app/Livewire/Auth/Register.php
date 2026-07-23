@@ -80,6 +80,8 @@ class Register extends Component
                 'onboarding_completado' => false,
             ]);
         } else {
+            // El contacto principal queda enlazado a su empresa por el evento
+            // `created` de Empresa (que fija users.empresa_id).
             Empresa::create([
                 'user_id' => $user->id,
                 'razon_social' => $this->razon_social,

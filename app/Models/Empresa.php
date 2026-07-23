@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empresa extends Model
 {
+    /** Máximo de usuarios adicionales que el contacto principal puede sumar. */
+    public const MAX_USUARIOS_ADICIONALES = 3;
+
     protected $guarded = [];
 
     protected $casts = [
@@ -15,6 +18,20 @@ class Empresa extends Model
         'datos_enviados_at' => 'datetime',
         'activada_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // El contacto principal (dueño) pertenece a su propia empresa: al crearla
+        // enlazamos su users.empresa_id si aún no lo tiene.
+        static::created(function (Empresa $empresa): void {
+            if ($empresa->user_id !== null) {
+                User::query()
+                    ->whereKey($empresa->user_id)
+                    ->whereNull('empresa_id')
+                    ->update(['empresa_id' => $empresa->id]);
+            }
+        });
+    }
 
     public function user(): BelongsTo
     {
@@ -39,6 +56,28 @@ class Empresa extends Model
     public function busquedas(): HasMany
     {
         return $this->hasMany(Busqueda::class);
+    }
+
+    /** Todos los usuarios del equipo (principal + adicionales). */
+    public function usuarios(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    /** Usuarios adicionales, es decir todos menos el contacto principal. */
+    public function usuariosAdicionales(): HasMany
+    {
+        return $this->usuarios()->where('id', '!=', $this->user_id);
+    }
+
+    public function usuariosAdicionalesDisponibles(): int
+    {
+        return max(0, self::MAX_USUARIOS_ADICIONALES - $this->usuariosAdicionales()->count());
+    }
+
+    public function puedeAgregarUsuario(): bool
+    {
+        return $this->usuariosAdicionalesDisponibles() > 0;
     }
 
     public function desbloqueos(): HasMany

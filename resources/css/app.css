@@ -238,6 +238,13 @@ body [class~="text-[15px]"] {
     @apply size-4 shrink-0 text-orange-500;
   }
 
+  /* Etiqueta neutra y compacta para valores del perfil (idiomas, habilidades,
+     regiones, industrias, modalidad). Estilo único y consistente en todo el sitio. */
+  .ad-tag {
+    @apply inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-[13px]
+           font-medium leading-snug text-gray-600;
+  }
+
   .ad-candidate-toolbar {
     @apply border-line-2 bg-white;
   }
@@ -326,6 +333,10 @@ body [class~="text-[15px]"] {
 
   .dark .ad-candidate-value svg {
     @apply text-[#F0A66F];
+  }
+
+  .dark .ad-tag {
+    @apply bg-[#2A2D30] text-gray-300;
   }
 
   .dark .ad-candidate-toolbar {
