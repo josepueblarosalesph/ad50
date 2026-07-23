@@ -62,6 +62,15 @@ class Resultados extends Component
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;
+
+        // Restaura la previsualización de filtros sin guardar para que se mantenga al
+        // volver al listado. FiltrosBusqueda guarda/limpia este borrador en sesión.
+        $borrador = session('filtros_borrador.'.$busqueda->id);
+
+        if (is_array($borrador)) {
+            $this->previsualizacion = $borrador;
+        }
+
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
 
         if (! in_array($this->actualizacion, ['todas', 'mes', '1a3', '3a6', 'mas6'], true)) {

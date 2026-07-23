@@ -126,6 +126,67 @@ test('the results list shows the preview matches before they are saved', functio
         ->and($valparaiso->fresh()->visible)->toBeTrue();
 });
 
+test('el borrador de filtros persiste al volver a montar el listado', function () {
+    [$user, $empresa] = empresaActiva();
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => []]);
+    $biobio = postulanteEnRegion('Biobío');
+    postulanteEnRegion('Valparaíso');
+
+    // Aplica un filtro sin guardar (previsualiza y persiste el borrador).
+    Livewire::actingAs($user)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('ciudad', ['Biobío'])
+        ->assertHasNoErrors();
+
+    // Al volver, el listado recién montado conserva la previsualización.
+    Livewire::actingAs($user)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->assertViewHas('previsualizando', true)
+        ->assertViewHas('totalCandidatos', 1)
+        ->assertViewHas('candidatos', fn ($candidatos): bool => $candidatos->pluck('postulante_id')->all() === [$biobio->id]);
+
+    // Y el panel de filtros recién montado recuerda la selección como pendiente.
+    Livewire::actingAs($user)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->assertSet('ciudad', ['Biobío'])
+        ->assertViewHas('sinGuardar', true);
+
+    // La búsqueda sigue sin materializar nada (el borrador no se guardó).
+    expect($busqueda->fresh()->criterios)->toBe([])
+        ->and($busqueda->fresh()->candidatos)->toHaveCount(0);
+});
+
+test('descartar limpia el borrador persistido y sale de la previsualizacion', function () {
+    [$user, $empresa] = empresaActiva();
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => []]);
+    postulanteEnRegion('Biobío');
+
+    Livewire::actingAs($user)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('ciudad', ['Biobío'])
+        ->call('descartar');
+
+    Livewire::actingAs($user)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->assertViewHas('previsualizando', false);
+});
+
+test('guardar limpia el borrador persistido', function () {
+    [$user, $empresa] = empresaActiva();
+    $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => []]);
+    postulanteEnRegion('Biobío');
+
+    Livewire::actingAs($user)
+        ->test(FiltrosBusqueda::class, ['busqueda' => $busqueda])
+        ->set('ciudad', ['Biobío'])
+        ->call('guardar');
+
+    // Ya guardado: montar el listado no debe entrar en modo previsualización.
+    Livewire::actingAs($user)
+        ->test(Resultados::class, ['busqueda' => $busqueda])
+        ->assertViewHas('previsualizando', false);
+});
+
 test('saved matches keep their pivot row while previewing so favourites survive', function () {
     [$user, $empresa] = empresaActiva();
     $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => ['ciudad' => ['Biobío']]]);

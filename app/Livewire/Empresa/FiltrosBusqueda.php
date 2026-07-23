@@ -90,6 +90,35 @@ class FiltrosBusqueda extends Component
         $this->busqueda = $busqueda;
         $this->hidratarDesde($busqueda->criterios ?? []);
         $this->criteriosGuardados = $this->armarCriterios();
+
+        // Restaura un borrador de filtros sin guardar para que, al volver al listado
+        // (p. ej. tras abrir un perfil), se mantenga la selección en curso.
+        $borrador = session($this->claveBorrador());
+
+        if (is_array($borrador)) {
+            $this->hidratarDesde($borrador);
+        }
+    }
+
+    /** Clave de sesión donde vive el borrador de filtros de esta búsqueda. */
+    private function claveBorrador(): string
+    {
+        return 'filtros_borrador.'.$this->busqueda->id;
+    }
+
+    /**
+     * Guarda (o limpia) el borrador en sesión. Si el borrador coincide con lo ya
+     * guardado, no hay nada pendiente y se descarta la clave.
+     */
+    private function recordarBorrador(): void
+    {
+        $criterios = $this->armarCriterios();
+
+        if ($criterios === $this->criteriosGuardados) {
+            session()->forget($this->claveBorrador());
+        } else {
+            session()->put($this->claveBorrador(), $criterios);
+        }
     }
 
     /**
@@ -210,6 +239,7 @@ class FiltrosBusqueda extends Component
     {
         $this->validate($this->reglas());
 
+        $this->recordarBorrador();
         $this->anunciarCriterios();
     }
 
@@ -228,6 +258,8 @@ class FiltrosBusqueda extends Component
      */
     public function descartar(): void
     {
+        session()->forget($this->claveBorrador());
+
         $this->sincronizarGuardado();
 
         $this->dispatch('criterios-guardados');
@@ -270,6 +302,7 @@ class FiltrosBusqueda extends Component
         });
 
         $this->criteriosGuardados = $criterios;
+        session()->forget($this->claveBorrador());
         $this->mostrandoGuardado = false;
 
         $this->dispatch('criterios-guardados');
