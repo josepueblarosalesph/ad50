@@ -126,6 +126,43 @@ class Resultados extends Component
     }
 
     /**
+     * Desbloquea un perfil desde el listado consumiendo un cupo del plan.
+     * Espeja la lógica de Candidato::desbloquear; los errores se informan por flash.
+     */
+    public function desbloquear(int $postulanteId): void
+    {
+        $empresa = auth()->user()->empresa;
+
+        abort_unless(auth()->user()->role === 'empresa' && $empresa?->id === $this->busqueda->empresa_id, 403);
+
+        $match = $this->busqueda->candidatos()->where('postulante_id', $postulanteId)->first();
+
+        abort_if($match === null, 404);
+
+        if ($empresa->haDesbloqueado($postulanteId)) {
+            return;
+        }
+
+        if (! $empresa->planVigente()) {
+            session()->flash('desbloqueo_error', 'Necesitas una suscripción activa para desbloquear perfiles.');
+
+            return;
+        }
+
+        if ($empresa->desbloqueosDisponibles() < 1) {
+            session()->flash('desbloqueo_error', 'No te quedan desbloqueos disponibles en tu plan.');
+
+            return;
+        }
+
+        $empresa->desbloqueos()->create(['postulante_id' => $postulanteId]);
+
+        if ($match->contactado_at === null) {
+            $match->update(['contactado_at' => now()]);
+        }
+    }
+
+    /**
      * Descarga rápida del CV desde el listado. Solo para candidatos desbloqueados
      * cuyo perfil pertenece a esta búsqueda; espeja la validación de Candidato::descargarCv.
      */
@@ -225,11 +262,15 @@ class Resultados extends Component
             ->pluck('postulante_id')
             ->all();
 
+        $empresa = auth()->user()->empresa;
+
         return view('livewire.empresa.resultados', [
             'candidatos' => $candidatos,
             'postulantesConNota' => $postulantesConNota,
             'postulantesDesbloqueados' => $postulantesDesbloqueados,
             'postulantesConCv' => $postulantesConCv,
+            'planVigente' => $empresa?->planVigente() ?? false,
+            'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
             'previsualizando' => $this->previsualizacion !== null,

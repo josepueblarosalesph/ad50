@@ -58,8 +58,17 @@
                 <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
             </div>
             <p class="max-w-xs text-[13px] text-gray-500 sm:text-right">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
+            @if ($planVigente)
+                <p class="inline-flex items-center gap-1 text-[12px] font-bold text-orange-600"><flux:icon.lock-open class="size-3.5" />{{ $desbloqueosDisponibles }} {{ $desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles' }}</p>
+            @endif
         </div>
     </div>
+
+    @if (session('desbloqueo_error'))
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            <flux:icon.exclamation-triangle class="size-4 flex-none" />{{ session('desbloqueo_error') }}
+        </div>
+    @endif
 
 
     <div class="space-y-3">
@@ -105,6 +114,19 @@
                     <div class="flex flex-wrap items-center gap-2 border-t border-line pt-3 md:min-w-44 md:flex-col md:items-end md:justify-center md:gap-2.5 md:border-l md:border-t-0 md:pl-4 md:pt-0">
                         <div class="flex items-center gap-2">
                             @if ($match->exists)
+                                @if (in_array($match->postulante_id, $postulantesDesbloqueados))
+                                    <flux:tooltip content="Perfil desbloqueado">
+                                        <span class="grid size-10 flex-none place-items-center rounded-xl border border-[#BFE6CD] bg-match-100 text-match" aria-label="Perfil desbloqueado"><flux:icon.lock-open class="size-5" /></span>
+                                    </flux:tooltip>
+                                @elseif ($planVigente && $desbloqueosDisponibles > 0)
+                                    <flux:tooltip content="Desbloquear perfil (usa 1 desbloqueo)">
+                                        <button type="button" wire:click="desbloquear({{ $match->postulante_id }})" wire:confirm="Desbloquear este perfil descontará 1 desbloqueo de tu plan. ¿Continuar?" wire:loading.attr="disabled" wire:target="desbloquear({{ $match->postulante_id }})" class="grid size-10 flex-none place-items-center rounded-xl border border-line-2 bg-white text-gray-400 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Desbloquear perfil de {{ $nombreCandidato }}"><flux:icon.lock-closed class="size-5" /></button>
+                                    </flux:tooltip>
+                                @else
+                                    <flux:tooltip :content="$planVigente ? 'Sin desbloqueos disponibles en tu plan' : 'Necesitas una suscripción activa para desbloquear'">
+                                        <span class="grid size-10 flex-none place-items-center rounded-xl border border-line-2 bg-paper text-gray-300 dark:bg-[#222528]" aria-label="Perfil bloqueado"><flux:icon.lock-closed class="size-5" /></span>
+                                    </flux:tooltip>
+                                @endif
                                 <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
                                     <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30] dark:hover:bg-orange-100' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
                                 </flux:tooltip>

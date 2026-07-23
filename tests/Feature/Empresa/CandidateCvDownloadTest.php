@@ -92,6 +92,49 @@ test('desde el listado no se puede descargar el cv de un candidato sin desbloque
         ->assertForbidden();
 });
 
+test('desde el listado se puede desbloquear un perfil consumiendo un cupo del plan', function () {
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa();
+
+    expect($empresaUser->empresa->haDesbloqueado($match->postulante_id))->toBeFalse();
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('desbloquear', $match->postulante_id)
+        ->assertHasNoErrors();
+
+    expect($empresaUser->empresa->haDesbloqueado($match->postulante_id))->toBeTrue()
+        ->and($match->fresh()->contactado_at)->not->toBeNull();
+});
+
+test('desde el listado no se puede desbloquear sin suscripcion activa', function () {
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa(planActivo: false);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('desbloquear', $match->postulante_id);
+
+    // Sin plan vigente no se consume ningún cupo ni se registra el desbloqueo.
+    expect($empresaUser->empresa->haDesbloqueado($match->postulante_id))->toBeFalse()
+        ->and($empresaUser->empresa->desbloqueos()->count())->toBe(0);
+});
+
+test('el listado muestra el candado abierto o cerrado segun el estado de desbloqueo', function () {
+    [$empresaUser, $match] = crearMatchConCvParaEmpresa();
+
+    // Bloqueado: botón para desbloquear.
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->assertSeeHtml('desbloquear('.$match->postulante_id.')');
+
+    $empresaUser->empresa->desbloqueos()->create(['postulante_id' => $match->postulante_id]);
+
+    // Desbloqueado: ya no ofrece la acción de desbloquear.
+    Livewire::actingAs($empresaUser)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->assertDontSeeHtml('desbloquear('.$match->postulante_id.')')
+        ->assertSee('Perfil desbloqueado');
+});
+
 test('el listado muestra accesos rapidos de cv, notas y linkedin solo al desbloquear', function () {
     Storage::fake('local');
     Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
