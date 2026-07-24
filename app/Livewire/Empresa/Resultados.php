@@ -294,6 +294,7 @@ class Resultados extends Component
     private function listadoGuardado(): array
     {
         $query = $this->busqueda->candidatos()
+            ->confirmados()
             ->where('estado_match', 'cumple')
             ->whereHas('postulante', function ($query): void {
                 $query->where('visible', true);

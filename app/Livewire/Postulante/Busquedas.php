@@ -26,6 +26,7 @@ class Busquedas extends Component
 
         return view('livewire.postulante.busquedas', [
             'matches' => BusquedaCandidato::query()
+                ->confirmados()
                 ->with('busqueda')
                 ->where('postulante_id', $postulante?->id)
                 ->latest()

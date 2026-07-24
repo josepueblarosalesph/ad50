@@ -187,6 +187,10 @@ body [class~="text-[15px]"] {
   .ad-card-pad    { @apply p-6; }
   .ad-card-head   { @apply flex items-center justify-between px-6 py-4 border-b border-line; }
 
+  /* Encabezado de tabla unificado: mismo tipo, tamaño, transformación y color en todo el sitio.
+     Se aplica al <tr> del <thead>; el <th> solo aporta el padding (p-4). */
+  .ad-thead-row   { @apply border-b border-line text-left text-[12px] font-bold uppercase tracking-wider text-gray-400; }
+
   .ad-card:has(> .ad-card-head) {
     overflow: hidden;
   }

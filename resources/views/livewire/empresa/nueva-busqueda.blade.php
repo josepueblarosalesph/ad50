@@ -17,9 +17,9 @@
         <div class="mb-6"><h1 class="text-[27px] font-extrabold">{{ $editando ? 'Editar proceso' : 'Nuevo proceso de selección' }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Puedes seleccionar varias alternativas. Todo criterio configurado es obligatorio.</p></div>
 
         <form wire:submit="save" class="ad-card">
-            <div class="ad-card-head"><h2 class="text-[16px] font-bold">Datos del proceso</h2></div>
+            <div class="ad-card-head"><h2 class="text-[18px] font-extrabold">Datos del proceso</h2></div>
             <div class="p-6 space-y-5">
-                <flux:input wire:model="titulo" label="Nombre de la postulación *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
+                <flux:input wire:model="titulo" label="Nombre del proceso *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
                     <div class="rounded-xl border border-line-2 p-4">
                         <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="cargo" campo="cargo" etiqueta="Cargo" descripcion="Busca y agrega uno o varios cargos." wire:key="sel-cargo" />

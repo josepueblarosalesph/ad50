@@ -5,8 +5,10 @@ namespace App\Livewire\Empresa;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\NotaCandidato;
+use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -185,10 +187,27 @@ class Candidato extends Component
         $this->cargarNavegacion();
     }
 
-    /** @return \Illuminate\Support\Collection<int, int> */
-    private function idsNavegacion(): \Illuminate\Support\Collection
+    /**
+     * Conjunto navegable de candidatos. Si hay un borrador de filtros sin guardar
+     * (previsualización), se recorre ese mismo conjunto para que la posición y el
+     * total coincidan con lo que muestra el listado; si no, el conjunto guardado.
+     *
+     * @return Collection<int, int>
+     */
+    private function idsNavegacion(): Collection
+    {
+        $borrador = $this->borradorFiltros();
+
+        return $borrador !== null
+            ? $this->idsNavegacionPrevisualizada($borrador)
+            : $this->idsNavegacionGuardada();
+    }
+
+    /** @return Collection<int, int> */
+    private function idsNavegacionGuardada(): Collection
     {
         $matches = $this->match->busqueda->candidatos()
+            ->confirmados()
             ->where('estado_match', 'cumple')
             ->whereHas('postulante', fn ($query) => $query->where('visible', true))
             ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
@@ -203,11 +222,58 @@ class Candidato extends Component
         return $matches->pluck('id')->values();
     }
 
+    /**
+     * Navegación sobre los perfiles ya guardados que además cumplen el borrador en
+     * previsualización, evaluados al vuelo. Mismo orden que el listado previsualizado
+     * (por postulante_id). Solo estos perfiles son abribles desde el listado.
+     *
+     * @param  array<string, mixed>  $criterios
+     * @return Collection<int, int>
+     */
+    private function idsNavegacionPrevisualizada(array $criterios): Collection
+    {
+        $matching = app(MatchingService::class);
+
+        return $this->match->busqueda->candidatos()
+            ->where('estado_match', 'cumple')
+            ->whereHas('postulante', fn ($query) => $query->where('visible', true))
+            ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
+            ->with('postulante')
+            ->get()
+            ->filter(function (BusquedaCandidato $match) use ($matching, $criterios): bool {
+                $detalle = $matching->evaluar($match->postulante, $criterios);
+
+                return ! collect($detalle)->contains(fn (array $criterio): bool => ! ($criterio['cumple'] ?? false));
+            })
+            ->sortBy('postulante_id')
+            ->pluck('id')
+            ->values();
+    }
+
+    /**
+     * Borrador de filtros en previsualización para esta búsqueda, si existe.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function borradorFiltros(): ?array
+    {
+        $borrador = session('filtros_borrador.'.$this->match->busqueda->id);
+
+        return is_array($borrador) ? $borrador : null;
+    }
+
     private function cargarNavegacion(): void
     {
         $ids = $this->idsNavegacion();
 
         $indice = $ids->search($this->match->id);
+
+        // Si el borrador cambió y el candidato ya no está en el set previsualizado,
+        // recurrimos a la navegación guardada para no dejar la vista en 404.
+        if ($indice === false && $this->borradorFiltros() !== null) {
+            $ids = $this->idsNavegacionGuardada();
+            $indice = $ids->search($this->match->id);
+        }
 
         abort_if($indice === false, 404);
 

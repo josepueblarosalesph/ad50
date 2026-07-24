@@ -21,7 +21,7 @@
     </div>
 
     <div class="grid xl:grid-cols-[1.4fr_0.8fr] gap-5 items-start">
-        <section id="empresas" class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas recientes</h2><span class="text-[12.5px] font-semibold text-orange-600">Ver todas</span></div><div class="overflow-x-auto"><table class="w-full text-[13.5px]"><thead><tr class="text-left text-[11px] uppercase tracking-wider text-gray-400 border-b border-line"><th class="p-4">Empresa</th><th class="p-4">Plan</th><th class="p-4">Estado</th></tr></thead><tbody>
+        <section id="empresas" class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas recientes</h2><span class="text-[12.5px] font-semibold text-orange-600">Ver todas</span></div><div class="overflow-x-auto"><table class="w-full text-[13.5px]"><thead><tr class="ad-thead-row"><th class="p-4">Empresa</th><th class="p-4">Plan</th><th class="p-4">Estado</th></tr></thead><tbody>
             @forelse ($empresas as $empresa)
                 <tr class="border-b border-line last:border-0"><td class="p-4"><b>{{ $empresa->razon_social }}</b><p class="text-[11.5px] text-gray-500 mt-1">{{ $empresa->user->email }}</p></td><td class="p-4 text-gray-500">{{ $empresa->plan?->nombre ?? 'Sin plan' }}</td><td class="p-4"><span @class(['ad-chip', 'ad-chip-green' => $empresa->estado_activacion === 'activa', 'ad-chip-orange' => $empresa->estado_activacion !== 'activa'])>{{ ucfirst($empresa->estado_activacion) }}</span></td></tr>
             @empty

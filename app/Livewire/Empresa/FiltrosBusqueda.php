@@ -240,7 +240,24 @@ class FiltrosBusqueda extends Component
         $this->validate($this->reglas());
 
         $this->recordarBorrador();
+        $this->materializarBorrador();
         $this->anunciarCriterios();
+    }
+
+    /**
+     * Materializa las coincidencias del borrador como filas temporales (para que la
+     * previsualización cuente y permita abrir todos los perfiles); si el borrador vuelve
+     * a coincidir con lo guardado, las limpia.
+     */
+    private function materializarBorrador(): void
+    {
+        $matching = app(MatchingService::class);
+
+        if ($this->armarCriterios() === $this->criteriosGuardados) {
+            $matching->limpiarTemporales($this->busqueda);
+        } else {
+            $matching->previsualizar($this->busqueda, $this->armarCriterios());
+        }
     }
 
     /**
@@ -259,6 +276,7 @@ class FiltrosBusqueda extends Component
     public function descartar(): void
     {
         session()->forget($this->claveBorrador());
+        app(MatchingService::class)->limpiarTemporales($this->busqueda);
 
         $this->sincronizarGuardado();
 

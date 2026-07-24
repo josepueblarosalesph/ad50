@@ -27,7 +27,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-[14px]">
                     <thead>
-                        <tr class="border-b border-line text-left text-[12px] uppercase tracking-wider text-gray-400">
+                        <tr class="ad-thead-row">
                             <th class="p-4">Nombre</th>
                             <th class="p-4">Email</th>
                             <th class="p-4">Rol</th>

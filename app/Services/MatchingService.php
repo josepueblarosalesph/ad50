@@ -42,6 +42,7 @@ class MatchingService
                         'criterios_totales' => $total,
                         'criterios_detalle' => json_encode(array_values($detalle), JSON_THROW_ON_ERROR),
                         'estado_match' => 'cumple',
+                        'temporal' => false,
                         'created_at' => $ahora,
                         'updated_at' => $ahora,
                     ];
@@ -49,11 +50,12 @@ class MatchingService
             });
 
         // Upsert de las coincidencias por tandas (preserva favorito y contactado_at existentes).
+        // `temporal => false` confirma cualquier fila que existiera como previsualización.
         foreach (array_chunk($filas, 500) as $tanda) {
             BusquedaCandidato::query()->upsert(
                 $tanda,
                 ['busqueda_id', 'postulante_id'],
-                ['match_score', 'criterios_cumplidos', 'criterios_totales', 'criterios_detalle', 'estado_match', 'updated_at'],
+                ['match_score', 'criterios_cumplidos', 'criterios_totales', 'criterios_detalle', 'estado_match', 'temporal', 'updated_at'],
             );
         }
 
@@ -246,7 +248,76 @@ class MatchingService
                 'criterios_totales' => $total,
                 'criterios_detalle' => array_values($detalle),
                 'estado_match' => $cumplidos === $total ? 'cumple' : 'parcial',
+                'temporal' => false,
             ],
         );
+    }
+
+    /**
+     * Materializa como filas TEMPORALES las coincidencias de un borrador de filtros sin
+     * guardar, para que la previsualización cuente y permita abrir todos los perfiles.
+     * No toca las filas confirmadas (conserva favoritos ni altera su detalle guardado):
+     * solo crea filas nuevas para los perfiles que aún no están en el proceso y descarta
+     * las temporales que dejaron de cumplir el borrador.
+     *
+     * @param  array<string, mixed>  $criterios
+     */
+    public function previsualizar(Busqueda $busqueda, array $criterios): void
+    {
+        $ahora = now();
+        $cumpleIds = [];
+        $detallePorId = [];
+
+        Postulante::query()
+            ->where('visible', true)
+            ->chunkById(500, function ($postulantes) use ($criterios, &$cumpleIds, &$detallePorId): void {
+                foreach ($postulantes as $postulante) {
+                    $detalle = $this->evaluar($postulante, $criterios);
+
+                    if (collect($detalle)->contains(fn (array $criterio): bool => ! $criterio['cumple'])) {
+                        continue;
+                    }
+
+                    $cumpleIds[] = $postulante->id;
+                    $detallePorId[$postulante->id] = array_values($detalle);
+                }
+            });
+
+        // Perfiles del borrador que aún no tienen fila en el proceso (ni confirmada ni temporal).
+        $existentes = $busqueda->candidatos()->pluck('postulante_id')->all();
+        $nuevos = array_values(array_diff($cumpleIds, $existentes));
+
+        $filas = [];
+        foreach ($nuevos as $postulanteId) {
+            $total = count($detallePorId[$postulanteId]);
+            $filas[] = [
+                'busqueda_id' => $busqueda->id,
+                'postulante_id' => $postulanteId,
+                'match_score' => 100,
+                'criterios_cumplidos' => $total,
+                'criterios_totales' => $total,
+                'criterios_detalle' => json_encode($detallePorId[$postulanteId], JSON_THROW_ON_ERROR),
+                'estado_match' => 'cumple',
+                'temporal' => true,
+                'created_at' => $ahora,
+                'updated_at' => $ahora,
+            ];
+        }
+
+        foreach (array_chunk($filas, 500) as $tanda) {
+            BusquedaCandidato::query()->insert($tanda);
+        }
+
+        // Descarta las filas temporales que ya no cumplen el borrador (de una edición previa).
+        $busqueda->candidatos()
+            ->temporales()
+            ->when($cumpleIds !== [], fn ($query) => $query->whereNotIn('postulante_id', $cumpleIds))
+            ->delete();
+    }
+
+    /** Elimina todas las coincidencias temporales de previsualización de una búsqueda. */
+    public function limpiarTemporales(Busqueda $busqueda): void
+    {
+        $busqueda->candidatos()->temporales()->delete();
     }
 }

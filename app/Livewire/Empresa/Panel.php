@@ -22,7 +22,7 @@ class Panel extends Component
     {
         $empresa = auth()->user()->empresa;
         $busquedas = Busqueda::query()
-            ->withCount('candidatos')
+            ->withCount(['candidatos' => fn ($query) => $query->confirmados()])
             ->where('empresa_id', $empresa?->id)
             ->latest()
             ->take(5)
@@ -32,6 +32,7 @@ class Panel extends Component
             'empresa' => $empresa,
             'busquedas' => $busquedas,
             'totalCandidatos' => BusquedaCandidato::query()
+                ->confirmados()
                 ->whereHas('busqueda', fn ($query) => $query->where('empresa_id', $empresa?->id))
                 ->count(),
         ]);
