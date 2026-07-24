@@ -6,6 +6,7 @@ use App\Models\Pago;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\FlowService;
+use App\Services\ValorUf;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
@@ -30,7 +31,8 @@ function empresaConPlanEmpresa(): array
         'codigo' => 'empresa_test_'.str()->random(6),
         'nombre' => 'AD+50 · Pro',
         'audiencia' => 'empresa',
-        'precio_clp' => 90000,
+        'precio_clp' => 0,
+        'precio_uf' => '30.00',
         'periodo' => 'mensual',
         'desbloqueos' => 10,
     ]);
@@ -44,7 +46,15 @@ test('la firma es HMAC-SHA256 de los parametros ordenados por nombre', function 
     expect($firma)->toBe(hash_hmac('sha256', 'a1b2c3', 'SECRET'));
 });
 
-test('contratar crea un pago pendiente y redirige a la pasarela de Flow', function () {
+test('precioClp convierte UF a CLP con IVA de 19%', function () {
+    $plan = new Plan(['precio_uf' => '30.00']);
+
+    expect($plan->precioClp(39000.0))->toBe((int) round(30 * 39000 * 1.19)); // 1.392.300
+});
+
+test('contratar cobra el CLP calculado desde la UF y redirige a Flow', function () {
+    $this->mock(ValorUf::class, fn ($m) => $m->shouldReceive('actual')->andReturn(39000.0));
+
     Http::fake([
         '*/payment/create' => Http::response([
             'url' => 'https://sandbox.flow.cl/app/web/pay.php',
@@ -64,15 +74,14 @@ test('contratar crea un pago pendiente y redirige a la pasarela de Flow', functi
 
     expect($pago)->not->toBeNull()
         ->and($pago->estado)->toBe('pendiente')
-        ->and($pago->amount)->toBe(90000)
+        ->and($pago->amount)->toBe((int) round(30 * 39000 * 1.19))
         ->and($pago->flow_token)->toBe('TOK123')
         ->and($pago->flow_order)->toBe(555)
         ->and($pago->commerce_order)->toBe('AD50-'.$pago->id);
 
-    // El request a Flow incluyó la firma.
     Http::assertSent(fn ($request) => $request->url() === 'https://sandbox.flow.cl/api/payment/create'
         && ! empty($request['s'])
-        && $request['commerceOrder'] === $pago->commerce_order);
+        && (int) $request['amount'] === (int) round(30 * 39000 * 1.19));
 });
 
 test('el webhook de Flow confirma el pago y activa la suscripcion de la empresa', function () {

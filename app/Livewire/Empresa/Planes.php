@@ -5,6 +5,7 @@ namespace App\Livewire\Empresa;
 use App\Models\Pago;
 use App\Models\Plan;
 use App\Services\FlowService;
+use App\Services\ValorUf;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
@@ -33,11 +34,27 @@ class Planes extends Component
         $plan = Plan::query()->where('audiencia', 'empresa')->find($planId);
         abort_if($plan === null, 404);
 
+        // Monto en CLP a partir de la UF del día (+ IVA).
+        try {
+            $amount = $plan->precioClp(app(ValorUf::class)->actual());
+        } catch (Throwable $e) {
+            Log::error('Valor UF falló', ['error' => $e->getMessage()]);
+            $this->addError('pago', 'No pudimos obtener el valor de la UF. Inténtalo nuevamente en unos minutos.');
+
+            return null;
+        }
+
+        if ($amount < 350) {
+            $this->addError('pago', 'El monto del plan no es válido para procesar el pago. Contáctanos.');
+
+            return null;
+        }
+
         $pago = Pago::query()->create([
             'empresa_id' => $empresa->id,
             'plan_id' => $plan->id,
             'commerce_order' => 'tmp',
-            'amount' => (int) $plan->precio_clp,
+            'amount' => $amount,
             'currency' => 'CLP',
             'estado' => 'pendiente',
         ]);
@@ -75,11 +92,20 @@ class Planes extends Component
     {
         $empresa = auth()->user()->empresa;
 
+        // Valor de la UF para mostrar los precios en CLP; si la API falla, 0 (la vista
+        // muestra el precio en UF como respaldo).
+        try {
+            $valorUf = app(ValorUf::class)->actual();
+        } catch (Throwable $e) {
+            $valorUf = 0.0;
+        }
+
         return view('livewire.empresa.planes', [
             'empresa' => $empresa,
             'planActual' => $empresa?->plan,
             'planVigente' => $empresa?->planVigente() ?? false,
-            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_clp')->get(),
+            'valorUf' => $valorUf,
+            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
         ]);
     }
 }
