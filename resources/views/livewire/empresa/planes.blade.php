@@ -53,13 +53,8 @@
                         <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Más elegido</span>
                     @endif
                     <h2 class="text-[18px] font-extrabold">{{ \Illuminate\Support\Str::after($plan->nombre, '· ') }}</h2>
-                    @if ($valorUf > 0)
-                        <div class="mt-3 text-[30px] font-extrabold">${{ number_format($plan->precioClp($valorUf), 0, ',', '.') }} <small class="text-[11px] font-medium text-gray-400">CLP · IVA incl.</small></div>
-                        <p class="mb-5 text-[12.5px] text-gray-500">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} UF · {{ $plan->periodo === 'anual' ? 'por año' : 'por mes' }}</p>
-                    @else
-                        <div class="mt-3 text-[30px] font-extrabold">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} <small class="text-[12px] font-semibold text-gray-500">UF + IVA</small></div>
-                        <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->periodo === 'anual' ? 'por año' : 'por mes' }}</p>
-                    @endif
+                    <div class="mt-3 text-[30px] font-extrabold">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} <small class="text-[11px] font-medium text-gray-400">UF + IVA</small></div>
+                    <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->periodo === 'anual' ? 'por año' : 'por mes' }}</p>
 
                     <ul class="mb-6 flex-1 space-y-2.5">
                         @foreach ($plan->features ?? [] as $feature)
@@ -81,10 +76,9 @@
             @endforeach
         </div>
 
-        <p class="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[12px] text-gray-400">
+        <p class="mt-6 flex items-center justify-center gap-2 text-[12px] text-gray-400">
             <flux:icon.lock-closed class="size-3.5" />
-            Pago seguro procesado por Flow.
-            @if ($valorUf > 0)<span>· Valor UF de hoy: ${{ number_format($valorUf, 0, ',', '.') }}</span>@endif
+            Pago seguro procesado por Flow (el cobro se realiza en CLP según el valor de la UF del día).
         </p>
     </div>
 </div>

@@ -92,19 +92,11 @@ class Planes extends Component
     {
         $empresa = auth()->user()->empresa;
 
-        // Valor de la UF para mostrar los precios en CLP; si la API falla, 0 (la vista
-        // muestra el precio en UF como respaldo).
-        try {
-            $valorUf = app(ValorUf::class)->actual();
-        } catch (Throwable $e) {
-            $valorUf = 0.0;
-        }
-
+        // Los precios se muestran en UF; la conversión a CLP se hace al pagar (contratar).
         return view('livewire.empresa.planes', [
             'empresa' => $empresa,
             'planActual' => $empresa?->plan,
             'planVigente' => $empresa?->planVigente() ?? false,
-            'valorUf' => $valorUf,
             'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
         ]);
     }
