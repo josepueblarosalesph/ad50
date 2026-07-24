@@ -41,8 +41,9 @@ class Activacion extends Component
 
         $empresa = auth()->user()->empresa;
 
-        // Si ya pagó su plan, el onboarding está completo: al panel.
-        if ($empresa?->planVigente()) {
+        // Solo si el onboarding está completo (datos + plan pagado) se va al panel.
+        // Ojo: no basta con planVigente, o se produce un bucle con el gate del panel.
+        if ($empresa?->puedeOperar()) {
             $this->redirectRoute('empresa.panel', navigate: true);
 
             return;
@@ -98,7 +99,14 @@ class Activacion extends Component
             'datos_enviados_at' => now(),
         ]);
 
-        // Siguiente paso del onboarding: elegir un plan y pagar.
+        // Si ya tenía un plan vigente, el onboarding queda completo → panel.
+        // Si no, siguiente paso: elegir un plan y pagar.
+        if (auth()->user()->empresa->fresh()->planVigente()) {
+            $this->redirectRoute('empresa.panel', navigate: true);
+
+            return;
+        }
+
         session()->flash('status', 'Tus datos quedaron guardados. Elige un plan para activar tu cuenta.');
         $this->redirectRoute('empresa.planes', navigate: true);
     }

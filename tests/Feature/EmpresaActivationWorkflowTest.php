@@ -3,6 +3,7 @@
 use App\Livewire\Admin\Empresas as AdminEmpresas;
 use App\Livewire\Empresa\Activacion;
 use App\Models\Empresa;
+use App\Models\Plan;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -118,6 +119,24 @@ test('an empresa with data and a paid plan reaches the panel', function () {
     $this->actingAs($user)
         ->get(route('empresa.panel'))
         ->assertOk();
+});
+
+test('an empresa with a paid plan but no submitted data does not loop', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Plan Sin Datos SpA',
+        'estado_activacion' => 'activa',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+        // datos_enviados_at nulo a propósito.
+    ]);
+
+    // Activación se muestra (no rebota al panel) y el panel lo manda a activación.
+    $this->actingAs($user)->get(route('empresa.activacion'))->assertOk();
+    $this->actingAs($user)->get(route('empresa.panel'))->assertRedirect(route('empresa.activacion'));
 });
 
 test('an admin can mark an empresa as active', function () {
