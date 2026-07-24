@@ -6,7 +6,7 @@ Plataforma web (Chile) que conecta **postulantes mayores de 50 años** con **emp
 
 ## Stack
 
-- **PHP 8.4 / Laravel 13** (backend monolítico)
+- **PHP 8.3 / Laravel 13** (backend monolítico)
 - **Livewire 4 + Flux UI (free)** — toda la UI dinámica es server-side en PHP; sin framework JS de front. Alpine.js para interacciones puntuales.
 - **Laravel Fortify** — autenticación (login, registro, verificación de email, 2FA, passkeys)
 - **Tailwind CSS 4** + **Vite** (bundling de `resources/css` y `resources/js`)
