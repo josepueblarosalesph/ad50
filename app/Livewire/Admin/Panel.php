@@ -28,7 +28,7 @@ class Panel extends Component
             'empresasPendientes' => Empresa::query()->where('estado_activacion', 'pendiente')->count(),
             'totalPostulantes' => Postulante::query()->count(),
             'totalBusquedas' => Busqueda::query()->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)->count(),
-            'totalCoincidencias' => BusquedaCandidato::query()->confirmados()->count(),
+            'totalCoincidencias' => BusquedaCandidato::query()->confirmados()->whereHas('busqueda')->count(),
         ]);
     }
 }

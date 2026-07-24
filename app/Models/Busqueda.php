@@ -5,9 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Busqueda extends Model
 {
+    use SoftDeletes;
+
+    /** Días que un proceso permanece en papelera antes de eliminarse en forma definitiva. */
+    public const DIAS_RETENCION_PAPELERA = 30;
+
     /**
      * Estados del proceso de selección (etapa del pipeline).
      *

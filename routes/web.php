@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FlowController;
 use App\Http\Middleware\EnsureEmpresaActiva;
 use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
@@ -11,6 +12,7 @@ use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\Equipo as EmpresaEquipo;
 use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Empresa\Panel as EmpresaPanel;
+use App\Livewire\Empresa\Planes as EmpresaPlanes;
 use App\Livewire\Empresa\Resultados;
 use App\Livewire\Landing;
 use App\Livewire\Planes;
@@ -27,6 +29,10 @@ Route::get('/registro', Register::class)->name('registro');
 Route::get('/planes', Planes::class)->name('planes');
 Route::get('/quienes-somos', QuienesSomos::class)->name('quienes-somos');
 
+// Callbacks de Flow (server-to-server y retorno del navegador). Sin auth ni CSRF.
+Route::post('/pagos/flow/confirmar', [FlowController::class, 'confirmar'])->name('pagos.flow.confirmar');
+Route::match(['get', 'post'], '/pagos/flow/retorno', [FlowController::class, 'retorno'])->name('pagos.flow.retorno');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/postulante/ficha', Ficha::class)->name('postulante.ficha');
     Route::middleware(EnsurePostulanteOnboardingComplete::class)->group(function () {
@@ -38,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(EnsureEmpresaActiva::class)->group(function () {
         Route::get('/empresa', EmpresaPanel::class)->name('empresa.panel');
+        Route::get('/empresa/planes', EmpresaPlanes::class)->name('empresa.planes');
         Route::get('/empresa/equipo', EmpresaEquipo::class)->name('empresa.equipo');
         Route::get('/empresa/busquedas', EmpresaBusquedas::class)->name('empresa.busquedas.index');
         Route::get('/empresa/busquedas/nueva', NuevaBusqueda::class)->name('empresa.busquedas.create');

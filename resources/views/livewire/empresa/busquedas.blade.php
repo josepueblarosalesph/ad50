@@ -3,6 +3,7 @@
     <x-slot:nav>
         <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Mis Procesos</a>
+        <a wire:navigate href="{{ route('empresa.planes') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Planes</a>
         @if (auth()->user()->esPrincipalEmpresa())
             <a wire:navigate href="{{ route('empresa.equipo') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Equipo</a>
         @endif
@@ -16,6 +17,17 @@
 
     @if (session('status'))
         <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
+    @endif
+
+    @if ($eliminadoId)
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-line-2 bg-paper px-4 py-3">
+            <div class="flex items-center gap-2 text-[13px] text-gray-700">
+                <flux:icon.trash class="size-4 flex-none text-gray-400" />
+                <span>Eliminaste el proceso <b class="text-ink">«{{ $eliminadoTitulo }}»</b>.</span>
+                <button type="button" wire:click="restaurar" wire:loading.attr="disabled" wire:target="restaurar" class="font-bold text-orange-600 underline underline-offset-2 hover:text-orange-700">Deshacer</button>
+            </div>
+            <span class="text-[12px] text-gray-500">Este proceso se eliminará en forma definitiva en los siguientes {{ \App\Models\Busqueda::DIAS_RETENCION_PAPELERA }} días.</span>
+        </div>
     @endif
 
     <div class="mb-6 flex flex-wrap items-start justify-between gap-5">
@@ -50,7 +62,7 @@
                                     @endforeach
                                 </select>
                             </td>
-                            <td class="p-4 text-right"><div class="flex justify-end gap-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="font-bold text-orange-600 hover:text-orange-700">Ver</a><a wire:navigate href="{{ route('empresa.busquedas.edit', $busqueda) }}" class="font-bold text-gray-500 hover:text-ink">Editar</a><button type="button" wire:click="borrar({{ $busqueda->id }})" wire:confirm="¿Borrar el proceso «{{ $busqueda->titulo }}»? Esta acción no se puede deshacer y se perderán sus candidatos guardados." class="font-bold text-[#A93226] hover:text-red-700 dark:text-red-400">Borrar</button></div></td>
+                            <td class="p-4 text-right"><div class="flex justify-end gap-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="font-bold text-orange-600 hover:text-orange-700">Ver</a><a wire:navigate href="{{ route('empresa.busquedas.edit', $busqueda) }}" class="font-bold text-gray-500 hover:text-ink">Editar</a><button type="button" wire:click="confirmarBorrado({{ $busqueda->id }})" class="font-bold text-[#A93226] hover:text-red-700 dark:text-red-400">Borrar</button></div></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="p-10 text-center"><flux:icon.magnifying-glass class="mx-auto size-8 text-gray-400" /><h2 class="mt-3 font-bold">Aún no has creado procesos</h2><a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm mt-4">Crear el primero</a></td></tr>
@@ -63,4 +75,31 @@
     @if ($busquedas->hasPages())
         <div class="mt-6">{{ $busquedas->links() }}</div>
     @endif
+
+    {{-- Confirmación de borrado: reemplaza el confirm nativo del navegador. --}}
+    <flux:modal name="borrar-proceso" class="max-w-lg" wire:close="$set('confirmacionTexto', '')">
+        <div class="space-y-4">
+            <div class="flex items-start gap-3">
+                <span class="grid size-10 flex-none place-items-center rounded-xl bg-red-100 text-[#A93226] dark:bg-red-950/40 dark:text-red-400"><flux:icon.trash class="size-5" /></span>
+                <div class="min-w-0">
+                    <flux:heading size="lg">Eliminar proceso</flux:heading>
+                    @if ($borrandoTitulo !== '')
+                        <flux:text class="mt-1 truncate">«{{ $borrandoTitulo }}»</flux:text>
+                    @endif
+                </div>
+            </div>
+
+            <flux:text>Al eliminar este proceso, se eliminarán los filtros de búsqueda y los candidatos marcados como favoritos (salvo los que están como favoritos en otros procesos).</flux:text>
+
+            <flux:text>Para confirmar, escribe <strong class="font-bold text-ink">ELIMINAR</strong> en el siguiente cuadro y haz clic en Aceptar.</flux:text>
+
+            <flux:input wire:model.live.debounce.200ms="confirmacionTexto" placeholder="ELIMINAR" autocomplete="off" autofocus />
+            @error('confirmacionTexto')<flux:text class="text-[#A93226] dark:text-red-400">{{ $message }}</flux:text>@enderror
+
+            <div class="flex justify-end gap-2 pt-2">
+                <flux:modal.close><flux:button variant="ghost">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="danger" wire:click="borrar" wire:loading.attr="disabled" wire:target="borrar" :disabled="mb_strtoupper(trim($confirmacionTexto)) !== 'ELIMINAR'">Aceptar</flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

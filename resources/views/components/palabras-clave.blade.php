@@ -2,18 +2,34 @@
     'palabras' => [],
     'placeholder' => 'Escribe y presiona Enter',
     'descripcion' => null,
+    'ayuda' => null,
     'hideLabel' => false,
 ])
 
 <div>
-    <flux:input
-        wire:model="nuevaPalabraClave"
-        wire:keydown.enter.prevent="agregarPalabraClave"
-        :label="$hideLabel ? null : 'Palabra clave'"
-        maxlength="100"
-        :placeholder="$placeholder"
-        :description="$descripcion"
-    />
+    <flux:field>
+        @unless ($hideLabel)
+            <div class="flex items-center gap-1.5">
+                <flux:label>Palabra clave</flux:label>
+                @if ($ayuda)
+                    <flux:tooltip :content="$ayuda">
+                        <flux:icon.information-circle class="size-4 cursor-help text-gray-400 hover:text-gray-500" />
+                    </flux:tooltip>
+                @endif
+            </div>
+        @endunless
+
+        @if ($descripcion)
+            <flux:description>{{ $descripcion }}</flux:description>
+        @endif
+
+        <flux:input
+            wire:model="nuevaPalabraClave"
+            wire:keydown.enter.prevent="agregarPalabraClave"
+            maxlength="100"
+            :placeholder="$placeholder"
+        />
+    </flux:field>
 
     @if (filled($palabras))
         <div class="mt-2 flex flex-wrap gap-1">

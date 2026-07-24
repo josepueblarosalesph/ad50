@@ -10,7 +10,7 @@
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Procesos</div>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.bars-3 class="size-[18px]" />Todos los procesos</a>
-        <a href="{{ $editando ? route('empresa.busquedas.edit', $busqueda) : route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon.magnifying-glass class="size-[18px]" />{{ $editando ? 'Editar proceso' : 'Nuevo proceso' }}</a>
+        <a href="{{ $editando ? route('empresa.busquedas.edit', $busqueda) : route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon :name="$editando ? 'pencil-square' : 'plus-circle'" class="size-[18px]" />{{ $editando ? 'Editar proceso' : 'Nuevo proceso' }}</a>
     </x-slot:sidebar>
 
     <div class="max-w-4xl">
@@ -63,7 +63,7 @@
                             <span @class(['text-[12px] font-bold', 'text-orange-600' => $rentaMax > 0, 'text-gray-500' => $rentaMax === 0])>{{ $rentaMax > 0 ? '$'.number_format($rentaMax, 0, ',', '.').' o menos' : 'Sin filtrar' }}</span>
                         </label>
                         <input id="renta-max-form" type="range" wire:model.live="rentaMax" min="0" max="8000000" step="200000" class="mt-3 w-full accent-orange-500" />
-                        <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>$8.000.000</span></div>
+                        <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>+$8.000.000</span></div>
                     </div>
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <x-slider-rango-edad label="Años de experiencia" :min="$limitesExperiencia['min']" :max="$limitesExperiencia['max']" :desde="$expMin" :hasta="$expMax" model-desde="expMin" model-hasta="expMax" />
@@ -73,7 +73,7 @@
                     </div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /><p class="text-[12px] text-gray-500">Basta que aparezca en alguna de sus experiencias.</p></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter. Basta con que el perfil contenga una de ellas." /></div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter." ayuda="Filtra los perfiles que contengan al menos una de estas palabras, en cualquiera de sus campos." /></div>
                 </div>
 
                 <div class="pt-2 flex justify-end gap-3"><a href="{{ $editando ? route('empresa.resultados', $busqueda) : route('empresa.panel') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a><button type="submit" class="ad-btn-primary ad-btn-sm">{{ $editando ? 'Guardar' : 'Buscar candidatos' }} <flux:icon.arrow-right class="size-4" /></button></div>

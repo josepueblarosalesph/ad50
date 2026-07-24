@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(
             fn (Request $request): string => route($request->user()->dashboardRouteName(), absolute: false),
         );
+
+        // Flow llama a estas rutas server-to-server (sin token CSRF).
+        $middleware->validateCsrfTokens(except: [
+            'pagos/flow/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

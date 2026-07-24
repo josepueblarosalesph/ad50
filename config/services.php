@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // Pasarela de pago Flow (https://www.flow.cl/docs/api.html).
+    // Sandbox: https://sandbox.flow.cl/api — Producción: https://www.flow.cl/api
+    'flow' => [
+        'api_key' => env('FLOW_API_KEY'),
+        'secret_key' => env('FLOW_SECRET_KEY'),
+        'base_url' => env('FLOW_BASE_URL', 'https://sandbox.flow.cl/api'),
+    ],
+
 ];

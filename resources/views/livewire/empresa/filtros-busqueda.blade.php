@@ -39,7 +39,7 @@
                 step="200000"
                 class="mt-3 w-full accent-orange-500"
             />
-            <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>$8.000.000</span></div>
+            <div class="mt-1 flex justify-between text-[10.5px] font-bold text-gray-400"><span>Sin filtrar</span><span>+$8.000.000</span></div>
         </x-filtro-acordeon>
 
         <x-filtro-acordeon titulo="Rango de edad" :count="($edadMin > $limitesEdad['min'] || $edadMax < $limitesEdad['max']) ? 1 : 0">

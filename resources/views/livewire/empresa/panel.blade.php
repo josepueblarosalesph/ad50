@@ -4,6 +4,7 @@
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mis Procesos</a>
+        <a wire:navigate href="{{ route('empresa.planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Planes</a>
         @if (auth()->user()->esPrincipalEmpresa())
             <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
         @endif

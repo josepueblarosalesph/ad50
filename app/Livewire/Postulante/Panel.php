@@ -33,6 +33,7 @@ class Panel extends Component
 
         $matches = BusquedaCandidato::with('busqueda')
             ->confirmados()
+            ->whereHas('busqueda')
             ->where('postulante_id', $postulante?->id)
             ->latest()
             ->take(3)
@@ -40,12 +41,14 @@ class Panel extends Component
 
         $totalMatches = BusquedaCandidato::query()
             ->confirmados()
+            ->whereHas('busqueda')
             ->where('postulante_id', $postulante?->id)
             ->count();
 
         $empresasInteresadas = BusquedaCandidato::query()
             ->confirmados()
             ->join('busquedas', 'busquedas.id', '=', 'busqueda_candidato.busqueda_id')
+            ->whereNull('busquedas.deleted_at')
             ->where('busqueda_candidato.postulante_id', $postulante?->id)
             ->where('busqueda_candidato.favorito', true)
             ->distinct()
