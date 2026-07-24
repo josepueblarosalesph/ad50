@@ -4,7 +4,6 @@
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mis Procesos</a>
-        <a wire:navigate href="{{ route('empresa.planes') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Planes</a>
         @if (auth()->user()->esPrincipalEmpresa())
             <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
         @endif
@@ -13,9 +12,18 @@
     <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[27px] font-extrabold">Hola, {{ $empresa?->razon_social ?? auth()->user()->name }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Resumen de tu actividad de selección.</p></div><a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm">+ Nuevo proceso</a></div>
 
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        @foreach ([['Procesos activos', $busquedas->whereIn('estado', \App\Models\Busqueda::ESTADOS_ACTIVOS)->count(), 'Procesos vigentes'], ['Candidatos que cumplen', $totalCandidatos, 'Resultados acumulados'], ['Plan', $empresa?->plan?->nombre ?? 'Sin plan', 'Revisa tu suscripción'], ['Vigencia', $empresa?->plan_hasta?->translatedFormat('d M Y') ?? '—', 'Fecha de renovación']] as [$label, $value, $detail])
+        @foreach ([['Procesos activos', $busquedas->whereIn('estado', \App\Models\Busqueda::ESTADOS_ACTIVOS)->count(), 'Procesos vigentes'], ['Candidatos que cumplen', $totalCandidatos, 'Resultados acumulados']] as [$label, $value, $detail])
             <div class="ad-card p-5"><span class="text-[13px] text-gray-500 font-semibold">{{ $label }}</span><div class="text-[25px] font-extrabold mt-3 truncate">{{ $value }}</div><div class="mt-1 text-[13px] font-semibold text-match">{{ $detail }}</div></div>
         @endforeach
+
+        {{-- Acceso directo a la suscripción --}}
+        <a wire:navigate href="{{ route('empresa.planes') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
+            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Plan <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $empresa?->plan?->nombre ?? 'Sin plan' }}</div>
+            <div class="mt-1 text-[13px] font-semibold text-orange-600">Ver planes y suscripción</div>
+        </a>
+
+        <div class="ad-card p-5"><span class="text-[13px] text-gray-500 font-semibold">Vigencia</span><div class="text-[25px] font-extrabold mt-3 truncate">{{ $empresa?->plan_hasta?->translatedFormat('d M Y') ?? '—' }}</div><div class="mt-1 text-[13px] font-semibold text-match">Fecha de renovación</div></div>
     </div>
 
     <section class="ad-card overflow-hidden">

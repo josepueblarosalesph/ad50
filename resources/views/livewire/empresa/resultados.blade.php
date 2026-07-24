@@ -9,8 +9,7 @@
     </x-slot:nav>
     <x-slot:sidebar>
         <div class="sticky top-24 space-y-3">
-            <livewire:empresa.filtro-actualizacion :actual="$actualizacion" wire:key="actualizacion-desktop" />
-            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" wire:key="filtros-desktop" />
+            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" :actualizacion="$actualizacion" wire:key="filtros-desktop" />
         </div>
     </x-slot:sidebar>
 
@@ -27,8 +26,7 @@
             <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
         </summary>
         <div class="space-y-3 border-t border-line px-3 pb-3 pt-3">
-            <livewire:empresa.filtro-actualizacion :actual="$actualizacion" wire:key="actualizacion-movil" />
-            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" lazy wire:key="filtros-movil" />
+            <livewire:empresa.filtros-busqueda :busqueda="$busqueda" :actualizacion="$actualizacion" lazy wire:key="filtros-movil" />
         </div>
     </details>
 

@@ -40,6 +40,9 @@
                                       :avatar="false" />
                         <flux:menu>
                             <flux:menu.item :href="route('profile.edit')" icon="user">Mi cuenta</flux:menu.item>
+                            @if (auth()->user()?->role === 'empresa')
+                                <flux:menu.item :href="route('empresa.planes')" icon="credit-card">Mi suscripción</flux:menu.item>
+                            @endif
                             <flux:menu.item :href="route('appearance.edit')" icon="cog-6-tooth">Configuración</flux:menu.item>
                             <flux:menu.separator />
                             <form method="POST" action="{{ route('logout') }}">@csrf
@@ -64,6 +67,9 @@
                         {{ $nav }}
                         <div class="my-2 h-px bg-line"></div>
                         <a href="{{ route('profile.edit') }}"><flux:icon.user class="mr-2 size-4" />Mi cuenta</a>
+                        @if (auth()->user()?->role === 'empresa')
+                            <a href="{{ route('empresa.planes') }}"><flux:icon.credit-card class="mr-2 size-4" />Mi suscripción</a>
+                        @endif
                         <a href="{{ route('appearance.edit') }}"><flux:icon.cog-6-tooth class="mr-2 size-4" />Configuración</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

@@ -6,7 +6,7 @@ use App\Models\Empresa;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('an inactive empresa is redirected to the activation form', function () {
+test('an empresa without data is redirected to the activation form', function () {
     $user = User::factory()->create(['role' => 'empresa']);
     Empresa::query()->create([
         'user_id' => $user->id,
@@ -25,12 +25,8 @@ test('an inactive empresa is redirected to the activation form', function () {
         ->assertSee('Contacto técnico');
 });
 
-test('an empresa can submit its details for manual review', function () {
-    $user = User::factory()->create([
-        'name' => 'Ana Silva',
-        'email' => 'ana@empresa.cl',
-        'role' => 'empresa',
-    ]);
+test('submitting the data self-activates and sends the empresa to choose a plan', function () {
+    $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
     $empresa = Empresa::query()->create([
         'user_id' => $user->id,
         'razon_social' => 'Empresa Pendiente SpA',
@@ -43,21 +39,18 @@ test('an empresa can submit its details for manual review', function () {
         ->set('rut', '98421157')
         ->set('rubro', 'Servicios profesionales')
         ->set('contactoPrincipalCargo', 'Gerenta de Personas')
-        ->set('contactoTecnicoNombre', 'Tomás Pérez')
-        ->set('contactoTecnicoEmail', 'tecnico@empresa.cl')
-        ->set('contactoTecnicoTelefono', '+56 9 2222 2222')
         ->call('guardar')
         ->assertHasNoErrors()
-        ->assertSee('Antecedentes recibidos');
+        ->assertRedirect(route('empresa.planes'));
 
     $this->assertDatabaseHas('empresas', [
         'id' => $empresa->id,
-        'estado_activacion' => 'pendiente',
+        'estado_activacion' => 'activa',
         'rut' => '9.842.115-7',
         'contacto_principal_nombre' => 'Ana Silva',
         'contacto_principal_email' => 'ana@empresa.cl',
-        'contacto_tecnico_email' => 'tecnico@empresa.cl',
     ]);
+    expect($empresa->fresh()->datos_enviados_at)->not->toBeNull();
 });
 
 test('the technical contact is optional and its cargo is stored', function () {
@@ -69,7 +62,6 @@ test('the technical contact is optional and its cargo is stored', function () {
         'estado_activacion' => 'inactiva',
     ]);
 
-    // Sin ningún dato de contacto técnico: debe poder enviarse.
     Livewire::actingAs($user)
         ->test(Activacion::class)
         ->set('rut', '98421157')
@@ -78,10 +70,9 @@ test('the technical contact is optional and its cargo is stored', function () {
         ->call('guardar')
         ->assertHasNoErrors();
 
-    expect($empresa->fresh()->estado_activacion)->toBe('pendiente')
+    expect($empresa->fresh()->datos_enviados_at)->not->toBeNull()
         ->and($empresa->fresh()->contacto_tecnico_nombre)->toBe('');
 
-    // Con contacto técnico incluido su cargo: se guarda.
     Livewire::actingAs($user)
         ->test(Activacion::class)
         ->set('rut', '98421157')
@@ -101,29 +92,48 @@ test('the technical contact is optional and its cargo is stored', function () {
     ]);
 });
 
-test('an admin can review and activate a pending empresa', function () {
+test('an empresa with data but without a paid plan is sent to choose a plan', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa Con Datos',
+        'estado_activacion' => 'activa',
+        'datos_enviados_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('empresa.panel'))
+        ->assertRedirect(route('empresa.planes'));
+});
+
+test('an empresa with data and a paid plan reaches the panel', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa Operativa',
+        'estado_activacion' => 'activa',
+    ]);
+    hacerEmpresaOperativa($empresa);
+
+    $this->actingAs($user)
+        ->get(route('empresa.panel'))
+        ->assertOk();
+});
+
+test('an admin can mark an empresa as active', function () {
     $admin = User::factory()->create(['role' => 'admin']);
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create([
         'user_id' => $empresaUser->id,
         'razon_social' => 'Empresa Revisada SpA',
         'rut' => '9.842.115-7',
-        'rubro' => 'Tecnología',
         'estado_activacion' => 'pendiente',
-        'contacto_principal_nombre' => 'Ana Silva',
-        'contacto_principal_cargo' => 'Gerenta de Personas',
-        'contacto_principal_email' => 'ana@empresa.cl',
-        'contacto_principal_telefono' => '+56 9 1111 1111',
-        'contacto_tecnico_nombre' => 'Tomás Pérez',
-        'contacto_tecnico_email' => 'tecnico@empresa.cl',
-        'contacto_tecnico_telefono' => '+56 9 2222 2222',
         'datos_enviados_at' => now(),
     ]);
 
     Livewire::actingAs($admin)
         ->test(AdminEmpresas::class)
         ->assertSee('Empresa Revisada SpA')
-        ->assertSee('Habilitar empresa')
         ->call('activar', $empresa->id)
         ->assertHasNoErrors();
 
@@ -132,10 +142,6 @@ test('an admin can review and activate a pending empresa', function () {
         'estado_activacion' => 'activa',
         'activada_por' => $admin->id,
     ]);
-
-    $this->actingAs($empresaUser)
-        ->get(route('empresa.panel'))
-        ->assertOk();
 });
 
 test('non admins cannot access empresa activation reviews', function () {

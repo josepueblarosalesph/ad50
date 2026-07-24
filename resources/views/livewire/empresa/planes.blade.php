@@ -4,7 +4,6 @@
     <x-slot:nav>
         <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mis Procesos</a>
-        <a wire:navigate href="{{ route('empresa.planes') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Planes</a>
         @if (auth()->user()->esPrincipalEmpresa())
             <a wire:navigate href="{{ route('empresa.equipo') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Equipo</a>
         @endif
@@ -24,6 +23,16 @@
             <div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ session('error_pago') }}</div>
         @endif
         @error('pago')<div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ $message }}</div>@enderror
+
+        @unless ($planVigente)
+            <div class="mb-6 flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 dark:bg-[#33251D]">
+                <span class="grid size-9 flex-none place-items-center rounded-xl bg-orange-500 text-white"><flux:icon.credit-card class="size-5" /></span>
+                <div>
+                    <p class="text-[14px] font-extrabold text-ink">Último paso para activar tu cuenta</p>
+                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">Elige un plan y realiza el pago para acceder al panel y empezar a revisar candidatos.</p>
+                </div>
+            </div>
+        @endunless
 
         @if ($planVigente && $planActual)
             <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#BFE6CD] bg-match-100/60 px-5 py-4">

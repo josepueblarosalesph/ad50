@@ -41,7 +41,8 @@ class Activacion extends Component
 
         $empresa = auth()->user()->empresa;
 
-        if ($empresa?->estaActiva()) {
+        // Si ya pagó su plan, el onboarding está completo: al panel.
+        if ($empresa?->planVigente()) {
             $this->redirectRoute('empresa.panel', navigate: true);
 
             return;
@@ -93,11 +94,13 @@ class Activacion extends Component
             'contacto_tecnico_cargo' => $validated['contactoTecnicoCargo'],
             'contacto_tecnico_email' => $validated['contactoTecnicoEmail'],
             'contacto_tecnico_telefono' => $validated['contactoTecnicoTelefono'],
-            'estado_activacion' => 'pendiente',
+            'estado_activacion' => 'activa', // autoservicio: sin aprobación manual
             'datos_enviados_at' => now(),
         ]);
 
-        session()->flash('status', 'Tus antecedentes fueron enviados para revisión. Te avisaremos cuando la cuenta sea habilitada.');
+        // Siguiente paso del onboarding: elegir un plan y pagar.
+        session()->flash('status', 'Tus datos quedaron guardados. Elige un plan para activar tu cuenta.');
+        $this->redirectRoute('empresa.planes', navigate: true);
     }
 
     #[Title('Activación de empresa · AD+50')]

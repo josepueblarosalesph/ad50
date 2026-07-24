@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Empresa;
+use App\Models\Plan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +49,27 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * Deja una empresa lista para operar el panel: datos enviados + plan pagado vigente.
+ * (Con el onboarding por pago, el panel exige ambos.)
+ */
+function hacerEmpresaOperativa(Empresa $empresa): Empresa
+{
+    $empresa->update([
+        'datos_enviados_at' => now(),
+        'estado_activacion' => 'activa',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'empresa_op_'.str()->random(8),
+            'nombre' => 'AD+50 · Operativa',
+            'audiencia' => 'empresa',
+            'precio_clp' => 50000,
+            'periodo' => 'mensual',
+            'desbloqueos' => 10,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+
+    return $empresa;
 }

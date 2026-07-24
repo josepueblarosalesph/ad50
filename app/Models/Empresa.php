@@ -53,6 +53,21 @@ class Empresa extends Model
         return $this->estado_activacion === 'activa';
     }
 
+    /** La empresa ya completó y envió sus datos de activación. */
+    public function datosEnviados(): bool
+    {
+        return $this->datos_enviados_at !== null;
+    }
+
+    /**
+     * Puede operar el panel: onboarding completo = datos enviados + plan pagado vigente.
+     * El pago es el requisito de acceso (autoservicio, sin aprobación manual).
+     */
+    public function puedeOperar(): bool
+    {
+        return $this->datosEnviados() && $this->planVigente();
+    }
+
     public function busquedas(): HasMany
     {
         return $this->hasMany(Busqueda::class);

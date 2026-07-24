@@ -40,11 +40,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
     });
 
+    // Pasos de onboarding de empresa (no requieren plan pagado): completar datos y pagar.
     Route::get('/empresa/activacion', EmpresaActivacion::class)->name('empresa.activacion');
+    Route::get('/empresa/planes', EmpresaPlanes::class)->name('empresa.planes');
 
     Route::middleware(EnsureEmpresaActiva::class)->group(function () {
         Route::get('/empresa', EmpresaPanel::class)->name('empresa.panel');
-        Route::get('/empresa/planes', EmpresaPlanes::class)->name('empresa.planes');
         Route::get('/empresa/equipo', EmpresaEquipo::class)->name('empresa.equipo');
         Route::get('/empresa/busquedas', EmpresaBusquedas::class)->name('empresa.busquedas.index');
         Route::get('/empresa/busquedas/nueva', NuevaBusqueda::class)->name('empresa.busquedas.create');

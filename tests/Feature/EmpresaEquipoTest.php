@@ -19,6 +19,7 @@ function crearEmpresaConPrincipal(): array
         'estado_activacion' => 'activa',
     ]);
     $principal->update(['empresa_id' => $empresa->id]);
+    hacerEmpresaOperativa($empresa);
 
     return [$principal->fresh(), $empresa->fresh()];
 }

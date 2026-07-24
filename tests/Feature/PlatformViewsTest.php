@@ -621,6 +621,7 @@ test('an empresa can view its pages and create a search', function () {
         'razon_social' => 'Empresa de Prueba SpA',
         'estado_activacion' => 'activa',
     ]);
+    hacerEmpresaOperativa($empresa);
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create([
         'user_id' => $postulanteUser->id,

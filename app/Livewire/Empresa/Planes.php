@@ -17,6 +17,11 @@ class Planes extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
+
+        // El primer paso del onboarding es completar los datos; recién ahí se paga.
+        if (! (auth()->user()->empresa?->datosEnviados() ?? false)) {
+            $this->redirectRoute('empresa.activacion', navigate: true);
+        }
     }
 
     /** Inicia el pago de un plan en Flow y redirige a la pasarela. */

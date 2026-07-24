@@ -56,14 +56,18 @@ class FlowController extends Controller
             $pago = null;
         }
 
-        $mensaje = match (true) {
-            $pago?->estaPagado() => ['status', '¡Pago confirmado! Tu plan quedó activo.'],
-            ($estado['status'] ?? null) == 3 => ['error_pago', 'El pago fue rechazado. Puedes intentarlo nuevamente.'],
-            ($estado['status'] ?? null) == 4 => ['error_pago', 'El pago fue anulado.'],
-            default => ['error_pago', 'Aún no confirmamos tu pago. Si lo realizaste, se activará en unos minutos.'],
+        // Pago confirmado → el plan queda vigente y puede entrar al panel.
+        if ($pago?->estaPagado()) {
+            return redirect()->route('empresa.panel')->with('status', '¡Pago confirmado! Tu plan quedó activo.');
+        }
+
+        $mensaje = match ((int) ($estado['status'] ?? 0)) {
+            3 => 'El pago fue rechazado. Puedes intentarlo nuevamente.',
+            4 => 'El pago fue anulado.',
+            default => 'Aún no confirmamos tu pago. Si lo realizaste, se activará en unos minutos.',
         };
 
-        return redirect()->route('empresa.planes')->with($mensaje[0], $mensaje[1]);
+        return redirect()->route('empresa.planes')->with('error_pago', $mensaje);
     }
 
     /**

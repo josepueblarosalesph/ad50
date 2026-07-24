@@ -52,6 +52,8 @@
             />
         </x-filtro-acordeon>
 
+        <livewire:empresa.filtro-actualizacion :actual="$actualizacion" wire:key="filtro-actualizacion-{{ $busqueda->id }}" />
+
         <x-filtro-acordeon titulo="Palabras clave" :count="count($palabrasClave)">
             <x-palabras-clave :palabras="$palabrasClave" :hide-label="true" />
         </x-filtro-acordeon>

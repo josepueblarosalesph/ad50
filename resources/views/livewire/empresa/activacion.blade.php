@@ -1,6 +1,6 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:status>{{ $empresa->estado_activacion === 'pendiente' ? 'Pendiente de revisión' : 'Cuenta inactiva' }}</x-slot:status>
+    <x-slot:status>Activación de cuenta</x-slot:status>
     <x-slot:nav>
         <a href="{{ route('empresa.activacion') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Activación de cuenta</a>
     </x-slot:nav>
@@ -8,15 +8,10 @@
     <div class="mx-auto max-w-4xl">
         <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <span class="ad-eyebrow">Validación de empresa</span>
-                <h1 class="mt-3 text-[30px] font-extrabold">Completa los antecedentes de tu empresa</h1>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Revisaremos esta información manualmente antes de habilitar procesos y acceso a perfiles profesionales.</p>
+                <span class="ad-eyebrow">Activación de empresa</span>
+                <h1 class="mt-3 text-[30px] font-extrabold">Completa los datos de tu empresa</h1>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Completa estos datos para activar tu cuenta. Luego elegirás un plan y realizarás el pago para acceder a los perfiles.</p>
             </div>
-            @unless ($empresa->estado_activacion === 'inactiva')
-                <span @class(['ad-chip', 'ad-chip-orange' => $empresa->estado_activacion !== 'activa', 'ad-chip-green' => $empresa->estado_activacion === 'activa'])>
-                    {{ $empresa->estado_activacion === 'pendiente' ? 'Revisión pendiente' : ucfirst($empresa->estado_activacion) }}
-                </span>
-            @endunless
         </div>
 
         @if ($empresa->estado_activacion === 'inactiva')
@@ -38,8 +33,8 @@
                     <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
                         <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">2</span>
                         <div>
-                            <div class="flex items-center gap-2"><flux:icon.envelope class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Valida tu email de contacto</h3></div>
-                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Te enviaremos un enlace de verificación.</p>
+                            <div class="flex items-center gap-2"><flux:icon.credit-card class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Elige tu plan y paga</h3></div>
+                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Activa tu cuenta y accede al panel.</p>
                         </div>
                     </div>
                 </div>
@@ -52,12 +47,6 @@
             <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
         @endif
 
-        @if ($empresa->estado_activacion === 'pendiente')
-            <div class="mb-5 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-[13px] leading-relaxed text-gray-700">
-                <flux:icon.clock class="mt-0.5 size-5 shrink-0 text-orange-500" />
-                <p><b class="text-ink">Antecedentes recibidos.</b> Puedes corregirlos mientras esperas. La activación será realizada por un administrador después de verificarlos.</p>
-            </div>
-        @endif
 
         <form wire:submit="guardar" class="space-y-5">
             <section class="ad-card">
@@ -93,9 +82,9 @@
             </section>
 
             <div class="ad-card flex flex-wrap items-center justify-between gap-4 p-5">
-                <p class="max-w-xl text-[13px] leading-relaxed text-gray-500">Al enviar, declaras que los antecedentes son correctos y autorizas su revisión para habilitar la cuenta.</p>
+                <p class="max-w-xl text-[13px] leading-relaxed text-gray-500">Al continuar, declaras que los datos son correctos. El siguiente paso es elegir tu plan y pagar.</p>
                 <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="guardar">
-                    <span wire:loading.remove wire:target="guardar">{{ $empresa->estado_activacion === 'pendiente' ? 'Actualizar antecedentes' : 'Enviar a revisión' }}</span>
+                    <span wire:loading.remove wire:target="guardar">Guardar y elegir plan</span>
                     <span wire:loading wire:target="guardar">Guardando…</span>
                 </button>
             </div>

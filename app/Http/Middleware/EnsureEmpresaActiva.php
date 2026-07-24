@@ -17,8 +17,16 @@ class EnsureEmpresaActiva
     {
         abort_unless($request->user()?->role === 'empresa', 403);
 
-        if (! $request->user()->empresa?->estaActiva()) {
+        $empresa = $request->user()->empresa;
+
+        // 1) Debe completar sus datos de activación.
+        if ($empresa === null || ! $empresa->datosEnviados()) {
             return redirect()->route('empresa.activacion');
+        }
+
+        // 2) Debe tener un plan pagado vigente para acceder al panel.
+        if (! $empresa->planVigente()) {
+            return redirect()->route('empresa.planes');
         }
 
         return $next($request);

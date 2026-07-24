@@ -23,6 +23,7 @@ function empresaConPlanEmpresa(): array
         'user_id' => $user->id,
         'razon_social' => 'Empresa Pago SpA',
         'estado_activacion' => 'activa',
+        'datos_enviados_at' => now(),
         'contacto_principal_email' => 'pagos@empresa.cl',
     ]);
     $plan = Plan::query()->create([

@@ -71,7 +71,11 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return match ($this->role) {
             'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.panel',
-            'empresa' => $this->empresa?->estaActiva() ? 'empresa.panel' : 'empresa.activacion',
+            'empresa' => match (true) {
+                ! ($this->empresa?->datosEnviados()) => 'empresa.activacion',
+                ! $this->empresa->planVigente() => 'empresa.planes',
+                default => 'empresa.panel',
+            },
             'admin' => 'admin.panel',
             default => 'dashboard',
         };

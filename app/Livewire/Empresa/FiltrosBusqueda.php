@@ -82,12 +82,16 @@ class FiltrosBusqueda extends Component
 
     public string $tituloNuevo = '';
 
-    public function mount(Busqueda $busqueda): void
+    /** Valor inicial del filtro de antigüedad de ficha, que se anida en este panel. */
+    public string $actualizacion = 'todas';
+
+    public function mount(Busqueda $busqueda, string $actualizacion = 'todas'): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;
+        $this->actualizacion = $actualizacion;
         $this->hidratarDesde($busqueda->criterios ?? []);
         $this->criteriosGuardados = $this->armarCriterios();
 

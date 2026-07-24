@@ -397,6 +397,7 @@ test('a company can edit a search and recalculate its existing results', functio
 test('a company can modify search filters from the results sidebar', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Lateral', 'estado_activacion' => 'activa']);
+    hacerEmpresaOperativa($empresa);
 
     foreach (['Biobío', 'Metropolitana de Santiago'] as $ciudad) {
         $user = User::factory()->create(['role' => 'postulante']);
@@ -521,7 +522,8 @@ test('a company cannot edit another company search', function () {
     $busqueda = $owner->busquedas()->create(['titulo' => 'Privada', 'criterios' => []]);
 
     $otherUser = User::factory()->create(['role' => 'empresa']);
-    Empresa::query()->create(['user_id' => $otherUser->id, 'razon_social' => 'Otra', 'estado_activacion' => 'activa']);
+    $otra = Empresa::query()->create(['user_id' => $otherUser->id, 'razon_social' => 'Otra', 'estado_activacion' => 'activa']);
+    hacerEmpresaOperativa($otra);
 
     $this->actingAs($otherUser)
         ->get(route('empresa.busquedas.edit', $busqueda))
