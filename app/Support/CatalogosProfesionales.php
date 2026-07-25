@@ -107,7 +107,7 @@ class CatalogosProfesionales
     {
         return [
             'Trabajando actualmente', 'Buscando trabajo',
-            'Independiente / Honorarios', 'Jubilado',
+            'Independiente / Honorarios',
         ];
     }
 

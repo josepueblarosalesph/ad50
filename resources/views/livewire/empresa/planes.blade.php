@@ -67,7 +67,7 @@
                         wire:click="contratar({{ $plan->id }})"
                         wire:loading.attr="disabled"
                         wire:target="contratar({{ $plan->id }})"
-                        class="{{ $plan->destacado ? 'ad-btn-primary' : 'ad-btn-ghost' }} ad-btn-sm ad-btn-block justify-center"
+                        class="ad-btn-primary ad-btn-sm ad-btn-block justify-center"
                     >
                         <span wire:loading.remove wire:target="contratar({{ $plan->id }})">{{ $planVigente ? 'Renovar / cambiar' : 'Contratar' }}</span>
                         <span wire:loading wire:target="contratar({{ $plan->id }})">Redirigiendo a Flow…</span>

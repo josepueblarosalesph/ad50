@@ -97,7 +97,7 @@
             <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 1 ? 'hidden' : '' }}">
                 <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Mis datos</h2><p class="mt-1 text-[13px] text-gray-500">Tu identificación, tus formas de contacto y tu información personal.</p></div></div>
                 <div class="space-y-7 p-6">@include('livewire.postulante.partials.form-datos')</div>
-                <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUN, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
+                <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT o pasaporte, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
             </section>
 
             <section id="acerca-de-mi" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 2 ? 'hidden' : '' }}">
@@ -146,7 +146,7 @@
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Mis datos</h2><p class="mt-1 text-[13px] text-gray-500">Identificación, contacto e información personal.</p></div><button type="button" wire:click="editarSeccion('datos')" class="ad-btn-ghost ad-btn-sm"><flux:icon.pencil-square class="size-4" />Editar</button></div>
                 <dl class="grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2">
                     <x-ficha-dato label="Nombre completo">{{ trim($nombres.' '.$apellidos) ?: '—' }}</x-ficha-dato>
-                    <x-ficha-dato label="{{ $tipoDocumento === 'pasaporte' ? 'Pasaporte' : 'RUN' }}">{{ $rut ?: '—' }}</x-ficha-dato>
+                    <x-ficha-dato label="{{ $tipoDocumento === 'pasaporte' ? 'Pasaporte' : 'RUT' }}">{{ $rut ?: '—' }}</x-ficha-dato>
                     <x-ficha-dato label="Email">{{ $email ?: '—' }}</x-ficha-dato>
                     <x-ficha-dato label="Teléfono">{{ $telefono ?: '—' }}</x-ficha-dato>
                     <x-ficha-dato label="LinkedIn">@if ($linkedin)<a href="{{ $linkedin }}" target="_blank" rel="noopener" class="font-semibold text-orange-600 hover:underline">Ver perfil</a>@else—@endif</x-ficha-dato>

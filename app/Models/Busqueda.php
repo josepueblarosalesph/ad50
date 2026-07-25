@@ -23,7 +23,6 @@ class Busqueda extends Model
         'long_list' => 'Long List',
         'short_list' => 'Short List',
         'entrevistas' => 'Entrevistas',
-        'cancelado_cliente' => 'Cancelado por el Cliente',
         'cancelado' => 'Cancelado',
         'cerrado' => 'Cerrado',
         'pausado' => 'Pausado',

@@ -34,7 +34,7 @@
 </div>
 
 {{-- ====== Stats ====== --}}
-<div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
     <div class="ad-card p-5">
         <div class="flex items-center">
             <span class="text-[13px] text-gray-500 font-semibold">Completitud del perfil</span>
@@ -75,16 +75,6 @@
         <div class="mt-1 text-[13px] font-semibold text-match">Te han visto {{ $empresasInteresadas }} {{ $empresasInteresadas === 1 ? 'empresa' : 'empresas' }}</div>
     </div>
 
-    <div class="ad-card p-5">
-        <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Activación del perfil</span>
-            <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
-                <flux:icon.check-circle class="size-4" />
-            </span>
-        </div>
-        <div class="text-[22px] font-extrabold tracking-[-0.02em] mt-3">Pago único</div>
-        <div class="mt-1 text-[13px] font-semibold text-match">Sin renovaciones ni cobros adicionales</div>
-    </div>
 </div>
 
 {{-- ====== Coincidencias recientes ====== --}}

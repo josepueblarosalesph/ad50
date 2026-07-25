@@ -84,6 +84,26 @@ test('contratar cobra el CLP calculado desde la UF y redirige a Flow', function 
         && (int) $request['amount'] === (int) round(30 * 39000 * 1.19));
 });
 
+test('todos los planes muestran el mismo boton naranja', function () {
+    [$user] = empresaConPlanEmpresa();
+
+    Plan::query()->create([
+        'codigo' => 'empresa_otro_'.str()->random(6),
+        'nombre' => 'AD+50 · Básico',
+        'audiencia' => 'empresa',
+        'precio_clp' => 0,
+        'precio_uf' => '20.00',
+        'periodo' => 'mensual',
+        'desbloqueos' => 5,
+        'destacado' => false,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Planes::class)
+        ->assertSeeHtml('class="ad-btn-primary ad-btn-sm ad-btn-block justify-center"')
+        ->assertDontSeeHtml('class="ad-btn-ghost ad-btn-sm ad-btn-block justify-center"');
+});
+
 test('el webhook de Flow confirma el pago y activa la suscripcion de la empresa', function () {
     [$user, $empresa, $plan] = empresaConPlanEmpresa();
     $pago = Pago::query()->create([

@@ -303,6 +303,8 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertSee(route('postulante.busquedas'), false)
         ->assertDontSee('Solicitar eliminación de mis datos')
         ->assertDontSee('Mi activación')
+        ->assertDontSee('Pago único')
+        ->assertDontSee('Sin renovaciones ni cobros adicionales')
         ->assertDontSee('<aside class="hidden border-r', false);
 
     // Perfil completo → editor de solo lectura: resumen + botones "Editar" (el formulario carga en el modal bajo demanda).
@@ -382,6 +384,11 @@ test('a postulante can view the panel and professional profile', function () {
         'Femenino',
         'Prefiero no Informar',
     ]);
+    expect(CatalogosProfesionales::situacionesLaborales())
+        ->not->toContain('Jubilado');
+    expect(Busqueda::ESTADOS)
+        ->toHaveKey('cancelado', 'Cancelado')
+        ->not->toHaveKey('cancelado_cliente');
 
     $cargos = CatalogosProfesionales::cargos();
 

@@ -40,6 +40,7 @@ test('the onboarding saves personal data and resumes from the persisted step', f
         ->assertSet('modoOnboarding', true)
         ->assertSet('pasoActual', 1)
         ->assertSee('Paso 1 de 6')
+        ->assertSee('RUT / Pasaporte')
         ->assertSee('Guardar y continuar')
         ->set('nombres', 'María')
         ->set('apellidos', 'Fuentes')

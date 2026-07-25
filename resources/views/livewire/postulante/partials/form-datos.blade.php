@@ -4,11 +4,11 @@
         <flux:input wire:model="nombres" label="Nombres *" maxlength="50" />
         <flux:input wire:model="apellidos" label="Apellidos *" maxlength="50" />
         <flux:field class="md:col-span-2 md:max-w-md">
-            <flux:label>{{ $tipoDocumento === 'pasaporte' ? 'Pasaporte *' : 'RUN *' }}</flux:label>
+            <flux:label>RUT / Pasaporte *</flux:label>
             <div class="flex items-start gap-2">
                 <div class="w-[130px] shrink-0">
                     <flux:select wire:model.live="tipoDocumento">
-                        <flux:select.option value="rut">RUN</flux:select.option>
+                        <flux:select.option value="rut">RUT</flux:select.option>
                         <flux:select.option value="pasaporte">Pasaporte</flux:select.option>
                     </flux:select>
                 </div>
