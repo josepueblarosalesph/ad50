@@ -12,6 +12,14 @@ class Postulacion extends Model
     /** @use HasFactory<PostulacionFactory> */
     use HasFactory;
 
+    /** Estados de la postulación en el flujo de revisión de la empresa. */
+    public const ESTADOS = [
+        'enviada' => 'Enviada',
+        'en_revision' => 'En revisión',
+        'seleccionada' => 'Seleccionada',
+        'descartada' => 'Descartada',
+    ];
+
     protected $table = 'postulaciones';
 
     protected $fillable = [
@@ -40,5 +48,10 @@ class Postulacion extends Model
     public function postulante(): BelongsTo
     {
         return $this->belongsTo(Postulante::class);
+    }
+
+    public function estadoLabel(): string
+    {
+        return self::ESTADOS[$this->estado] ?? ucfirst((string) $this->estado);
     }
 }

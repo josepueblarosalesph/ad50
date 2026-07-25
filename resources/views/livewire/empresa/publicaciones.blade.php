@@ -31,7 +31,7 @@
                         <tr wire:key="publicacion-{{ $publicacion->id }}" class="border-b border-line last:border-0">
                             <td class="p-4"><p class="font-bold text-ink">{{ $publicacion->cargo }}</p><p class="mt-1 text-[12px] text-gray-500">{{ $publicacion->tipo_cargo }} · {{ $publicacion->vacantes }} vacante(s)</p></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->comuna }} · {{ $publicacion->modalidad }}</td>
-                            <td class="p-4 font-bold text-orange-600">{{ $publicacion->postulaciones_count }}</td>
+                            <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 font-bold text-orange-600 underline decoration-orange-200 underline-offset-4 transition hover:bg-orange-100 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600" aria-label="Ver las {{ $publicacion->postulaciones_count }} postulaciones de {{ $publicacion->cargo }}">{{ $publicacion->postulaciones_count }}</a></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</td>
                             <td class="p-4">
                                 <select wire:change="cambiarEstado({{ $publicacion->id }}, $event.target.value)" class="rounded-lg border border-line-2 bg-paper px-2.5 py-1.5 text-[13px] font-bold">

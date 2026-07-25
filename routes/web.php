@@ -14,6 +14,7 @@ use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Empresa\NuevaPublicacion;
 use App\Livewire\Empresa\Panel as EmpresaPanel;
 use App\Livewire\Empresa\Planes as EmpresaPlanes;
+use App\Livewire\Empresa\Postulaciones as EmpresaPostulaciones;
 use App\Livewire\Empresa\Publicaciones as EmpresaPublicaciones;
 use App\Livewire\Empresa\Resultados;
 use App\Livewire\Landing;
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/empresa/candidatos/{match}', Candidato::class)->name('empresa.candidatos.show');
         Route::get('/empresa/publicaciones', EmpresaPublicaciones::class)->name('empresa.publicaciones.index');
         Route::get('/empresa/publicaciones/nueva', NuevaPublicacion::class)->name('empresa.publicaciones.create');
+        Route::get('/empresa/publicaciones/{publicacion}/postulaciones', EmpresaPostulaciones::class)->name('empresa.publicaciones.postulaciones');
     });
 
     Route::get('/admin', AdminPanel::class)->name('admin.panel');
