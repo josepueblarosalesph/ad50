@@ -25,11 +25,11 @@
     <section class="ad-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-[14px]">
-                <thead><tr class="ad-thead-row"><th class="p-4">Publicación</th><th class="p-4">Ubicación</th><th class="p-4">Postulaciones</th><th class="p-4">Vigencia</th><th class="p-4">Estado</th></tr></thead>
+                <thead><tr class="ad-thead-row"><th class="p-4">Publicación</th><th class="p-4">Ubicación</th><th class="p-4">Postulaciones</th><th class="p-4">Vigencia</th><th class="p-4">Estado</th><th class="p-4"></th></tr></thead>
                 <tbody>
                     @forelse ($publicaciones as $publicacion)
                         <tr wire:key="publicacion-{{ $publicacion->id }}" class="border-b border-line last:border-0">
-                            <td class="p-4"><p class="font-bold text-ink">{{ $publicacion->cargo }}</p><p class="mt-1 text-[12px] text-gray-500">{{ $publicacion->tipo_cargo }} · {{ $publicacion->vacantes }} vacante(s)</p></td>
+                            <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="rounded-lg font-bold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">{{ $publicacion->cargo }}</a><p class="mt-1 text-[12px] text-gray-500">{{ $publicacion->tipo_cargo }} · {{ $publicacion->vacantes }} vacante(s)</p></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->comuna }} · {{ $publicacion->modalidad }}</td>
                             <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 font-bold text-orange-600 underline decoration-orange-200 underline-offset-4 transition hover:bg-orange-100 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600" aria-label="Ver las {{ $publicacion->postulaciones_count }} postulaciones de {{ $publicacion->cargo }}">{{ $publicacion->postulaciones_count }}</a></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</td>
@@ -40,9 +40,10 @@
                                     @endforeach
                                 </select>
                             </td>
+                            <td class="p-4 text-right"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver postulantes</a></td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="p-10 text-center"><flux:icon.megaphone class="mx-auto size-8 text-gray-400" /><h2 class="mt-3 font-bold">Aún no tienes publicaciones</h2><p class="mt-2 text-[13px] text-gray-500">Publica una oportunidad para comenzar a recibir postulaciones.</p><a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm mt-4">Crear publicación</a></td></tr>
+                        <tr><td colspan="6" class="p-10 text-center"><flux:icon.megaphone class="mx-auto size-8 text-gray-400" /><h2 class="mt-3 font-bold">Aún no tienes publicaciones</h2><p class="mt-2 text-[13px] text-gray-500">Publica una oportunidad para comenzar a recibir postulaciones.</p><a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm mt-4">Crear publicación</a></td></tr>
                     @endforelse
                 </tbody>
             </table>
