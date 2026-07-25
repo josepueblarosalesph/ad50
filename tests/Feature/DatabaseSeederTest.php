@@ -4,6 +4,7 @@ use App\Models\Busqueda;
 use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
+use App\Models\Publicacion;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 
@@ -20,6 +21,10 @@ test('database seeders create diverse and filterable demo data', function () {
         ->and(Postulante::query()->whereNotNull('idiomas')->count())->toBe(18)
         ->and(Postulante::query()->whereNotNull('experiencias')->count())->toBe(18)
         ->and(Busqueda::query()->has('candidatos')->count())->toBe(12)
+        ->and(Publicacion::query()->count())->toBe(8)
+        ->and(Publicacion::query()->distinct()->count('modalidad'))->toBe(3)
+        ->and(Publicacion::query()->distinct()->count('comuna'))->toBeGreaterThanOrEqual(6)
+        ->and(Publicacion::query()->where('estado', 'publicada')->count())->toBe(8)
         ->and(Plan::query()->where('audiencia', 'empresa')->count())->toBe(3)
         ->and(Plan::query()->where('codigo', 'empresa_basic')->firstOrFail()->precio_uf)->toBe('5.00')
         ->and(Plan::query()->where('codigo', 'empresa_pro')->firstOrFail()->precio_uf)->toBe('30.00')
@@ -34,5 +39,6 @@ test('database seeders are idempotent', function () {
 
     expect(Postulante::query()->count())->toBe(18)
         ->and(Empresa::query()->count())->toBe(5)
-        ->and(Busqueda::query()->count())->toBe(12);
+        ->and(Busqueda::query()->count())->toBe(12)
+        ->and(Publicacion::query()->count())->toBe(8);
 });

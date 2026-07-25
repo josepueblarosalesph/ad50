@@ -4,12 +4,13 @@
     <x-slot:nav>
         <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi Panel</a>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mis Procesos</a>
+        <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Publicaciones</a>
         @if (auth()->user()->esPrincipalEmpresa())
             <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
         @endif
     </x-slot:nav>
 
-    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[27px] font-extrabold">Hola, {{ $empresa?->razon_social ?? auth()->user()->name }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Resumen de tu actividad de selección.</p></div><a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm">+ Nuevo proceso</a></div>
+    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[27px] font-extrabold">Hola, {{ $empresa?->razon_social ?? auth()->user()->name }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Resumen de tu actividad de selección.</p></div><div class="flex flex-wrap gap-3"><a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm">+ Nueva publicación</a><a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm">+ Nuevo proceso</a></div></div>
 
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         @foreach ([['Procesos activos', $busquedas->whereIn('estado', \App\Models\Busqueda::ESTADOS_ACTIVOS)->count(), 'Procesos vigentes'], ['Candidatos que cumplen', $totalCandidatos, 'Resultados acumulados']] as [$label, $value, $detail])

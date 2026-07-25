@@ -13,6 +13,8 @@ class DatabaseSeeder extends Seeder
             PostulanteSeeder::class,
             EmpresaSeeder::class,
             BusquedaSeeder::class,
+            PublicacionSeeder::class,
+            PostulacionSeeder::class,
         ]);
     }
 }

@@ -147,4 +147,9 @@ class Postulante extends Model
     {
         return $this->hasMany(BusquedaCandidato::class);
     }
+
+    public function postulaciones(): HasMany
+    {
+        return $this->hasMany(Postulacion::class);
+    }
 }

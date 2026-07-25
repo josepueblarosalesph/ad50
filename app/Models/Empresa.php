@@ -73,6 +73,11 @@ class Empresa extends Model
         return $this->hasMany(Busqueda::class);
     }
 
+    public function publicaciones(): HasMany
+    {
+        return $this->hasMany(Publicacion::class);
+    }
+
     /** Todos los usuarios del equipo (principal + adicionales). */
     public function usuarios(): HasMany
     {

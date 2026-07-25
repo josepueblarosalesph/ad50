@@ -9,6 +9,7 @@ use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\Postulante;
+use App\Models\Publicacion;
 use App\Models\User;
 use App\Support\CatalogosProfesionales;
 use Livewire\Livewire;
@@ -326,7 +327,7 @@ test('a postulante can view the panel and professional profile', function () {
 
     $this->actingAs($user)->get(route('postulante.busquedas'))
         ->assertOk()
-        ->assertSee('dark:bg-[#222528]', false);
+        ->assertSee('Oportunidades para tu experiencia');
 
     $ficha = file_get_contents(resource_path('views/livewire/postulante/ficha.blade.php'));
 
@@ -430,7 +431,7 @@ test('a postulante cannot save a gender outside the available options', function
         ->assertHasErrors(['genero' => 'in']);
 });
 
-test('the postulante panel summarizes three searches and the searches page lists them all', function () {
+test('the postulante panel summarizes matching and the opportunities page lists publications', function () {
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true]);
     $empresaUser = User::factory()->create(['role' => 'empresa']);
@@ -444,6 +445,11 @@ test('the postulante panel summarizes three searches and the searches page lists
             'criterios_cumplidos' => 1,
             'criterios_totales' => 1,
         ]);
+        Publicacion::factory()->create([
+            'empresa_id' => $empresa->id,
+            'nombre_empresa' => $empresa->razon_social,
+            'cargo' => "Publicación {$index}",
+        ]);
     }
 
     Livewire::actingAs($postulanteUser)
@@ -454,9 +460,9 @@ test('the postulante panel summarizes three searches and the searches page lists
 
     Livewire::actingAs($postulanteUser)
         ->test(PostulanteBusquedas::class)
-        ->assertViewHas('matches', fn ($matches) => $matches->total() === 5)
-        ->assertSee('Búsqueda 1')
-        ->assertSee('Búsqueda 5');
+        ->assertViewHas('publicaciones', fn ($publicaciones) => $publicaciones->total() === 5)
+        ->assertSee('Publicación 1')
+        ->assertSee('Publicación 5');
 });
 
 test('a postulante can update every section of the professional profile', function () {

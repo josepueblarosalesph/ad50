@@ -41,6 +41,7 @@
                         <flux:menu>
                             <flux:menu.item :href="route('profile.edit')" icon="user">Mi cuenta</flux:menu.item>
                             @if (auth()->user()?->role === 'empresa')
+                                <flux:menu.item :href="route('empresa.publicaciones.index')" icon="megaphone">Publicaciones</flux:menu.item>
                                 <flux:menu.item :href="route('empresa.planes')" icon="credit-card">Mi suscripción</flux:menu.item>
                             @endif
                             <flux:menu.item :href="route('appearance.edit')" icon="cog-6-tooth">Configuración</flux:menu.item>

@@ -6,7 +6,7 @@
     @php($nav = [
         ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
         ['label' => 'Mi perfil', 'href' => route('postulante.ficha')],
-        ['label' => 'Procesos que me incluyen', 'href' => route('postulante.busquedas')],
+        ['label' => 'Oportunidades', 'href' => route('postulante.busquedas')],
     ])
     @foreach ($nav as $item)
         <a href="{{ $item['href'] }}"
