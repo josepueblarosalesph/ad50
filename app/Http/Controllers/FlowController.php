@@ -56,9 +56,11 @@ class FlowController extends Controller
             $pago = null;
         }
 
-        // Pago confirmado → el plan queda vigente y puede entrar al panel.
+        // Pago confirmado → completa los datos pendientes antes de entrar al panel.
         if ($pago?->estaPagado()) {
-            return redirect()->route('empresa.panel')->with('status', '¡Pago confirmado! Tu plan quedó activo.');
+            $route = $pago->empresa->datosEnviados() ? 'empresa.panel' : 'empresa.activacion';
+
+            return redirect()->route($route)->with('status', '¡Pago confirmado! Tu plan quedó activo.');
         }
 
         $mensaje = match ((int) ($estado['status'] ?? 0)) {

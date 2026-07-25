@@ -12,7 +12,7 @@
             <span class="ad-eyebrow">Usuarios de la empresa</span>
             <h1 class="mt-3 text-[30px] font-extrabold">Equipo de {{ $empresa->razon_social }}</h1>
             <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">
-                Puedes sumar hasta {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} usuarios adicionales que comparten el acceso al panel.
+                La empresa tiene un contacto administrador y puede sumar hasta {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} contactos usuarios que comparten el acceso al panel.
                 Se agregan de a uno. Te quedan <b class="text-ink">{{ $disponibles }}</b> disponible(s).
             </p>
         </div>
@@ -38,14 +38,14 @@
                         <tr class="border-b border-line">
                             <td class="p-4 font-semibold">{{ $principal->name }}</td>
                             <td class="p-4 text-gray-500">{{ $principal->email }}</td>
-                            <td class="p-4"><span class="ad-chip ad-chip-orange">Contacto principal</span></td>
+                            <td class="p-4"><span class="ad-chip ad-chip-orange">Contacto administrador</span></td>
                             <td class="p-4"></td>
                         </tr>
                         @foreach ($adicionales as $usuario)
                             <tr class="border-b border-line last:border-0">
                                 <td class="p-4 font-semibold">{{ $usuario->name }}</td>
                                 <td class="p-4 text-gray-500">{{ $usuario->email }}</td>
-                                <td class="p-4"><span class="ad-chip">Usuario adicional</span></td>
+                                <td class="p-4"><span class="ad-chip">Contacto usuario</span></td>
                                 <td class="p-4 text-right">
                                     <button type="button"
                                             wire:click="eliminar({{ $usuario->id }})"

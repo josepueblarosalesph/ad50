@@ -7,7 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use Livewire\Livewire;
 
-test('an empresa without data is redirected to the activation form', function () {
+test('an empresa without a paid plan is redirected to choose a plan before entering data', function () {
     $user = User::factory()->create(['role' => 'empresa']);
     Empresa::query()->create([
         'user_id' => $user->id,
@@ -17,22 +17,29 @@ test('an empresa without data is redirected to the activation form', function ()
 
     $this->actingAs($user)
         ->get(route('empresa.panel'))
-        ->assertRedirect(route('empresa.activacion'));
+        ->assertRedirect(route('empresa.planes'));
 
     $this->actingAs($user)
         ->get(route('empresa.activacion'))
+        ->assertRedirect(route('empresa.planes'));
+
+    $this->actingAs($user)
+        ->get(route('empresa.planes'))
         ->assertOk()
-        ->assertSee('Contacto principal')
-        ->assertSee('Contacto técnico');
+        ->assertSee('Primer paso para activar tu cuenta');
 });
 
-test('submitting the data self-activates and sends the empresa to choose a plan', function () {
+test('an empresa completes its data after paying and is sent to the panel', function () {
     $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
     $empresa = Empresa::query()->create([
         'user_id' => $user->id,
         'razon_social' => 'Empresa Pendiente SpA',
         'telefono' => '+56 9 1111 1111',
         'estado_activacion' => 'inactiva',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
     ]);
 
     Livewire::actingAs($user)
@@ -42,7 +49,7 @@ test('submitting the data self-activates and sends the empresa to choose a plan'
         ->set('contactoPrincipalCargo', 'Gerenta de Personas')
         ->call('guardar')
         ->assertHasNoErrors()
-        ->assertRedirect(route('empresa.planes'));
+        ->assertRedirect(route('empresa.panel'));
 
     $this->assertDatabaseHas('empresas', [
         'id' => $empresa->id,
@@ -54,13 +61,17 @@ test('submitting the data self-activates and sends the empresa to choose a plan'
     expect($empresa->fresh()->datos_enviados_at)->not->toBeNull();
 });
 
-test('the technical contact is optional and its cargo is stored', function () {
+test('the administrator can enable all three contact users during onboarding', function () {
     $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
     $empresa = Empresa::query()->create([
         'user_id' => $user->id,
         'razon_social' => 'Empresa Sin Técnico SpA',
         'telefono' => '+56 9 1111 1111',
         'estado_activacion' => 'inactiva',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
     ]);
 
     Livewire::actingAs($user)
@@ -68,29 +79,29 @@ test('the technical contact is optional and its cargo is stored', function () {
         ->set('rut', '98421157')
         ->set('rubro', 'Servicios profesionales')
         ->set('contactoPrincipalCargo', 'Gerenta de Personas')
+        ->set('usuarios.0.nombre', 'Tomás')
+        ->set('usuarios.0.apellidos', 'Pérez')
+        ->set('usuarios.0.email', 'tomas@empresa.cl')
+        ->set('usuarios.0.password', 'secreto123')
+        ->set('usuarios.1.nombre', 'Carla')
+        ->set('usuarios.1.apellidos', 'Rojas')
+        ->set('usuarios.1.email', 'carla@empresa.cl')
+        ->set('usuarios.1.password', 'secreto456')
+        ->set('usuarios.2.nombre', 'Diego')
+        ->set('usuarios.2.apellidos', 'Soto')
+        ->set('usuarios.2.email', 'diego@empresa.cl')
+        ->set('usuarios.2.password', 'secreto789')
         ->call('guardar')
         ->assertHasNoErrors();
 
-    expect($empresa->fresh()->datos_enviados_at)->not->toBeNull()
-        ->and($empresa->fresh()->contacto_tecnico_nombre)->toBe('');
-
-    Livewire::actingAs($user)
-        ->test(Activacion::class)
-        ->set('rut', '98421157')
-        ->set('rubro', 'Servicios profesionales')
-        ->set('contactoPrincipalCargo', 'Gerenta de Personas')
-        ->set('contactoTecnicoNombre', 'Tomás Pérez')
-        ->set('contactoTecnicoCargo', 'Jefe de TI')
-        ->set('contactoTecnicoEmail', 'ti@empresa.cl')
-        ->call('guardar')
-        ->assertHasNoErrors();
-
-    $this->assertDatabaseHas('empresas', [
-        'id' => $empresa->id,
-        'contacto_tecnico_nombre' => 'Tomás Pérez',
-        'contacto_tecnico_cargo' => 'Jefe de TI',
-        'contacto_tecnico_email' => 'ti@empresa.cl',
+    $this->assertDatabaseHas('users', [
+        'name' => 'Tomás Pérez',
+        'email' => 'tomas@empresa.cl',
+        'role' => 'empresa',
+        'empresa_id' => $empresa->id,
     ]);
+
+    expect($empresa->fresh()->usuariosAdicionales()->count())->toBe(3);
 });
 
 test('an empresa with data but without a paid plan is sent to choose a plan', function () {
@@ -134,7 +145,7 @@ test('an empresa with a paid plan but no submitted data does not loop', function
         // datos_enviados_at nulo a propósito.
     ]);
 
-    // Activación se muestra (no rebota al panel) y el panel lo manda a activación.
+    // Tras pagar, la activación se muestra y el panel exige completar los datos.
     $this->actingAs($user)->get(route('empresa.activacion'))->assertOk();
     $this->actingAs($user)->get(route('empresa.panel'))->assertRedirect(route('empresa.activacion'));
 });

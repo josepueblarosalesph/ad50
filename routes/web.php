@@ -40,7 +40,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
     });
 
-    // Pasos de onboarding de empresa (no requieren plan pagado): completar datos y pagar.
+    // Pasos del onboarding de empresa: pagar y luego completar los datos.
     Route::get('/empresa/activacion', EmpresaActivacion::class)->name('empresa.activacion');
     Route::get('/empresa/planes', EmpresaPlanes::class)->name('empresa.planes');
 

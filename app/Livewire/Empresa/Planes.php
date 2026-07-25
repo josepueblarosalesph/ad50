@@ -19,8 +19,10 @@ class Planes extends Component
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
 
-        // El primer paso del onboarding es completar los datos; recién ahí se paga.
-        if (! (auth()->user()->empresa?->datosEnviados() ?? false)) {
+        // Tras pagar, el siguiente paso del onboarding es completar los datos.
+        $empresa = auth()->user()->empresa;
+
+        if (($empresa?->planVigente() ?? false) && ! $empresa->datosEnviados()) {
             $this->redirectRoute('empresa.activacion', navigate: true);
         }
     }

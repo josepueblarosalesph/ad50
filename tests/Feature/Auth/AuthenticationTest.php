@@ -10,7 +10,7 @@ test('login screen can be rendered', function () {
         ->assertOk()
         ->assertSeeText('Tu experiencia sigue en movimiento.')
         ->assertSeeText('Ingresar a mi cuenta')
-        ->assertSee('/images/ad50-hero-profesionales-trabajando.webp', false)
+        ->assertSee('/images/ad50-hero-profesionales-trabajando-v2.webp', false)
         ->assertSee('/images/ad50-logo.png', false);
 });
 
@@ -22,7 +22,7 @@ test('authenticated users are redirected from login to their role dashboard', fu
         ->assertRedirect(route($dashboardRoute, absolute: false));
 })->with([
     'postulante' => ['postulante', 'postulante.panel'],
-    'empresa' => ['empresa', 'empresa.activacion'],
+    'empresa' => ['empresa', 'empresa.planes'],
     'admin' => ['admin', 'admin.panel'],
 ]);
 
@@ -41,7 +41,7 @@ test('users are redirected to their role dashboard after authentication', functi
     $this->assertAuthenticated();
 })->with([
     'postulante' => ['postulante', 'postulante.panel'],
-    'empresa' => ['empresa', 'empresa.activacion'],
+    'empresa' => ['empresa', 'empresa.planes'],
     'admin' => ['admin', 'admin.panel'],
 ]);
 

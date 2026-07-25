@@ -6,7 +6,7 @@ use App\Models\User;
 use Livewire\Livewire;
 
 /**
- * Crea un contacto principal (dueño) con su empresa activa.
+ * Crea un contacto administrador con su empresa activa.
  *
  * @return array{0: User, 1: Empresa}
  */
@@ -24,7 +24,7 @@ function crearEmpresaConPrincipal(): array
     return [$principal->fresh(), $empresa->fresh()];
 }
 
-test('el contacto principal puede agregar usuarios adicionales de a uno', function () {
+test('el contacto administrador puede agregar contactos usuarios de a uno', function () {
     [$principal, $empresa] = crearEmpresaConPrincipal();
 
     Livewire::actingAs($principal)

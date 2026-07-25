@@ -72,8 +72,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return match ($this->role) {
             'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.panel',
             'empresa' => match (true) {
-                ! ($this->empresa?->datosEnviados()) => 'empresa.activacion',
-                ! $this->empresa->planVigente() => 'empresa.planes',
+                ! ($this->empresa?->planVigente()) => 'empresa.planes',
+                ! $this->empresa->datosEnviados() => 'empresa.activacion',
                 default => 'empresa.panel',
             },
             'admin' => 'admin.panel',
@@ -97,7 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Empresa de la que este usuario es contacto principal (dueño), vía empresas.user_id.
+     * Empresa de la que este usuario es contacto administrador (dueño), vía empresas.user_id.
      * Se conserva como relación para poder hacer `->empresa()->update(...)`.
      */
     public function empresa(): HasOne
@@ -112,8 +112,8 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * La empresa efectiva del usuario: la que posee (principal) o, si es un usuario
-     * adicional, aquella a la que pertenece. Resolver la del principal por ownership
+     * La empresa efectiva del usuario: la que administra o, si es un contacto usuario,
+     * aquella a la que pertenece. Resolver la del administrador por ownership
      * (no por empresa_id) evita depender de que la columna esté cargada en memoria.
      */
     public function getEmpresaAttribute(): ?Empresa
@@ -125,7 +125,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         return $this->getRelation('empresa');
     }
 
-    /** Es el contacto principal (dueño) de su empresa. */
+    /** Es el contacto administrador (dueño) de su empresa. */
     public function esPrincipalEmpresa(): bool
     {
         return $this->role === 'empresa'

@@ -19,14 +19,14 @@ class EnsureEmpresaActiva
 
         $empresa = $request->user()->empresa;
 
-        // 1) Debe completar sus datos de activación.
-        if ($empresa === null || ! $empresa->datosEnviados()) {
-            return redirect()->route('empresa.activacion');
+        // 1) Debe elegir y pagar un plan.
+        if ($empresa === null || ! $empresa->planVigente()) {
+            return redirect()->route('empresa.planes');
         }
 
-        // 2) Debe tener un plan pagado vigente para acceder al panel.
-        if (! $empresa->planVigente()) {
-            return redirect()->route('empresa.planes');
+        // 2) Con el pago confirmado, completa el resto de los datos.
+        if (! $empresa->datosEnviados()) {
+            return redirect()->route('empresa.activacion');
         }
 
         return $next($request);

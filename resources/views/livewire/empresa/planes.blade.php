@@ -28,8 +28,8 @@
             <div class="mb-6 flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 dark:bg-[#33251D]">
                 <span class="grid size-9 flex-none place-items-center rounded-xl bg-orange-500 text-white"><flux:icon.credit-card class="size-5" /></span>
                 <div>
-                    <p class="text-[14px] font-extrabold text-ink">Último paso para activar tu cuenta</p>
-                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">Elige un plan y realiza el pago para acceder al panel y empezar a revisar candidatos.</p>
+                    <p class="text-[14px] font-extrabold text-ink">Primer paso para activar tu cuenta</p>
+                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">Elige un plan y realiza el pago. Después completarás los datos restantes de tu empresa.</p>
                 </div>
             </div>
         @endunless

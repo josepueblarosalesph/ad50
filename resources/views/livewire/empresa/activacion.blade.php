@@ -10,21 +10,21 @@
             <div>
                 <span class="ad-eyebrow">Activación de empresa</span>
                 <h1 class="mt-3 text-[30px] font-extrabold">Completa los datos de tu empresa</h1>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Completa estos datos para activar tu cuenta. Luego elegirás un plan y realizarás el pago para acceder a los perfiles.</p>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Tu pago ya fue confirmado. Completa los datos restantes para terminar de activar tu cuenta y acceder a los perfiles.</p>
             </div>
         </div>
 
         @if ($empresa->estado_activacion === 'inactiva')
             <div class="mb-6 overflow-hidden rounded-[20px] border border-orange-200 bg-gradient-to-br from-orange-50 to-paper p-6 sm:p-8">
                 <h2 class="text-[22px] font-extrabold">¡Bienvenido! 👋</h2>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-600">Para comenzar a usar la plataforma solo necesitas completar <b class="text-ink">2 pasos</b>:</p>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-600">Ya completaste el pago. Solo falta ingresar los datos de tu empresa:</p>
 
                 <div class="mt-6 flex flex-col items-stretch gap-4 sm:flex-row">
                     <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
                         <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">1</span>
                         <div>
-                            <div class="flex items-center gap-2"><flux:icon.building-office-2 class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Completa los datos de tu empresa</h3></div>
-                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Razón social, RUT y datos de contacto.</p>
+                            <div class="flex items-center gap-2"><flux:icon.check class="size-5 flex-none text-match" /><h3 class="text-[15px] font-extrabold text-ink">Plan pagado</h3></div>
+                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Tu suscripción ya se encuentra activa.</p>
                         </div>
                     </div>
 
@@ -33,8 +33,8 @@
                     <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
                         <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">2</span>
                         <div>
-                            <div class="flex items-center gap-2"><flux:icon.credit-card class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Elige tu plan y paga</h3></div>
-                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Activa tu cuenta y accede al panel.</p>
+                            <div class="flex items-center gap-2"><flux:icon.building-office-2 class="size-5 flex-none text-orange-600" /><h3 class="text-[15px] font-extrabold text-ink">Completa los datos de tu empresa</h3></div>
+                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Razón social, RUT y datos de contacto.</p>
                         </div>
                     </div>
                 </div>
@@ -59,7 +59,7 @@
             </section>
 
             <section class="ad-card">
-                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contacto principal</h2><p class="mt-1 text-[13px] text-gray-500">Persona responsable de la cuenta y los procesos de selección.</p></div></div>
+                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contacto administrador</h2><p class="mt-1 text-[13px] text-gray-500">Única persona responsable de administrar la cuenta, el plan y los usuarios.</p></div></div>
                 <div class="grid gap-4 p-6 md:grid-cols-2">
                     <flux:input wire:model="contactoPrincipalNombre" label="Nombre completo *" />
                     <flux:input wire:model="contactoPrincipalCargo" label="Cargo *" />
@@ -72,19 +72,27 @@
             </section>
 
             <section class="ad-card">
-                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contacto técnico <span class="text-[13px] font-semibold text-gray-400">(opcional)</span></h2><p class="mt-1 text-[13px] text-gray-500">Persona a quien contactar ante temas de acceso, seguridad o integración.</p></div></div>
-                <div class="grid gap-4 p-6 md:grid-cols-2">
-                    <flux:input wire:model="contactoTecnicoNombre" label="Nombre completo" />
-                    <flux:input wire:model="contactoTecnicoCargo" label="Cargo" />
-                    <flux:input wire:model="contactoTecnicoEmail" type="email" label="Email" />
-                    <x-input-telefono wire:model="contactoTecnicoTelefono" label="Teléfono" />
+                <div class="ad-card-head"><div><h2 class="text-[18px] font-extrabold">Contactos usuarios <span class="text-[13px] font-semibold text-gray-400">(opcionales)</span></h2><p class="mt-1 text-[13px] text-gray-500">Puedes habilitar ahora hasta tres usuarios adicionales con acceso al panel.</p></div></div>
+                <div class="grid gap-5 p-6">
+                    @foreach ($usuarios as $index => $usuario)
+                        <fieldset wire:key="usuario-{{ $index }}" class="rounded-[16px] border border-line-2 p-5">
+                            <legend class="px-2 text-[14px] font-extrabold text-ink">Usuario {{ $index + 1 }}</legend>
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <flux:input wire:model="usuarios.{{ $index }}.nombre" label="Nombres" />
+                                <flux:input wire:model="usuarios.{{ $index }}.apellidos" label="Apellidos" />
+                                <flux:input wire:model="usuarios.{{ $index }}.email" type="email" label="Email corporativo" />
+                                <flux:input wire:model="usuarios.{{ $index }}.password" type="password" label="Contraseña temporal" viewable />
+                            </div>
+                        </fieldset>
+                    @endforeach
+                    <p class="text-[13px] leading-relaxed text-gray-500">Completa todos los campos de cada usuario que quieras habilitar. Luego podrás agregarlos o eliminarlos desde la sección Equipo.</p>
                 </div>
             </section>
 
             <div class="ad-card flex flex-wrap items-center justify-between gap-4 p-5">
-                <p class="max-w-xl text-[13px] leading-relaxed text-gray-500">Al continuar, declaras que los datos son correctos. El siguiente paso es elegir tu plan y pagar.</p>
+                <p class="max-w-xl text-[13px] leading-relaxed text-gray-500">Al continuar, declaras que los datos son correctos y finalizarás la activación de tu cuenta.</p>
                 <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="guardar">
-                    <span wire:loading.remove wire:target="guardar">Guardar y elegir plan</span>
+                    <span wire:loading.remove wire:target="guardar">Guardar y finalizar</span>
                     <span wire:loading wire:target="guardar">Guardando…</span>
                 </button>
             </div>

@@ -68,7 +68,7 @@ test('a newly verified postulante is redirected to onboarding', function () {
         ->assertRedirect(route('postulante.ficha', ['verified' => 1]));
 });
 
-test('a newly verified empresa is redirected to its activation panel', function () {
+test('a newly verified empresa is redirected to choose and pay for a plan', function () {
     $user = User::factory()->unverified()->create(['role' => 'empresa']);
     Empresa::query()->create([
         'user_id' => $user->id,
@@ -84,7 +84,7 @@ test('a newly verified empresa is redirected to its activation panel', function 
 
     $this->actingAs($user)
         ->get($verificationUrl)
-        ->assertRedirect(route('empresa.activacion', ['verified' => 1]));
+        ->assertRedirect(route('empresa.planes', ['verified' => 1]));
 });
 
 test('email is not verified with invalid hash', function () {

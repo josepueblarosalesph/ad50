@@ -111,6 +111,31 @@ test('el webhook de Flow confirma el pago y activa la suscripcion de la empresa'
         ->and($empresa->fresh()->planVigente())->toBeTrue();
 });
 
+test('el retorno de un pago confirmado envia a completar los datos pendientes', function () {
+    [$user, $empresa, $plan] = empresaConPlanEmpresa();
+    $empresa->update(['datos_enviados_at' => null]);
+
+    Pago::query()->create([
+        'empresa_id' => $empresa->id,
+        'plan_id' => $plan->id,
+        'commerce_order' => 'AD50-998',
+        'flow_token' => 'TOK-RETORNO',
+        'amount' => 90000,
+        'estado' => 'pendiente',
+    ]);
+
+    Http::fake([
+        '*/payment/getStatus*' => Http::response([
+            'commerceOrder' => 'AD50-998',
+            'status' => 2,
+            'flowOrder' => 776,
+        ]),
+    ]);
+
+    $this->get(route('pagos.flow.retorno', ['token' => 'TOK-RETORNO']))
+        ->assertRedirect(route('empresa.activacion'));
+});
+
 test('el webhook es idempotente y no vuelve a extender la vigencia', function () {
     [$user, $empresa, $plan] = empresaConPlanEmpresa();
     $pago = Pago::query()->create([

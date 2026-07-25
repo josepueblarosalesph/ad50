@@ -23,7 +23,7 @@ class Equipo extends Component
 
     public function mount(): void
     {
-        // Solo el contacto principal gestiona el equipo.
+        // Solo el contacto administrador gestiona el equipo.
         abort_unless(auth()->user()->esPrincipalEmpresa(), 403);
     }
 

@@ -23,12 +23,6 @@
                 </li>
             @endforeach
         </ul>
-        <div class="flex gap-3 mt-10">
-            @foreach (['Sence','Icontec','Ley 21.719'] as $c)
-                <span class="text-[10px] font-bold tracking-wider text-white/60
-                             border border-white/15 rounded-md px-2.5 py-1.5 uppercase">{{ $c }}</span>
-            @endforeach
-        </div>
     </div>
 </aside>
 

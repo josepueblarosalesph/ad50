@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Empresa extends Model
 {
-    /** Máximo de usuarios adicionales que el contacto principal puede sumar. */
+    /** Máximo de contactos usuarios adicionales que el contacto administrador puede sumar. */
     public const MAX_USUARIOS_ADICIONALES = 3;
 
     protected $guarded = [];
@@ -21,7 +21,7 @@ class Empresa extends Model
 
     protected static function booted(): void
     {
-        // El contacto principal (dueño) pertenece a su propia empresa: al crearla
+        // El contacto administrador (dueño) pertenece a su propia empresa: al crearla
         // enlazamos su users.empresa_id si aún no lo tiene.
         static::created(function (Empresa $empresa): void {
             if ($empresa->user_id !== null) {
@@ -79,7 +79,7 @@ class Empresa extends Model
         return $this->hasMany(User::class);
     }
 
-    /** Usuarios adicionales, es decir todos menos el contacto principal. */
+    /** Contactos usuarios, es decir todos menos el contacto administrador. */
     public function usuariosAdicionales(): HasMany
     {
         return $this->usuarios()->where('id', '!=', $this->user_id);

@@ -2,9 +2,13 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Models\User;
+use App\Rules\EmailCorporativo;
 use App\Rules\RutValido;
 use App\Support\Rut;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -27,13 +31,10 @@ class Activacion extends Component
 
     public string $contactoPrincipalDescripcion = '';
 
-    public string $contactoTecnicoNombre = '';
-
-    public string $contactoTecnicoCargo = '';
-
-    public string $contactoTecnicoEmail = '';
-
-    public string $contactoTecnicoTelefono = '';
+    /**
+     * @var array<int, array{nombre: string, apellidos: string, email: string, password: string}>
+     */
+    public array $usuarios = [];
 
     public function mount(): void
     {
@@ -41,8 +42,13 @@ class Activacion extends Component
 
         $empresa = auth()->user()->empresa;
 
+        if (! ($empresa?->planVigente() ?? false)) {
+            $this->redirectRoute('empresa.planes', navigate: true);
+
+            return;
+        }
+
         // Solo si el onboarding está completo (datos + plan pagado) se va al panel.
-        // Ojo: no basta con planVigente, o se produce un bucle con el gate del panel.
         if ($empresa?->puedeOperar()) {
             $this->redirectRoute('empresa.panel', navigate: true);
 
@@ -57,14 +63,22 @@ class Activacion extends Component
         $this->contactoPrincipalEmail = $empresa?->contacto_principal_email ?? auth()->user()->email;
         $this->contactoPrincipalTelefono = $empresa?->contacto_principal_telefono ?? $empresa?->telefono ?? '';
         $this->contactoPrincipalDescripcion = $empresa?->contacto_principal_descripcion ?? '';
-        $this->contactoTecnicoNombre = $empresa?->contacto_tecnico_nombre ?? '';
-        $this->contactoTecnicoCargo = $empresa?->contacto_tecnico_cargo ?? '';
-        $this->contactoTecnicoEmail = $empresa?->contacto_tecnico_email ?? '';
-        $this->contactoTecnicoTelefono = $empresa?->contacto_tecnico_telefono ?? '';
+        $this->usuarios = array_fill(0, 3, [
+            'nombre' => '',
+            'apellidos' => '',
+            'email' => '',
+            'password' => '',
+        ]);
     }
 
     public function guardar(): void
     {
+        if (! (auth()->user()->empresa?->planVigente() ?? false)) {
+            $this->redirectRoute('empresa.planes', navigate: true);
+
+            return;
+        }
+
         $this->rut = Rut::formatear($this->rut);
 
         $validated = $this->validate([
@@ -76,39 +90,51 @@ class Activacion extends Component
             'contactoPrincipalEmail' => ['required', 'email', 'max:255'],
             'contactoPrincipalTelefono' => ['required', 'string', 'max:30'],
             'contactoPrincipalDescripcion' => ['nullable', 'string', 'max:1000'],
-            'contactoTecnicoNombre' => ['nullable', 'string', 'max:160'],
-            'contactoTecnicoCargo' => ['nullable', 'string', 'max:120'],
-            'contactoTecnicoEmail' => ['nullable', 'email', 'max:255'],
-            'contactoTecnicoTelefono' => ['nullable', 'string', 'max:30'],
+            'usuarios' => ['array', 'max:3'],
+            'usuarios.*.nombre' => ['nullable', 'required_with:usuarios.*.apellidos,usuarios.*.email,usuarios.*.password', 'string', 'max:80'],
+            'usuarios.*.apellidos' => ['nullable', 'required_with:usuarios.*.nombre,usuarios.*.email,usuarios.*.password', 'string', 'max:80'],
+            'usuarios.*.email' => ['nullable', 'required_with:usuarios.*.nombre,usuarios.*.apellidos,usuarios.*.password', 'email', 'max:255', 'distinct', 'unique:users,email', new EmailCorporativo],
+            'usuarios.*.password' => ['nullable', 'required_with:usuarios.*.nombre,usuarios.*.apellidos,usuarios.*.email', 'string', 'min:8'],
         ]);
 
-        auth()->user()->empresa()->update([
-            'razon_social' => $validated['razonSocial'],
-            'rut' => $validated['rut'],
-            'rubro' => $validated['rubro'],
-            'contacto_principal_nombre' => $validated['contactoPrincipalNombre'],
-            'contacto_principal_cargo' => $validated['contactoPrincipalCargo'],
-            'contacto_principal_email' => $validated['contactoPrincipalEmail'],
-            'contacto_principal_telefono' => $validated['contactoPrincipalTelefono'],
-            'contacto_principal_descripcion' => $validated['contactoPrincipalDescripcion'],
-            'contacto_tecnico_nombre' => $validated['contactoTecnicoNombre'],
-            'contacto_tecnico_cargo' => $validated['contactoTecnicoCargo'],
-            'contacto_tecnico_email' => $validated['contactoTecnicoEmail'],
-            'contacto_tecnico_telefono' => $validated['contactoTecnicoTelefono'],
-            'estado_activacion' => 'activa', // autoservicio: sin aprobación manual
-            'datos_enviados_at' => now(),
-        ]);
+        DB::transaction(function () use ($validated): void {
+            $empresa = auth()->user()->empresa;
 
-        // Si ya tenía un plan vigente, el onboarding queda completo → panel.
-        // Si no, siguiente paso: elegir un plan y pagar.
-        if (auth()->user()->empresa->fresh()->planVigente()) {
-            $this->redirectRoute('empresa.panel', navigate: true);
+            $empresa->update([
+                'razon_social' => $validated['razonSocial'],
+                'rut' => $validated['rut'],
+                'rubro' => $validated['rubro'],
+                'contacto_principal_nombre' => $validated['contactoPrincipalNombre'],
+                'contacto_principal_cargo' => $validated['contactoPrincipalCargo'],
+                'contacto_principal_email' => $validated['contactoPrincipalEmail'],
+                'contacto_principal_telefono' => $validated['contactoPrincipalTelefono'],
+                'contacto_principal_descripcion' => $validated['contactoPrincipalDescripcion'],
+                'estado_activacion' => 'activa',
+                'datos_enviados_at' => now(),
+            ]);
 
-            return;
-        }
+            foreach ($validated['usuarios'] as $usuario) {
+                if ($usuario['email'] === '') {
+                    continue;
+                }
 
-        session()->flash('status', 'Tus datos quedaron guardados. Elige un plan para activar tu cuenta.');
-        $this->redirectRoute('empresa.planes', navigate: true);
+                $nuevoUsuario = User::create([
+                    'name' => trim($usuario['nombre'].' '.$usuario['apellidos']),
+                    'nombres' => $usuario['nombre'],
+                    'apellidos' => $usuario['apellidos'],
+                    'email' => $usuario['email'],
+                    'password' => Hash::make($usuario['password']),
+                    'role' => 'empresa',
+                    'empresa_id' => $empresa->id,
+                    'acepta_ley_21719' => true,
+                ]);
+
+                $nuevoUsuario->markEmailAsVerified();
+            }
+        });
+
+        session()->flash('status', 'Tus datos quedaron guardados. Tu cuenta ya está activa.');
+        $this->redirectRoute('empresa.panel', navigate: true);
     }
 
     #[Title('Activación de empresa · AD+50')]

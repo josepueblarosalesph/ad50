@@ -19,8 +19,8 @@
   --color-orange-100: #FCE8D8;
   --color-orange-200: #F7C59E;
   --color-orange-500: #E87722;   /* Pantone Solid Coated 158c */
-  --color-orange-600: #B94F08;   /* variante accesible para fondos con texto blanco */
-  --color-orange-700: #8F3B04;
+  --color-orange-600: #E87722;   /* acento de marca (mismo naranjo claro que "oportunidades") */
+  --color-orange-700: #8F3B04;   /* variante oscura solo para hover/estados */
 
   --color-ink:        #343638;
   --color-ink-2:      #4C4F51;
@@ -169,7 +169,7 @@ body [class~="text-[15px]"] {
     @apply inline-flex items-center justify-center gap-2 rounded-[12px] font-bold text-[16px]
            px-6 py-3.5 transition duration-200 whitespace-nowrap;
   }
-  .ad-btn-primary { @apply bg-orange-600 text-white shadow-[0_8px_20px_rgba(185,79,8,.22)] hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(143,59,4,.28)]; }
+  .ad-btn-primary { @apply bg-orange-600 text-white shadow-[0_8px_20px_rgba(232,119,34,.28)] hover:bg-orange-700 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(143,59,4,.28)]; }
   .ad-btn-dark    { @apply bg-ink text-white hover:bg-black; }
   .ad-btn-ghost   { @apply bg-transparent text-ink border-[1.5px] border-line-2 hover:border-ink hover:bg-white/60; }
   .ad-btn-light   { @apply bg-white/90 text-[#343638] border-[1.5px] border-white hover:bg-white; }

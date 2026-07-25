@@ -25,8 +25,8 @@
                 </div>
                 <div class="grid gap-5 py-5 md:grid-cols-3">
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Cuenta</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->user->name }}</p><p class="text-[13px] text-gray-500">{{ $empresa->user->email }}</p></div>
-                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contacto principal</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->contacto_principal_nombre }}</p><p class="text-[13px] text-gray-500">{{ $empresa->contacto_principal_cargo }} · {{ $empresa->contacto_principal_email }} · {{ $empresa->contacto_principal_telefono }}</p></div>
-                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contacto técnico</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->contacto_tecnico_nombre }}</p><p class="text-[13px] text-gray-500">{{ $empresa->contacto_tecnico_email }} · {{ $empresa->contacto_tecnico_telefono }}</p></div>
+                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contacto administrador</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->contacto_principal_nombre }}</p><p class="text-[13px] text-gray-500">{{ $empresa->contacto_principal_cargo }} · {{ $empresa->contacto_principal_email }} · {{ $empresa->contacto_principal_telefono }}</p></div>
+                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contactos usuarios</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->usuariosAdicionales()->count() }} de {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} habilitados</p></div>
                 </div>
                 <div class="flex justify-end border-t border-line pt-4">
                     <button type="button" wire:click="activar({{ $empresa->id }})" wire:confirm="¿Confirmas que revisaste los antecedentes y deseas habilitar esta empresa?" class="ad-btn-primary ad-btn-sm"><flux:icon.check-badge class="size-4" />Habilitar empresa</button>
