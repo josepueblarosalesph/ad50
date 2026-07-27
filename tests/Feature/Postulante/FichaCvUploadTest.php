@@ -26,7 +26,7 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
             'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
             'mencion' => 'Finanzas',
             'modalidad' => 'Presencial',
-            'situacion' => 'Titulado',
+            'situacion' => 'Titulado / Titulada',
             'inicio_anio' => 1989,
             'termino_anio' => 1995,
             'egreso_anio' => null,

@@ -10016,6 +10016,7 @@ return [
     'Dirección Técnica Complementario',
     'Directivo Docente',
     'Director',
+    'Directora',
     'Director Académico',
     'Director Adjunto',
     'Director Administración',

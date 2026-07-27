@@ -180,7 +180,7 @@ test('new criteria (idioma, nivel de estudios, situación laboral, expectativa d
         'situacion_laboral' => 'Buscando trabajo',
         'expectativa_renta' => 2000000,
         'idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Avanzado']],
-        'educaciones' => [['nivel' => 'Universitaria', 'situacion' => 'Titulado']],
+        'educaciones' => [['nivel' => 'Universitaria', 'situacion' => 'Titulado / Titulada']],
     ]);
 
     $noCalza = Postulante::query()->create([
@@ -624,7 +624,7 @@ test('choosing "Otros" for cargo or empresa requires specifying the free-text va
     $experiencia = [
         'cargo' => 'Otros', 'cargo_otro' => '',
         'tipo_trabajo' => 'Jornada completa',
-        'empresa' => 'Otros', 'empresa_otro' => '',
+        'empresa' => 'Otra', 'empresa_otro' => '',
         'jerarquia' => 'Jefatura',
         'actividad_empresa' => 'Banca y servicios financieros',
         'inicio_mes' => 1, 'inicio_anio' => 2010,
@@ -644,7 +644,7 @@ test('choosing "Otros" for cargo or empresa requires specifying the free-text va
         ->assertHasNoErrors();
 
     expect($user->postulante->fresh()->experiencias[0])
-        ->toMatchArray(['cargo' => 'Otros', 'cargo_otro' => 'Analista de Riesgo', 'empresa' => 'Otros', 'empresa_otro' => 'Consultora Independiente'])
+        ->toMatchArray(['cargo' => 'Otros', 'cargo_otro' => 'Analista de Riesgo', 'empresa' => 'Otra', 'empresa_otro' => 'Consultora Independiente'])
         ->and($user->postulante->fresh()->cargo_actual)->toBe('Analista de Riesgo')
         ->and($user->postulante->fresh()->empresa_actual)->toBe('Consultora Independiente');
 });
@@ -661,7 +661,7 @@ test('a cargo entered as "Otros" free text participates in the matching', functi
         'cargo_actual' => 'Analista Finanzas Corporativas',
         'experiencias' => [[
             'cargo' => 'Otros', 'cargo_otro' => 'Analista Finanzas Corporativas',
-            'empresa' => 'Otros', 'empresa_otro' => 'Consultora Independiente',
+            'empresa' => 'Otra', 'empresa_otro' => 'Consultora Independiente',
             'actividad_empresa' => 'Finanzas', 'inicio' => 2010, 'fin' => 2026,
         ]],
     ]);
@@ -674,7 +674,7 @@ test('a cargo entered as "Otros" free text participates in the matching', functi
         'cargo_actual' => 'Jefe de Bodega',
         'experiencias' => [[
             'cargo' => 'Otros', 'cargo_otro' => 'Jefe de Bodega',
-            'empresa' => 'Otros', 'empresa_otro' => 'Logística Sur',
+            'empresa' => 'Otra', 'empresa_otro' => 'Logística Sur',
             'actividad_empresa' => 'Logística / Cadena de suministros', 'inicio' => 2010, 'fin' => 2026,
         ]],
     ]);

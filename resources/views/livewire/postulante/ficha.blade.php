@@ -7,7 +7,7 @@
         @endunless
         <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil</a>
         @unless ($modoOnboarding)
-            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Procesos que me incluyen</a>
+            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Oportunidades</a>
         @endunless
     </x-slot:nav>
     @unless ($modoOnboarding)
@@ -181,7 +181,7 @@
                     @forelse ($experiencias as $exp)
                         <div class="rounded-[12px] border border-line-2 p-4">
                             <div class="flex flex-wrap items-baseline justify-between gap-2"><h3 class="text-[15px] font-bold text-ink">{{ (($exp['cargo'] ?? '') === 'Otros' ? ($exp['cargo_otro'] ?? '') : $exp['cargo']) ?: 'Cargo sin nombre' }}</h3><span class="text-[12px] font-semibold text-gray-500">{{ ($meses[$exp['inicio_mes']] ?? '') }} {{ $exp['inicio_anio'] }} — {{ $exp['actualmente'] ? 'Actualidad' : trim(($meses[$exp['fin_mes']] ?? '').' '.$exp['fin_anio']) }}</span></div>
-                            <p class="mt-0.5 text-[13px] font-semibold text-orange-600">{{ ($exp['empresa'] ?? '') === 'Otros' ? ($exp['empresa_otro'] ?? '') : $exp['empresa'] }}</p>
+                            <p class="mt-0.5 text-[13px] font-semibold text-orange-600">{{ in_array(($exp['empresa'] ?? ''), ['Otra', 'Otros'], true) ? ($exp['empresa_otro'] ?? '') : $exp['empresa'] }}</p>
                             @if (filled($exp['responsabilidades']))<p class="mt-2 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">{{ \Illuminate\Support\Str::limit($exp['responsabilidades'], 220) }}</p>@endif
                         </div>
                     @empty

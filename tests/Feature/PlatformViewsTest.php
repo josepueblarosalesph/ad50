@@ -394,10 +394,10 @@ test('a postulante can view the panel and professional profile', function () {
     $cargos = CatalogosProfesionales::cargos();
 
     expect($cargos)
-        ->toHaveCount(29957)
+        ->toHaveCount(29958)
         ->toContain('Otros', 'Abastecedor Logístico', 'Gerente Finanza')
         ->and($cargos[0])->toBe('Otros')
-        ->and(array_unique($cargos))->toHaveCount(29957);
+        ->and(array_unique($cargos))->toHaveCount(29958);
 
     // Dos juegos de secciones (paso a paso + editor de solo lectura) comparten el mismo estilo.
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(12);
@@ -408,14 +408,14 @@ test('a postulante can view the panel and professional profile', function () {
         ->not->toContain('dark:bg-[#252129]');
 });
 
-test('a postulante cannot select more than five regions or industries', function () {
+test('a postulante cannot select more than 5 regions or more than 6 industries', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id]);
 
     Livewire::actingAs($user)
         ->test(Ficha::class)
         ->set('regionesInteres', array_slice(CatalogosProfesionales::regiones(), 0, 6))
-        ->set('industriasInteres', array_slice(CatalogosProfesionales::industrias(), 0, 6))
+        ->set('industriasInteres', array_slice(CatalogosProfesionales::industrias(), 0, 7))
         ->call('save')
         ->assertHasErrors(['regionesInteres' => 'max', 'industriasInteres' => 'max']);
 });
@@ -513,7 +513,7 @@ test('a postulante can update every section of the professional profile', functi
                 'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
                 'mencion' => 'Finanzas',
                 'modalidad' => 'Presencial',
-                'situacion' => 'Titulado',
+                'situacion' => 'Titulado / Titulada',
                 'inicio_anio' => 1989,
                 'termino_anio' => 1995,
                 'egreso_anio' => null,
@@ -606,7 +606,7 @@ test('a postulante can update every section of the professional profile', functi
         ->and($educaciones[1])->toMatchArray([
             'nivel' => 'Universitaria',
             'modalidad' => 'Presencial',
-            'situacion' => 'Titulado',
+            'situacion' => 'Titulado / Titulada',
         ])
         ->and($idiomas)->toBe([
             ['idioma' => 'Español', 'nivel' => 'Avanzado'],

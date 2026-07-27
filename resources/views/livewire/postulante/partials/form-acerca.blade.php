@@ -11,6 +11,7 @@
                 :habilidades="$habilidades"
                 :sugerencias="$this->habilidadesSugeridas()"
                 :buscar="$buscarHabilidad"
+                :max="6"
             />
         </div>
 
@@ -29,13 +30,13 @@
 
         <x-selector-colapsable
             titulo="Industrias de interés"
-            descripcion="Marca hasta 5 alternativas ({{ count($industriasInteres) }} de 5)."
+            descripcion="Marca hasta 6 alternativas ({{ count($industriasInteres) }} de 6)."
             :seleccion="$industriasInteres"
             error="industriasInteres"
         >
             <flux:checkbox.group wire:model.live="industriasInteres">
                 <div class="max-h-44 space-y-1.5 overflow-y-auto pr-2">
-                    @foreach ($industrias as $opcion)<flux:checkbox wire:key="industria-{{ $loop->index }}" :value="$opcion" :label="$opcion" :disabled="count($industriasInteres) >= 5 && ! in_array($opcion, $industriasInteres, true)" />@endforeach
+                    @foreach ($industrias as $opcion)<flux:checkbox wire:key="industria-{{ $loop->index }}" :value="$opcion" :label="$opcion" :disabled="count($industriasInteres) >= 6 && ! in_array($opcion, $industriasInteres, true)" />@endforeach
                 </div>
             </flux:checkbox.group>
         </x-selector-colapsable>

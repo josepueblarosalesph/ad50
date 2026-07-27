@@ -71,7 +71,7 @@ test('una empresa crea una publicación con los campos del formulario', function
         ->set('requisitos', 'Experiencia liderando equipos multidisciplinarios y controlando presupuestos.')
         ->set('experienciaLaboral', '10 años o más')
         ->set('estudiosMinimos', 'Universitaria')
-        ->set('situacionAcademica', 'Titulado')
+        ->set('situacionAcademica', 'Titulado / Titulada')
         ->set('competenciasTexto', 'Liderazgo, Planificación, Liderazgo')
         ->set('idiomas', ['Español', 'Inglés'])
         ->set('preguntas', ['¿Por qué te interesa este cargo?'])

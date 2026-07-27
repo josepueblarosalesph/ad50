@@ -91,7 +91,7 @@ class Postulante extends Model
         ])->first();
 
         $cargo = ($e['cargo'] ?? '') === 'Otros' ? ($e['cargo_otro'] ?? 'Otros') : ($e['cargo'] ?? '');
-        $empresa = ($e['empresa'] ?? '') === 'Otros' ? ($e['empresa_otro'] ?? null) : ($e['empresa'] ?? null);
+        $empresa = in_array($e['empresa'] ?? '', ['Otra', 'Otros'], true) ? ($e['empresa_otro'] ?? null) : ($e['empresa'] ?? null);
 
         return [
             'cargo' => $cargo,

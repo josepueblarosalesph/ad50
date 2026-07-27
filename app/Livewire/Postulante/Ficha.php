@@ -161,7 +161,7 @@ class Ficha extends Component
             'carrera' => $postulante?->carrera ?? '',
             'mencion' => $postulante?->especialidad ?? '',
             'modalidad' => '',
-            'situacion' => filled($postulante?->carrera) ? 'Titulado' : '',
+            'situacion' => filled($postulante?->carrera) ? 'Titulado / Titulada' : '',
         ]];
         $this->educaciones = collect($educacionesGuardadas)
             ->map(fn (array $educacion): array => $this->normalizarEducacion($educacion))
@@ -281,7 +281,7 @@ class Ficha extends Component
             return;
         }
 
-        if (count($this->habilidades) >= 30 || in_array($nombre, $this->habilidades, true)) {
+        if (count($this->habilidades) >= 6 || in_array($nombre, $this->habilidades, true)) {
             return;
         }
 
@@ -502,11 +502,11 @@ class Ficha extends Component
             // El titular es obligatorio: es la primera información que ven las empresas.
             'titular' => ['required', 'string', 'max:100'],
             'resumenProfesional' => ['nullable', 'string', 'max:900'],
-            'habilidades' => ['array', 'max:10'],
+            'habilidades' => ['array', 'max:6'],
             'habilidades.*' => [Rule::in(CatalogosProfesionales::habilidades()), 'distinct:strict'],
             'regionesInteres' => ['array', 'max:5'],
             'regionesInteres.*' => [Rule::in(CatalogosProfesionales::regionesInteres()), 'distinct:strict'],
-            'industriasInteres' => ['array', 'max:5'],
+            'industriasInteres' => ['array', 'max:6'],
             'industriasInteres.*' => [Rule::in(CatalogosProfesionales::industrias()), 'distinct:strict'],
             'modalidadesTrabajo' => ['array', 'max:'.count(CatalogosProfesionales::modalidadesTrabajoPreferidas())],
             'modalidadesTrabajo.*' => [Rule::in(CatalogosProfesionales::modalidadesTrabajoPreferidas()), 'distinct:strict'],
@@ -633,7 +633,7 @@ class Ficha extends Component
             $validated['experiencias'][$index]['cargo_otro'] = $experiencia['cargo'] === 'Otros'
                 ? trim((string) ($experiencia['cargo_otro'] ?? ''))
                 : null;
-            $validated['experiencias'][$index]['empresa_otro'] = $experiencia['empresa'] === 'Otros'
+            $validated['experiencias'][$index]['empresa_otro'] = in_array($experiencia['empresa'], ['Otra', 'Otros'], true)
                 ? trim((string) ($experiencia['empresa_otro'] ?? ''))
                 : null;
 
@@ -641,7 +641,7 @@ class Ficha extends Component
                 $this->addError("experiencias.$index.cargo_otro", 'Especifica el cargo u ocupación.');
             }
 
-            if ($experiencia['empresa'] === 'Otros' && $validated['experiencias'][$index]['empresa_otro'] === '') {
+            if (in_array($experiencia['empresa'], ['Otra', 'Otros'], true) && $validated['experiencias'][$index]['empresa_otro'] === '') {
                 $this->addError("experiencias.$index.empresa_otro", 'Especifica el nombre de la empresa.');
             }
 
@@ -674,7 +674,7 @@ class Ficha extends Component
 
         auth()->user()->postulante()->update([
             'cargo_actual' => $principal['cargo'] === 'Otros' ? ($principal['cargo_otro'] ?: 'Otros') : $principal['cargo'],
-            'empresa_actual' => $principal['empresa'] === 'Otros' ? ($principal['empresa_otro'] ?: 'Otros') : $principal['empresa'],
+            'empresa_actual' => in_array($principal['empresa'], ['Otra', 'Otros'], true) ? ($principal['empresa_otro'] ?: 'Otra') : $principal['empresa'],
             'experiencia_area' => $principal['actividad_empresa'],
             'experiencia_inicio' => $principal['inicio_anio'],
             'experiencia_fin' => $principal['fin_anio'],
@@ -1001,7 +1001,7 @@ class Ficha extends Component
             $validated['experiencias'][$index]['cargo_otro'] = $experiencia['cargo'] === 'Otros'
                 ? trim((string) ($experiencia['cargo_otro'] ?? ''))
                 : null;
-            $validated['experiencias'][$index]['empresa_otro'] = $experiencia['empresa'] === 'Otros'
+            $validated['experiencias'][$index]['empresa_otro'] = in_array($experiencia['empresa'], ['Otra', 'Otros'], true)
                 ? trim((string) ($experiencia['empresa_otro'] ?? ''))
                 : null;
 
@@ -1009,7 +1009,7 @@ class Ficha extends Component
                 $this->addError("experiencias.$index.cargo_otro", 'Especifica el cargo u ocupación.');
             }
 
-            if ($experiencia['empresa'] === 'Otros' && $validated['experiencias'][$index]['empresa_otro'] === '') {
+            if (in_array($experiencia['empresa'], ['Otra', 'Otros'], true) && $validated['experiencias'][$index]['empresa_otro'] === '') {
                 $this->addError("experiencias.$index.empresa_otro", 'Especifica el nombre de la empresa.');
             }
 
@@ -1075,7 +1075,7 @@ class Ficha extends Component
                     'postgrado' => in_array($educacionPrincipal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $educacionPrincipal['carrera'] : null,
                     'educaciones' => $validated['educaciones'],
                     'idiomas' => $validated['idiomas'],
-                    'empresa_actual' => $principal['empresa'] === 'Otros' ? ($principal['empresa_otro'] ?: 'Otros') : $principal['empresa'],
+                    'empresa_actual' => in_array($principal['empresa'], ['Otra', 'Otros'], true) ? ($principal['empresa_otro'] ?: 'Otra') : $principal['empresa'],
                     'experiencia_area' => $principal['actividad_empresa'],
                     'experiencia_inicio' => $principal['inicio_anio'],
                     'experiencia_fin' => $principal['fin_anio'],
@@ -1227,6 +1227,7 @@ class Ficha extends Component
             'carrerasEstudio' => CatalogosProfesionales::carrerasEstudio(),
             'nivelesEstudio' => CatalogosProfesionales::nivelesEstudio(),
             'nivelesEscolares' => CatalogosProfesionales::nivelesEscolares(),
+            'paises' => CatalogosProfesionales::paises(),
             'modalidadesEstudio' => CatalogosProfesionales::modalidadesEstudio(),
             'situacionesEstudio' => CatalogosProfesionales::situacionesEstudio(),
             'idiomasDisponibles' => CatalogosProfesionales::idiomas(),

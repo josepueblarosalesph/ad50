@@ -46,12 +46,14 @@
             </div>
         @endif
 
-        <div class="grid gap-5 lg:grid-cols-3">
+        <div class="grid gap-5 pt-3 lg:grid-cols-3">
             @foreach ($planes as $plan)
-                <article wire:key="plan-{{ $plan->id }}" @class(['ad-card relative flex flex-col p-6', 'border-2 border-orange-500' => $plan->destacado])>
+                {{-- El badge va en un contenedor externo porque las tarjetas del panel tienen overflow:hidden. --}}
+                <div wire:key="plan-{{ $plan->id }}" class="relative">
                     @if ($plan->destacado)
-                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">Más elegido</span>
+                        <span class="absolute -top-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-orange-600 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-[var(--shadow-card)]">Más elegido</span>
                     @endif
+                <article @class(['ad-card flex h-full flex-col p-6', 'border-2 border-orange-500' => $plan->destacado])>
                     <h2 class="text-[18px] font-extrabold">{{ \Illuminate\Support\Str::after($plan->nombre, '· ') }}</h2>
                     <div class="mt-3 text-[30px] font-extrabold">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} <small class="text-[11px] font-medium text-gray-400">UF + IVA</small></div>
                     <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->periodo === 'anual' ? 'por año' : 'por mes' }}</p>
@@ -73,6 +75,7 @@
                         <span wire:loading wire:target="contratar({{ $plan->id }})">Redirigiendo a Flow…</span>
                     </button>
                 </article>
+                </div>
             @endforeach
         </div>
 

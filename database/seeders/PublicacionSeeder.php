@@ -47,7 +47,7 @@ class PublicacionSeeder extends Seeder
             'pais' => 'Chile',
             'mostrar_sueldo' => true,
             'estudios_minimos' => 'Universitaria',
-            'situacion_academica' => 'Titulado',
+            'situacion_academica' => 'Titulado / Titulada',
             'idiomas' => ['Español'],
             'preguntas' => ['¿Qué experiencia relevante aportarías a esta posición?'],
             'empleo_inclusivo' => true,

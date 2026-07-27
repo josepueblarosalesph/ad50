@@ -44,7 +44,7 @@ class PublicacionFactory extends Factory
             'requisitos' => fake()->paragraphs(2, true),
             'experiencia_laboral' => '5 años o más',
             'estudios_minimos' => 'Universitaria',
-            'situacion_academica' => 'Titulado',
+            'situacion_academica' => 'Titulado / Titulada',
             'competencias' => ['Liderazgo', 'Gestión de proyectos'],
             'idiomas' => ['Español'],
             'preguntas' => ['¿Por qué te interesa esta oportunidad?'],

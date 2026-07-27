@@ -8,7 +8,10 @@
                 <flux:select.option value="">Selecciona un nivel</flux:select.option>
                 @foreach ($nivelesEstudio as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
             </flux:select>
-            <flux:input wire:model.live.debounce.500ms="educaciones.{{ $index }}.pais" label="País *" placeholder="Chile" />
+            <flux:select wire:model.live="educaciones.{{ $index }}.pais" label="País *">
+                <flux:select.option value="">Selecciona un país</flux:select.option>
+                @foreach ($paises as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
+            </flux:select>
             @if ($esChile)
                 <div x-data="{ otro: false }" wire:key="institucion-wrap-{{ $index }}">
                     <div x-show="!otro">

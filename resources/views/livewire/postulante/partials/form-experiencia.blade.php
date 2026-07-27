@@ -15,7 +15,7 @@
             </flux:select>
             <div>
                 <x-combobox model="experiencias.{{ $index }}.empresa" label="Empresa *" :opciones="$empresas" :valor="$experiencia['empresa'] ?? ''" error="experiencias.{{ $index }}.empresa" placeholder="Escribe para buscar" />
-                @if (($experiencia['empresa'] ?? '') === 'Otros')
+                @if (in_array(($experiencia['empresa'] ?? ''), ['Otra', 'Otros'], true))
                     <div class="mt-3">
                         <flux:input wire:model.blur="experiencias.{{ $index }}.empresa_otro" label="Especifica el nombre de la empresa *" placeholder="Escribe el nombre de la empresa" />
                     </div>

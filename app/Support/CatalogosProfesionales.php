@@ -43,6 +43,7 @@ class CatalogosProfesionales
             'Banca y servicios financieros', 'Seguros', 'Telecomunicaciones',
             'Transporte / Logística', 'Turismo', 'Salud', 'Educación',
             'Servicios Profesionales (Auditoría / Consultoría / Legales)',
+            'Consultora en Recursos Humanos', 'Empleabilidad', 'Selección de Personal', 'Capacitaciones',
             'Tecnología de la Información', 'Inmobiliario', 'Administración Pública',
         ];
     }
@@ -99,6 +100,16 @@ class CatalogosProfesionales
             'Chilena', 'Argentina', 'Boliviana', 'Brasileña', 'Colombiana', 'Cubana',
             'Ecuatoriana', 'Española', 'Estadounidense', 'Haitiana', 'Mexicana',
             'Paraguaya', 'Peruana', 'Uruguaya', 'Venezolana', 'Otra',
+        ];
+    }
+
+    /** @return array<int, string> */
+    public static function paises(): array
+    {
+        return [
+            'Chile', 'Argentina', 'Bolivia', 'Brasil', 'Colombia', 'Cuba',
+            'Ecuador', 'España', 'Estados Unidos', 'Haití', 'México',
+            'Paraguay', 'Perú', 'Uruguay', 'Venezuela', 'Otro país',
         ];
     }
 
@@ -163,7 +174,7 @@ class CatalogosProfesionales
     /** @return array<int, string> */
     public static function empresas(): array
     {
-        return ['Otros', ...require __DIR__.'/empresas.php'];
+        return ['Otra', ...require __DIR__.'/empresas.php'];
     }
 
     /** @return array<int, string> */
@@ -220,7 +231,7 @@ class CatalogosProfesionales
     {
         return [
             'Jornada completa', 'Media jornada', 'Independiente', 'Contrato temporal',
-            'Práctica', 'Por proyecto', 'Consultoría',
+            'Por proyecto', 'Consultoría',
         ];
     }
 
@@ -267,7 +278,7 @@ class CatalogosProfesionales
     /** @return array<int, string> */
     public static function situacionesEstudio(): array
     {
-        return ['Egresado', 'Titulado', 'Estudiando', 'Incompleto'];
+        return ['Egresado', 'Titulado / Titulada', 'Estudiando', 'Incompleto'];
     }
 
     /** @return array<int, string> */

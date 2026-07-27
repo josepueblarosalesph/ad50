@@ -150,7 +150,7 @@ test('cuenta idiomas por combinación idioma y nivel', function () {
 test('cuenta instituciones y niveles desde educaciones', function () {
     postulanteVisible([
         'universidad' => 'Universidad de Concepción',
-        'educaciones' => [['institucion' => 'Universidad de Concepción', 'nivel' => 'Universitaria', 'situacion' => 'Titulado']],
+        'educaciones' => [['institucion' => 'Universidad de Concepción', 'nivel' => 'Universitaria', 'situacion' => 'Titulado / Titulada']],
     ]);
     postulanteVisible([
         'educaciones' => [['institucion' => 'Universidad de Chile', 'nivel' => 'Magíster', 'situacion' => 'Egresado']],
