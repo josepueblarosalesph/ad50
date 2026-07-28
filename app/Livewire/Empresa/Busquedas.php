@@ -28,7 +28,7 @@ class Busquedas extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
     }
 
-    /** Abre el modal de confirmación de borrado para un proceso. */
+    /** Abre el modal de confirmación de borrado para una búsqueda. */
     public function confirmarBorrado(Busqueda $busqueda): void
     {
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
@@ -38,7 +38,7 @@ class Busquedas extends Component
         $this->confirmacionTexto = '';
         $this->resetErrorBag('confirmacionTexto');
 
-        $this->modal('borrar-proceso')->show();
+        $this->modal('borrar-busqueda')->show();
     }
 
     public function borrar(): void
@@ -54,16 +54,16 @@ class Busquedas extends Component
             return;
         }
 
-        // Borrado lógico: el proceso queda en papelera y puede deshacerse.
+        // Borrado lógico: la búsqueda queda en papelera y puede deshacerse.
         $this->eliminadoId = $busqueda->id;
         $this->eliminadoTitulo = $busqueda->titulo;
         $busqueda->delete();
 
         $this->reset('borrandoId', 'borrandoTitulo', 'confirmacionTexto');
-        $this->modal('borrar-proceso')->close();
+        $this->modal('borrar-busqueda')->close();
     }
 
-    /** Restaura el último proceso eliminado (deshacer). */
+    /** Restaura la última búsqueda eliminada (deshacer). */
     public function restaurar(): void
     {
         if ($this->eliminadoId === null) {
@@ -79,7 +79,7 @@ class Busquedas extends Component
 
         $this->reset('eliminadoId', 'eliminadoTitulo');
 
-        session()->flash('status', 'El proceso fue restaurado.');
+        session()->flash('status', 'La búsqueda fue restaurada.');
     }
 
     public function cambiarEstado(Busqueda $busqueda, string $estado): void

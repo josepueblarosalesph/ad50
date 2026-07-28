@@ -3,6 +3,7 @@
 use App\Livewire\Empresa\Equipo;
 use App\Models\Empresa;
 use App\Models\User;
+use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 
 /**
@@ -99,4 +100,58 @@ test('el principal puede eliminar un usuario adicional pero nunca a sí mismo', 
         ->call('eliminar', $principal->id);
 
     expect(User::query()->whereKey($principal->id)->exists())->toBeTrue();
+});
+
+test('el menú del panel muestra Equipo solo al contacto administrador', function () {
+    [$principal, $empresa] = crearEmpresaConPrincipal();
+    $adicional = User::factory()->create([
+        'role' => 'empresa',
+        'empresa_id' => $empresa->id,
+        'email' => 'sin-permisos@empresa.cl',
+    ]);
+
+    $vistas = [
+        route('empresa.panel'),
+        route('empresa.busquedas.index'),
+        route('empresa.publicaciones.index'),
+        route('empresa.planes'),
+    ];
+
+    foreach ($vistas as $url) {
+        // El menú es el mismo componente en todas las vistas: siempre lleva las
+        // secciones comunes y solo el principal ve el enlace a Equipo.
+        $this->actingAs($principal)->get($url)
+            ->assertOk()
+            ->assertSee('href="'.route('empresa.busquedas.index').'"', false)
+            ->assertSee('href="'.route('empresa.publicaciones.index').'"', false)
+            ->assertSee('href="'.route('empresa.equipo').'"', false);
+
+        $this->actingAs($adicional)->get($url)
+            ->assertOk()
+            ->assertSee('href="'.route('empresa.publicaciones.index').'"', false)
+            ->assertDontSee('href="'.route('empresa.equipo').'"', false);
+    }
+});
+
+test('el menú resalta la sección que se está viendo y no las demás', function () {
+    [$principal] = crearEmpresaConPrincipal();
+    $this->actingAs($principal);
+
+    $html = Blade::render('<x-nav-empresa activo="publicaciones" />');
+
+    // Solo hay una sección marcada como actual, y es la publicada.
+    expect(substr_count($html, 'aria-current="page"'))->toBe(1);
+
+    $activo = collect(explode('<a', $html))
+        ->first(fn (string $enlace): bool => str_contains($enlace, 'aria-current="page"'));
+
+    expect($activo)->toContain(route('empresa.publicaciones.index'))
+        ->toContain('bg-orange-100');
+});
+
+test('sin sección activa el menú no marca ninguna', function () {
+    [$principal] = crearEmpresaConPrincipal();
+    $this->actingAs($principal);
+
+    expect(Blade::render('<x-nav-empresa />'))->not->toContain('aria-current="page"');
 });

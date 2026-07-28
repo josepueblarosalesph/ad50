@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 class MatchingService
 {
     /**
-     * Recalcula las coincidencias de un proceso contra todos los postulantes visibles.
+     * Recalcula las coincidencias de una búsqueda contra todos los postulantes visibles.
      *
      * Evalúa en memoria y escribe en lote (un upsert + un delete) para no hacer una
      * consulta por postulante: con volúmenes grandes esto es órdenes de magnitud más rápido.
@@ -59,7 +59,7 @@ class MatchingService
             );
         }
 
-        // Quitar de este proceso a los postulantes que dejaron de cumplir (o ya no son visibles).
+        // Quitar de esta búsqueda a los postulantes que dejaron de cumplir (o ya no son visibles).
         $busqueda->candidatos()
             ->when($cumpleIds !== [], fn ($query) => $query->whereNotIn('postulante_id', $cumpleIds))
             ->delete();
@@ -257,7 +257,7 @@ class MatchingService
      * Materializa como filas TEMPORALES las coincidencias de un borrador de filtros sin
      * guardar, para que la previsualización cuente y permita abrir todos los perfiles.
      * No toca las filas confirmadas (conserva favoritos ni altera su detalle guardado):
-     * solo crea filas nuevas para los perfiles que aún no están en el proceso y descarta
+     * solo crea filas nuevas para los perfiles que aún no están en la búsqueda y descarta
      * las temporales que dejaron de cumplir el borrador.
      *
      * @param  array<string, mixed>  $criterios
@@ -283,7 +283,7 @@ class MatchingService
                 }
             });
 
-        // Perfiles del borrador que aún no tienen fila en el proceso (ni confirmada ni temporal).
+        // Perfiles del borrador que aún no tienen fila en la búsqueda (ni confirmada ni temporal).
         $existentes = $busqueda->candidatos()->pluck('postulante_id')->all();
         $nuevos = array_values(array_diff($cumpleIds, $existentes));
 

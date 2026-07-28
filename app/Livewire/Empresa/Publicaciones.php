@@ -102,6 +102,8 @@ class Publicaciones extends Component
     #[Layout('components.layouts.app')]
     public function render(): View
     {
+        $empresa = auth()->user()->empresa;
+
         return view('livewire.empresa.publicaciones', [
             'publicaciones' => Publicacion::query()
                 ->whereBelongsTo(auth()->user()->empresa)
@@ -109,6 +111,10 @@ class Publicaciones extends Component
                 ->latest()
                 ->paginate(12),
             'estados' => Publicacion::ESTADOS,
+            'publicacionesTotales' => $empresa?->publicacionesTotales(),
+            'publicacionesUsadas' => $empresa?->publicacionesUsadas() ?? 0,
+            'publicacionesDisponibles' => $empresa?->publicacionesDisponibles(),
+            'puedePublicar' => $empresa?->puedePublicar() ?? false,
         ]);
     }
 }

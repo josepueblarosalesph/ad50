@@ -13,7 +13,7 @@ use Livewire\Component;
 
 /**
  * Panel de filtros de las postulaciones de una publicación. Reusa los mismos criterios
- * del panel de procesos, pero sin persistir nada: solo emite el mapa de criterios para
+ * del panel de búsquedas, pero sin persistir nada: solo emite el mapa de criterios para
  * que la lista de postulaciones se acote al vuelo.
  */
 class FiltrosPostulaciones extends Component

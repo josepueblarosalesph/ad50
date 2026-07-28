@@ -91,6 +91,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         };
     }
 
+    /** @return HasOne<Postulante, $this> */
     public function postulante(): HasOne
     {
         return $this->hasOne(Postulante::class);
@@ -99,13 +100,19 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     /**
      * Empresa de la que este usuario es contacto administrador (dueño), vía empresas.user_id.
      * Se conserva como relación para poder hacer `->empresa()->update(...)`.
+     *
+     * @return HasOne<Empresa, $this>
      */
     public function empresa(): HasOne
     {
         return $this->hasOne(Empresa::class);
     }
 
-    /** Empresa a la que el usuario fue agregado como miembro adicional, vía users.empresa_id. */
+    /**
+     * Empresa a la que el usuario fue agregado como miembro adicional, vía users.empresa_id.
+     *
+     * @return BelongsTo<Empresa, $this>
+     */
     public function empresaMembresia(): BelongsTo
     {
         return $this->belongsTo(Empresa::class, 'empresa_id');

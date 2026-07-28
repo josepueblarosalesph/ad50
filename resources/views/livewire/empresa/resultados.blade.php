@@ -1,12 +1,6 @@
 <div>
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mis Procesos</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="busquedas" /></x-slot:nav>
     <x-slot:sidebar>
         <div class="sticky top-24 space-y-3">
             <livewire:empresa.filtros-busqueda :busqueda="$busqueda" :actualizacion="$actualizacion" wire:key="filtros-desktop" />
@@ -16,7 +10,7 @@
     <div>
     <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm mb-4 inline-flex items-center gap-2">
         <flux:icon.arrow-left class="size-4" />
-        Volver a Procesos
+        Volver a Talent Finder
     </a>
 
     {{-- Filtros en móvil: el sidebar del layout se oculta bajo md, así que aquí van colapsables. --}}
@@ -34,7 +28,7 @@
         <div class="min-w-0">
             @if ($editandoTitulo)
                 <form wire:submit="guardarTitulo" class="flex flex-wrap items-center gap-2">
-                    <flux:input wire:model="tituloEditado" class="max-w-md" placeholder="Nombre del proceso" autofocus />
+                    <flux:input wire:model="tituloEditado" class="max-w-md" placeholder="Nombre de la búsqueda" autofocus />
                     <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="guardarTitulo">Guardar</button>
                     <button type="button" wire:click="cancelarTitulo" class="ad-btn-ghost ad-btn-sm">Cancelar</button>
                 </form>
@@ -42,7 +36,7 @@
             @else
                 <div class="flex items-center gap-2">
                     <h1 class="text-[25px] font-extrabold">{{ $busqueda->titulo }}</h1>
-                    <button type="button" wire:click="editarTitulo" class="rounded-lg p-1.5 text-gray-400 transition hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Editar el nombre del proceso" title="Editar nombre">
+                    <button type="button" wire:click="editarTitulo" class="rounded-lg p-1.5 text-gray-400 transition hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" aria-label="Editar el nombre de la búsqueda" title="Editar nombre">
                         <flux:icon.pencil-square class="size-5" />
                     </button>
                 </div>
@@ -128,6 +122,15 @@
                                 <flux:tooltip :content="$match->favorito ? 'Quitar de favoritos' : 'Guardar como favorito'">
                                     <button type="button" wire:click="toggleFavorito({{ $match->id }})" wire:loading.attr="disabled" wire:target="toggleFavorito({{ $match->id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $match->favorito, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30] dark:hover:bg-orange-100' => ! $match->favorito]) aria-label="{{ $match->favorito ? 'Quitar candidato de favoritos' : 'Guardar candidato como favorito' }}" aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" /></button>
                                 </flux:tooltip>
+                                @php($asociadas = $asociacionesPorPostulante[$match->postulante_id] ?? 0)
+                                <flux:tooltip :content="$asociadas > 0 ? 'Asociado a '.$asociadas.' publicación(es)' : 'Asociar a una publicación'">
+                                    <button type="button" wire:click="abrirAsociacion({{ $match->postulante_id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $match->postulante_id }})" @class(['relative grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $asociadas > 0, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $asociadas === 0]) aria-label="Asociar a {{ $nombreCandidato }} a una publicación">
+                                        <flux:icon.megaphone class="size-5" />
+                                        @if ($asociadas > 0)
+                                            <span class="absolute -right-1 -top-1 grid min-w-[18px] place-items-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white">{{ $asociadas }}</span>
+                                        @endif
+                                    </button>
+                                </flux:tooltip>
                                 <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
                             @else
                                 <flux:tooltip content="Guarda el filtro para poder abrir y marcar este candidato">
@@ -164,7 +167,7 @@
                 </div>
             </article>
         @empty
-            <div class="ad-card p-10 text-center"><flux:icon.magnifying-glass class="size-8 text-gray-400 mx-auto" /><h2 class="font-bold mt-3">{{ $criterios !== [] ? 'Ningún candidato cumple esta combinación' : 'Aún no hay coincidencias' }}</h2><p class="text-[13px] text-gray-500 mt-2">{{ $criterios !== [] ? 'Quita uno de los filtros para ampliar los resultados.' : 'Prueba ampliando los criterios del proceso.' }}</p>@if ($criterios !== [])<button type="button" wire:click="limpiarCriterios" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>@endif</div>
+            <div class="ad-card p-10 text-center"><flux:icon.magnifying-glass class="size-8 text-gray-400 mx-auto" /><h2 class="font-bold mt-3">{{ $criterios !== [] ? 'Ningún candidato cumple esta combinación' : 'Aún no hay coincidencias' }}</h2><p class="text-[13px] text-gray-500 mt-2">{{ $criterios !== [] ? 'Quita uno de los filtros para ampliar los resultados.' : 'Prueba ampliando los criterios de la búsqueda.' }}</p>@if ($criterios !== [])<button type="button" wire:click="limpiarCriterios" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>@endif</div>
         @endforelse
     </div>
 
@@ -172,4 +175,6 @@
         <div class="mt-6">{{ $candidatos->links() }}</div>
     @endif
     </div>
+
+    <x-asociar-publicaciones-modal :publicaciones="$publicacionesAsociables" :asociadas="$publicacionesDelCandidato" />
 </div>

@@ -76,7 +76,7 @@ class FiltrosBusqueda extends Component
     public array $criteriosGuardados = [];
 
     /**
-     * Controla el panel que pregunta si actualizar el proceso actual o crear uno nuevo.
+     * Controla el panel que pregunta si actualizar la búsqueda actual o crear uno nuevo.
      */
     public bool $mostrandoGuardado = false;
 
@@ -289,7 +289,7 @@ class FiltrosBusqueda extends Component
     }
 
     /**
-     * Abre el panel que ofrece actualizar el proceso actual o crear uno nuevo.
+     * Abre el panel que ofrece actualizar la búsqueda actual o crear uno nuevo.
      * Valida primero los filtros para no ofrecer guardar algo inválido.
      */
     public function abrirGuardado(): void
@@ -307,7 +307,7 @@ class FiltrosBusqueda extends Component
     }
 
     /**
-     * Actualiza el proceso actual con los filtros en edición.
+     * Actualiza la búsqueda actual con los filtros en edición.
      */
     public function guardar(MatchingService $matching): void
     {
@@ -332,7 +332,7 @@ class FiltrosBusqueda extends Component
     }
 
     /**
-     * Crea un proceso nuevo con los filtros en edición, sin tocar el actual, y
+     * Crea una búsqueda nueva con los filtros en edición, sin tocar el actual, y
      * redirige a sus resultados.
      */
     public function guardarComoNuevo(MatchingService $matching): void

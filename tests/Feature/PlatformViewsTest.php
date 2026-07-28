@@ -664,7 +664,7 @@ test('an empresa can view its pages and create a search', function () {
         ->assertDontSee('<aside class="hidden border-r', false);
     $this->actingAs($user)->get(route('empresa.busquedas.index'))
         ->assertOk()
-        ->assertSee('Mis procesos')
+        ->assertSee('Talent Finder')
         ->assertSee('Gerente de Finanzas');
     $this->actingAs($user)->get(route('empresa.busquedas.create'))->assertOk();
     $this->actingAs($user)->get(route('empresa.resultados', $busqueda))->assertOk();

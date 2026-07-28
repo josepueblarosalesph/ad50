@@ -1,6 +1,6 @@
 <div id="filtros-busqueda" class="pb-5 pr-1">
     <div class="mb-3 flex items-center justify-between gap-2 px-1">
-        <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Filtros del proceso</span>
+        <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400">Filtros de la búsqueda</span>
         <span wire:loading class="text-[11px] font-bold text-orange-600">Actualizando…</span>
     </div>
     <div class="space-y-2">
@@ -58,7 +58,7 @@
             <x-palabras-clave :palabras="$palabrasClave" :hide-label="true" />
         </x-filtro-acordeon>
 
-        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros, pero solo quedan guardados al usar el botón Guardar Proceso.</p>
+        <p class="px-1 text-[11.5px] leading-relaxed text-gray-500">Los resultados se actualizan a medida que cambias los filtros, pero solo quedan guardados al usar el botón Guardar búsqueda.</p>
     </div>
 
     {{-- Barra de guardado: los cambios solo se persisten aquí. --}}
@@ -74,7 +74,7 @@
                     wire:target="guardar"
                     class="ad-btn-primary ad-btn-sm w-full justify-center disabled:opacity-50"
                 >
-                    <span wire:loading.remove wire:target="guardar">Actualizar este proceso</span>
+                    <span wire:loading.remove wire:target="guardar">Actualizar esta búsqueda</span>
                     <span wire:loading wire:target="guardar">Actualizando…</span>
                 </button>
 
@@ -82,9 +82,9 @@
                     <span class="h-px flex-1 bg-line-2"></span>o<span class="h-px flex-1 bg-line-2"></span>
                 </div>
 
-                <label for="titulo-nuevo-proceso" class="mb-1 block text-[12px] font-semibold text-gray-600 dark:text-gray-300">Nombre del nuevo proceso</label>
+                <label for="titulo-nueva-busqueda" class="mb-1 block text-[12px] font-semibold text-gray-600 dark:text-gray-300">Nombre de la nueva búsqueda</label>
                 <input
-                    id="titulo-nuevo-proceso"
+                    id="titulo-nueva-busqueda"
                     type="text"
                     wire:model="tituloNuevo"
                     maxlength="180"
@@ -100,7 +100,7 @@
                     wire:target="guardarComoNuevo"
                     class="ad-btn-ghost ad-btn-sm mt-2 w-full justify-center disabled:opacity-50"
                 >
-                    <span wire:loading.remove wire:target="guardarComoNuevo">Crear proceso nuevo</span>
+                    <span wire:loading.remove wire:target="guardarComoNuevo">Crear búsqueda nueva</span>
                     <span wire:loading wire:target="guardarComoNuevo">Creando…</span>
                 </button>
 
@@ -122,7 +122,7 @@
                 @disabled(! $sinGuardar)
                 class="ad-btn-primary ad-btn-sm flex-1 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                Guardar Proceso
+                Guardar búsqueda
             </button>
             @if ($sinGuardar)
                 <button type="button" wire:click="descartar" wire:loading.attr="disabled" wire:target="descartar" class="ad-btn-ghost ad-btn-sm">Descartar</button>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
@@ -121,6 +122,18 @@ class Publicacion extends Model
     public function postulaciones(): HasMany
     {
         return $this->hasMany(Postulacion::class);
+    }
+
+    /**
+     * Candidatos que la empresa asoció a esta publicación desde el Talent Finder.
+     *
+     * @return BelongsToMany<Postulante, $this>
+     */
+    public function candidatos(): BelongsToMany
+    {
+        return $this->belongsToMany(Postulante::class, 'publicacion_candidato')
+            ->withPivot('busqueda_id')
+            ->withTimestamps();
     }
 
     public function scopeVigentes(Builder $query): Builder

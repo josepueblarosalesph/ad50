@@ -1,12 +1,6 @@
 <div>
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mis Procesos</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="busquedas" /></x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Candidato</div>
         <a href="{{ route('empresa.resultados', ['busqueda' => $match->busqueda, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.arrow-left class="size-[18px]" />Volver a resultados</a>
@@ -55,8 +49,16 @@
                 @endif
             </div>
         </div>
-        <button type="button" wire:click="toggleFavorito" wire:loading.attr="disabled" @class(['ad-favorite-button ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'is-active' => $match->favorito]) aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" />{{ $match->favorito ? 'Guardado en favoritos' : 'Guardar como favorito' }}</button>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" wire:click="toggleFavorito" wire:loading.attr="disabled" @class(['ad-favorite-button ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'is-active' => $match->favorito]) aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" />{{ $match->favorito ? 'Guardado en favoritos' : 'Guardar como favorito' }}</button>
+            <button type="button" wire:click="abrirAsociacion({{ $match->postulante_id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $match->postulante_id }})" @class(['ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $totalAsociaciones > 0, 'border-line-2 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $totalAsociaciones === 0])>
+                <flux:icon.megaphone class="size-5" />
+                {{ $totalAsociaciones > 0 ? 'En '.$totalAsociaciones.' publicación'.($totalAsociaciones === 1 ? '' : 'es') : 'Asociar a publicación' }}
+            </button>
+        </div>
     </div>
+
+    <x-asociar-publicaciones-modal :publicaciones="$publicacionesAsociables" :asociadas="$publicacionesDelCandidato" />
 
     <div class="grid lg:grid-cols-[1.4fr_0.8fr] gap-5 items-start">
         <div class="space-y-5">

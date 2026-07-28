@@ -171,7 +171,7 @@ class NuevaBusqueda extends Component
             ];
 
             if ($this->busqueda) {
-                // Al editar se preservan tanto la etapa del proceso como la fecha de creación.
+                // Al editar se preservan tanto la etapa de la búsqueda como la fecha de creación.
                 $this->busqueda->update($atributos);
                 $busqueda = $this->busqueda->fresh();
             } else {

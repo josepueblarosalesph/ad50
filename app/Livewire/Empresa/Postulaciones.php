@@ -29,7 +29,7 @@ class Postulaciones extends Component
     public string $estado = 'todas';
 
     /**
-     * Criterios de perfil provenientes del panel lateral (mismos de Procesos), aplicados al vuelo.
+     * Criterios de perfil provenientes del panel lateral (mismos del Talent Finder), aplicados al vuelo.
      *
      * @var array<string, mixed>|null
      */

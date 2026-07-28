@@ -9,7 +9,7 @@ class PurgarBusquedasEliminadas extends Command
 {
     protected $signature = 'busquedas:purgar-eliminadas';
 
-    protected $description = 'Elimina en forma definitiva los procesos en papelera con más de '.Busqueda::DIAS_RETENCION_PAPELERA.' días.';
+    protected $description = 'Elimina en forma definitiva las búsquedas en papelera con más de '.Busqueda::DIAS_RETENCION_PAPELERA.' días.';
 
     public function handle(): int
     {
@@ -22,7 +22,7 @@ class PurgarBusquedasEliminadas extends Command
             ->each->forceDelete()
             ->count();
 
-        $this->info("Procesos purgados definitivamente: {$purgadas}.");
+        $this->info("Búsquedas purgadas definitivamente: {$purgadas}.");
 
         return self::SUCCESS;
     }

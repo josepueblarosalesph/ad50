@@ -1,13 +1,6 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mis Procesos</a>
-        <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Publicaciones</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
     <div class="mx-auto max-w-5xl">
         <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="mb-4 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a publicaciones</a>
@@ -56,6 +49,35 @@
                 <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vigente hasta</p>
                 <p class="mt-1 text-[14px] font-bold text-ink">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</p>
                 <p class="mt-0.5 text-[12px] text-gray-500">{{ $publicacion->vigencia_dias }} días de vigencia</p>
+            </div>
+        </section>
+
+        {{-- Candidatos que la empresa asoció a esta publicación desde el Talent Finder. --}}
+        <section class="ad-card mb-6">
+            <div class="ad-card-head flex-wrap gap-3">
+                <h2 class="text-[16px] font-bold">Candidatos del Talent Finder</h2>
+                <span class="text-[13px] font-semibold text-gray-500">{{ $candidatosAsociados->count() }} asociado(s)</span>
+            </div>
+            <div class="divide-y divide-line px-6">
+                @forelse ($candidatosAsociados as $candidato)
+                    <div wire:key="asociado-{{ $candidato->id }}" class="flex flex-wrap items-center justify-between gap-3 py-4">
+                        <div class="min-w-0">
+                            <p class="truncate text-[14px] font-bold text-ink">{{ $candidato->cargo_actual ?: 'Candidato #'.$candidato->id }}</p>
+                            <p class="mt-1 truncate text-[13px] text-gray-500">
+                                {{ collect([$candidato->carrera, $candidato->anios_experiencia ? $candidato->anios_experiencia.' años de experiencia' : null])->filter()->implode(' · ') }}
+                            </p>
+                        </div>
+                        <button type="button" wire:click="quitarCandidato({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="quitarCandidato({{ $candidato->id }})" class="ad-btn-ghost ad-btn-sm whitespace-nowrap disabled:opacity-50">
+                            Quitar
+                        </button>
+                    </div>
+                @empty
+                    <p class="py-6 text-center text-[13px] text-gray-500">
+                        Aún no asocias candidatos. Búscalos en
+                        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="font-bold text-orange-600 underline underline-offset-2">Talent Finder</a>
+                        y asócialos desde sus resultados.
+                    </p>
+                @endforelse
             </div>
         </section>
 

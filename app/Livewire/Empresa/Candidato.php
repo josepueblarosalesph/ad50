@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\AsociaCandidatosAPublicaciones;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\NotaCandidato;
@@ -18,6 +19,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Candidato extends Component
 {
+    use AsociaCandidatosAPublicaciones;
+
     public BusquedaCandidato $match;
 
     #[Url]
@@ -115,6 +118,25 @@ class Candidato extends Component
         $this->puedeVerContacto = $this->desbloqueado;
         $this->planVigente = $empresa !== null && $empresa->planVigente();
         $this->desbloqueosDisponibles = $empresa?->desbloqueosDisponibles() ?? 0;
+    }
+
+    protected function empresaDeAsociacion(): ?Empresa
+    {
+        return auth()->user()->empresa;
+    }
+
+    protected function busquedaDeAsociacion(): ?int
+    {
+        return $this->match->busqueda_id;
+    }
+
+    /** Desde el detalle solo se asocia al candidato que se está viendo. */
+    protected function candidatoAsociable(int $postulanteId): bool
+    {
+        return auth()->user()->role === 'empresa'
+            && auth()->user()->empresa?->id === $this->match->busqueda->empresa_id
+            && $postulanteId === $this->match->postulante_id
+            && $this->match->postulante->visible;
     }
 
     public function guardarNota(): void
@@ -335,6 +357,9 @@ class Candidato extends Component
         return view('livewire.empresa.candidato', [
             'meses' => CatalogosProfesionales::meses(),
             'criteriosActivos' => collect($this->criteriosDisponibles())->only($this->criterios),
+            'publicacionesAsociables' => $this->publicacionesAsociables(),
+            'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
+            'totalAsociaciones' => $this->conteoAsociaciones([$this->match->postulante_id])[$this->match->postulante_id] ?? 0,
         ]);
     }
 }

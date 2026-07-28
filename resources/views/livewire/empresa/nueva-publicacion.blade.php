@@ -1,13 +1,6 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mis Procesos</a>
-        <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Publicaciones</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
     <div class="mx-auto max-w-5xl">
         <div class="mb-6">

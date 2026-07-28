@@ -38,6 +38,7 @@ class Empresa extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Plan, $this> */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
@@ -73,6 +74,7 @@ class Empresa extends Model
         return $this->hasMany(Busqueda::class);
     }
 
+    /** @return HasMany<Publicacion, $this> */
     public function publicaciones(): HasMany
     {
         return $this->hasMany(Publicacion::class);
@@ -131,5 +133,47 @@ class Empresa extends Model
     public function haDesbloqueado(int $postulanteId): bool
     {
         return $this->desbloqueos()->where('postulante_id', $postulanteId)->exists();
+    }
+
+    /** Cupo de publicaciones del plan. NULL = ilimitadas. */
+    public function publicacionesTotales(): ?int
+    {
+        $cupo = $this->plan?->publicaciones;
+
+        return $cupo === null ? null : (int) $cupo;
+    }
+
+    /**
+     * Publicaciones creadas contra el cupo. Cuenta también las cerradas y las que están
+     * en papelera: el cupo se consume al crear y no se recupera al cerrar ni al eliminar.
+     */
+    public function publicacionesUsadas(): int
+    {
+        return $this->publicaciones()->withTrashed()->count();
+    }
+
+    /** Publicaciones que aún puede crear. NULL = ilimitadas. */
+    public function publicacionesDisponibles(): ?int
+    {
+        $total = $this->publicacionesTotales();
+
+        return $total === null ? null : max(0, $total - $this->publicacionesUsadas());
+    }
+
+    public function tienePublicacionesIlimitadas(): bool
+    {
+        return $this->publicacionesTotales() === null;
+    }
+
+    /** Puede crear una publicación nueva: plan vigente y cupo disponible. */
+    public function puedePublicar(): bool
+    {
+        if (! $this->planVigente()) {
+            return false;
+        }
+
+        $disponibles = $this->publicacionesDisponibles();
+
+        return $disponibles === null || $disponibles > 0;
     }
 }

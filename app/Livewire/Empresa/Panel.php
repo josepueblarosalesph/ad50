@@ -35,6 +35,7 @@ class Panel extends Component
                 ->confirmados()
                 ->whereHas('busqueda', fn ($query) => $query->where('empresa_id', $empresa?->id))
                 ->count(),
+            'puedePublicar' => $empresa?->puedePublicar() ?? false,
         ]);
     }
 }

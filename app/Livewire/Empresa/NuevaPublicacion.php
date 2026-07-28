@@ -68,6 +68,10 @@ class NuevaPublicacion extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
 
         if ($publicacion === null || ! $publicacion->exists) {
+            // El cupo del plan solo limita crear publicaciones nuevas; editar una
+            // existente sigue disponible aunque el cupo esté agotado.
+            $this->redirigirSinCupo();
+
             return;
         }
 
@@ -100,6 +104,22 @@ class NuevaPublicacion extends Component
         $this->vigenciaDias = $publicacion->vigencia_dias;
     }
 
+    /**
+     * Manda de vuelta al listado si la empresa agotó el cupo de publicaciones del plan.
+     * Devuelve true cuando redirigió, para que quien lo llame corte su ejecución.
+     */
+    private function redirigirSinCupo(): bool
+    {
+        if (auth()->user()->empresa?->puedePublicar()) {
+            return false;
+        }
+
+        session()->flash('publicacion_error', 'Alcanzaste el máximo de publicaciones de tu plan. Cambia de plan para publicar más.');
+        $this->redirectRoute('empresa.publicaciones.index', navigate: true);
+
+        return true;
+    }
+
     public function agregarPregunta(): void
     {
         if (count($this->preguntas) < 10) {
@@ -115,6 +135,12 @@ class NuevaPublicacion extends Component
 
     public function guardar(): void
     {
+        // Revalida el cupo al guardar: entre que se abrió el formulario y este envío,
+        // otro usuario del equipo pudo consumir la última publicación disponible.
+        if ($this->publicacion === null && $this->redirigirSinCupo()) {
+            return;
+        }
+
         $validated = $this->validate([
             'cargo' => ['required', 'string', 'max:100'],
             'tipoCargo' => ['required', Rule::in(CatalogosProfesionales::tiposTrabajo())],
@@ -211,6 +237,7 @@ class NuevaPublicacion extends Component
     {
         return view('livewire.empresa.nueva-publicacion', [
             'editando' => $this->publicacion !== null,
+            'publicacionesDisponibles' => auth()->user()->empresa?->publicacionesDisponibles(),
             'tiposCargo' => CatalogosProfesionales::tiposTrabajo(),
             'actividades' => CatalogosProfesionales::industrias(),
             'jerarquias' => CatalogosProfesionales::jerarquias(),

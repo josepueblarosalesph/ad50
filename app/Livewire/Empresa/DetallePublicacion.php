@@ -36,6 +36,12 @@ class DetallePublicacion extends Component
         $this->modal('borrar-publicacion')->show();
     }
 
+    /** Quita a un candidato asociado desde el Talent Finder (no toca sus postulaciones). */
+    public function quitarCandidato(int $postulanteId): void
+    {
+        $this->publicacion->candidatos()->detach($postulanteId);
+    }
+
     public function borrar(): void
     {
         if (mb_strtoupper(trim($this->confirmacionTexto)) !== 'ELIMINAR') {
@@ -61,6 +67,11 @@ class DetallePublicacion extends Component
         return view('livewire.empresa.detalle-publicacion', [
             'totalPostulaciones' => $this->publicacion->postulaciones()->count(),
             'estados' => Publicacion::ESTADOS,
+            'candidatosAsociados' => $this->publicacion->candidatos()
+                ->where('visible', true)
+                ->with('user')
+                ->orderBy('postulantes.id')
+                ->get(),
         ])->title($this->publicacion->cargo.' · AD+50');
     }
 }

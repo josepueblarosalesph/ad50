@@ -14,6 +14,6 @@
             </select>
             <flux:icon.chevron-down class="pointer-events-none absolute inset-y-0 right-2.5 my-auto size-4 text-gray-400" />
         </div>
-        <p class="mt-2 text-[11.5px] leading-relaxed text-gray-500">Acota los resultados por cuán reciente es la ficha. No modifica el proceso.</p>
+        <p class="mt-2 text-[11.5px] leading-relaxed text-gray-500">Acota los resultados por cuán reciente es la ficha. No modifica la búsqueda.</p>
     </x-filtro-acordeon>
 </div>

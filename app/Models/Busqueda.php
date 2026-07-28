@@ -11,11 +11,11 @@ class Busqueda extends Model
 {
     use SoftDeletes;
 
-    /** Días que un proceso permanece en papelera antes de eliminarse en forma definitiva. */
+    /** Días que una búsqueda permanece en papelera antes de eliminarse en forma definitiva. */
     public const DIAS_RETENCION_PAPELERA = 30;
 
     /**
-     * Estados del proceso de selección (etapa del pipeline).
+     * Estados de la búsqueda (etapa de trabajo del reclutador) (etapa del pipeline).
      *
      * @var array<string, string>
      */
@@ -29,7 +29,7 @@ class Busqueda extends Model
     ];
 
     /**
-     * Estados en los que el proceso sigue vigente y participa del matching.
+     * Estados en los que la búsqueda sigue vigente y participa del matching.
      *
      * @var list<string>
      */

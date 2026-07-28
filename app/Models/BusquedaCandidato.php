@@ -20,7 +20,7 @@ class BusquedaCandidato extends Model
     ];
 
     /**
-     * Solo coincidencias confirmadas del proceso (excluye las materializadas
+     * Solo coincidencias confirmadas de la búsqueda (excluye las materializadas
      * temporalmente para previsualizar un borrador de filtros sin guardar).
      *
      * @param  Builder<BusquedaCandidato>  $query

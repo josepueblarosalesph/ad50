@@ -1,16 +1,16 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a wire:navigate href="{{ route('empresa.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Mis Procesos</a>
-        <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Publicaciones</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
     @if (session('status'))
         <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
+    @endif
+
+    @if (session('publicacion_error'))
+        <div class="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-xl border border-[#F5C6C0] bg-[#FDECEA] px-4 py-3 text-[13px] font-bold text-[#A93226] dark:bg-[#3A2523]">
+            <span>{{ session('publicacion_error') }}</span>
+            <a wire:navigate href="{{ route('empresa.planes') }}" class="underline underline-offset-2">Ver planes</a>
+        </div>
     @endif
 
     @if ($eliminadoId)
@@ -29,8 +29,21 @@
             <span class="ad-eyebrow">Portal laboral</span>
             <h1 class="mt-3 text-[30px] font-extrabold">Publicaciones</h1>
             <p class="mt-2 text-[14px] text-gray-500">Administra las oportunidades visibles para los postulantes.</p>
+            <p class="mt-2 text-[13px] font-semibold text-gray-600">
+                @if ($publicacionesTotales === null)
+                    <flux:icon.megaphone class="inline size-4 text-orange-500" /> Publicaciones ilimitadas en tu plan.
+                @else
+                    <flux:icon.megaphone class="inline size-4 text-orange-500" />
+                    Usaste {{ $publicacionesUsadas }} de {{ $publicacionesTotales }} publicaciones de tu plan
+                    <span class="text-gray-500">({{ $publicacionesDisponibles }} disponibles).</span>
+                @endif
+            </p>
         </div>
-        <a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm"><flux:icon.plus class="size-4" />Nueva publicación</a>
+        @if ($puedePublicar)
+            <a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm"><flux:icon.plus class="size-4" />Nueva publicación</a>
+        @else
+            <a wire:navigate href="{{ route('empresa.planes') }}" class="ad-btn-primary ad-btn-sm"><flux:icon.credit-card class="size-4" />Ampliar plan para publicar</a>
+        @endif
     </div>
 
     <section class="ad-card overflow-hidden">

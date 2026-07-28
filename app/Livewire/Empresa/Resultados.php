@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\AsociaCandidatosAPublicaciones;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
+use App\Models\Empresa;
 use App\Models\NotaCandidato;
 use App\Models\Postulante;
 use App\Services\MatchingService;
@@ -25,6 +27,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Resultados extends Component
 {
+    use AsociaCandidatosAPublicaciones;
     use WithPagination;
 
     public Busqueda $busqueda;
@@ -201,6 +204,30 @@ class Resultados extends Component
         );
     }
 
+    protected function empresaDeAsociacion(): ?Empresa
+    {
+        return auth()->user()->empresa;
+    }
+
+    protected function busquedaDeAsociacion(): ?int
+    {
+        return $this->busqueda->id;
+    }
+
+    /**
+     * Solo se pueden asociar candidatos que estén en esta búsqueda (incluidas las filas
+     * temporales de previsualización) y cuya ficha siga visible.
+     */
+    protected function candidatoAsociable(int $postulanteId): bool
+    {
+        return auth()->user()->role === 'empresa'
+            && auth()->user()->empresa?->id === $this->busqueda->empresa_id
+            && $this->busqueda->candidatos()
+                ->where('postulante_id', $postulanteId)
+                ->whereHas('postulante', fn ($query) => $query->where('visible', true))
+                ->exists();
+    }
+
     public function toggleCriterio(string $criterio): void
     {
         abort_unless(array_key_exists($criterio, $this->criteriosDisponibles()), 404);
@@ -283,6 +310,9 @@ class Resultados extends Component
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
             'previsualizando' => $this->previsualizacion !== null,
+            'publicacionesAsociables' => $this->publicacionesAsociables(),
+            'asociacionesPorPostulante' => $this->conteoAsociaciones($idsPagina),
+            'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
         ]);
     }
 

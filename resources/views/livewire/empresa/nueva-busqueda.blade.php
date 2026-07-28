@@ -1,25 +1,19 @@
 <div>
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi Panel</a>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mis Procesos</a>
-        @if (auth()->user()->esPrincipalEmpresa())
-            <a wire:navigate href="{{ route('empresa.equipo') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Equipo</a>
-        @endif
-    </x-slot:nav>
+    <x-slot:nav><x-nav-empresa activo="busquedas" /></x-slot:nav>
     <x-slot:sidebar>
-        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Procesos</div>
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.bars-3 class="size-[18px]" />Todos los procesos</a>
-        <a href="{{ $editando ? route('empresa.busquedas.edit', $busqueda) : route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon :name="$editando ? 'pencil-square' : 'plus-circle'" class="size-[18px]" />{{ $editando ? 'Editar proceso' : 'Nuevo proceso' }}</a>
+        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Talent Finder</div>
+        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.bars-3 class="size-[18px]" />Todas las búsquedas</a>
+        <a href="{{ $editando ? route('empresa.busquedas.edit', $busqueda) : route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon :name="$editando ? 'pencil-square' : 'plus-circle'" class="size-[18px]" />{{ $editando ? 'Editar búsqueda' : 'Nueva búsqueda' }}</a>
     </x-slot:sidebar>
 
     <div class="max-w-4xl">
-        <div class="mb-6"><h1 class="text-[27px] font-extrabold">{{ $editando ? 'Editar proceso' : 'Nuevo proceso de selección' }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Puedes seleccionar varias alternativas. Todo criterio configurado es obligatorio.</p></div>
+        <div class="mb-6"><h1 class="text-[27px] font-extrabold">{{ $editando ? 'Editar búsqueda' : 'Nueva búsqueda de candidatos' }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Puedes seleccionar varias alternativas. Todo criterio configurado es obligatorio.</p></div>
 
         <form wire:submit="save" class="ad-card">
-            <div class="ad-card-head"><h2 class="text-[18px] font-extrabold">Datos del proceso</h2></div>
+            <div class="ad-card-head"><h2 class="text-[18px] font-extrabold">Datos de la búsqueda</h2></div>
             <div class="p-6 space-y-5">
-                <flux:input wire:model="titulo" label="Nombre del proceso *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
+                <flux:input wire:model="titulo" label="Nombre de la búsqueda *" placeholder="Subgerente/a de Finanzas — Planta Coronel" />
                 <div class="grid md:grid-cols-2 gap-4">
                     <div class="rounded-xl border border-line-2 p-4">
                         <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="cargo" campo="cargo" etiqueta="Cargo" descripcion="Busca y agrega uno o varios cargos." wire:key="sel-cargo" />

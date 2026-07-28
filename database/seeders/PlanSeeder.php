@@ -25,6 +25,7 @@ class PlanSeeder extends Seeder
                 'precio_clp' => 0,
                 'precio_uf' => 5,
                 'desbloqueos' => 10,
+                'publicaciones' => 5,
                 'periodo' => 'anual',
                 'destacado' => false,
                 'features' => ['5 publicaciones', 'Match inteligente', '10 desbloqueos de perfiles'],
@@ -37,6 +38,7 @@ class PlanSeeder extends Seeder
                 'precio_clp' => 0,
                 'precio_uf' => 30,
                 'desbloqueos' => 50,
+                'publicaciones' => 30,
                 'periodo' => 'anual',
                 'destacado' => false,
                 'features' => ['30 publicaciones', 'Match inteligente', '50 desbloqueos de perfiles', 'Soporte técnico'],
@@ -49,6 +51,7 @@ class PlanSeeder extends Seeder
                 'precio_clp' => 0,
                 'precio_uf' => 45,
                 'desbloqueos' => 100,
+                'publicaciones' => null, // Ilimitadas.
                 'periodo' => 'anual',
                 'destacado' => true,
                 'features' => ['Publicaciones ilimitadas', 'Match inteligente', '100 desbloqueos de perfiles', 'Soporte técnico'],
