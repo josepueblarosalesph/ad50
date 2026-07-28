@@ -5,11 +5,26 @@ use App\Livewire\Empresa\SelectorCriterio;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Support\CatalogosProfesionales;
 use Livewire\Livewire;
 
+/** Crea una ficha visible con las regiones de interés indicadas. */
+function fichaEnRegiones(array $regiones): Postulante
+{
+    return Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'regiones_interes' => $regiones,
+    ]);
+}
+
 test('server-side search filters the catalog and lists options', function () {
+    fichaEnRegiones(['Biobío']);
+    fichaEnRegiones(['Valparaíso']);
+
     Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad', 'etiqueta' => 'Región'])
-        ->assertSee('Nacional')
+        ->assertSee('Biobío')
+        ->assertSee('Valparaíso')
         ->set('buscar', 'biob')
         ->assertSee('Biobío')
         ->assertDontSee('Valparaíso');
@@ -61,7 +76,7 @@ test('the count label stays singular for a single candidate', function () {
         ->assertSee('Quedan 1 candidato si agregas', escape: false);
 });
 
-test('hidden fichas are not counted', function () {
+test('hidden fichas are not counted, so their option is not offered', function () {
     Postulante::query()->create([
         'user_id' => User::factory()->create(['role' => 'postulante'])->id,
         'visible' => false, 'regiones_interes' => ['Biobío'],
@@ -69,7 +84,111 @@ test('hidden fichas are not counted', function () {
 
     Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad'])
         ->set('buscar', 'Biobío')
-        ->assertSee('Quedan 0 candidatos si agregas', escape: false);
+        ->assertViewHas('resultados', [])
+        ->assertSee('Ninguna opción tiene candidatos con los filtros actuales');
+});
+
+test('las opciones sin candidatos no se listan', function () {
+    fichaEnRegiones(['Biobío']);
+
+    Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad'])
+        ->assertSee('Biobío')
+        // El resto del catálogo de regiones no tiene fichas: no debe ofrecerse.
+        ->assertDontSee('Valparaíso')
+        ->assertDontSee('Antofagasta')
+        ->assertViewHas('resultados', fn (array $resultados): bool => count($resultados) === 1
+            && $resultados[0]['valor'] === 'Biobío');
+});
+
+test('una opción aparece sola en cuanto entra un candidato nuevo', function () {
+    fichaEnRegiones(['Biobío']);
+
+    $selector = Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad']);
+    $selector->assertDontSee('Valparaíso');
+
+    // Al guardar una ficha se invalidan los conteos cacheados (Postulante::booted).
+    fichaEnRegiones(['Valparaíso']);
+
+    $selector->set('buscar', 'Valpara')
+        ->assertSee('Valparaíso')
+        ->assertSee('Quedan 1 candidato si agregas', escape: false);
+});
+
+test('una opción deja de ofrecerse cuando su último candidato se oculta', function () {
+    $ficha = fichaEnRegiones(['Biobío']);
+    fichaEnRegiones(['Valparaíso']);
+
+    $selector = Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad']);
+    $selector->assertSee('Biobío');
+
+    $ficha->update(['visible' => false]);
+
+    $selector->set('buscar', 'Biobío')
+        ->assertViewHas('resultados', [])
+        ->assertSee('Ninguna opción tiene candidatos con los filtros actuales');
+});
+
+test('las opciones se listan de mayor a menor cantidad de candidatos', function () {
+    // Valparaíso: 3 fichas · Biobío: 2 · Maule: 1.
+    foreach ([['Valparaíso'], ['Valparaíso'], ['Valparaíso'], ['Biobío'], ['Biobío'], ['Maule']] as $regiones) {
+        fichaEnRegiones($regiones);
+    }
+
+    Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad'])
+        ->assertViewHas('resultados', fn (array $resultados): bool => collect($resultados)
+            ->map(fn (array $opcion): array => [$opcion['valor'], $opcion['total']])
+            ->all() === [['Valparaíso', 3], ['Biobío', 2], ['Maule', 1]])
+        // El orden también se refleja en el desplegable.
+        ->assertSeeInOrder(['Valparaíso', 'Biobío', 'Maule']);
+});
+
+test('entre opciones con la misma cantidad el orden es alfabético', function () {
+    fichaEnRegiones(['Biobío']);
+    fichaEnRegiones(['Antofagasta']);
+    fichaEnRegiones(['Maule']);
+
+    Livewire::test(SelectorCriterio::class, ['campo' => 'ciudad'])
+        ->assertViewHas('resultados', fn (array $resultados): bool => collect($resultados)
+            ->pluck('valor')
+            ->all() === ['Antofagasta', 'Biobío', 'Maule']);
+});
+
+test('el recorte a 50 opciones no gasta el cupo en opciones vacías', function () {
+    // "Otros" está al final del catálogo de cargos, muy por detrás de la opción 50.
+    $catalogo = CatalogosProfesionales::cargos();
+    $ultimo = $catalogo[count($catalogo) - 1];
+
+    expect(array_search($ultimo, $catalogo, true))->toBeGreaterThan(50);
+
+    Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'cargo_actual' => $ultimo,
+    ]);
+
+    Livewire::test(SelectorCriterio::class, ['campo' => 'cargo'])
+        ->assertViewHas('resultados', fn (array $resultados): bool => collect($resultados)->contains('valor', $ultimo));
+});
+
+test('los filtros ya elegidos acotan qué opciones siguen disponibles', function () {
+    Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true, 'genero' => 'Femenino', 'regiones_interes' => ['Biobío'],
+    ]);
+    Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true, 'genero' => 'Masculino', 'regiones_interes' => ['Valparaíso'],
+    ]);
+
+    // Sin filtros ambos géneros tienen candidatos.
+    Livewire::test(SelectorCriterio::class, ['campo' => 'genero'])
+        ->assertSee('Femenino')
+        ->assertSee('Masculino');
+
+    // Acotando a Biobío, solo queda el género de esa ficha.
+    Livewire::test(SelectorCriterio::class, ['campo' => 'genero', 'criterios' => ['ciudad' => ['Biobío']]])
+        ->assertSee('Femenino')
+        ->assertDontSee('Masculino');
 });
 
 test('the count reflects the criteria it receives', function () {

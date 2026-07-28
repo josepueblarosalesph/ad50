@@ -60,19 +60,20 @@
                 >
                     <span class="truncate">{{ $resultado['valor'] }}</span>
                     {{-- Conteo contextual: cuántas fichas quedarían al agregar esta opción
-                         manteniendo el resto de los filtros ya elegidos. --}}
+                         manteniendo el resto de los filtros ya elegidos. Solo se listan
+                         opciones con candidatos, así que siempre es mayor que cero. --}}
                     <span
-                        @class([
-                            'shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
-                            'bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]' => $resultado['total'] > 0,
-                            'bg-gray-100 text-gray-400 dark:bg-white/5' => $resultado['total'] === 0,
-                        ])
+                        class="shrink-0 rounded-full bg-orange-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]"
                         title="Quedan {{ $resultado['total'] }} {{ Str::plural('candidato', $resultado['total']) }} si agregas esta opción a los filtros actuales"
                     >{{ $resultado['total'] }}</span>
                 </button>
             </li>
         @empty
-            <li class="px-3 py-2 text-[13px] text-gray-500">Sin coincidencias en el catálogo.</li>
+            <li class="px-3 py-2 text-[13px] text-gray-500">
+                {{ $sinCandidatos
+                    ? 'Ninguna opción tiene candidatos con los filtros actuales.'
+                    : 'Sin coincidencias en el catálogo.' }}
+            </li>
         @endforelse
     </ul>
 </div>

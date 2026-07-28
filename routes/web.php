@@ -11,6 +11,7 @@ use App\Livewire\Empresa\Busquedas as EmpresaBusquedas;
 use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\DetallePublicacion;
 use App\Livewire\Empresa\Equipo as EmpresaEquipo;
+use App\Livewire\Empresa\Favoritos as EmpresaFavoritos;
 use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Empresa\NuevaPublicacion;
 use App\Livewire\Empresa\Panel as EmpresaPanel;
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(EnsureEmpresaActiva::class)->group(function () {
         Route::get('/empresa', EmpresaPanel::class)->name('empresa.panel');
         Route::get('/empresa/equipo', EmpresaEquipo::class)->name('empresa.equipo');
+        Route::get('/empresa/favoritos', EmpresaFavoritos::class)->name('empresa.favoritos');
         Route::get('/empresa/busquedas', EmpresaBusquedas::class)->name('empresa.busquedas.index');
         Route::get('/empresa/busquedas/nueva', NuevaBusqueda::class)->name('empresa.busquedas.create');
         Route::get('/empresa/busquedas/{busqueda}/editar', NuevaBusqueda::class)->name('empresa.busquedas.edit');

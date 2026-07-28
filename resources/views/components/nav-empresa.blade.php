@@ -10,6 +10,7 @@
     $enlaces = [
         'panel' => ['empresa.panel', 'Mi Panel'],
         'busquedas' => ['empresa.busquedas.index', 'Talent Finder'],
+        'favoritos' => ['empresa.favoritos', 'Mis favoritos'],
         'publicaciones' => ['empresa.publicaciones.index', 'Publicaciones'],
     ];
 

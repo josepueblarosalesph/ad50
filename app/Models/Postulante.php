@@ -144,6 +144,7 @@ class Postulante extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<BusquedaCandidato, $this> */
     public function matches(): HasMany
     {
         return $this->hasMany(BusquedaCandidato::class);

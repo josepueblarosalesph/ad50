@@ -108,32 +108,67 @@ class SelectorCriterio extends Component
     }
 
     /**
-     * Hasta 50 opciones que calzan con el texto buscado, anotadas con cuántas fichas
-     * quedarían al agregar esa opción a los criterios actuales.
+     * Opciones del catálogo que calzan con el texto buscado y que aún no están elegidas.
      *
-     * @return list<array{valor: string, total: int}>
+     * @return list<string>
      */
-    private function resultados(DisponibilidadCandidatos $disponibilidad): array
+    private function coincidencias(): array
     {
         $consulta = self::normalizar($this->buscar);
+
+        return array_values(
+            collect($this->catalogo())
+                ->reject(fn (string $opcion): bool => in_array($opcion, $this->seleccion, true))
+                ->filter(fn (string $opcion): bool => $consulta === '' || str_contains(self::normalizar($opcion), $consulta))
+                ->all()
+        );
+    }
+
+    /**
+     * Hasta 50 opciones con candidatos, ordenadas de mayor a menor cantidad y anotadas
+     * con cuántas fichas quedarían al agregar esa opción a los criterios actuales.
+     *
+     * Las opciones que quedarían en cero no se listan: no aportan nada y esconden a las
+     * que sí tienen datos. El recorte a 50 se aplica DESPUÉS de descartarlas, porque si
+     * no, un catálogo largo (cargos, habilidades) podría gastar el cupo en opciones
+     * vacías y dejar fuera a las que sí sirven.
+     *
+     * El conteo lo entrega DisponibilidadCandidatos, que se invalida al guardar o borrar
+     * una ficha, así que las opciones aparecen solas a medida que entran candidatos.
+     *
+     * @param  list<string>  $coincidencias
+     * @return list<array{valor: string, total: int}>
+     */
+    private function resultados(DisponibilidadCandidatos $disponibilidad, array $coincidencias): array
+    {
         $conteos = $disponibilidad->conteos($this->campo, $this->criterios);
 
-        return collect($this->catalogo())
-            ->reject(fn (string $opcion): bool => in_array($opcion, $this->seleccion, true))
-            ->filter(fn (string $opcion): bool => $consulta === '' || str_contains(self::normalizar($opcion), $consulta))
-            ->take(50)
-            ->map(fn (string $opcion): array => [
-                'valor' => $opcion,
-                'total' => $conteos[DisponibilidadCandidatos::clave($opcion)] ?? 0,
-            ])
-            ->values()
-            ->all();
+        return array_values(
+            collect($coincidencias)
+                ->map(fn (string $opcion): array => [
+                    'valor' => $opcion,
+                    'total' => $conteos[DisponibilidadCandidatos::clave($opcion)] ?? 0,
+                ])
+                ->filter(fn (array $opcion): bool => $opcion['total'] > 0)
+                // De mayor a menor, y alfabético entre las que empatan para que el orden
+                // sea estable. Va antes del recorte: así las 50 que quedan son las de más
+                // candidatos, no las primeras 50 del catálogo.
+                ->sortBy([['total', 'desc'], ['valor', 'asc']])
+                ->take(50)
+                ->all()
+        );
     }
 
     public function render(DisponibilidadCandidatos $disponibilidad): View
     {
+        $coincidencias = $this->coincidencias();
+        $resultados = $this->resultados($disponibilidad, $coincidencias);
+
         return view('livewire.empresa.selector-criterio', [
-            'resultados' => $this->resultados($disponibilidad),
+            'resultados' => $resultados,
+            // El catálogo sí tenía opciones para el texto buscado, pero ninguna tiene
+            // candidatos con los filtros actuales: merece un mensaje distinto a "no existe".
+            'sinCandidatos' => $resultados === [] && $coincidencias !== [],
         ]);
     }
 }
