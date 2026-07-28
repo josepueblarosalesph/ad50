@@ -12,7 +12,8 @@ function agregacionesDurante(Closure $callback): int
     $total = 0;
 
     DB::listen(function ($consulta) use (&$total): void {
-        if (str_contains($consulta->sql, 'from "postulantes"')) {
+        // El identificador va entre comillas dobles en Postgres y entre backticks en MySQL/MariaDB.
+        if (preg_match('/from\s+["`]postulantes["`]/i', $consulta->sql) === 1) {
             $total++;
         }
     });

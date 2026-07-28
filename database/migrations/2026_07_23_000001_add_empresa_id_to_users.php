@@ -18,7 +18,11 @@ return new class extends Migration
         });
 
         // Backfill: cada contacto principal existente apunta a su propia empresa.
-        DB::statement('UPDATE users SET empresa_id = empresas.id FROM empresas WHERE empresas.user_id = users.id');
+        // Fila por fila para no depender de la sintaxis de UPDATE ... FROM / JOIN,
+        // que difiere entre Postgres y MySQL/MariaDB.
+        foreach (DB::table('empresas')->select('id', 'user_id')->whereNotNull('user_id')->cursor() as $empresa) {
+            DB::table('users')->where('id', $empresa->user_id)->update(['empresa_id' => $empresa->id]);
+        }
     }
 
     public function down(): void

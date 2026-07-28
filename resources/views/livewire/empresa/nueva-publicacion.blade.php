@@ -11,10 +11,10 @@
 
     <div class="mx-auto max-w-5xl">
         <div class="mb-6">
-            <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="mb-4 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a publicaciones</a>
-            <span class="ad-eyebrow">Nueva oportunidad</span>
-            <h1 class="mt-3 text-[30px] font-extrabold">Publicar oferta laboral</h1>
-            <p class="mt-2 text-[14px] text-gray-500">La oferta quedará visible en el portal de postulantes durante el período seleccionado.</p>
+            <a wire:navigate href="{{ $editando ? route('empresa.publicaciones.show', $publicacion) : route('empresa.publicaciones.index') }}" class="mb-4 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />{{ $editando ? 'Volver a la publicación' : 'Volver a publicaciones' }}</a>
+            <span class="ad-eyebrow">{{ $editando ? 'Editar oportunidad' : 'Nueva oportunidad' }}</span>
+            <h1 class="mt-3 text-[30px] font-extrabold">{{ $editando ? 'Editar oferta laboral' : 'Publicar oferta laboral' }}</h1>
+            <p class="mt-2 text-[14px] text-gray-500">{{ $editando ? 'Los cambios se reflejan de inmediato en el portal de postulantes.' : 'La oferta quedará visible en el portal de postulantes durante el período seleccionado.' }}</p>
         </div>
 
         <form wire:submit="guardar" class="space-y-6">
@@ -103,9 +103,14 @@
                     <flux:switch wire:model="empleoInclusivo" label="Empleo inclusivo" />
                     <flux:switch wire:model="postulacionFacil" label="Postulación fácil" />
                     <flux:switch wire:model="notificarPostulaciones" label="Recibir notificación de postulación" />
-                    <flux:select wire:model="vigenciaDias" label="Vigencia de publicación *">
-                        @foreach ([15, 30, 60, 90] as $dias)<flux:select.option :value="$dias">{{ $dias }} días</flux:select.option>@endforeach
-                    </flux:select>
+                    <div>
+                        <flux:select wire:model="vigenciaDias" label="Vigencia de publicación *">
+                            @foreach ([15, 30, 60, 90] as $dias)<flux:select.option :value="$dias">{{ $dias }} días</flux:select.option>@endforeach
+                        </flux:select>
+                        @if ($editando)
+                            <p class="mt-1 text-[12px] text-gray-400">Vigente hasta el {{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}. Si cambias este valor, la vigencia se recalcula desde hoy.</p>
+                        @endif
+                    </div>
                 </div>
             </section>
 
@@ -123,10 +128,10 @@
             <div class="ad-card flex flex-wrap items-center justify-between gap-4 p-5">
                 <p class="max-w-xl text-[13px] text-gray-500">Al publicar declaras que la información es verídica y cumple la legislación laboral vigente.</p>
                 <div class="flex gap-3">
-                    <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a>
+                    <a wire:navigate href="{{ $editando ? route('empresa.publicaciones.show', $publicacion) : route('empresa.publicaciones.index') }}" class="ad-btn-ghost ad-btn-sm">Cancelar</a>
                     <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="guardar">
-                        <span wire:loading.remove wire:target="guardar">Publicar oportunidad</span>
-                        <span wire:loading wire:target="guardar">Publicando…</span>
+                        <span wire:loading.remove wire:target="guardar">{{ $editando ? 'Guardar cambios' : 'Publicar oportunidad' }}</span>
+                        <span wire:loading wire:target="guardar">{{ $editando ? 'Guardando…' : 'Publicando…' }}</span>
                     </button>
                 </div>
             </div>

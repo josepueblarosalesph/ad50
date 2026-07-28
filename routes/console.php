@@ -10,3 +10,6 @@ Artisan::command('inspire', function () {
 
 // Purga diaria de los procesos en papelera con más de 30 días.
 Schedule::command('busquedas:purgar-eliminadas')->dailyAt('03:00');
+
+// Purga diaria de las publicaciones en papelera con más de 30 días.
+Schedule::command('publicaciones:purgar-eliminadas')->dailyAt('03:15');

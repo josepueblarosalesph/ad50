@@ -8,11 +8,37 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * Atributos con cast declarados para el análisis estático.
+ *
+ * @property Carbon|null $vigente_hasta
+ * @property list<string>|null $competencias
+ * @property list<string>|null $idiomas
+ * @property list<string>|null $preguntas
+ */
 class Publicacion extends Model
 {
     /** @use HasFactory<PublicacionFactory> */
     use HasFactory;
+
+    use SoftDeletes;
+
+    /** Días que una publicación permanece en papelera antes de eliminarse en forma definitiva. */
+    public const DIAS_RETENCION_PAPELERA = 30;
+
+    /**
+     * Estados de la publicación en el portal de postulantes.
+     *
+     * @var array<string, string>
+     */
+    public const ESTADOS = [
+        'publicada' => 'Publicada',
+        'pausada' => 'Pausada',
+        'cerrada' => 'Cerrada',
+    ];
 
     protected $table = 'publicaciones';
 
@@ -74,6 +100,17 @@ class Publicacion extends Model
             'mostrar_sueldo' => 'boolean',
             'vigente_hasta' => 'date',
         ];
+    }
+
+    public function estadoLabel(): string
+    {
+        return self::ESTADOS[$this->estado] ?? ucfirst((string) $this->estado);
+    }
+
+    /** Visible para los postulantes: publicada y dentro del período de vigencia. */
+    public function estaVigente(): bool
+    {
+        return $this->estado === 'publicada' && $this->vigente_hasta?->gte(today());
     }
 
     public function empresa(): BelongsTo

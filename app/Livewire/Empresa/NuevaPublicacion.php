@@ -7,11 +7,12 @@ use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
 class NuevaPublicacion extends Component
 {
+    public ?Publicacion $publicacion = null;
+
     public string $cargo = '';
 
     public string $tipoCargo = '';
@@ -62,9 +63,41 @@ class NuevaPublicacion extends Component
 
     public int $vigenciaDias = 30;
 
-    public function mount(): void
+    public function mount(?Publicacion $publicacion = null): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
+
+        if ($publicacion === null || ! $publicacion->exists) {
+            return;
+        }
+
+        abort_unless($publicacion->empresa_id === auth()->user()->empresa?->id, 403);
+
+        $this->publicacion = $publicacion;
+        $this->cargo = $publicacion->cargo;
+        $this->tipoCargo = $publicacion->tipo_cargo;
+        $this->vacantes = $publicacion->vacantes;
+        $this->descripcion = $publicacion->descripcion;
+        $this->modalidad = $publicacion->modalidad;
+        $this->pais = $publicacion->pais;
+        $this->comuna = $publicacion->comuna;
+        $this->actividadEmpresa = $publicacion->actividad_empresa;
+        $this->jerarquia = $publicacion->jerarquia;
+        $this->sueldo = $publicacion->sueldo;
+        $this->mostrarSueldo = $publicacion->mostrar_sueldo;
+        $this->requisitos = $publicacion->requisitos;
+        $this->experienciaLaboral = $publicacion->experiencia_laboral;
+        $this->estudiosMinimos = $publicacion->estudios_minimos;
+        $this->situacionAcademica = $publicacion->situacion_academica;
+        $this->competenciasTexto = implode(', ', $publicacion->competencias ?? []);
+        $this->idiomas = $publicacion->idiomas ?? [];
+        $this->preguntas = $publicacion->preguntas ?? [];
+        $this->empleoInclusivo = $publicacion->empleo_inclusivo;
+        $this->postulacionFacil = $publicacion->postulacion_facil;
+        $this->notificarPostulaciones = $publicacion->notificar_postulaciones;
+        $this->evaluacionOnline = $publicacion->evaluacion_online;
+        $this->evaluacionManual = $publicacion->evaluacion_manual;
+        $this->vigenciaDias = $publicacion->vigencia_dias;
     }
 
     public function agregarPregunta(): void
@@ -119,8 +152,7 @@ class NuevaPublicacion extends Component
             ->values()
             ->all();
 
-        Publicacion::query()->create([
-            'empresa_id' => auth()->user()->empresa->id,
+        $atributos = [
             'cargo' => $validated['cargo'],
             'tipo_cargo' => $validated['tipoCargo'],
             'vacantes' => $validated['vacantes'],
@@ -146,19 +178,39 @@ class NuevaPublicacion extends Component
             'evaluacion_online' => $validated['evaluacionOnline'],
             'evaluacion_manual' => $validated['evaluacionManual'],
             'vigencia_dias' => $validated['vigenciaDias'],
+        ];
+
+        if ($this->publicacion) {
+            // Cambiar la vigencia reinicia el conteo desde hoy; si no se toca, la fecha
+            // de término original se respeta para no alargar la oferta sin querer.
+            if ($this->publicacion->vigencia_dias !== $validated['vigenciaDias']) {
+                $atributos['vigente_hasta'] = today()->addDays($validated['vigenciaDias']);
+            }
+
+            $this->publicacion->update($atributos);
+
+            session()->flash('status', 'Actualizamos la publicación «'.$this->publicacion->cargo.'».');
+            $this->redirectRoute('empresa.publicaciones.show', ['publicacion' => $this->publicacion], navigate: true);
+
+            return;
+        }
+
+        Publicacion::query()->create([
+            'empresa_id' => auth()->user()->empresa->id,
             'vigente_hasta' => today()->addDays($validated['vigenciaDias']),
             'estado' => 'publicada',
+            ...$atributos,
         ]);
 
         session()->flash('status', 'La publicación quedó visible para los postulantes.');
         $this->redirectRoute('empresa.publicaciones.index', navigate: true);
     }
 
-    #[Title('Nueva publicación · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
     {
         return view('livewire.empresa.nueva-publicacion', [
+            'editando' => $this->publicacion !== null,
             'tiposCargo' => CatalogosProfesionales::tiposTrabajo(),
             'actividades' => CatalogosProfesionales::industrias(),
             'jerarquias' => CatalogosProfesionales::jerarquias(),
@@ -166,6 +218,6 @@ class NuevaPublicacion extends Component
             'estudios' => CatalogosProfesionales::nivelesEstudio(),
             'situacionesAcademicas' => CatalogosProfesionales::situacionesEstudio(),
             'idiomasDisponibles' => CatalogosProfesionales::idiomas(),
-        ]);
+        ])->title($this->publicacion ? 'Editar publicación · AD+50' : 'Nueva publicación · AD+50');
     }
 }
