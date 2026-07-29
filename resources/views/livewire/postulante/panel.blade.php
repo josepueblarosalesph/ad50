@@ -2,21 +2,7 @@
 
 <x-slot:context>Postulante</x-slot:context>
 
-<x-slot:nav>
-    @php($nav = [
-        ['label' => 'Mi panel', 'href' => route('postulante.panel'), 'active' => true],
-        ['label' => 'Mi perfil', 'href' => route('postulante.ficha')],
-        ['label' => 'Oportunidades', 'href' => route('postulante.busquedas')],
-    ])
-    @foreach ($nav as $item)
-        <a href="{{ $item['href'] }}"
-           @class([
-               'text-[13.5px] font-semibold px-3.5 py-2 rounded-lg',
-               'text-ink bg-orange-100' => $item['active'] ?? false,
-               'text-gray-500 hover:text-ink' => !($item['active'] ?? false),
-           ])>{{ $item['label'] }}</a>
-    @endforeach
-</x-slot:nav>
+<x-slot:nav><x-nav-postulante activo="panel" /></x-slot:nav>
 
 {{-- ====== Header ====== --}}
 <div class="flex items-start justify-between gap-5 mb-6 flex-wrap">

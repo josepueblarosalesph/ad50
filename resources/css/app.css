@@ -231,6 +231,8 @@ body [class~="text-[15px]"] {
   .ad-chip-orange { @apply bg-orange-100 border-orange-200 text-orange-600; }
   .ad-chip-green  { @apply bg-match-100 border-[#BFE6CD] text-match; }
   .ad-chip-gray   { @apply bg-gray-100 border-line-2 text-gray-500; }
+  /* Variante compacta para listas con muchos chips (p. ej. competencias de una oferta). */
+  .ad-chip-sm     { @apply gap-1 text-[12px] px-2.5 py-0.5; }
   .ad-chip-dot::before { content:""; @apply w-1.5 h-1.5 rounded-full bg-current inline-block; }
 
   .ad-candidate-value {

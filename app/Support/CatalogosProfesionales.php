@@ -243,6 +243,21 @@ class CatalogosProfesionales
         return ['min' => 0, 'max' => 40];
     }
 
+    /**
+     * Límites del filtro de sueldo, expresados en MILLONES de pesos para que el
+     * deslizador avance de a un intervalo entero. El tope se interpreta como "o más":
+     * una oferta de $12.000.000 sigue calzando en un rango que llega al máximo.
+     *
+     * @return array{min: int, max: int}
+     */
+    public static function rangoSueldo(): array
+    {
+        return ['min' => 0, 'max' => 8];
+    }
+
+    /** Pesos que representa un punto del deslizador de sueldo. */
+    public const SUELDO_POR_INTERVALO = 1_000_000;
+
     /** @return array<int, string> */
     public static function rangosExperiencia(): array
     {

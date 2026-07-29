@@ -1,15 +1,7 @@
 <div class="ad-panel">
 
     <x-slot:context>Postulante</x-slot:context>
-    <x-slot:nav>
-        @unless ($modoOnboarding)
-            <a href="{{ route('postulante.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Mi panel</a>
-        @endunless
-        <a href="{{ route('postulante.ficha') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Mi perfil</a>
-        @unless ($modoOnboarding)
-            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Oportunidades</a>
-        @endunless
-    </x-slot:nav>
+    <x-slot:nav><x-nav-postulante activo="ficha" /></x-slot:nav>
     @unless ($modoOnboarding)
         <x-slot:sidebar>
             <div

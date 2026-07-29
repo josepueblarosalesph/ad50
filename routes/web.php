@@ -24,6 +24,7 @@ use App\Livewire\Planes;
 use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\Ficha;
 use App\Livewire\Postulante\Panel;
+use App\Livewire\Postulante\Postulaciones as PostulantePostulaciones;
 use App\Livewire\QuienesSomos;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware(EnsurePostulanteOnboardingComplete::class)->group(function () {
         Route::get('/postulante', Panel::class)->name('postulante.panel');
         Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
+        Route::get('/postulante/postulaciones', PostulantePostulaciones::class)->name('postulante.postulaciones');
     });
 
     // Pasos del onboarding de empresa: pagar y luego completar los datos.

@@ -112,7 +112,9 @@
                     <dd class="mt-1 text-[14px] text-ink">
                         @if ($publicacion->sueldo)
                             ${{ number_format($publicacion->sueldo, 0, ',', '.') }} líquidos aprox.
-                            <span class="text-[13px] text-gray-500">({{ $publicacion->mostrar_sueldo ? 'visible en la oferta' : 'oculto para el postulante' }})</span>
+                            {{-- El portal ya no publica el monto: solo se usa para que el
+                                 postulante pueda filtrar por rango de renta. --}}
+                            <span class="text-[13px] text-gray-500">(no se muestra en el portal; sirve para el filtro por rango)</span>
                         @else
                             <span class="text-gray-500">No informado</span>
                         @endif
