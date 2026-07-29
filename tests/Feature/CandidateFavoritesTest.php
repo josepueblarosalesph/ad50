@@ -7,6 +7,7 @@ use App\Livewire\Empresa\Resultados;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\Postulante;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -17,14 +18,16 @@ test('a company can mark and filter favorite candidates within a search', functi
 
     Livewire::actingAs($empresaUser)
         ->test(Resultados::class, ['busqueda' => $busqueda])
-        ->call('toggleFavorito', $matches[1]->id)
+        ->call('toggleFavorito', $matches[1]->postulante_id)
         ->assertHasNoErrors()
         ->call('mostrar', 'favoritos')
         ->assertSet('filtro', 'favoritos')
         ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 1);
 
-    expect($matches[1]->fresh()->favorito)->toBeTrue()
-        ->and($matches[0]->fresh()->favorito)->toBeFalse();
+    $empresa = $empresaUser->empresa;
+
+    expect($empresa->haMarcadoFavorito($matches[1]->postulante_id))->toBeTrue()
+        ->and($empresa->haMarcadoFavorito($matches[0]->postulante_id))->toBeFalse();
 });
 
 test('candidates can be filtered by how recently their profile was updated', function () {
@@ -120,15 +123,15 @@ test('candidate detail navigation follows the search result ranking', function (
         ->assertSet('posicion', 2)
         ->assertSet('totalCandidatos', 3)
         ->call('toggleFavorito')
-        ->assertSet('match.favorito', true);
+        ->assertSet('esFavorito', true);
 
-    expect($matches[1]->fresh()->favorito)->toBeTrue();
+    expect($matches[1]->busqueda->empresa->haMarcadoFavorito($matches[1]->postulante_id))->toBeTrue();
 });
 
 test('candidate detail preserves the favorites filter while navigating and returning to results', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
-    $matches[0]->update(['favorito' => true]);
-    $matches[2]->update(['favorito' => true]);
+    marcarFavorito($matches[0]);
+    marcarFavorito($matches[2]);
 
     Livewire::withQueryParams(['filtro' => 'favoritos'])
         ->actingAs($empresaUser)
@@ -151,8 +154,8 @@ test('candidate detail preserves the favorites filter while navigating and retur
 
 test('changing the filter from the candidate detail recomputes the navigation', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
-    $matches[0]->update(['favorito' => true]);
-    $matches[2]->update(['favorito' => true]);
+    marcarFavorito($matches[0]);
+    marcarFavorito($matches[2]);
 
     // Estando en "todos" sobre un candidato favorito, cambiar a "favoritos" mantiene el candidato
     // y recalcula el set (2 favoritos).
@@ -168,7 +171,7 @@ test('changing the filter from the candidate detail recomputes the navigation', 
 
 test('changing to favorites on a non-favorite candidate redirects to the first favorite', function () {
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
-    $matches[2]->update(['favorito' => true]);
+    marcarFavorito($matches[2]);
 
     // matches[0] no es favorito: al cambiar a "favoritos" salta al primer favorito.
     Livewire::actingAs($empresaUser)
@@ -183,10 +186,12 @@ test('a company cannot favorite a candidate from another company search', functi
 
     Livewire::actingAs($empresaUser)
         ->test(Resultados::class, ['busqueda' => $busqueda])
-        ->call('toggleFavorito', $foreignMatches[0]->id)
+        // El candidato no pertenece a esta búsqueda: no se puede guardar desde aquí.
+        ->call('toggleFavorito', $foreignMatches[0]->postulante_id)
         ->assertNotFound();
 
-    expect($foreignMatches[0]->fresh()->favorito)->toBeFalse();
+    expect($empresaUser->empresa->haMarcadoFavorito($foreignMatches[0]->postulante_id))->toBeFalse()
+        ->and($foreignMatches[0]->busqueda->empresa->haMarcadoFavorito($foreignMatches[0]->postulante_id))->toBeFalse();
 });
 
 test('candidate totals in the company panel link to their search results', function () {
@@ -251,6 +256,15 @@ test('candidate detail navigation respects active criterion filters', function (
 /**
  * @return array{User, Busqueda, array<int, BusquedaCandidato>}
  */
+/** Guarda al candidato de un match en los favoritos de la empresa dueña de la búsqueda. */
+function marcarFavorito(BusquedaCandidato $match): Favorito
+{
+    return Favorito::query()->firstOrCreate([
+        'empresa_id' => $match->busqueda->empresa_id,
+        'postulante_id' => $match->postulante_id,
+    ], ['busqueda_id' => $match->busqueda_id]);
+}
+
 function candidateSearchWithMatches(): array
 {
     $empresaUser = User::factory()->create(['role' => 'empresa']);

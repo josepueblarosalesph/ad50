@@ -7,6 +7,7 @@ use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\NotaCandidato;
 use App\Models\Postulante;
 use App\Services\MatchingService;
@@ -128,13 +129,33 @@ class Resultados extends Component
         $this->resetPage(pageName: 'candidatos');
     }
 
-    public function toggleFavorito(int $matchId): void
+    /** Guarda o quita al candidato de los favoritos de la empresa. */
+    public function toggleFavorito(int $postulanteId): void
     {
-        $match = $this->busqueda->candidatos()->find($matchId);
+        $empresa = auth()->user()->empresa;
 
-        abort_if($match === null, 404);
+        abort_unless($empresa?->id === $this->busqueda->empresa_id, 403);
+        abort_unless($this->busqueda->candidatos()->where('postulante_id', $postulanteId)->exists(), 404);
 
-        $match->update(['favorito' => ! $match->favorito]);
+        // La búsqueda actual queda solo como origen del favorito.
+        $empresa->alternarFavorito($postulanteId, $this->busqueda->id);
+    }
+
+    /**
+     * Postulantes que la empresa tiene guardados. Se consulta una vez por render y la
+     * vista pregunta contra esta lista, en vez de llevar la marca en cada fila.
+     *
+     * @return list<int>
+     */
+    private function favoritosDeLaEmpresa(): array
+    {
+        return once(fn (): array => array_values(
+            Favorito::query()
+                ->where('empresa_id', $this->busqueda->empresa_id)
+                ->pluck('postulante_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all()
+        ));
     }
 
     /**
@@ -313,6 +334,7 @@ class Resultados extends Component
             'publicacionesAsociables' => $this->publicacionesAsociables(),
             'asociacionesPorPostulante' => $this->conteoAsociaciones($idsPagina),
             'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
+            'postulantesFavoritos' => $this->favoritosDeLaEmpresa(),
         ]);
     }
 
@@ -331,8 +353,10 @@ class Resultados extends Component
                 $this->aplicarRangoActualizacion($query);
             });
 
+        $favoritos = $this->favoritosDeLaEmpresa();
+
         $totalCandidatos = (clone $query)->count();
-        $totalFavoritos = (clone $query)->where('favorito', true)->count();
+        $totalFavoritos = (clone $query)->whereIn('postulante_id', $favoritos)->count();
 
         if ($this->criterios !== []) {
             $candidatosFiltrados = (clone $query)
@@ -344,7 +368,7 @@ class Resultados extends Component
         }
 
         $candidatos = $query
-            ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
+            ->when($this->filtro === 'favoritos', fn ($query) => $query->whereIn('postulante_id', $favoritos))
             ->with('postulante.user')
             ->orderByDesc('criterios_cumplidos')
             ->orderBy('postulante_id')
@@ -355,8 +379,8 @@ class Resultados extends Component
 
     /**
      * Listado de los criterios en edición, evaluado en memoria y sin escribir nada.
-     * Reutiliza la fila pivote existente cuando la hay (conserva favorito y el enlace
-     * al perfil); los candidatos nuevos se representan con un modelo sin persistir.
+     * Reutiliza la fila pivote existente cuando la hay (conserva el enlace al perfil);
+     * los candidatos nuevos se representan con un modelo sin persistir.
      *
      * @return array{0: LengthAwarePaginator<int, BusquedaCandidato>, 1: int, 2: int}
      */
@@ -383,7 +407,6 @@ class Resultados extends Component
                     $match = $existentes->get($postulante->id) ?? new BusquedaCandidato([
                         'busqueda_id' => $this->busqueda->id,
                         'postulante_id' => $postulante->id,
-                        'favorito' => false,
                     ]);
 
                     $match->criterios_detalle = array_values($detalle);
@@ -397,12 +420,14 @@ class Resultados extends Component
             ->filter(fn (BusquedaCandidato $match): bool => $this->enRangoActualizacion($match->postulante))
             ->values();
 
+        $favoritos = $this->favoritosDeLaEmpresa();
+
         $totalCandidatos = $coincidencias->count();
-        $totalFavoritos = $coincidencias->where('favorito', true)->count();
+        $totalFavoritos = $coincidencias->whereIn('postulante_id', $favoritos)->count();
 
         $visibles = $coincidencias
             ->when($this->criterios !== [], fn (Collection $items): Collection => $items->filter(fn (BusquedaCandidato $match): bool => $this->cumpleCriterios($match)))
-            ->when($this->filtro === 'favoritos', fn (Collection $items): Collection => $items->where('favorito', true))
+            ->when($this->filtro === 'favoritos', fn (Collection $items): Collection => $items->whereIn('postulante_id', $favoritos))
             ->sortBy('postulante_id')
             ->values();
 

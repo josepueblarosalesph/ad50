@@ -7,7 +7,7 @@
             <h1 class="text-[30px] font-extrabold">Mis favoritos</h1>
             <p class="mt-2 text-[14px] text-gray-500">
                 {{ $totalFavoritos }} {{ $totalFavoritos === 1 ? 'candidato guardado' : 'candidatos guardados' }}
-                en todas tus búsquedas.
+                en tu cuenta.
             </p>
         </div>
     </div>
@@ -60,7 +60,7 @@
     <div class="space-y-3">
         @forelse ($candidatos as $candidato)
             @php($desbloqueado = in_array($candidato->id, $postulantesDesbloqueados, true))
-            @php($favoritos = $candidato->matches)
+            @php($origen = $origenPorPostulante->get($candidato->id))
             @php($ultimaExp = $candidato->ultimaExperiencia())
 
             <article wire:key="favorito-{{ $candidato->id }}" class="ad-card overflow-hidden p-4 md:p-5">
@@ -106,30 +106,28 @@
                             @endif
                         </button>
 
-                        @if ($favoritos->isNotEmpty())
-                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $favoritos->first()->id]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
+                        @if ($candidato->match_visible_id)
+                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $candidato->match_visible_id]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
                         @endif
                     </div>
                 </div>
 
-                {{-- Búsquedas donde está marcado: cada chip permite quitar el favorito ahí. --}}
                 <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                    <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">Favorito en</span>
-                    @foreach ($favoritos as $match)
-                        <span wire:key="fav-{{ $candidato->id }}-{{ $match->busqueda_id }}" class="inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-100 py-1 pl-3 pr-1.5 text-[12.5px] font-bold text-orange-700">
-                            {{ $match->busqueda?->titulo ?? 'Búsqueda eliminada' }}
-                            <button
-                                type="button"
-                                wire:click="quitarFavorito({{ $match->busqueda_id }}, {{ $candidato->id }})"
-                                wire:loading.attr="disabled"
-                                wire:target="quitarFavorito({{ $match->busqueda_id }}, {{ $candidato->id }})"
-                                class="grid size-5 place-items-center rounded-full text-orange-600 transition hover:bg-orange-200 hover:text-orange-800 disabled:opacity-50"
-                                aria-label="Quitar de favoritos en {{ $match->busqueda?->titulo }}"
-                            >
-                                <flux:icon.x-mark class="size-3.5" />
-                            </button>
-                        </span>
-                    @endforeach
+                    @if ($origen?->busqueda)
+                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">Guardado desde</span>
+                        <span class="ad-chip ad-chip-sm">{{ $origen->busqueda->titulo }}</span>
+                    @else
+                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">Guardado en tus favoritos</span>
+                    @endif
+                    <button
+                        type="button"
+                        wire:click="quitarFavorito({{ $candidato->id }})"
+                        wire:loading.attr="disabled"
+                        wire:target="quitarFavorito({{ $candidato->id }})"
+                        class="ms-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12.5px] font-bold text-gray-500 transition hover:bg-orange-100 hover:text-orange-700 disabled:opacity-50"
+                    >
+                        <flux:icon.x-mark class="size-3.5" />Quitar de favoritos
+                    </button>
                 </div>
 
                 @if ($candidato->publicacionesAsociadas->isNotEmpty())

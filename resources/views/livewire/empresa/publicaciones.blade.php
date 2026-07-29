@@ -49,7 +49,14 @@
     <section class="ad-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-[14px]">
-                <thead><tr class="ad-thead-row"><th class="p-4">Publicación</th><th class="p-4">Ubicación</th><th class="p-4">Postulaciones</th><th class="p-4">Vigencia</th><th class="p-4">Estado</th><th class="p-4"></th></tr></thead>
+                <thead><tr class="ad-thead-row">
+                            <x-th-ordenable campo="cargo" :orden="$orden" :direccion="$direccion">Publicación</x-th-ordenable>
+                            <x-th-ordenable campo="comuna" :orden="$orden" :direccion="$direccion">Ubicación</x-th-ordenable>
+                            <x-th-ordenable campo="postulaciones" :orden="$orden" :direccion="$direccion">Postulaciones</x-th-ordenable>
+                            <x-th-ordenable campo="vigente_hasta" :orden="$orden" :direccion="$direccion">Vigencia</x-th-ordenable>
+                            <x-th-ordenable campo="estado" :orden="$orden" :direccion="$direccion">Estado</x-th-ordenable>
+                            <th class="p-4"></th>
+                        </tr></thead>
                 <tbody>
                     @forelse ($publicaciones as $publicacion)
                         <tr wire:key="publicacion-{{ $publicacion->id }}" class="border-b border-line last:border-0">

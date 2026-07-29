@@ -95,7 +95,7 @@
                 </div>
             </div>
 
-            <flux:text>Al eliminar esta búsqueda, se eliminarán sus filtros y los candidatos marcados como favoritos (salvo los que están como favoritos en otras búsquedas).</flux:text>
+            <flux:text>Al eliminar esta búsqueda se eliminan sus filtros y sus coincidencias. Tus favoritos no se tocan: están guardados en la cuenta, no en la búsqueda.</flux:text>
 
             <flux:text>Para confirmar, escribe <strong class="font-bold text-ink">ELIMINAR</strong> en el siguiente cuadro y haz clic en Aceptar.</flux:text>
 

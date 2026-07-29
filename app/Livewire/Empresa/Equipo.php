@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\OrdenaListado;
 use App\Models\Empresa;
 use App\Models\User;
 use App\Rules\EmailCorporativo;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class Equipo extends Component
 {
+    use OrdenaListado;
+
     public string $nombre = '';
 
     public string $apellidos = '';
@@ -25,6 +28,8 @@ class Equipo extends Component
     {
         // Solo el contacto administrador gestiona el equipo.
         abort_unless(auth()->user()->esPrincipalEmpresa(), 403);
+
+        $this->hidratarOrden();
     }
 
     public function agregar(): void
@@ -81,6 +86,12 @@ class Equipo extends Component
         session()->flash('status', 'Usuario eliminado del equipo.');
     }
 
+    /** @return array<string, string> */
+    protected function columnasOrdenables(): array
+    {
+        return ['name' => 'name', 'email' => 'email'];
+    }
+
     #[Title('Equipo · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
@@ -90,7 +101,9 @@ class Equipo extends Component
         return view('livewire.empresa.equipo', [
             'empresa' => $empresa,
             'principal' => $empresa->user,
-            'adicionales' => $empresa->usuariosAdicionales()->orderBy('name')->get(),
+            'adicionales' => $empresa->usuariosAdicionales()
+                ->tap(fn ($query) => $this->aplicarOrden($query))
+                ->get(),
             'disponibles' => $empresa->usuariosAdicionalesDisponibles(),
         ]);
     }

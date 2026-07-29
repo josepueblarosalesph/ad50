@@ -24,8 +24,8 @@
                 <table class="w-full text-[14px]">
                     <thead>
                         <tr class="ad-thead-row">
-                            <th class="p-4">Nombre</th>
-                            <th class="p-4">Email</th>
+                            <x-th-ordenable campo="name" :orden="$orden" :direccion="$direccion">Nombre</x-th-ordenable>
+                            <x-th-ordenable campo="email" :orden="$orden" :direccion="$direccion">Email</x-th-ordenable>
                             <th class="p-4">Rol</th>
                             <th class="p-4"></th>
                         </tr>

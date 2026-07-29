@@ -175,15 +175,17 @@ test('se puede ordenar por el conteo de candidatos', function () {
         }
     }
 
+    // Un conteo parte descendente: lo útil es ver primero las que tienen más candidatos.
     $componente = Livewire::actingAs($user)->test(Busquedas::class)->call('ordenarPor', 'candidatos');
 
-    expect($componente->viewData('busquedas')->pluck('titulo')->all())
-        ->toBe(['Sin nadie', 'Con uno', 'Con dos']);
+    expect($componente->get('direccion'))->toBe('desc')
+        ->and($componente->viewData('busquedas')->pluck('titulo')->all())
+        ->toBe(['Con dos', 'Con uno', 'Sin nadie']);
 
     $componente->call('ordenarPor', 'candidatos');
 
     expect($componente->viewData('busquedas')->pluck('titulo')->all())
-        ->toBe(['Con dos', 'Con uno', 'Sin nadie']);
+        ->toBe(['Sin nadie', 'Con uno', 'Con dos']);
 });
 
 test('una columna que no es ordenable se rechaza', function () {

@@ -2,6 +2,7 @@
 
 use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\FiltrosBusqueda;
+use App\Livewire\Empresa\Panel;
 use App\Livewire\Empresa\Resultados;
 use App\Models\Empresa;
 use App\Models\Postulante;
@@ -258,7 +259,7 @@ test('la previsualizacion materializa perfiles nuevos abribles y contables, sin 
 
     // El panel de empresa NO cuenta el temporal (sigue en 1 confirmado).
     Livewire::actingAs($user)
-        ->test(\App\Livewire\Empresa\Panel::class)
+        ->test(Panel::class)
         ->assertViewHas('totalCandidatos', 1);
 });
 
@@ -297,13 +298,13 @@ test('guardar confirma las coincidencias del borrador y limpia las temporales', 
         ->and($busqueda->candidatos()->confirmados()->pluck('postulante_id')->all())->toBe([$biobio->id]);
 });
 
-test('saved matches keep their pivot row while previewing so favourites survive', function () {
+test('las coincidencias guardadas conservan su fila al previsualizar', function () {
     [$user, $empresa] = empresaActiva();
     $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => ['ciudad' => ['Biobío']]]);
     $biobio = postulanteEnRegion('Biobío');
 
     app(MatchingService::class)->sincronizar($busqueda->fresh());
-    $busqueda->candidatos()->where('postulante_id', $biobio->id)->update(['favorito' => true]);
+    $empresa->alternarFavorito($biobio->id, $busqueda->id);
 
     Livewire::actingAs($user)
         ->test(Resultados::class, ['busqueda' => $busqueda])

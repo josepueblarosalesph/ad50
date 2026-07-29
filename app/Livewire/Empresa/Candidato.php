@@ -5,6 +5,7 @@ namespace App\Livewire\Empresa;
 use App\Concerns\AsociaCandidatosAPublicaciones;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\NotaCandidato;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
@@ -48,6 +49,8 @@ class Candidato extends Component
 
     public int $totalCandidatos = 1;
 
+    public bool $esFavorito = false;
+
     public string $nota = '';
 
     public bool $notaGuardada = false;
@@ -68,15 +71,37 @@ class Candidato extends Component
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
         $this->cvDisponible = filled($this->match->postulante->cv_ruta)
             && Storage::disk('local')->exists($this->match->postulante->cv_ruta);
+        $this->esFavorito = auth()->user()->empresa?->haMarcadoFavorito($match->postulante_id) ?? false;
         $this->hidratarAcceso(auth()->user()->empresa);
 
         $this->cargarNavegacion();
     }
 
+    /** Guarda o quita al candidato de los favoritos de la empresa. */
     public function toggleFavorito(): void
     {
-        $this->match->update(['favorito' => ! $this->match->favorito]);
-        $this->match->refresh();
+        $empresa = auth()->user()->empresa;
+
+        abort_unless($empresa?->id === $this->match->busqueda->empresa_id, 403);
+
+        // La búsqueda desde la que se está viendo queda como origen del favorito.
+        $this->esFavorito = $empresa->alternarFavorito($this->match->postulante_id, $this->match->busqueda_id);
+    }
+
+    /**
+     * Postulantes guardados por la empresa, para acotar la navegación por favoritos.
+     *
+     * @return list<int>
+     */
+    private function favoritosDeLaEmpresa(): array
+    {
+        return once(fn (): array => array_values(
+            Favorito::query()
+                ->where('empresa_id', $this->match->busqueda->empresa_id)
+                ->pluck('postulante_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all()
+        ));
     }
 
     /** Desbloquea el perfil consumiendo un cupo del plan de la empresa. */
@@ -232,7 +257,7 @@ class Candidato extends Component
             ->confirmados()
             ->where('estado_match', 'cumple')
             ->whereHas('postulante', fn ($query) => $query->where('visible', true))
-            ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
+            ->when($this->filtro === 'favoritos', fn ($query) => $query->whereIn('postulante_id', $this->favoritosDeLaEmpresa()))
             ->orderByDesc('criterios_cumplidos')
             ->orderBy('postulante_id')
             ->get(['id', 'criterios_detalle']);
@@ -259,7 +284,7 @@ class Candidato extends Component
         return $this->match->busqueda->candidatos()
             ->where('estado_match', 'cumple')
             ->whereHas('postulante', fn ($query) => $query->where('visible', true))
-            ->when($this->filtro === 'favoritos', fn ($query) => $query->where('favorito', true))
+            ->when($this->filtro === 'favoritos', fn ($query) => $query->whereIn('postulante_id', $this->favoritosDeLaEmpresa()))
             ->with('postulante')
             ->get()
             ->filter(function (BusquedaCandidato $match) use ($matching, $criterios): bool {

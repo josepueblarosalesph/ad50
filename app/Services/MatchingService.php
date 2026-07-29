@@ -49,7 +49,7 @@ class MatchingService
                 }
             });
 
-        // Upsert de las coincidencias por tandas (preserva favorito y contactado_at existentes).
+        // Upsert de las coincidencias por tandas (preserva contactado_at existente).
         // `temporal => false` confirma cualquier fila que existiera como previsualización.
         foreach (array_chunk($filas, 500) as $tanda) {
             BusquedaCandidato::query()->upsert(
@@ -256,7 +256,7 @@ class MatchingService
     /**
      * Materializa como filas TEMPORALES las coincidencias de un borrador de filtros sin
      * guardar, para que la previsualización cuente y permita abrir todos los perfiles.
-     * No toca las filas confirmadas (conserva favoritos ni altera su detalle guardado):
+     * No toca las filas confirmadas (no altera su detalle guardado):
      * solo crea filas nuevas para los perfiles que aún no están en la búsqueda y descarta
      * las temporales que dejaron de cumplir el borrador.
      *

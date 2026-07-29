@@ -50,7 +50,7 @@
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-2">
-            <button type="button" wire:click="toggleFavorito" wire:loading.attr="disabled" @class(['ad-favorite-button ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'is-active' => $match->favorito]) aria-pressed="{{ $match->favorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" />{{ $match->favorito ? 'Guardado en favoritos' : 'Guardar como favorito' }}</button>
+            <button type="button" wire:click="toggleFavorito" wire:loading.attr="disabled" @class(['ad-favorite-button ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'is-active' => $esFavorito]) aria-pressed="{{ $esFavorito ? 'true' : 'false' }}"><flux:icon.star variant="solid" class="size-5" />{{ $esFavorito ? 'Guardado en favoritos' : 'Guardar como favorito' }}</button>
             <button type="button" wire:click="abrirAsociacion({{ $match->postulante_id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $match->postulante_id }})" @class(['ad-btn-sm inline-flex items-center gap-2 rounded-xl border font-bold transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $totalAsociaciones > 0, 'border-line-2 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $totalAsociaciones === 0])>
                 <flux:icon.megaphone class="size-5" />
                 {{ $totalAsociaciones > 0 ? 'En '.$totalAsociaciones.' publicación'.($totalAsociaciones === 1 ? '' : 'es') : 'Asociar a publicación' }}

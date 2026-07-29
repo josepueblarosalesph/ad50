@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\OrdenaListado;
 use App\Models\Publicacion;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -11,6 +12,7 @@ use Livewire\WithPagination;
 
 class Publicaciones extends Component
 {
+    use OrdenaListado;
     use WithPagination;
 
     public ?int $borrandoId = null;
@@ -27,6 +29,8 @@ class Publicaciones extends Component
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
 
+        $this->hidratarOrden();
+
         // El borrado hecho desde el detalle deja aquí el aviso con opción de deshacer.
         $eliminada = session('publicacion-eliminada');
 
@@ -34,6 +38,25 @@ class Publicaciones extends Component
             $this->eliminadoId = (int) $eliminada['id'];
             $this->eliminadoCargo = (string) $eliminada['cargo'];
         }
+    }
+
+    /** @return array<string, string> */
+    protected function columnasOrdenables(): array
+    {
+        return [
+            'created_at' => 'created_at',
+            'cargo' => 'cargo',
+            'comuna' => 'comuna',
+            'postulaciones' => 'postulaciones_count',
+            'vigente_hasta' => 'vigente_hasta',
+            'estado' => 'estado',
+        ];
+    }
+
+    /** @return list<string> */
+    protected function columnasDescendentes(): array
+    {
+        return ['created_at', 'postulaciones', 'vigente_hasta'];
     }
 
     public function cambiarEstado(Publicacion $publicacion, string $estado): void
@@ -108,7 +131,7 @@ class Publicaciones extends Component
             'publicaciones' => Publicacion::query()
                 ->whereBelongsTo(auth()->user()->empresa)
                 ->withCount('postulaciones')
-                ->latest()
+                ->tap(fn ($query) => $this->aplicarOrden($query))
                 ->paginate(12),
             'estados' => Publicacion::ESTADOS,
             'publicacionesTotales' => $empresa?->publicacionesTotales(),

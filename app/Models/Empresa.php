@@ -107,6 +107,44 @@ class Empresa extends Model
         return $this->hasMany(Desbloqueo::class);
     }
 
+    /**
+     * Candidatos guardados por la empresa. Es de la cuenta: no depende de la búsqueda
+     * desde la que se marcó ni se pierde si esa búsqueda se elimina.
+     *
+     * @return HasMany<Favorito, $this>
+     */
+    public function favoritos(): HasMany
+    {
+        return $this->hasMany(Favorito::class);
+    }
+
+    public function haMarcadoFavorito(int $postulanteId): bool
+    {
+        return $this->favoritos()->where('postulante_id', $postulanteId)->exists();
+    }
+
+    /**
+     * Marca o desmarca un candidato. Devuelve true si quedó guardado.
+     * `$busquedaId` solo registra desde dónde se marcó.
+     */
+    public function alternarFavorito(int $postulanteId, ?int $busquedaId = null): bool
+    {
+        $favorito = $this->favoritos()->where('postulante_id', $postulanteId)->first();
+
+        if ($favorito !== null) {
+            $favorito->delete();
+
+            return false;
+        }
+
+        $this->favoritos()->create([
+            'postulante_id' => $postulanteId,
+            'busqueda_id' => $busquedaId,
+        ]);
+
+        return true;
+    }
+
     /** El plan está vigente (permite desbloquear perfiles). */
     public function planVigente(): bool
     {

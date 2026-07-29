@@ -5,6 +5,7 @@ use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
@@ -32,7 +33,10 @@ function empresaConFavoritos(): array
     return [$user->fresh(), $empresa->fresh(), $liderazgo, $planta, $publicacion];
 }
 
-/** Crea un candidato y lo marca (o no) como favorito en la búsqueda dada. */
+/**
+ * Crea un candidato que calza con la búsqueda y, si corresponde, lo guarda en los
+ * favoritos de la empresa (que ya no dependen de la búsqueda: solo registra el origen).
+ */
 function candidatoEnBusqueda(Busqueda $busqueda, bool $favorito = true, string $cargo = 'Gerente'): BusquedaCandidato
 {
     $postulante = Postulante::query()->create([
@@ -41,13 +45,22 @@ function candidatoEnBusqueda(Busqueda $busqueda, bool $favorito = true, string $
         'cargo_actual' => $cargo,
     ]);
 
-    return $busqueda->candidatos()->create([
+    $match = $busqueda->candidatos()->create([
         'postulante_id' => $postulante->id,
         'criterios_cumplidos' => 1,
         'criterios_totales' => 1,
         'estado_match' => 'cumple',
-        'favorito' => $favorito,
     ]);
+
+    if ($favorito) {
+        Favorito::query()->create([
+            'empresa_id' => $busqueda->empresa_id,
+            'postulante_id' => $postulante->id,
+            'busqueda_id' => $busqueda->id,
+        ]);
+    }
+
+    return $match;
 }
 
 test('la lista muestra solo los favoritos de la empresa, una fila por candidato', function () {
@@ -56,13 +69,12 @@ test('la lista muestra solo los favoritos de la empresa, una fila por candidato'
     $favorito = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Operaciones');
     candidatoEnBusqueda($liderazgo, favorito: false, cargo: 'No favorito');
 
-    // El mismo candidato marcado también en la segunda búsqueda: sigue siendo una fila.
+    // El mismo candidato calza también con la segunda búsqueda: el favorito sigue siendo uno.
     $planta->candidatos()->create([
         'postulante_id' => $favorito->postulante_id,
         'criterios_cumplidos' => 1,
         'criterios_totales' => 1,
         'estado_match' => 'cumple',
-        'favorito' => true,
     ]);
 
     Livewire::actingAs($user)
@@ -71,9 +83,9 @@ test('la lista muestra solo los favoritos de la empresa, una fila por candidato'
         ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 1)
         ->assertSee('Gerente de Operaciones')
         ->assertDontSee('No favorito')
-        // Aparecen las dos búsquedas donde está marcado.
-        ->assertSee('Liderazgo')
-        ->assertSee('Planta Sur');
+        // Se indica la búsqueda desde la que se guardó.
+        ->assertSee('Guardado desde')
+        ->assertSee('Liderazgo');
 });
 
 test('los favoritos de otra empresa no se filtran a la lista', function () {
@@ -176,45 +188,52 @@ test('los filtros se combinan y se pueden limpiar de una vez', function () {
         ->assertViewHas('candidatos', fn ($c) => $c->total() === 2);
 });
 
-test('quitar el favorito lo saca de esa búsqueda pero lo conserva en las demás', function () {
-    [$user, , $liderazgo, $planta] = empresaConFavoritos();
+test('quitar el favorito lo saca de la cuenta de una sola vez', function () {
+    [$user, $empresa, $liderazgo, $planta] = empresaConFavoritos();
     $match = candidatoEnBusqueda($liderazgo);
-    $otro = $planta->candidatos()->create([
+
+    // Aunque el candidato calce con otra búsqueda, el favorito es uno solo.
+    $planta->candidatos()->create([
         'postulante_id' => $match->postulante_id,
         'criterios_cumplidos' => 1,
         'criterios_totales' => 1,
         'estado_match' => 'cumple',
-        'favorito' => true,
     ]);
 
     Livewire::actingAs($user)
         ->test(Favoritos::class)
-        ->call('quitarFavorito', $liderazgo->id, $match->postulante_id)
+        ->call('quitarFavorito', $match->postulante_id)
         ->assertHasNoErrors()
-        // Sigue en la lista porque continúa marcado en la otra búsqueda.
-        ->assertViewHas('totalFavoritos', 1);
-
-    expect($match->fresh()->favorito)->toBeFalse()
-        ->and($otro->fresh()->favorito)->toBeTrue();
-
-    // Al quitarlo de la segunda, desaparece de la lista.
-    Livewire::actingAs($user)
-        ->test(Favoritos::class)
-        ->call('quitarFavorito', $planta->id, $match->postulante_id)
         ->assertViewHas('totalFavoritos', 0);
+
+    expect($empresa->haMarcadoFavorito($match->postulante_id))->toBeFalse();
 });
 
-test('no se puede quitar el favorito de una búsqueda de otra empresa', function () {
+test('no se puede quitar un favorito de otra empresa', function () {
     [$user] = empresaConFavoritos();
-    [, , $ajena] = empresaConFavoritos();
+    [, $otraEmpresa, $ajena] = empresaConFavoritos();
     $match = candidatoEnBusqueda($ajena);
 
     Livewire::actingAs($user)
         ->test(Favoritos::class)
-        ->call('quitarFavorito', $ajena->id, $match->postulante_id)
+        ->call('quitarFavorito', $match->postulante_id)
         ->assertStatus(404);
 
-    expect($match->fresh()->favorito)->toBeTrue();
+    expect($otraEmpresa->haMarcadoFavorito($match->postulante_id))->toBeTrue();
+});
+
+test('el favorito sobrevive a que se elimine la búsqueda desde la que se guardó', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Sigue guardado');
+
+    $liderazgo->delete();
+
+    expect($empresa->haMarcadoFavorito($match->postulante_id))->toBeTrue();
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertViewHas('totalFavoritos', 1)
+        ->assertSee('Sigue guardado');
 });
 
 test('desde favoritos se asocia un candidato a una publicación', function () {

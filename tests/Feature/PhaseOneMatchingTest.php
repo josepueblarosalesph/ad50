@@ -373,10 +373,10 @@ test('a company can edit a search and recalculate its existing results', functio
 
     $busqueda = $empresa->busquedas()->sole();
     expect($busqueda->candidatos)->toHaveCount(2);
-    $busqueda->candidatos()
+    $favorecido = $busqueda->candidatos()
         ->whereHas('postulante', fn ($query) => $query->where('ciudad', 'Metropolitana de Santiago'))
-        ->sole()
-        ->update(['favorito' => true]);
+        ->sole();
+    $empresa->alternarFavorito($favorecido->postulante_id, $busqueda->id);
 
     Livewire::actingAs($empresaUser)
         ->test(NuevaBusqueda::class, ['busqueda' => $busqueda])
@@ -391,7 +391,8 @@ test('a company can edit a search and recalculate its existing results', functio
         ->and($busqueda->fresh()->criterios['ciudad'])->toBe(['Metropolitana de Santiago'])
         ->and($busqueda->fresh()->candidatos)->toHaveCount(1)
         ->and($busqueda->fresh()->candidatos->sole()->postulante->ciudad)->toBe('Metropolitana de Santiago')
-        ->and($busqueda->fresh()->candidatos->sole()->favorito)->toBeTrue();
+        // El favorito es de la cuenta: no depende de que la búsqueda siga calzando.
+        ->and($empresa->haMarcadoFavorito($favorecido->postulante_id))->toBeTrue();
 });
 
 test('a company can modify search filters from the results sidebar', function () {

@@ -3,9 +3,11 @@
 namespace App\Livewire\Empresa;
 
 use App\Concerns\AsociaCandidatosAPublicaciones;
+use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\Postulante;
 use App\Models\Publicacion;
 use Illuminate\Contracts\View\View;
@@ -18,11 +20,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Todos los candidatos que la empresa marcó como favoritos, en una sola lista.
+ * Todos los candidatos que la empresa guardó, en una sola lista.
  *
- * El favorito vive en `busqueda_candidato`, así que una misma persona marcada en dos
- * búsquedas produce dos filas. Aquí se agrupa por candidato: cada persona aparece una
- * vez y las búsquedas donde está marcada se muestran como chips.
+ * El favorito es de la cuenta (tabla `favoritos`), así que hay uno por candidato sin
+ * importar desde qué búsqueda se marcó. `busqueda_id` guarda ese origen y alimenta el
+ * filtro "Búsqueda de origen".
  */
 class Favoritos extends Component
 {
@@ -76,18 +78,14 @@ class Favoritos extends Component
         $this->resetPage(pageName: 'favoritos');
     }
 
-    /** Quita el favorito de un candidato en una búsqueda concreta. */
-    public function quitarFavorito(int $busquedaId, int $postulanteId): void
+    /** Quita al candidato de los favoritos de la empresa. */
+    public function quitarFavorito(int $postulanteId): void
     {
-        $match = BusquedaCandidato::query()
-            ->where('busqueda_id', $busquedaId)
-            ->where('postulante_id', $postulanteId)
-            ->whereHas('busqueda', fn (Builder $query) => $query->where('empresa_id', $this->empresaId()))
-            ->first();
+        $favorito = $this->favoritosDeLaEmpresa()->where('postulante_id', $postulanteId)->first();
 
-        abort_if($match === null, 404);
+        abort_if($favorito === null, 404);
 
-        $match->update(['favorito' => false]);
+        $favorito->delete();
         $this->resetPage(pageName: 'favoritos');
     }
 
@@ -116,16 +114,14 @@ class Favoritos extends Component
     }
 
     /**
-     * Filas de favoritos confirmados de la empresa, sobre postulantes visibles.
+     * Favoritos de la empresa sobre postulantes visibles.
      *
-     * @return Builder<BusquedaCandidato>
+     * @return Builder<Favorito>
      */
     private function favoritosDeLaEmpresa(): Builder
     {
-        return BusquedaCandidato::query()
-            ->confirmados()
-            ->where('favorito', true)
-            ->whereHas('busqueda', fn (Builder $query) => $query->where('empresa_id', $this->empresaId()))
+        return Favorito::query()
+            ->where('empresa_id', $this->empresaId())
             ->whereHas('postulante', fn (Builder $query) => $query->where('visible', true));
     }
 
@@ -173,15 +169,23 @@ class Favoritos extends Component
     {
         $empresaId = $this->empresaId();
 
-        // Se parte del conjunto de favoritos y se sube a los candidatos: así el filtro
-        // por búsqueda reutiliza exactamente la misma definición de "favorito vigente".
         $query = Postulante::query()
+            ->select('postulantes.*')
+            // Una coincidencia cualquiera del candidato en esta empresa, para enlazar al
+            // perfil. Puede no existir: el favorito ya no depende de ninguna búsqueda.
+            ->addSelect(['match_visible_id' => BusquedaCandidato::query()
+                ->select('busqueda_candidato.id')
+                ->whereColumn('busqueda_candidato.postulante_id', 'postulantes.id')
+                ->whereIn('busqueda_candidato.busqueda_id', Busqueda::query()->where('empresa_id', $empresaId)->select('id'))
+                ->where('busqueda_candidato.temporal', false)
+                ->limit(1),
+            ])
             ->where('visible', true)
             ->whereIn('id', $this->favoritosDeLaEmpresa()->select('postulante_id'));
 
         $totalFavoritos = (clone $query)->count();
 
-        // Filtro por la búsqueda donde se marcó el favorito.
+        // Filtro por la búsqueda desde la que se guardó.
         if ($this->busqueda !== 'todas') {
             $query->whereIn('id', $this->favoritosDeLaEmpresa()
                 ->where('busqueda_id', (int) $this->busqueda)
@@ -207,11 +211,6 @@ class Favoritos extends Component
         $candidatos = $query
             ->with([
                 'user',
-                // Solo las marcas de favorito de esta empresa, con su búsqueda para los chips.
-                'matches' => fn ($q) => $q->confirmados()
-                    ->where('favorito', true)
-                    ->whereHas('busqueda', fn (Builder $b) => $b->where('empresa_id', $empresaId))
-                    ->with('busqueda:id,titulo'),
                 'publicacionesAsociadas' => fn ($q) => $q->where('publicaciones.empresa_id', $empresaId),
             ])
             ->orderBy('id')
@@ -224,6 +223,12 @@ class Favoritos extends Component
             'totalFavoritos' => $totalFavoritos,
             'busquedasDisponibles' => $this->busquedasDeLaEmpresa(),
             'publicacionesDisponibles' => $this->publicacionesDeLaEmpresa(),
+            // Origen de cada favorito, para el chip "Guardado desde".
+            'origenPorPostulante' => $this->favoritosDeLaEmpresa()
+                ->whereIn('postulante_id', $candidatos->pluck('id'))
+                ->with('busqueda:id,titulo')
+                ->get()
+                ->keyBy('postulante_id'),
             'postulantesDesbloqueados' => Desbloqueo::query()
                 ->where('empresa_id', $empresaId)
                 ->whereIn('postulante_id', $candidatos->pluck('id'))
