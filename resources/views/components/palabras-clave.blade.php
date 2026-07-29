@@ -10,7 +10,7 @@
     <flux:field>
         @unless ($hideLabel)
             <div class="flex items-center gap-1.5">
-                <flux:label>Palabra clave</flux:label>
+                <flux:label>Palabras clave</flux:label>
                 @if ($ayuda)
                     <flux:tooltip :content="$ayuda">
                         <flux:icon.information-circle class="size-4 cursor-help text-gray-400 hover:text-gray-500" />

@@ -11,16 +11,9 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
 
-    Route::livewire('settings/security', 'pages::settings.security')
-        ->middleware([
-            'password.confirm',
-        ])
-        ->name('security.edit');
+    // Sin `password.confirm`: se entra directo al formulario de cambio de contraseña
+    // (actual + nueva + confirmación) en vez de pasar por la pantalla intermedia que
+    // vuelve a pedir la clave. Las acciones de 2FA de Fortify conservan su propia
+    // confirmación (config/fortify.php, 'confirmPassword' => true).
+    Route::livewire('settings/security', 'pages::settings.security')->name('security.edit');
 });
-
-Route::get('.well-known/passkey-endpoints', function () {
-    return response()->json([
-        'enroll' => route('security.edit'),
-        'manage' => route('security.edit'),
-    ]);
-})->name('well-known.passkeys');

@@ -2,6 +2,8 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
 
@@ -10,9 +12,6 @@ beforeEach(function () {
 
     Features::twoFactorAuthentication([
         'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-    Features::passkeys([
         'confirmPassword' => true,
     ]);
 });
@@ -26,19 +25,21 @@ test('security settings page can be rendered', function () {
 
     $response->assertOk();
 
-    $response->assertSee('Passkeys');
-    $response->assertSee('No passkeys yet');
     $response->assertSee('Two-factor authentication');
     $response->assertSee('Enable 2FA');
 });
 
-test('security settings page requires password confirmation when enabled', function () {
+test('Seguridad se abre directo en el formulario de cambio de contraseña', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)
-        ->get(route('security.edit'));
-
-    $response->assertRedirect(route('password.confirm'));
+    // Ya no hay pantalla intermedia que vuelva a pedir la clave: se entra al formulario.
+    $this->actingAs($user)
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertDontSee(route('password.confirm'), false)
+        ->assertSee('Current password')
+        ->assertSee('New password')
+        ->assertSee('Confirm password');
 });
 
 test('security settings page renders without two factor when feature is disabled', function () {
@@ -51,8 +52,6 @@ test('security settings page renders without two factor when feature is disabled
         ->get(route('security.edit'))
         ->assertOk()
         ->assertSee('Update password')
-        ->assertDontSee('Manage your passkeys for passwordless sign-in')
-        ->assertDontSee('Add a passkey to sign in without a password')
         ->assertDontSee('Two-factor authentication');
 });
 
@@ -110,4 +109,19 @@ test('correct password must be provided to update password', function () {
         ->call('updatePassword');
 
     $response->assertHasErrors(['current_password']);
+});
+
+test('la aplicación ya no expone nada de passkeys', function () {
+    $user = User::factory()->create();
+
+    // Ni la pantalla de seguridad ni la de confirmación ofrecen passkeys...
+    $this->actingAs($user)->get(route('security.edit'))
+        ->assertOk()
+        ->assertDontSee('passkey', false)
+        ->assertDontSee('Passkey', false);
+
+    // ...y la función quedó fuera de Fortify, sin rutas ni tabla.
+    expect(Features::enabled('passkeys'))->toBeFalse()
+        ->and(Route::has('well-known.passkeys'))->toBeFalse()
+        ->and(Schema::hasTable('passkeys'))->toBeFalse();
 });

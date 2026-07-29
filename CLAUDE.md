@@ -8,7 +8,7 @@ Plataforma web (Chile) que conecta **postulantes mayores de 50 años** con **emp
 
 - **PHP 8.3 / Laravel 13** (backend monolítico)
 - **Livewire 4 + Flux UI (free)** — toda la UI dinámica es server-side en PHP; sin framework JS de front. Alpine.js para interacciones puntuales.
-- **Laravel Fortify** — autenticación (login, registro, verificación de email, 2FA, passkeys)
+- **Laravel Fortify** — autenticación (login, registro, verificación de email, 2FA)
 - **Tailwind CSS 4** + **Vite** (bundling de `resources/css` y `resources/js`)
 - **PostgreSQL** como motor de base de datos. La conexión (`DB_CONNECTION=pgsql`, host, base, usuario y contraseña) se define en `.env` y apunta a la instancia gestionada en **Laravel Cloud**.
 - **Pest 4** para tests; **Pint** para formateo; **Larastan/PHPStan** para análisis estático
@@ -95,7 +95,7 @@ Definidas en [routes/web.php](routes/web.php). Estructura:
 - Públicas: `/` (Landing), `/registro`, `/planes`, `/planes/postulantes`.
 - Autenticadas (`auth`, `verified`), agrupadas por rol con sus middlewares de gating (`EnsurePostulanteOnboardingComplete`, `EnsureEmpresaActiva`).
 - `/dashboard` redirige al panel correcto según rol vía `dashboardRouteName()`.
-- Configuración de cuenta en [routes/settings.php](routes/settings.php); auth/2FA/passkeys gestionados por Fortify + páginas Livewire en `resources/views/pages/`.
+- Configuración de cuenta en [routes/settings.php](routes/settings.php); auth/2FA gestionados por Fortify + páginas Livewire en `resources/views/pages/`.
 
 ## Organización del código
 

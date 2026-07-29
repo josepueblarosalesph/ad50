@@ -4,12 +4,21 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+/**
+ * Se retiró el inicio de sesión con passkeys, así que la tabla deja de usarse.
+ *
+ * La migración que la creaba también se eliminó: en una instalación nueva esta
+ * migración no encuentra nada que borrar (`dropIfExists`) y en las existentes limpia
+ * la tabla junto con las credenciales guardadas.
+ */
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
+    {
+        Schema::dropIfExists('passkeys');
+    }
+
+    public function down(): void
     {
         Schema::create('passkeys', function (Blueprint $table) {
             $table->id();
@@ -22,13 +31,5 @@ return new class extends Migration
 
             $table->index('user_id');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('passkeys');
     }
 };

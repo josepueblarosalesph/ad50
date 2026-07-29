@@ -51,6 +51,8 @@
                     <div class="rounded-xl border border-line-2 p-4">
                         <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="actividadEconomica" campo="actividad_economica" etiqueta="Actividad económica" wire:key="sel-actividad-economica" />
                     </div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /></div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <label for="renta-max-form" class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">
                             Expectativa de renta
@@ -65,8 +67,6 @@
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <x-slider-rango-edad :min="$limitesEdad['min']" :max="$limitesEdad['max']" :desde="$edadMin" :hasta="$edadMax" />
                     </div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /><p class="text-[12px] text-gray-500">Basta que aparezca en alguna de sus experiencias.</p></div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
                     <div class="space-y-2 rounded-xl border border-line-2 p-4 md:col-span-2"><x-palabras-clave :palabras="$palabrasClave" placeholder="Ej. SAP, transformación, planificación" descripcion="Escribe una palabra y presiona Enter." ayuda="Filtra los perfiles que contengan al menos una de estas palabras, en cualquiera de sus campos." /></div>
                 </div>
 

@@ -147,12 +147,12 @@ new #[Title('Mi cuenta · AD+50')] #[Layout('components.layouts.app')] class ext
                 </form>
             </div>
 
-            {{-- La contraseña, el 2FA y las passkeys se administran en Configuración → Seguridad. --}}
+            {{-- La contraseña y el 2FA se administran en Configuración → Seguridad. --}}
             <div class="ad-card">
                 <div class="flex flex-wrap items-center justify-between gap-4 p-6">
                     <div class="min-w-0">
                         <h2 class="text-[15px] font-extrabold text-ink">Contraseña y seguridad</h2>
-                        <p class="mt-1 text-[13px] text-gray-500">Tu contraseña, la verificación en dos pasos y tus passkeys.</p>
+                        <p class="mt-1 text-[13px] text-gray-500">Tu contraseña y la verificación en dos pasos.</p>
                     </div>
                     <a wire:navigate href="{{ route('security.edit') }}" class="ad-btn-ghost ad-btn-sm whitespace-nowrap">
                         Ir a Seguridad
