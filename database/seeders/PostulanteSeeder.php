@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Postulante;
 use App\Models\User;
 use App\Support\CatalogosProfesionales;
+use App\Support\SecuenciasPostgres;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -56,6 +57,10 @@ class PostulanteSeeder extends Seeder
             ['id'],
             array_values(array_diff(array_keys($postulantes[0]), ['id', 'user_id', 'created_at'])),
         );
+
+        // El upsert fija los ids a mano y eso no mueve la secuencia de Postgres: sin
+        // esto, el siguiente registro real chocaría con una de estas filas.
+        SecuenciasPostgres::sincronizar('postulantes');
     }
 
     /**
