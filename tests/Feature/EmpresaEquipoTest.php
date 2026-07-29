@@ -188,3 +188,29 @@ test('el menú principal lista las secciones con su nombre y en orden', function
     sort($ordenadas);
     expect($posiciones)->toBe($ordenadas);
 });
+
+test('el menú lateral se puede plegar donde existe', function () {
+    [$principal] = crearEmpresaConPrincipal();
+
+    // Prospección tiene menú lateral: aparece el control de plegado.
+    $this->actingAs($principal)->get(route('empresa.busquedas.index'))
+        ->assertOk()
+        ->assertSee('aria-controls="menu-lateral"', false)
+        ->assertSee('ad-sidebar-plegado', false)
+        // El ancho sale de la variable CSS, con el valor desplegado por defecto.
+        ->assertSee('md:grid-cols-[var(--ad-sidebar,260px)_1fr]', false);
+
+    // Publicaciones no tiene menú lateral: no se ofrece el control.
+    $this->actingAs($principal)->get(route('empresa.publicaciones.index'))
+        ->assertOk()
+        ->assertDontSee('aria-controls="menu-lateral"', false);
+});
+
+test('el acceso a nueva búsqueda del menú lateral usa el icono +', function () {
+    [$principal] = crearEmpresaConPrincipal();
+
+    // `path` del icono plus de Heroicons: identifica el glifo sin depender del nombre.
+    $this->actingAs($principal)->get(route('empresa.busquedas.index'))
+        ->assertOk()
+        ->assertSee('M12 4.5v15m7.5-7.5h-15', false);
+});

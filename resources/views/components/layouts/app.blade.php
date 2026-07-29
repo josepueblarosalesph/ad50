@@ -87,11 +87,42 @@
         </div>
     </header>
 
-    {{-- ====== SHELL CON SIDEBAR ====== --}}
-    <div @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[260px_1fr]' => isset($sidebar)])>
+    {{-- ====== SHELL CON SIDEBAR ======
+         El menú lateral se puede plegar para ganar ancho de contenido. La preferencia
+         se guarda en localStorage (no en sesión) para que se mantenga al navegar sin
+         costar un viaje al servidor. Solo aplica en escritorio: en móvil el sidebar ya
+         está oculto y sus filtros viven en un desplegable dentro del contenido. --}}
+    <div
         @isset($sidebar)
-            <aside class="hidden border-r border-line bg-white p-4 dark:bg-[#1D2022] md:block">
-                {{ $sidebar }}
+            x-data="{ plegado: localStorage.getItem('ad-sidebar-plegado') === '1' }"
+            x-effect="localStorage.setItem('ad-sidebar-plegado', plegado ? '1' : '0')"
+            {{-- El ancho sale de una variable CSS con el valor desplegado por defecto: el
+                 servidor ya pinta el layout correcto y Alpine solo la baja si está plegado,
+                 así no hay salto de columnas mientras carga. --}}
+            x-bind:style="plegado ? '--ad-sidebar: 56px' : ''"
+        @endisset
+        @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[var(--ad-sidebar,260px)_1fr]' => isset($sidebar)])
+    >
+        @isset($sidebar)
+            <aside class="hidden border-r border-line bg-white px-3 py-4 dark:bg-[#1D2022] md:block">
+                <div class="mb-2 flex" x-bind:class="plegado ? 'justify-center' : 'justify-end'">
+                    <button
+                        type="button"
+                        x-on:click="plegado = ! plegado"
+                        class="grid size-8 place-items-center rounded-lg text-gray-400 transition hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:hover:bg-white/5"
+                        x-bind:aria-label="plegado ? 'Mostrar el menú lateral' : 'Plegar el menú lateral'"
+                        x-bind:aria-expanded="plegado ? 'false' : 'true'"
+                        aria-controls="menu-lateral"
+                    >
+                        <flux:icon.chevron-double-left class="size-4" x-bind:class="plegado && 'hidden'" />
+                        <flux:icon.chevron-double-right class="hidden size-4" x-bind:class="plegado && '!block'" />
+                    </button>
+                </div>
+
+                {{-- Visible por defecto; Alpine lo esconde solo si la preferencia es plegado. --}}
+                <div id="menu-lateral" x-bind:class="plegado && 'hidden'">
+                    {{ $sidebar }}
+                </div>
             </aside>
         @endisset
 

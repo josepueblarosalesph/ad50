@@ -180,7 +180,10 @@ test('authentication and application shells use the official logo without forcin
         ->toContain('<x-mobile-menu id="application-mobile-navigation">')
         ->toContain("route('profile.edit')")
         ->toContain("route('appearance.edit')")
-        ->toContain("'md:grid-cols-[260px_1fr]' => isset(\$sidebar)")
+        // El ancho del menú lateral sale de una variable CSS: 260px desplegado (valor por
+        // defecto que pinta el servidor) y 56px cuando Alpine la baja al plegarlo.
+        ->toContain("'md:grid-cols-[var(--ad-sidebar,260px)_1fr]' => isset(\$sidebar)")
+        ->toContain("'--ad-sidebar: 56px'")
         ->and($applicationStyles)
         ->toContain('.dark .ad-logo')
         ->toContain('background-color: #222528')
