@@ -3,6 +3,7 @@
 use App\Livewire\Empresa\Busquedas;
 use App\Models\Busqueda;
 use App\Models\Empresa;
+use App\Models\Postulante;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -128,4 +129,83 @@ test('an empresa cannot delete another company search', function () {
         ->assertForbidden();
 
     expect(Busqueda::query()->whereKey($ajena->id)->exists())->toBeTrue();
+});
+
+test('el listado ordena por la columna elegida e invierte al repetirla', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
+
+    foreach (['Charlie', 'Alfa', 'Bravo'] as $titulo) {
+        $empresa->busquedas()->create(['titulo' => $titulo, 'criterios' => []]);
+    }
+
+    $titulos = fn ($componente): array => $componente->viewData('busquedas')->pluck('titulo')->all();
+
+    $componente = Livewire::actingAs($user)->test(Busquedas::class);
+
+    // Por defecto, lo más reciente primero.
+    expect($componente->get('orden'))->toBe('created_at')
+        ->and($componente->get('direccion'))->toBe('desc');
+
+    // Al elegir el título parte ascendente...
+    $componente->call('ordenarPor', 'titulo');
+    expect($componente->get('direccion'))->toBe('asc')
+        ->and($titulos($componente))->toBe(['Alfa', 'Bravo', 'Charlie']);
+
+    // ...y repetir la misma columna invierte el sentido.
+    $componente->call('ordenarPor', 'titulo');
+    expect($componente->get('direccion'))->toBe('desc')
+        ->and($titulos($componente))->toBe(['Charlie', 'Bravo', 'Alfa']);
+});
+
+test('se puede ordenar por el conteo de candidatos', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
+
+    foreach (['Con dos' => 2, 'Sin nadie' => 0, 'Con uno' => 1] as $titulo => $cantidad) {
+        $busqueda = $empresa->busquedas()->create(['titulo' => $titulo, 'criterios' => []]);
+
+        // Ojo: range(1, 0) devuelve [1, 0] en PHP, así que el conteo se hace con un for.
+        for ($i = 0; $i < $cantidad; $i++) {
+            $postulante = Postulante::query()->create([
+                'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+                'visible' => true,
+            ]);
+            $busqueda->candidatos()->create(['postulante_id' => $postulante->id, 'estado_match' => 'cumple']);
+        }
+    }
+
+    $componente = Livewire::actingAs($user)->test(Busquedas::class)->call('ordenarPor', 'candidatos');
+
+    expect($componente->viewData('busquedas')->pluck('titulo')->all())
+        ->toBe(['Sin nadie', 'Con uno', 'Con dos']);
+
+    $componente->call('ordenarPor', 'candidatos');
+
+    expect($componente->viewData('busquedas')->pluck('titulo')->all())
+        ->toBe(['Con dos', 'Con uno', 'Sin nadie']);
+});
+
+test('una columna que no es ordenable se rechaza', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->call('ordenarPor', 'criterios')
+        ->assertStatus(404);
+});
+
+test('el encabezado marca la columna activa y su sentido', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
+    $empresa->busquedas()->create(['titulo' => 'Una', 'criterios' => []]);
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->call('ordenarPor', 'titulo')
+        // La columna ordenada informa el sentido a lectores de pantalla.
+        ->assertSee('aria-sort="ascending"', false)
+        ->assertSee('aria-sort="none"', false)
+        ->assertSee('Fecha de creación');
 });

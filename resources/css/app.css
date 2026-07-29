@@ -187,9 +187,19 @@ body [class~="text-[15px]"] {
   .ad-card-pad    { @apply p-6; }
   .ad-card-head   { @apply flex items-center justify-between px-6 py-4 border-b border-line; }
 
-  /* Encabezado de tabla unificado: mismo tipo, tamaño, transformación y color en todo el sitio.
-     Se aplica al <tr> del <thead>; el <th> solo aporta el padding (p-4). */
-  .ad-thead-row   { @apply border-b border-line text-left text-[12px] font-bold uppercase tracking-wider text-gray-400; }
+  /* Encabezado de tabla unificado: mismo tipo, tamaño y color en todo el sitio.
+     Se aplica al <tr> del <thead>; el <th> solo aporta el padding (p-4).
+     Fondo gris suave y rótulos en mayúscula inicial (sin `uppercase`), que se leen
+     mejor que las versaditas, sobre todo en etiquetas de dos palabras. */
+  .ad-thead-row   { @apply border-b border-line bg-paper text-left text-[12.5px] font-bold text-gray-500; }
+
+  /* Botón de ordenamiento dentro de un <th>: hereda el tipo del encabezado. */
+  .ad-th-orden {
+    @apply inline-flex items-center gap-1.5 rounded-md text-left font-bold text-gray-500 transition
+           hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500;
+  }
+
+  .ad-th-orden.is-active { @apply text-ink; }
 
   .ad-card:has(> .ad-card-head) {
     overflow: hidden;
@@ -322,6 +332,16 @@ body [class~="text-[15px]"] {
   .dark .ad-card-head {
     @apply border-line bg-[#222528];
   }
+
+  /* En oscuro, `bg-paper` es más oscuro que la tarjeta y el encabezado se leería como
+     un hueco; se usa un realce claro y sutil sobre el fondo de la tarjeta. */
+  .dark .ad-thead-row {
+    @apply bg-white/5 text-gray-300;
+  }
+
+  .dark .ad-th-orden { @apply text-gray-300 hover:text-white; }
+
+  .dark .ad-th-orden.is-active { @apply text-white; }
 
   .dark .ad-chip {
     @apply bg-[#2A2D30] border-line-2 text-gray-700;

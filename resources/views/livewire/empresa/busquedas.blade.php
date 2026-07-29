@@ -31,7 +31,20 @@
     <section class="ad-card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-[14px]">
-                <thead><tr class="ad-thead-row"><th class="p-4">Búsqueda</th><th class="p-4">Candidatos</th><th class="p-4">Favoritos</th><th class="p-4">Fecha de creación</th><th class="p-4">Estado</th><th class="p-4"></th></tr></thead>
+                <thead>
+                    <tr class="ad-thead-row">
+                        @foreach ([
+                            'titulo' => 'Búsqueda',
+                            'candidatos' => 'Candidatos',
+                            'favoritos' => 'Favoritos',
+                            'created_at' => 'Fecha de creación',
+                            'estado' => 'Estado',
+                        ] as $campo => $etiqueta)
+                            <x-th-ordenable :campo="$campo" :orden="$orden" :direccion="$direccion">{{ $etiqueta }}</x-th-ordenable>
+                        @endforeach
+                        <th class="p-4"></th>
+                    </tr>
+                </thead>
                 <tbody>
                     @forelse ($busquedas as $busqueda)
                         <tr wire:key="busqueda-{{ $busqueda->id }}" class="border-b border-line last:border-0">
