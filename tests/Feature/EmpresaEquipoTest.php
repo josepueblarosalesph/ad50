@@ -198,7 +198,9 @@ test('el menú lateral se puede plegar donde existe', function () {
         ->assertSee('aria-controls="menu-lateral"', false)
         ->assertSee('ad-sidebar-plegado', false)
         // El ancho sale de la variable CSS, con el valor desplegado por defecto.
-        ->assertSee('md:grid-cols-[var(--ad-sidebar,260px)_1fr]', false);
+        ->assertSee('md:grid-cols-[var(--ad-sidebar,260px)_1fr]', false)
+        // El menú va elevado para que sus desplegables no queden bajo el contenido.
+        ->assertSee('<aside class="relative z-20 hidden', false);
 
     // Publicaciones no tiene menú lateral: no se ofrece el control.
     $this->actingAs($principal)->get(route('empresa.publicaciones.index'))

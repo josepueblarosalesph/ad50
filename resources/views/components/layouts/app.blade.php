@@ -104,7 +104,12 @@
         @class(['grid min-h-[calc(100vh-65px)]', 'md:grid-cols-[var(--ad-sidebar,260px)_1fr]' => isset($sidebar)])
     >
         @isset($sidebar)
-            <aside class="hidden border-r border-line bg-white px-3 py-4 dark:bg-[#1D2022] md:block">
+            {{-- `relative z-20` es necesario, no decorativo: los paneles de filtros usan un
+                 contenedor `sticky`, y `position: sticky` crea un contexto de apilamiento
+                 propio. Sin elevar el <aside>, el z-index de un desplegable solo compite
+                 dentro del menú y el contenido —que va después en el DOM— lo tapa al
+                 desbordarse hacia la derecha. Queda bajo el header, que es z-30. --}}
+            <aside class="relative z-20 hidden border-r border-line bg-white px-3 py-4 dark:bg-[#1D2022] md:block">
                 <div class="mb-2 flex" x-bind:class="plegado ? 'justify-center' : 'justify-end'">
                     <button
                         type="button"
