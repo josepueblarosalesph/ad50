@@ -34,8 +34,11 @@ test('deleting soft-deletes the process and offers undo with the 30-day notice',
         ->call('borrar')
         ->assertSet('eliminadoId', $busqueda->id)
         ->assertSet('eliminadoTitulo', 'A borrar')
+        // El aviso nombra la búsqueda borrada, ofrece deshacer y explica la retención.
+        ->assertSee('Eliminaste la búsqueda')
+        ->assertSee('A borrar')
         ->assertSee('Deshacer')
-        ->assertSee('30 días');
+        ->assertSee('se eliminará en forma definitiva en los siguientes 30 días');
 
     // Queda en papelera: fuera de las consultas normales, pero recuperable.
     expect(Busqueda::query()->whereKey($busqueda->id)->exists())->toBeFalse()
