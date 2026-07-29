@@ -91,7 +91,10 @@
         wire:ignore
         x-show="abierto"
         x-cloak
-        class="absolute left-0 z-30 mt-1 max-h-64 w-[min(26rem,80vw)] min-w-full overflow-y-auto rounded-xl border border-line-2 bg-white py-1 shadow-xl dark:border-[#5A5F64] dark:bg-[#222528]"
+        {{-- `w-max` hace que la lista se ajuste a la opción más larga en vez de partirla,
+             acotada por `max-w` para no desbordar la ventana; `min-w-full` evita que quede
+             más angosta que el campo. --}}
+        class="absolute left-0 z-30 mt-1 max-h-64 w-max min-w-full max-w-[min(38rem,90vw)] overflow-y-auto rounded-xl border border-line-2 bg-white py-1 shadow-xl dark:border-[#5A5F64] dark:bg-[#222528]"
         role="listbox"
     >
         <template x-for="(opcion, i) in filtradas" :key="opcion">
@@ -103,7 +106,8 @@
                     x-bind:class="indice === i
                         ? 'bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]'
                         : 'text-ink dark:text-gray-200'"
-                    class="block w-full px-3 py-2 text-left text-[13px] transition"
+                    {{-- Si aun así una opción excede el ancho, se envuelve en vez de cortarse. --}}
+                    class="block w-full break-words px-3 py-2 text-left text-[13px] leading-snug transition"
                     x-text="opcion"
                     role="option"
                     x-bind:aria-selected="indice === i"

@@ -46,7 +46,9 @@
     <ul
         x-show="abierto"
         x-cloak
-        class="absolute left-0 z-30 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-line-2 bg-white py-1 shadow-xl dark:border-[#5A5F64] dark:bg-[#222528]"
+        {{-- Se ajusta a la opción más larga (acotado por `max-w`) para no cortar nombres
+             largos de cargos o habilidades; nunca más angosto que el campo. --}}
+        class="absolute left-0 z-30 mt-1 max-h-64 w-max min-w-full max-w-[min(38rem,90vw)] overflow-y-auto rounded-xl border border-line-2 bg-white py-1 shadow-xl dark:border-[#5A5F64] dark:bg-[#222528]"
         role="listbox"
     >
         @forelse ($resultados as $resultado)
@@ -55,10 +57,11 @@
                     type="button"
                     wire:click="agregar(@js($resultado['valor']))"
                     x-on:click="abierto = true"
-                    class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] text-ink transition hover:bg-orange-100 hover:text-orange-700 dark:text-gray-200 dark:hover:bg-white/10"
+                    class="flex w-full items-start justify-between gap-3 px-3 py-2 text-left text-[13px] leading-snug text-ink transition hover:bg-orange-100 hover:text-orange-700 dark:text-gray-200 dark:hover:bg-white/10"
                     role="option"
                 >
-                    <span class="truncate">{{ $resultado['valor'] }}</span>
+                    {{-- Sin `truncate`: la opción se envuelve completa en vez de cortarse. --}}
+                    <span class="break-words">{{ $resultado['valor'] }}</span>
                     {{-- Conteo contextual: cuántas fichas quedarían al agregar esta opción
                          manteniendo el resto de los filtros ya elegidos. Solo se listan
                          opciones con candidatos, así que siempre es mayor que cero. --}}
