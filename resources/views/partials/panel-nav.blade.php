@@ -11,9 +11,6 @@
     </x-slot:nav>
 @elseif ($rolPanel === 'empresa')
     <x-slot:context>Empresa</x-slot:context>
-    <x-slot:nav>
-        <a href="{{ route('empresa.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Panel</a>
-        <a href="{{ route('empresa.busquedas.index') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Búsquedas</a>
-        <a href="{{ route('empresa.busquedas.create') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Nueva búsqueda</a>
-    </x-slot:nav>
+    {{-- Mismo menú que el panel: sin sección activa, porque estas pantallas no son del panel. --}}
+    <x-slot:nav><x-nav-empresa /></x-slot:nav>
 @endif

@@ -36,7 +36,7 @@ class DetallePublicacion extends Component
         $this->modal('borrar-publicacion')->show();
     }
 
-    /** Quita a un candidato asociado desde el Talent Finder (no toca sus postulaciones). */
+    /** Quita a un candidato asociado desde Prospección de Candidatos (no toca sus postulaciones). */
     public function quitarCandidato(int $postulanteId): void
     {
         $this->publicacion->candidatos()->detach($postulanteId);

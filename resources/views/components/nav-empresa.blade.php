@@ -7,17 +7,14 @@
 --}}
 
 @php
+    // La administración de usuarios (Equipo) no vive aquí: es una tarea de cuenta, no de
+    // trabajo diario, así que se ofrece en el menú de perfil (arriba a la derecha).
     $enlaces = [
         'panel' => ['empresa.panel', 'Mi Panel'],
-        'busquedas' => ['empresa.busquedas.index', 'Talent Finder'],
-        'favoritos' => ['empresa.favoritos', 'Mis favoritos'],
-        'publicaciones' => ['empresa.publicaciones.index', 'Publicaciones'],
+        'busquedas' => ['empresa.busquedas.index', 'Prospección de Candidatos'],
+        'publicaciones' => ['empresa.publicaciones.index', 'Mis Publicaciones'],
+        'favoritos' => ['empresa.favoritos', 'Favoritos'],
     ];
-
-    // Solo el contacto administrador gestiona el equipo (Equipo::mount() aborta 403 al resto).
-    if (auth()->user()?->esPrincipalEmpresa()) {
-        $enlaces['equipo'] = ['empresa.equipo', 'Equipo'];
-    }
 @endphp
 
 @foreach ($enlaces as $clave => [$ruta, $etiqueta])

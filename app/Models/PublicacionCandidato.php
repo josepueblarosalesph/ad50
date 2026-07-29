@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Candidato del Talent Finder asociado a una publicación.
+ * Candidato de Prospección de Candidatos asociado a una publicación.
  *
  * Es una asociación manual del reclutador, independiente del matching: sobrevive a que
  * el candidato deje de cumplir los criterios de la búsqueda desde la que se asoció.

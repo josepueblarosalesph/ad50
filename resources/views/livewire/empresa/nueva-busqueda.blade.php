@@ -2,7 +2,7 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="busquedas" /></x-slot:nav>
     <x-slot:sidebar>
-        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Talent Finder</div>
+        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Prospección de Candidatos</div>
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] text-gray-700 hover:bg-paper"><flux:icon.bars-3 class="size-[18px]" />Todas las búsquedas</a>
         <a href="{{ $editando ? route('empresa.busquedas.edit', $busqueda) : route('empresa.busquedas.create') }}" class="flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px] bg-orange-100 text-orange-600"><flux:icon :name="$editando ? 'pencil-square' : 'plus-circle'" class="size-[18px]" />{{ $editando ? 'Editar búsqueda' : 'Nueva búsqueda' }}</a>
     </x-slot:sidebar>

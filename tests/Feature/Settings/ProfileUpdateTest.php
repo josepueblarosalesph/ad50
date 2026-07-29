@@ -2,7 +2,6 @@
 
 use App\Models\Postulante;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
 test('profile page is displayed', function () {
@@ -45,7 +44,7 @@ test('email verification status is unchanged when email address is unchanged', f
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('the profile page shows account, password and visibility sections for a postulante', function () {
+test('Mi cuenta muestra datos, acceso a seguridad y visibilidad para un postulante', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id]);
 
@@ -53,7 +52,7 @@ test('the profile page shows account, password and visibility sections for a pos
 
     Livewire::test('pages::settings.profile')
         ->assertSee('Datos de la cuenta')
-        ->assertSee('Contraseña')
+        ->assertSee('Contraseña y seguridad')
         ->assertSee('Visibilidad del perfil')
         ->assertSee('Eliminar cuenta');
 });
@@ -64,38 +63,21 @@ test('a non-postulante does not see the visibility section', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::settings.profile')
-        ->assertSee('Contraseña')
+        ->assertSee('Datos de la cuenta')
         ->assertDontSee('Visibilidad del perfil');
 });
 
-test('password can be updated from the profile page', function () {
-    $user = User::factory()->create(['password' => Hash::make('password')]);
+test('Mi cuenta no ofrece el formulario de contraseña, solo el acceso a Seguridad', function () {
+    $user = User::factory()->create();
 
     $this->actingAs($user);
 
+    // El cambio de contraseña vive en Configuración → Seguridad (ver SecurityTest).
     Livewire::test('pages::settings.profile')
-        ->set('current_password', 'password')
-        ->set('password', 'new-password-123')
-        ->set('password_confirmation', 'new-password-123')
-        ->call('updatePassword')
-        ->assertHasNoErrors();
-
-    expect(Hash::check('new-password-123', $user->refresh()->password))->toBeTrue();
-});
-
-test('the current password must be correct to change it from the profile page', function () {
-    $user = User::factory()->create(['password' => Hash::make('password')]);
-
-    $this->actingAs($user);
-
-    Livewire::test('pages::settings.profile')
-        ->set('current_password', 'wrong-password')
-        ->set('password', 'new-password-123')
-        ->set('password_confirmation', 'new-password-123')
-        ->call('updatePassword')
-        ->assertHasErrors('current_password');
-
-    expect(Hash::check('password', $user->refresh()->password))->toBeTrue();
+        ->assertSee('Contraseña y seguridad')
+        ->assertSee('Ir a Seguridad')
+        ->assertDontSee('Contraseña actual')
+        ->assertDontSee('Nueva contraseña');
 });
 
 test('a postulante can toggle profile visibility from settings', function () {
@@ -140,4 +122,26 @@ test('correct password must be provided to delete account', function () {
     $response->assertHasErrors(['password']);
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('Mi cuenta y Configuración son pantallas separadas', function () {
+    $user = User::factory()->create();
+
+    // "Mi cuenta": pantalla única. No lleva el menú lateral de Configuración, aunque sí
+    // enlaza a Seguridad desde su tarjeta (y a Configuración desde el desplegable
+    // superior): por eso se comprueba la ausencia del menú lateral, no la de los enlaces.
+    $this->actingAs($user)->get(route('profile.edit'))
+        ->assertOk()
+        ->assertSee('Mi cuenta')
+        ->assertDontSee('aria-label="Configuración"', false)
+        ->assertDontSee('Contraseña actual');
+
+    // "Configuración": menú lateral con Seguridad y Apariencia; ya no ofrece Perfil.
+    $this->actingAs($user)->get(route('appearance.edit'))
+        ->assertOk()
+        ->assertSee('aria-label="Configuración"', false)
+        ->assertSee('Seguridad')
+        ->assertSee('Apariencia')
+        ->assertSee('href="'.route('security.edit').'"', false)
+        ->assertDontSee('>Perfil<', false);
 });

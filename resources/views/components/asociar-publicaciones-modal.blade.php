@@ -3,7 +3,7 @@
     'asociadas' => [],
 ])
 
-{{-- Panel para vincular un candidato del Talent Finder a una o más publicaciones. --}}
+{{-- Panel para vincular un candidato de Prospección de Candidatos a una o más publicaciones. --}}
 <flux:modal name="asociar-publicaciones" class="max-w-lg" wire:close="cerrarAsociacion">
     <div class="space-y-5">
         <div>

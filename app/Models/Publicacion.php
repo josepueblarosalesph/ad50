@@ -125,7 +125,7 @@ class Publicacion extends Model
     }
 
     /**
-     * Candidatos que la empresa asoció a esta publicación desde el Talent Finder.
+     * Candidatos que la empresa asoció a esta publicación desde Prospección de Candidatos.
      *
      * @return BelongsToMany<Postulante, $this>
      */

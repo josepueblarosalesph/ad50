@@ -102,7 +102,7 @@ test('el principal puede eliminar un usuario adicional pero nunca a sí mismo', 
     expect(User::query()->whereKey($principal->id)->exists())->toBeTrue();
 });
 
-test('el menú del panel muestra Equipo solo al contacto administrador', function () {
+test('la administración de usuarios se ofrece solo al contacto administrador', function () {
     [$principal, $empresa] = crearEmpresaConPrincipal();
     $adicional = User::factory()->create([
         'role' => 'empresa',
@@ -118,19 +118,34 @@ test('el menú del panel muestra Equipo solo al contacto administrador', functio
     ];
 
     foreach ($vistas as $url) {
-        // El menú es el mismo componente en todas las vistas: siempre lleva las
-        // secciones comunes y solo el principal ve el enlace a Equipo.
+        // Vive en el menú de perfil (arriba a la derecha), no en el menú principal.
         $this->actingAs($principal)->get($url)
             ->assertOk()
             ->assertSee('href="'.route('empresa.busquedas.index').'"', false)
             ->assertSee('href="'.route('empresa.publicaciones.index').'"', false)
-            ->assertSee('href="'.route('empresa.equipo').'"', false);
+            ->assertSee('href="'.route('empresa.equipo').'"', false)
+            ->assertSee('Administración de usuarios');
 
         $this->actingAs($adicional)->get($url)
             ->assertOk()
             ->assertSee('href="'.route('empresa.publicaciones.index').'"', false)
-            ->assertDontSee('href="'.route('empresa.equipo').'"', false);
+            ->assertDontSee('href="'.route('empresa.equipo').'"', false)
+            ->assertDontSee('Administración de usuarios');
     }
+});
+
+test('el menú principal ya no incluye Equipo', function () {
+    [$principal] = crearEmpresaConPrincipal();
+    $this->actingAs($principal);
+
+    // Aunque sea el administrador, el menú principal solo trae las secciones de trabajo.
+    $html = Blade::render('<x-nav-empresa />');
+
+    expect($html)->not->toContain(route('empresa.equipo'))
+        ->toContain(route('empresa.panel'))
+        ->toContain(route('empresa.busquedas.index'))
+        ->toContain(route('empresa.favoritos'))
+        ->toContain(route('empresa.publicaciones.index'));
 });
 
 test('el menú resalta la sección que se está viendo y no las demás', function () {
@@ -154,4 +169,22 @@ test('sin sección activa el menú no marca ninguna', function () {
     $this->actingAs($principal);
 
     expect(Blade::render('<x-nav-empresa />'))->not->toContain('aria-current="page"');
+});
+
+test('el menú principal lista las secciones con su nombre y en orden', function () {
+    [$principal] = crearEmpresaConPrincipal();
+    $this->actingAs($principal);
+
+    $html = Blade::render('<x-nav-empresa />');
+
+    $esperado = ['Mi Panel', 'Prospección de Candidatos', 'Mis Publicaciones', 'Favoritos'];
+    $posiciones = array_map(fn (string $etiqueta): int|false => mb_strpos($html, '>'.$etiqueta.'</a>'), $esperado);
+
+    // Todas presentes...
+    expect($posiciones)->not->toContain(false);
+
+    // ...y en este orden.
+    $ordenadas = $posiciones;
+    sort($ordenadas);
+    expect($posiciones)->toBe($ordenadas);
 });

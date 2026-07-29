@@ -242,7 +242,7 @@ test('no se puede asociar desde favoritos a alguien que no es favorito', functio
     expect($publicacion->candidatos()->count())->toBe(0);
 });
 
-test('el menú de empresa incluye Mis favoritos', function () {
+test('el menú de empresa incluye Favoritos', function () {
     [$user, , $liderazgo] = empresaConFavoritos();
     candidatoEnBusqueda($liderazgo);
 
@@ -250,7 +250,7 @@ test('el menú de empresa incluye Mis favoritos', function () {
         ->get(route('empresa.favoritos'))
         ->assertOk()
         ->assertSee('href="'.route('empresa.favoritos').'"', false)
-        ->assertSee('Mis favoritos');
+        ->assertSee('Mis favoritos');  // encabezado de la página
 });
 
 test('un postulante no puede entrar a los favoritos de una empresa', function () {
@@ -259,4 +259,24 @@ test('un postulante no puede entrar a los favoritos de una empresa', function ()
     $this->actingAs($postulante)
         ->get(route('empresa.favoritos'))
         ->assertForbidden();
+});
+
+test('la tarjeta muestra el candado como icono y el botón rotulado de asociar', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+
+    // Sin desbloquear: candado cerrado, sin la etiqueta de texto.
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('aria-label="Perfil sin desbloquear"', false)
+        ->assertSee('Asociar a publicación');
+
+    Desbloqueo::query()->create([
+        'empresa_id' => $empresa->id,
+        'postulante_id' => $match->postulante_id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('aria-label="Perfil desbloqueado"', false);
 });

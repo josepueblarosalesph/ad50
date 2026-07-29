@@ -52,10 +52,10 @@
             </div>
         </section>
 
-        {{-- Candidatos que la empresa asoció a esta publicación desde el Talent Finder. --}}
+        {{-- Candidatos que la empresa asoció a esta publicación desde Prospección de Candidatos. --}}
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
-                <h2 class="text-[16px] font-bold">Candidatos del Talent Finder</h2>
+                <h2 class="text-[16px] font-bold">Candidatos prospectados</h2>
                 <span class="text-[13px] font-semibold text-gray-500">{{ $candidatosAsociados->count() }} asociado(s)</span>
             </div>
             <div class="divide-y divide-line px-6">
@@ -74,7 +74,7 @@
                 @empty
                     <p class="py-6 text-center text-[13px] text-gray-500">
                         Aún no asocias candidatos. Búscalos en
-                        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="font-bold text-orange-600 underline underline-offset-2">Talent Finder</a>
+                        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="font-bold text-orange-600 underline underline-offset-2">Prospección de Candidatos</a>
                         y asócialos desde sus resultados.
                     </p>
                 @endforelse

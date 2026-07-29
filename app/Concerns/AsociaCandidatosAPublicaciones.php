@@ -8,7 +8,7 @@ use App\Models\PublicacionCandidato;
 use Illuminate\Support\Collection;
 
 /**
- * Asocia un candidato encontrado en el Talent Finder a una o más publicaciones.
+ * Asocia un candidato encontrado en Prospección de Candidatos a una o más publicaciones.
  *
  * Es una acción manual del reclutador, independiente del favorito y del matching: la
  * asociación vive en `publicacion_candidato` y sobrevive a que el candidato deje de

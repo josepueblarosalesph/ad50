@@ -10,7 +10,7 @@
     <div>
     <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm mb-4 inline-flex items-center gap-2">
         <flux:icon.arrow-left class="size-4" />
-        Volver a Talent Finder
+        Volver a Prospección de Candidatos
     </a>
 
     {{-- Filtros en móvil: el sidebar del layout se oculta bajo md, así que aquí van colapsables. --}}

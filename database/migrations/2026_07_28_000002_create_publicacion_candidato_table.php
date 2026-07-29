@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Asocia un candidato encontrado en el Talent Finder a una o más publicaciones.
+     * Asocia un candidato encontrado en Prospección de Candidatos a una o más publicaciones.
      *
      * La llave es (publicacion_id, postulante_id) y NO la fila de busqueda_candidato:
      * el motor de matching borra esas filas cuando el candidato deja de cumplir los

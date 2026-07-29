@@ -4,7 +4,7 @@
 
     <div class="mb-6 flex flex-wrap items-start justify-between gap-5">
         <div>
-            <span class="ad-eyebrow">Talent Finder</span>
+            <span class="ad-eyebrow">Prospección de Candidatos</span>
             <h1 class="mt-3 text-[30px] font-extrabold">Mis favoritos</h1>
             <p class="mt-2 text-[14px] text-gray-500">
                 {{ $totalFavoritos }} {{ $totalFavoritos === 1 ? 'candidato guardado' : 'candidatos guardados' }}
@@ -83,21 +83,29 @@
                     </div>
 
                     <div class="flex flex-none flex-wrap items-center gap-2">
-                        @if ($desbloqueado)
-                            <span class="ad-chip ad-chip-green"><flux:icon.lock-open class="size-3.5" /> Desbloqueado</span>
-                        @else
-                            <span class="ad-chip"><flux:icon.lock-closed class="size-3.5" /> Sin desbloquear</span>
-                        @endif
-
-                        <flux:tooltip :content="$candidato->publicacionesAsociadas->isNotEmpty() ? 'Asociado a '.$candidato->publicacionesAsociadas->count().' publicación(es)' : 'Asociar a una publicación'">
-                            <button type="button" wire:click="abrirAsociacion({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $candidato->id }})" @class([
-                                'grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50',
-                                'border-orange-300 bg-orange-100 text-orange-600' => $candidato->publicacionesAsociadas->isNotEmpty(),
-                                'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $candidato->publicacionesAsociadas->isEmpty(),
-                            ]) aria-label="Asociar candidato a una publicación">
-                                <flux:icon.megaphone class="size-5" />
-                            </button>
+                        {{-- Solo el candado: el estado se lee por el icono y el color. --}}
+                        <flux:tooltip :content="$desbloqueado ? 'Perfil desbloqueado' : 'Perfil sin desbloquear'">
+                            <span @class([
+                                'grid size-10 flex-none place-items-center rounded-xl border',
+                                'border-[#BFE6CD] bg-match-100 text-match' => $desbloqueado,
+                                'border-line-2 bg-paper text-gray-400 dark:bg-[#222528]' => ! $desbloqueado,
+                            ]) aria-label="{{ $desbloqueado ? 'Perfil desbloqueado' : 'Perfil sin desbloquear' }}">
+                                <flux:icon :name="$desbloqueado ? 'lock-open' : 'lock-closed'" class="size-5" />
+                            </span>
                         </flux:tooltip>
+
+                        @php($asociadas = $candidato->publicacionesAsociadas->count())
+                        <button type="button" wire:click="abrirAsociacion({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $candidato->id }})" @class([
+                            'ad-btn-sm inline-flex items-center gap-2 whitespace-nowrap rounded-xl border font-bold transition disabled:opacity-50',
+                            'border-orange-300 bg-orange-100 text-orange-600' => $asociadas > 0,
+                            'border-line-2 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $asociadas === 0,
+                        ])>
+                            <flux:icon.megaphone class="size-4" />
+                            Asociar a publicación
+                            @if ($asociadas > 0)
+                                <span class="grid min-w-[18px] place-items-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white">{{ $asociadas }}</span>
+                            @endif
+                        </button>
 
                         @if ($favoritos->isNotEmpty())
                             <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $favoritos->first()->id]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
@@ -148,7 +156,7 @@
                 @if ($hayFiltros)
                     <button type="button" wire:click="limpiarFiltros" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>
                 @else
-                    <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-primary ad-btn-sm mt-4">Ir a Talent Finder</a>
+                    <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-primary ad-btn-sm mt-4">Ir a Prospección de Candidatos</a>
                 @endif
             </div>
         @endforelse

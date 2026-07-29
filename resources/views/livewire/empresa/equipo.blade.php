@@ -1,7 +1,7 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:status>{{ $empresa?->plan?->nombre ?? 'Sin plan' }}</x-slot:status>
-    <x-slot:nav><x-nav-empresa activo="equipo" /></x-slot:nav>
+    <x-slot:nav><x-nav-empresa /></x-slot:nav>
 
     <div class="mx-auto max-w-4xl">
         <div class="mb-6">

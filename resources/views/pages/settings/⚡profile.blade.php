@@ -1,6 +1,5 @@
 <?php
 
-use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Services\MatchingService;
 /* @chisel-email-verification */
@@ -8,25 +7,17 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 /* @end-chisel-email-verification */
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] class extends Component {
-    use PasswordValidationRules;
+new #[Title('Mi cuenta · AD+50')] #[Layout('components.layouts.app')] class extends Component {
     use ProfileValidationRules;
 
     public string $name = '';
 
     public string $email = '';
-
-    public string $current_password = '';
-
-    public string $password = '';
-
-    public string $password_confirmation = '';
 
     public bool $visible = false;
 
@@ -53,27 +44,6 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
         $user->save();
 
         session()->flash('status-datos', 'Actualizamos los datos de tu cuenta.');
-    }
-
-    /** Cambia la contraseña de la cuenta. */
-    public function updatePassword(): void
-    {
-        try {
-            $validated = $this->validate([
-                'current_password' => $this->currentPasswordRules(),
-                'password' => $this->passwordRules(),
-            ]);
-        } catch (ValidationException $e) {
-            $this->reset('current_password', 'password', 'password_confirmation');
-
-            throw $e;
-        }
-
-        Auth::user()->update(['password' => $validated['password']]);
-
-        $this->reset('current_password', 'password', 'password_confirmation');
-
-        session()->flash('status-password', 'Actualizamos tu contraseña.');
     }
 
     /**
@@ -134,11 +104,15 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
 
 <section class="w-full">
     @include('partials.panel-nav')
-    @include('partials.settings-heading')
+    @include('partials.settings-heading', [
+        'titulo' => 'Mi cuenta',
+        'bajada' => 'Tus datos personales y la visibilidad de tu perfil.',
+    ])
 
-    <flux:heading class="sr-only">Configuración de perfil</flux:heading>
+    <flux:heading class="sr-only">Mi cuenta</flux:heading>
 
-    <x-pages::settings.layout heading="Perfil" subheading="Administra tus datos de cuenta, tu contraseña y la visibilidad de tu perfil.">
+    {{-- Pantalla única: la seguridad y la apariencia viven en Configuración. --}}
+    <x-pages::settings.layout :con-navegacion="false">
         <div class="space-y-5">
             {{-- Datos de la cuenta --}}
             <div class="ad-card">
@@ -173,22 +147,17 @@ new #[Title('Configuración de perfil')] #[Layout('components.layouts.app')] cla
                 </form>
             </div>
 
-            {{-- Contraseña --}}
+            {{-- La contraseña, el 2FA y las passkeys se administran en Configuración → Seguridad. --}}
             <div class="ad-card">
-                <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[16px] font-extrabold text-orange-700 dark:text-orange-500">Contraseña</h2><p class="mt-1 text-[13px] text-gray-500">Usa una contraseña larga y única para mantener tu cuenta segura.</p></div></div>
-                <form wire:submit="updatePassword" class="space-y-5 p-6">
-                    @if (session('status-password'))
-                        <div class="rounded-[10px] border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-semibold text-match" role="status">{{ session('status-password') }}</div>
-                    @endif
-
-                    <flux:input wire:model="current_password" label="Contraseña actual" type="password" autocomplete="current-password" viewable />
-                    <flux:input wire:model="password" label="Nueva contraseña" type="password" autocomplete="new-password" viewable />
-                    <flux:input wire:model="password_confirmation" label="Confirmar nueva contraseña" type="password" autocomplete="new-password" viewable />
-
-                    <div class="flex justify-end">
-                        <flux:button variant="primary" type="submit" data-test="update-password-button">Actualizar contraseña</flux:button>
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6">
+                    <div class="min-w-0">
+                        <h2 class="text-[15px] font-extrabold text-ink">Contraseña y seguridad</h2>
+                        <p class="mt-1 text-[13px] text-gray-500">Tu contraseña, la verificación en dos pasos y tus passkeys.</p>
                     </div>
-                </form>
+                    <a wire:navigate href="{{ route('security.edit') }}" class="ad-btn-ghost ad-btn-sm whitespace-nowrap">
+                        Ir a Seguridad
+                    </a>
+                </div>
             </div>
 
             {{-- Visibilidad del perfil (solo postulantes) --}}
