@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Postulante;
 
-use App\Models\Postulacion;
+use App\Concerns\PostulaAOfertas;
 use App\Models\Publicacion;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
@@ -14,6 +14,7 @@ use Livewire\WithPagination;
 
 class Busquedas extends Component
 {
+    use PostulaAOfertas;
     use WithPagination;
 
     /**
@@ -46,11 +47,6 @@ class Busquedas extends Component
     public int $sueldoMin = 0;
 
     public int $sueldoMax = 8;
-
-    public ?int $postulandoId = null;
-
-    /** @var array<int, string> */
-    public array $respuestas = [];
 
     /** `idiomas` se guarda como lista JSON; el resto son columnas de texto. */
     private const CAMPO_JSON = 'idiomas';
@@ -196,55 +192,6 @@ class Busquedas extends Component
         }
     }
 
-    public function abrirPostulacion(Publicacion $publicacion): void
-    {
-        abort_unless($publicacion->estado === 'publicada' && $publicacion->vigente_hasta->endOfDay()->isFuture(), 404);
-
-        $postulante = auth()->user()->postulante;
-
-        if ($publicacion->postulaciones()->whereBelongsTo($postulante)->exists()) {
-            session()->flash('status', 'Ya postulaste a esta publicación.');
-
-            return;
-        }
-
-        $this->postulandoId = $publicacion->id;
-        $this->respuestas = array_fill(0, count($publicacion->preguntas ?? []), '');
-        $this->resetErrorBag();
-        $this->modal('postular-publicacion')->show();
-    }
-
-    public function postular(): void
-    {
-        $publicacion = Publicacion::query()->vigentes()->findOrFail($this->postulandoId);
-        $postulante = auth()->user()->postulante;
-
-        abort_if($postulante === null, 403);
-
-        $reglas = ['respuestas' => ['array']];
-
-        foreach ($publicacion->preguntas ?? [] as $index => $pregunta) {
-            $reglas["respuestas.$index"] = ['required', 'string', 'max:1000'];
-        }
-
-        $validated = $this->validate($reglas);
-
-        Postulacion::query()->firstOrCreate(
-            [
-                'publicacion_id' => $publicacion->id,
-                'postulante_id' => $postulante->id,
-            ],
-            [
-                'respuestas' => $validated['respuestas'],
-                'estado' => 'enviada',
-            ],
-        );
-
-        $this->reset('postulandoId', 'respuestas');
-        $this->modal('postular-publicacion')->close();
-        session()->flash('status', 'Tu postulación fue enviada correctamente.');
-    }
-
     #[Title('Oportunidades laborales · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
@@ -271,9 +218,7 @@ class Busquedas extends Component
             'filtros' => $this->opciones(),
             'limitesSueldo' => CatalogosProfesionales::rangoSueldo(),
             'filtrosActivos' => $this->totalFiltrosActivos(),
-            'publicacionSeleccionada' => $this->postulandoId === null
-                ? null
-                : Publicacion::query()->find($this->postulandoId),
+            'publicacionSeleccionada' => $this->publicacionEnPostulacion(),
         ]);
     }
 }

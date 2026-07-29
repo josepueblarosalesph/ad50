@@ -431,7 +431,7 @@ test('a postulante cannot save a gender outside the available options', function
         ->assertHasErrors(['genero' => 'in']);
 });
 
-test('the postulante panel summarizes matching and the opportunities page lists publications', function () {
+test('el panel del postulante lista oportunidades y la pantalla de oportunidades las pagina', function () {
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true]);
     $empresaUser = User::factory()->create(['role' => 'empresa']);
@@ -452,11 +452,13 @@ test('the postulante panel summarizes matching and the opportunities page lists 
         ]);
     }
 
+    // El panel ya no resume coincidencias: lista las ofertas vigentes con su enlace al detalle.
     Livewire::actingAs($postulanteUser)
         ->test(PostulantePanel::class)
-        ->assertViewHas('matches', fn ($matches) => $matches->count() === 3)
-        ->assertViewHas('totalMatches', 5)
-        ->assertSee('Ver más');
+        ->assertViewHas('publicaciones', fn ($publicaciones) => $publicaciones->count() === 5)
+        ->assertSee('Publicación 1')
+        ->assertSee('Ver más oportunidades')
+        ->assertDontSee('Búsquedas que me incluyen');
 
     Livewire::actingAs($postulanteUser)
         ->test(PostulanteBusquedas::class)

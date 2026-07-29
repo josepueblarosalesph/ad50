@@ -3,6 +3,8 @@
 use App\Livewire\Empresa\NuevaPublicacion;
 use App\Livewire\Empresa\Publicaciones;
 use App\Livewire\Postulante\Busquedas as PortalOportunidades;
+use App\Livewire\Postulante\DetallePublicacion as DetalleOportunidad;
+use App\Livewire\Postulante\Panel as PanelPostulante;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Postulante;
@@ -379,4 +381,110 @@ test('limpiar filtros deja el listado sin restricciones', function () {
         ->call('limpiarFiltros')
         ->assertViewHas('filtrosActivos', 0)
         ->assertSee('Unica oferta');
+});
+
+test('el postulante entra al detalle de una oferta desde el listado', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('detalle@empresa.cl');
+    $postulante = postulanteHabilitadoParaPostular('detalle@ejemplo.cl');
+
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Jefe de Mantenimiento',
+        'descripcion' => str_repeat('Detalle completo de la oferta. ', 8),
+        'competencias' => ['Liderazgo'],
+        'preguntas' => ['¿Por qué te interesa?'],
+    ]);
+
+    // El listado enlaza al detalle...
+    $this->actingAs($postulante)
+        ->get(route('postulante.busquedas'))
+        ->assertOk()
+        ->assertSee('href="'.route('postulante.publicaciones.show', $publicacion).'"', false);
+
+    // ...y el detalle muestra la oferta completa con la opción de postular.
+    $this->actingAs($postulante)
+        ->get(route('postulante.publicaciones.show', $publicacion))
+        ->assertOk()
+        ->assertSee('Jefe de Mantenimiento')
+        ->assertSee('Detalle completo de la oferta.')
+        ->assertSee('Liderazgo')
+        ->assertSee('¿Por qué te interesa?', false)
+        ->assertSee('Postular');
+});
+
+test('el detalle permite postular y deja de ofrecerlo después', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('postuladetalle@empresa.cl');
+    $postulanteUser = postulanteHabilitadoParaPostular('postuladetalle@ejemplo.cl');
+
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Analista Senior',
+        'preguntas' => ['¿Cuál es tu disponibilidad?'],
+    ]);
+
+    Livewire::actingAs($postulanteUser)
+        ->test(DetalleOportunidad::class, ['publicacion' => $publicacion])
+        ->assertViewHas('yaPostulo', false)
+        ->call('abrirPostulacion', $publicacion->id)
+        ->set('respuestas.0', 'Inmediata')
+        ->call('postular')
+        ->assertHasNoErrors()
+        ->assertViewHas('yaPostulo', true);
+
+    expect(Postulacion::query()->where('publicacion_id', $publicacion->id)->count())->toBe(1);
+});
+
+test('una oferta cerrada o vencida no tiene detalle público', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('cerrada@empresa.cl');
+    $postulante = postulanteHabilitadoParaPostular('cerrada@ejemplo.cl');
+
+    $vencida = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'vigente_hasta' => today()->subDay(),
+    ]);
+    $cerrada = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'estado' => 'cerrada',
+    ]);
+
+    foreach ([$vencida, $cerrada] as $publicacion) {
+        $this->actingAs($postulante)
+            ->get(route('postulante.publicaciones.show', $publicacion))
+            ->assertNotFound();
+    }
+});
+
+test('el panel lista las ofertas vigentes y permite postular sin salir', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('panel@empresa.cl');
+    $postulanteUser = postulanteHabilitadoParaPostular('panel@ejemplo.cl');
+
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Supervisor de Turno',
+        'preguntas' => [],
+    ]);
+    Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Oferta vencida',
+        'vigente_hasta' => today()->subDay(),
+    ]);
+
+    Livewire::actingAs($postulanteUser)
+        ->test(PanelPostulante::class)
+        ->assertSee('Supervisor de Turno')
+        ->assertDontSee('Oferta vencida')
+        ->assertSee('href="'.route('postulante.publicaciones.show', $publicacion).'"', false)
+        ->call('abrirPostulacion', $publicacion->id)
+        ->call('postular')
+        ->assertHasNoErrors()
+        // Ya postulada, el panel deja de ofrecer el botón para esa oferta.
+        ->assertSee('Postulaste');
+
+    expect(Postulacion::query()->where('publicacion_id', $publicacion->id)->count())->toBe(1);
 });

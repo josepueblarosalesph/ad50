@@ -2,15 +2,22 @@
 
 namespace App\Livewire\Postulante;
 
-use App\Models\BusquedaCandidato;
+use App\Concerns\PostulaAOfertas;
+use App\Models\Publicacion;
 use App\Services\MatchingService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 class Panel extends Component
 {
+    use PostulaAOfertas;
+
+    /** Ofertas que se listan en el panel; el resto queda en Oportunidades. */
+    private const OFERTAS_EN_PANEL = 6;
+
     public function mount(): void
     {
         abort_unless(auth()->user()->role === 'postulante', 403);
@@ -28,37 +35,19 @@ class Panel extends Component
     #[Layout('components.layouts.app')]
     public function render(): View
     {
-        $user = auth()->user();
-        $postulante = $user->postulante;
-
-        $matches = BusquedaCandidato::with('busqueda')
-            ->confirmados()
-            ->whereHas('busqueda')
-            ->where('postulante_id', $postulante?->id)
-            ->latest()
-            ->take(3)
-            ->get();
-
-        $totalMatches = BusquedaCandidato::query()
-            ->confirmados()
-            ->whereHas('busqueda')
-            ->where('postulante_id', $postulante?->id)
-            ->count();
-
-        $empresasInteresadas = BusquedaCandidato::query()
-            ->confirmados()
-            ->join('busquedas', 'busquedas.id', '=', 'busqueda_candidato.busqueda_id')
-            ->whereNull('busquedas.deleted_at')
-            ->where('busqueda_candidato.postulante_id', $postulante?->id)
-            ->where('busqueda_candidato.favorito', true)
-            ->distinct()
-            ->count('busquedas.empresa_id');
+        $postulante = auth()->user()->postulante;
 
         return view('livewire.postulante.panel', [
             'postulante' => $postulante,
-            'matches' => $matches,
-            'totalMatches' => $totalMatches,
-            'empresasInteresadas' => $empresasInteresadas,
+            'publicaciones' => Publicacion::query()
+                ->vigentes()
+                ->withExists([
+                    'postulaciones as postulada' => fn (Builder $query) => $query->where('postulante_id', $postulante?->id),
+                ])
+                ->latest()
+                ->take(self::OFERTAS_EN_PANEL)
+                ->get(),
+            'publicacionSeleccionada' => $this->publicacionEnPostulacion(),
         ]);
     }
 }

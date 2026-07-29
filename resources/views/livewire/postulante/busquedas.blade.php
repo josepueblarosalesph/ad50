@@ -46,7 +46,9 @@
                             @if ($publicacion->empleo_inclusivo)<span class="ad-chip ad-chip-sm ad-chip-green">Empleo inclusivo</span>@endif
                             <span class="text-[12px] text-gray-400">Publicado {{ $publicacion->created_at->diffForHumans() }}</span>
                         </div>
-                        <h2 class="mt-2 text-[18px] font-extrabold text-ink">{{ $publicacion->cargo }}</h2>
+                        <h2 class="mt-2 text-[18px] font-extrabold">
+                            <a wire:navigate href="{{ route('postulante.publicaciones.show', $publicacion) }}" class="text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600">{{ $publicacion->cargo }}</a>
+                        </h2>
                         <p class="mt-0.5 text-[13.5px] font-semibold text-gray-600">{{ $publicacion->nombre_empresa }} · {{ $publicacion->comuna }}, {{ $publicacion->pais }}</p>
                         <p class="mt-2 line-clamp-2 text-[13.5px] leading-relaxed text-gray-600">{{ $publicacion->descripcion }}</p>
                         <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-gray-500">
@@ -89,35 +91,5 @@
         <div class="mt-6">{{ $publicaciones->links() }}</div>
     @endif
 
-    <flux:modal name="postular-publicacion" class="max-w-2xl" wire:close="$set('postulandoId', null)">
-        @if ($publicacionSeleccionada)
-            <form wire:submit="postular" class="space-y-5">
-                <div>
-                    <flux:heading size="lg">Postular a {{ $publicacionSeleccionada->cargo }}</flux:heading>
-                    <flux:text class="mt-1">{{ $publicacionSeleccionada->nombre_empresa }} · {{ $publicacionSeleccionada->comuna }}</flux:text>
-                </div>
-
-                <div class="rounded-xl bg-paper p-4">
-                    <p class="text-[13px] font-bold text-ink">Requisitos principales</p>
-                    <p class="mt-2 whitespace-pre-line text-[13px] leading-relaxed text-gray-600">{{ $publicacionSeleccionada->requisitos }}</p>
-                </div>
-
-                @foreach ($publicacionSeleccionada->preguntas ?? [] as $index => $pregunta)
-                    <flux:textarea wire:key="respuesta-{{ $index }}" wire:model="respuestas.{{ $index }}" :label="$pregunta.' *'" rows="3" maxlength="1000" />
-                @endforeach
-
-                @if (empty($publicacionSeleccionada->preguntas))
-                    <flux:text>Tu perfil profesional y currículum serán enviados a la empresa.</flux:text>
-                @endif
-
-                <div class="flex justify-end gap-3">
-                    <flux:modal.close><flux:button variant="ghost">Cancelar</flux:button></flux:modal.close>
-                    <button type="submit" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="postular">
-                        <span wire:loading.remove wire:target="postular">Enviar postulación</span>
-                        <span wire:loading wire:target="postular">Enviando…</span>
-                    </button>
-                </div>
-            </form>
-        @endif
-    </flux:modal>
+    <x-postular-modal :publicacion="$publicacionSeleccionada" />
 </div>

@@ -1,9 +1,9 @@
 <?php
 
 use App\Livewire\Empresa\Candidato;
+use App\Livewire\Empresa\FiltroActualizacion;
 use App\Livewire\Empresa\Panel;
 use App\Livewire\Empresa\Resultados;
-use App\Livewire\Postulante\Panel as PostulantePanel;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
@@ -59,7 +59,7 @@ test('the sidebar recency control drives the results filter through an event', f
 
     // El control del menú lateral emite el evento con el rango elegido.
     Livewire::actingAs($empresaUser)
-        ->test(App\Livewire\Empresa\FiltroActualizacion::class, ['actual' => 'todas'])
+        ->test(FiltroActualizacion::class, ['actual' => 'todas'])
         ->set('actualizacion', 'mes')
         ->assertDispatched('actualizacion-cambiada', valor: 'mes');
 
@@ -211,38 +211,6 @@ test('company panel summarizes at most five recent searches', function () {
         ->assertViewHas('busquedas', fn ($busquedas) => $busquedas->count() === 5)
         ->assertSee('Ver más')
         ->assertSee(route('empresa.busquedas.index'), escape: false);
-});
-
-test('postulante panel counts unique companies that favorited the profile', function () {
-    $postulanteUser = User::factory()->create(['role' => 'postulante']);
-    $postulante = Postulante::query()->create([
-        'user_id' => $postulanteUser->id,
-        'visible' => true,
-    ]);
-
-    foreach ([2, 1] as $favoriteSearches) {
-        $empresaUser = User::factory()->create(['role' => 'empresa']);
-        $empresa = Empresa::query()->create([
-            'user_id' => $empresaUser->id,
-            'razon_social' => fake()->unique()->company(),
-        ]);
-
-        foreach (range(1, $favoriteSearches) as $index) {
-            $busqueda = $empresa->busquedas()->create([
-                'titulo' => "Búsqueda {$index}",
-                'criterios' => [],
-            ]);
-            $busqueda->candidatos()->create([
-                'postulante_id' => $postulante->id,
-                'favorito' => true,
-            ]);
-        }
-    }
-
-    Livewire::actingAs($postulanteUser)
-        ->test(PostulantePanel::class)
-        ->assertViewHas('empresasInteresadas', 2)
-        ->assertSee('Te han visto 2 empresas');
 });
 
 test('search criterion tags filter candidates that fulfill every selected criterion', function () {

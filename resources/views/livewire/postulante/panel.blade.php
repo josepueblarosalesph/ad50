@@ -19,79 +19,63 @@
     </div>
 </div>
 
-{{-- ====== Stats ====== --}}
-<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
-    <div class="ad-card p-5">
-        <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Completitud del perfil</span>
-            <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
-                <flux:icon.user class="size-4" />
-            </span>
+{{-- ====== Completitud del perfil ====== --}}
+@php($completitud = $postulante?->completitud ?? 0)
+<div class="ad-card mb-6 p-5">
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-4">
+        <span class="grid size-11 flex-none place-items-center rounded-[12px] bg-orange-100 text-orange-600">
+            <flux:icon.user class="size-5" />
+        </span>
+
+        <div class="min-w-[220px] flex-1">
+            <div class="flex items-baseline justify-between gap-3">
+                <span class="text-[13px] font-semibold text-gray-500">Completitud del perfil</span>
+                <span class="text-[26px] font-extrabold leading-none tracking-[-0.02em]">{{ $completitud }}%</span>
+            </div>
+            <div class="mt-2 h-2 overflow-hidden rounded-full bg-line">
+                <div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div>
+            </div>
+            <p @class(['mt-2 text-[13px] font-semibold', 'text-match' => $completitud >= 100, 'text-gray-500' => $completitud < 100])>
+                {{ $completitud >= 100 ? '¡Tu perfil está completo!' : 'Completa tu perfil para llegar a 100%' }}
+            </p>
         </div>
-        <div class="text-[30px] font-extrabold tracking-[-0.02em] mt-2">{{ $postulante?->completitud ?? 0 }}%</div>
-        <div class="h-2 rounded-full bg-line overflow-hidden mt-2">
-            <div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $postulante?->completitud ?? 0 }}%"></div>
-        </div>
-        @if (($postulante?->completitud ?? 0) >= 100)
-            <div class="mt-2 text-[13px] font-semibold text-match">¡Tu perfil está completo!</div>
-        @else
-            <div class="mt-2 text-[13px] font-semibold text-match">Completa tu perfil para llegar a 100%</div>
+
+        @if ($completitud < 100)
+            <a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm flex-none">Completar perfil</a>
         @endif
     </div>
-
-    <div class="ad-card p-5">
-        <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Búsquedas que me incluyen</span>
-            <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
-                <flux:icon.check class="size-4" />
-            </span>
-        </div>
-        <div class="text-[30px] font-extrabold tracking-[-0.02em] mt-2">{{ $totalMatches }}</div>
-        <div class="mt-1 text-[13px] font-semibold text-match">+2 este mes</div>
-    </div>
-
-    <div class="ad-card p-5">
-        <div class="flex items-center">
-            <span class="text-[13px] text-gray-500 font-semibold">Interés en tu perfil</span>
-            <span class="ml-auto size-8 rounded-[9px] bg-orange-100 text-orange-600 grid place-items-center">
-                <flux:icon.star variant="solid" class="size-4" />
-            </span>
-        </div>
-        <div class="text-[30px] font-extrabold tracking-[-0.02em] mt-2">{{ $empresasInteresadas }}</div>
-        <div class="mt-1 text-[13px] font-semibold text-match">Te han visto {{ $empresasInteresadas }} {{ $empresasInteresadas === 1 ? 'empresa' : 'empresas' }}</div>
-    </div>
-
 </div>
 
-{{-- ====== Coincidencias recientes ====== --}}
-<div id="coincidencias" class="ad-card">
+{{-- ====== Oportunidades vigentes ====== --}}
+<div id="oportunidades" class="ad-card">
         <div class="ad-card-head">
-            <h3 class="text-[16px] font-bold">Búsquedas que me incluyen</h3>
-            <div class="flex items-center gap-3"><span class="ad-chip ad-chip-green ad-chip-dot">{{ $totalMatches }} coincidencias</span><a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[14px] font-bold text-orange-600 hover:text-orange-700">Ver más</a></div>
+            <h3 class="text-[16px] font-bold">Oportunidades disponibles</h3>
+            <a wire:navigate href="{{ route('postulante.busquedas') }}" class="text-[14px] font-bold text-orange-600 hover:text-orange-700">Ver más oportunidades</a>
         </div>
-        <div class="p-5 pt-2 space-y-2.5">
-            @forelse ($matches as $m)
-                <div class="ad-toggle-row">
-                    <div>
-                        <b class="text-[13.5px] block">{{ $m->busqueda->titulo }}</b>
-                        <span class="text-[13px] text-gray-500">
-                            Cumples {{ $m->criterios_cumplidos }} de {{ $m->criterios_totales }} criterios · {{ $m->created_at->diffForHumans() }}
+        <div class="divide-y divide-line px-5">
+            @forelse ($publicaciones as $publicacion)
+                <div wire:key="oportunidad-{{ $publicacion->id }}" class="flex flex-wrap items-center justify-between gap-3 py-3.5">
+                    <div class="min-w-0">
+                        <a wire:navigate href="{{ route('postulante.publicaciones.show', $publicacion) }}" class="block truncate text-[14px] font-bold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600">
+                            {{ $publicacion->cargo }}
+                        </a>
+                        <span class="mt-0.5 block truncate text-[13px] text-gray-500">
+                            {{ $publicacion->nombre_empresa }} · {{ $publicacion->comuna }} · {{ $publicacion->modalidad }}
                         </span>
                     </div>
-                    @if ($m->estado_match !== 'cumple')
-                        <span class="ad-chip">Parcial</span>
+                    @if ($publicacion->postulada)
+                        <span class="ad-chip ad-chip-green ad-chip-sm flex-none"><flux:icon.check class="size-3.5" />Postulaste</span>
+                    @else
+                        <button type="button" wire:click="abrirPostulacion({{ $publicacion->id }})" wire:loading.attr="disabled" wire:target="abrirPostulacion({{ $publicacion->id }})" class="ad-btn-primary ad-btn-sm flex-none">Postular</button>
                     @endif
                 </div>
             @empty
-                <p class="py-6 text-center text-[14px] text-gray-500">Aún no apareces en búsquedas.</p>
+                <p class="py-6 text-center text-[14px] text-gray-500">Por ahora no hay ofertas vigentes.</p>
             @endforelse
-
-            <div class="mt-3 flex items-start gap-2 text-[13px] text-gray-500">
-                <flux:icon.lock-closed class="size-3.5 text-gray-400 flex-none mt-0.5" />
-                <span>Por privacidad, el nombre de la empresa se muestra solo como rubro hasta que te contactan.</span>
-            </div>
         </div>
 </div>
+
+<x-postular-modal :publicacion="$publicacionSeleccionada" />
 
 @if ($postulante?->updated_at?->lt(now()->subMonths(6)))
     <div class="mt-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5"><b class="text-[14px]">¿Cambió tu trayectoria?</b><p class="mt-1 text-[13px] text-gray-700">Actualiza tu perfil profesional para seguir apareciendo en búsquedas relevantes.</p><a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-3">Revisar mi perfil profesional</a></div>
