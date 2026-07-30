@@ -107,7 +107,7 @@
                         </button>
 
                         @if ($candidato->match_visible_id)
-                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $candidato->match_visible_id]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
+                            <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $candidato->match_visible_id, 'origen' => 'favoritos']) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
                         @endif
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\Favoritos;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
@@ -298,4 +299,52 @@ test('la tarjeta muestra el candado como icono y el botón rotulado de asociar',
     Livewire::actingAs($user)
         ->test(Favoritos::class)
         ->assertSee('aria-label="Perfil desbloqueado"', false);
+});
+
+test('desde favoritos se navega entre favoritos, no entre los candidatos de una búsqueda', function () {
+    [$user, $empresa, $liderazgo, $planta] = empresaConFavoritos();
+
+    // En la misma búsqueda: uno favorito y otro no.
+    $favoritoA = candidatoEnBusqueda($liderazgo, cargo: 'Favorito A');
+    candidatoEnBusqueda($liderazgo, favorito: false, cargo: 'No favorito');
+    // Y un favorito que viene de OTRA búsqueda.
+    $favoritoB = candidatoEnBusqueda($planta, cargo: 'Favorito B');
+
+    $detalle = Livewire::actingAs($user)->test(Candidato::class, [
+        'match' => $favoritoA,
+        'origen' => 'favoritos',
+    ]);
+
+    // El conjunto navegable son los 2 favoritos de la cuenta, no los de la búsqueda.
+    $detalle->assertSet('totalCandidatos', 2)
+        ->assertSet('posicion', 1)
+        ->assertSet('siguienteId', $favoritoB->id)
+        ->assertSet('anteriorId', null)
+        // Vuelve a la lista de favoritos y no ofrece los filtros de la búsqueda.
+        ->assertSee('Volver a Mis favoritos')
+        ->assertDontSee("cambiarFiltro('favoritos')", escape: false);
+});
+
+test('el detalle abierto desde una búsqueda sigue navegando dentro de ella', function () {
+    [$user, , $liderazgo, $planta] = empresaConFavoritos();
+
+    $enLiderazgo = candidatoEnBusqueda($liderazgo, cargo: 'De liderazgo');
+    candidatoEnBusqueda($liderazgo, favorito: false, cargo: 'Otro de liderazgo');
+    candidatoEnBusqueda($planta, cargo: 'De planta');
+
+    Livewire::actingAs($user)
+        ->test(Candidato::class, ['match' => $enLiderazgo])
+        ->assertSet('origen', 'busqueda')
+        // Los 2 de esta búsqueda; el de la otra queda fuera.
+        ->assertSet('totalCandidatos', 2)
+        ->assertSee("cambiarFiltro('favoritos')", escape: false);
+});
+
+test('no se abre como favorito un candidato que no lo es', function () {
+    [$user, , $liderazgo] = empresaConFavoritos();
+    $noFavorito = candidatoEnBusqueda($liderazgo, favorito: false);
+
+    Livewire::actingAs($user)
+        ->test(Candidato::class, ['match' => $noFavorito, 'origen' => 'favoritos'])
+        ->assertStatus(404);
 });

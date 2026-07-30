@@ -39,11 +39,13 @@ class BusquedaCandidato extends Model
         $query->where($query->qualifyColumn('temporal'), true);
     }
 
+    /** @return BelongsTo<Busqueda, $this> */
     public function busqueda(): BelongsTo
     {
         return $this->belongsTo(Busqueda::class);
     }
 
+    /** @return BelongsTo<Postulante, $this> */
     public function postulante(): BelongsTo
     {
         return $this->belongsTo(Postulante::class);

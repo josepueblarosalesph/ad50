@@ -27,6 +27,14 @@ class Candidato extends Component
     #[Url]
     public string $filtro = 'todos';
 
+    /**
+     * Desde dónde se abrió el perfil: 'busqueda' (los resultados de una búsqueda) o
+     * 'favoritos' (la lista de la cuenta). Define entre qué candidatos navegan las
+     * flechas y a dónde vuelve el enlace de retorno.
+     */
+    #[Url]
+    public string $origen = 'busqueda';
+
     /** @var list<string> */
     #[Url]
     public array $criterios = [];
@@ -62,6 +70,12 @@ class Candidato extends Component
         abort_unless($match->postulante->visible, 404);
 
         $this->filtro = in_array($this->filtro, ['todos', 'favoritos'], true) ? $this->filtro : 'todos';
+        $this->origen = in_array($this->origen, ['busqueda', 'favoritos'], true) ? $this->origen : 'busqueda';
+
+        // Al venir de la lista de favoritos, el candidato tiene que ser uno de ellos.
+        if ($this->origen === 'favoritos') {
+            abort_unless(in_array($match->postulante_id, $this->favoritosDeLaEmpresa(), true), 404);
+        }
 
         $this->match = $match->load('busqueda', 'postulante.user');
         $this->nota = NotaCandidato::query()
@@ -210,6 +224,8 @@ class Candidato extends Component
     public function cambiarFiltro(string $filtro): void
     {
         abort_unless(in_array($filtro, ['todos', 'favoritos'], true), 404);
+        // Viniendo de la lista de favoritos no hay filtro que cambiar: el conjunto ya es ese.
+        abort_if($this->origen === 'favoritos', 404);
 
         if ($filtro === $this->filtro) {
             return;
@@ -243,11 +259,39 @@ class Candidato extends Component
      */
     private function idsNavegacion(): Collection
     {
+        if ($this->origen === 'favoritos') {
+            return $this->idsNavegacionFavoritos();
+        }
+
         $borrador = $this->borradorFiltros();
 
         return $borrador !== null
             ? $this->idsNavegacionPrevisualizada($borrador)
             : $this->idsNavegacionGuardada();
+    }
+
+    /**
+     * Navegación entre los favoritos de la cuenta, sin importar de qué búsqueda venga
+     * cada uno. Se toma una coincidencia por candidato —la lista de favoritos enlaza
+     * igual— y se respeta su mismo orden (por postulante).
+     *
+     * @return Collection<int, int>
+     */
+    private function idsNavegacionFavoritos(): Collection
+    {
+        $empresaId = $this->match->busqueda->empresa_id;
+
+        return BusquedaCandidato::query()
+            ->confirmados()
+            ->whereIn('postulante_id', $this->favoritosDeLaEmpresa())
+            ->whereHas('busqueda', fn ($query) => $query->where('empresa_id', $empresaId))
+            ->whereHas('postulante', fn ($query) => $query->where('visible', true))
+            ->orderBy('postulante_id')
+            ->get(['id', 'postulante_id'])
+            // Un candidato puede calzar con varias búsquedas: basta una para abrirlo.
+            ->unique('postulante_id')
+            ->pluck('id')
+            ->values();
     }
 
     /** @return Collection<int, int> */

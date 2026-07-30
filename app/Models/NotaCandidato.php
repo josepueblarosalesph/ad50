@@ -15,11 +15,13 @@ class NotaCandidato extends Model
 
     protected $guarded = [];
 
+    /** @return BelongsTo<Empresa, $this> */
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
     }
 
+    /** @return BelongsTo<Postulante, $this> */
     public function postulante(): BelongsTo
     {
         return $this->belongsTo(Postulante::class);
