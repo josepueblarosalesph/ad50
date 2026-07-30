@@ -2,8 +2,66 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+
 class CatalogosProfesionales
 {
+    private const CACHE_PREFIJO = 'catalogo_terminos:';
+
+    /**
+     * Valores vigentes de un catálogo administrable.
+     *
+     * Se leen de `terminos_catalogo` y se cachean. Si la tabla no existe todavía (una
+     * instalación a medio migrar) o el catálogo está vacío, se devuelven los valores
+     * por defecto del código: la plataforma nunca se queda sin opciones.
+     *
+     * @return list<string>
+     */
+    private static function desdeCatalogo(string $catalogo, string $origen): array
+    {
+        $terminos = Cache::remember(
+            self::CACHE_PREFIJO.$catalogo,
+            now()->addHour(),
+            function () use ($catalogo): array {
+                if (! Schema::hasTable('terminos_catalogo')) {
+                    return [];
+                }
+
+                return DB::table('terminos_catalogo')
+                    ->where('catalogo', $catalogo)
+                    ->orderBy('orden')
+                    ->orderBy('valor')
+                    ->pluck('valor')
+                    ->all();
+            },
+        );
+
+        return $terminos === [] ? self::porDefecto($origen) : array_values($terminos);
+    }
+
+    /**
+     * Valores originales de un catálogo, tal como están escritos en el código. Es la
+     * fuente de la carga inicial y el respaldo cuando la tabla está vacía.
+     *
+     * @return list<string>
+     */
+    public static function porDefecto(string $origen): array
+    {
+        $metodo = $origen.'PorDefecto';
+
+        return method_exists(self::class, $metodo) ? array_values(self::$metodo()) : [];
+    }
+
+    /** Descarta la caché de un catálogo, o de todos si no se indica ninguno. */
+    public static function olvidar(?string $catalogo = null): void
+    {
+        foreach ($catalogo !== null ? [$catalogo] : CatalogosAdministrables::claves() as $clave) {
+            Cache::forget(self::CACHE_PREFIJO.$clave);
+        }
+    }
+
     /** @return array<string, array<int, string>> */
     public static function carreras(): array
     {
@@ -32,8 +90,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function industrias(): array
+    {
+        return self::desdeCatalogo('industria', 'industrias');
+    }
+
+    /** @return list<string> */
+    private static function industriasPorDefecto(): array
     {
         return [
             'Minería', 'Agricultura', 'Frutícola', 'Ganadería', 'Silvicultura / Forestal',
@@ -87,14 +151,26 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function generos(): array
+    {
+        return self::desdeCatalogo('genero', 'generos');
+    }
+
+    /** @return list<string> */
+    private static function generosPorDefecto(): array
     {
         return ['Masculino', 'Femenino', 'Prefiero no Informar'];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function nacionalidades(): array
+    {
+        return self::desdeCatalogo('nacionalidad', 'nacionalidades');
+    }
+
+    /** @return list<string> */
+    private static function nacionalidadesPorDefecto(): array
     {
         return [
             'Chilena', 'Argentina', 'Boliviana', 'Brasileña', 'Colombiana', 'Cubana',
@@ -103,8 +179,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function paises(): array
+    {
+        return self::desdeCatalogo('pais', 'paises');
+    }
+
+    /** @return list<string> */
+    private static function paisesPorDefecto(): array
     {
         // Chile primero por ser el mercado principal; el resto en orden alfabético.
         return [
@@ -144,8 +226,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function situacionesLaborales(): array
+    {
+        return self::desdeCatalogo('situacion_laboral', 'situacionesLaborales');
+    }
+
+    /** @return list<string> */
+    private static function situacionesLaboralesPorDefecto(): array
     {
         return [
             'Trabajando actualmente', 'Buscando trabajo',
@@ -164,13 +252,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /**
-     * Opciones para "regiones de interés" del postulante: primero Nacional e Internacional,
-     * luego las regiones más demandadas y el resto en el orden geográfico habitual.
-     *
-     * @return list<string>
-     */
+    /** @return list<string> */
     public static function regionesInteres(): array
+    {
+        return self::desdeCatalogo('region', 'regionesInteres');
+    }
+
+    /** @return list<string> */
+    private static function regionesInteresPorDefecto(): array
     {
         $prioritarias = ['Metropolitana de Santiago', 'Biobío', 'Valparaíso'];
         $resto = array_values(array_diff(self::regiones(), $prioritarias));
@@ -178,14 +267,26 @@ class CatalogosProfesionales
         return array_merge(['Nacional', 'Internacional'], $prioritarias, $resto);
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function modalidadesTrabajoPreferidas(): array
+    {
+        return self::desdeCatalogo('modalidad_trabajo', 'modalidadesTrabajoPreferidas');
+    }
+
+    /** @return list<string> */
+    private static function modalidadesTrabajoPreferidasPorDefecto(): array
     {
         return ['Jornada Completa', 'Jornada Parcial', 'Honorarios'];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function cargosAreas(): array
+    {
+        return self::desdeCatalogo('cargo_area', 'cargosAreas');
+    }
+
+    /** @return list<string> */
+    private static function cargosAreasPorDefecto(): array
     {
         return [
             'Gerencia General', 'Administración y Finanzas', 'Finanzas', 'Control de Gestión',
@@ -196,32 +297,62 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function instituciones(): array
+    {
+        return self::desdeCatalogo('institucion', 'instituciones');
+    }
+
+    /** @return list<string> */
+    private static function institucionesPorDefecto(): array
     {
         return require __DIR__.'/instituciones.php';
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function empresas(): array
     {
-        return ['Otra', ...require __DIR__.'/empresas.php'];
+        return self::desdeCatalogo('empresa', 'empresas');
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
+    private static function empresasPorDefecto(): array
+    {
+        return array_values(['Otra', ...require __DIR__.'/empresas.php']);
+    }
+
+    /** @return list<string> */
     public static function cargos(): array
     {
-        return ['Otros', ...require __DIR__.'/cargos.php'];
+        return self::desdeCatalogo('cargo', 'cargos');
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
+    private static function cargosPorDefecto(): array
+    {
+        return array_values(['Otros', ...require __DIR__.'/cargos.php']);
+    }
+
+    /** @return list<string> */
     public static function habilidades(): array
+    {
+        return self::desdeCatalogo('habilidad', 'habilidades');
+    }
+
+    /** @return list<string> */
+    private static function habilidadesPorDefecto(): array
     {
         return require __DIR__.'/habilidades.php';
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function carrerasEstudio(): array
+    {
+        return self::desdeCatalogo('carrera', 'carrerasEstudio');
+    }
+
+    /** @return list<string> */
+    private static function carrerasEstudioPorDefecto(): array
     {
         return require __DIR__.'/carreras_estudio.php';
     }
@@ -272,8 +403,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function tiposTrabajo(): array
+    {
+        return self::desdeCatalogo('tipo_trabajo', 'tiposTrabajo');
+    }
+
+    /** @return list<string> */
+    private static function tiposTrabajoPorDefecto(): array
     {
         return [
             'Jornada completa', 'Media jornada', 'Independiente', 'Contrato temporal',
@@ -281,8 +418,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function jerarquias(): array
+    {
+        return self::desdeCatalogo('jerarquia', 'jerarquias');
+    }
+
+    /** @return list<string> */
+    private static function jerarquiasPorDefecto(): array
     {
         return [
             'Gerencia / Dirección', 'Subgerencia', 'Jefatura', 'Coordinación / Supervisión',
@@ -299,8 +442,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function nivelesEstudio(): array
+    {
+        return self::desdeCatalogo('nivel_estudios', 'nivelesEstudio');
+    }
+
+    /** @return list<string> */
+    private static function nivelesEstudioPorDefecto(): array
     {
         return [
             'Básica', 'Media', 'Técnico Medio / Colegio Técnico',
@@ -321,14 +470,26 @@ class CatalogosProfesionales
         return ['Presencial', 'Semi-presencial', 'Online'];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function situacionesEstudio(): array
+    {
+        return self::desdeCatalogo('situacion_estudios', 'situacionesEstudio');
+    }
+
+    /** @return list<string> */
+    private static function situacionesEstudioPorDefecto(): array
     {
         return ['Egresado', 'Titulado / Titulada', 'Estudiando', 'Incompleto'];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function idiomas(): array
+    {
+        return self::desdeCatalogo('idioma', 'idiomas');
+    }
+
+    /** @return list<string> */
+    private static function idiomasPorDefecto(): array
     {
         return [
             'Alemán', 'Chino Mandarín', 'Coreano', 'Español', 'Francés', 'Inglés',
@@ -336,8 +497,14 @@ class CatalogosProfesionales
         ];
     }
 
-    /** @return array<int, string> */
+    /** @return list<string> */
     public static function nivelesIdioma(): array
+    {
+        return self::desdeCatalogo('nivel_idioma', 'nivelesIdioma');
+    }
+
+    /** @return list<string> */
+    private static function nivelesIdiomaPorDefecto(): array
     {
         return ['Intermedio', 'Avanzado'];
     }

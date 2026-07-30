@@ -11,6 +11,7 @@
         'panel' => ['admin.panel', 'Resumen'],
         'empresas' => ['admin.empresas', 'Empresas'],
         'postulantes' => ['admin.postulantes', 'Postulantes'],
+        'catalogos' => ['admin.catalogos', 'Catálogos'],
     ];
 @endphp
 

@@ -148,6 +148,7 @@ class PostulanteSeeder extends Seeder
                 'idioma' => $idioma,
                 'nivel' => $index === 0 || $idioma === 'Español' ? 'Avanzado' : 'Intermedio',
             ])
+            ->values()
             ->all();
     }
 
@@ -213,7 +214,12 @@ class PostulanteSeeder extends Seeder
         ];
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  list<string>  $regiones
+     * @param  list<string>  $industriasAdicionales
+     * @param  list<string>  $idiomas
+     * @return array<string, mixed>
+     */
     private function perfil(string $name, string $email, string $slug, int $edad, string $genero, string $cargo, string $titular, string $ciudad, array $regiones, string $modalidad, string $carrera, string $especialidad, string $institucion, string $industria, array $industriasAdicionales, int $aniosExperiencia, string $empresa, string $cargoAnterior, string $empresaAnterior, string $jerarquia, string $resumen, array $idiomas, ?string $postgrado = null): array
     {
         $genero = match ($genero) {
