@@ -35,6 +35,23 @@ class Postulaciones extends Component
      */
     public ?array $criterios = null;
 
+    /** Postulación cuyo detalle está abierto; null con el panel cerrado. */
+    public ?int $detalleId = null;
+
+    /** Abre el perfil completo del postulante sin salir del listado. */
+    public function verDetalle(int $postulacionId): void
+    {
+        abort_unless($this->publicacion->postulaciones()->whereKey($postulacionId)->exists(), 404);
+
+        $this->detalleId = $postulacionId;
+        $this->modal('detalle-postulante')->show();
+    }
+
+    public function cerrarDetalle(): void
+    {
+        $this->detalleId = null;
+    }
+
     public function mount(Publicacion $publicacion): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
@@ -123,6 +140,11 @@ class Postulaciones extends Component
             'totalFiltradas' => $total,
             'conteoPorEstado' => $conteoPorEstado,
             'estados' => Postulacion::ESTADOS,
+            'detalle' => $this->detalleId === null
+                ? null
+                : $this->publicacion->postulaciones()
+                    ->with('postulante.user')
+                    ->find($this->detalleId),
         ]);
     }
 

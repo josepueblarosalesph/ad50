@@ -139,6 +139,14 @@ class MatchingService
             }],
             'actividad_economica' => ['Actividad económica', fn (array $valores): bool => collect($valores)->contains(fn (string $valor): bool => collect($postulante->experiencias ?? [])->contains(fn (array $experiencia): bool => $this->iguales($experiencia['actividad_empresa'] ?? null, $valor)))],
             'renta_max' => ['Expectativa de renta', fn (string $valor): bool => $postulante->expectativa_renta !== null && $postulante->expectativa_renta <= (int) $valor],
+            'renta' => ['Expectativa de renta', function (array $valor) use ($postulante): bool {
+                if ($postulante->expectativa_renta === null) {
+                    return false;
+                }
+
+                return $postulante->expectativa_renta >= (int) $valor['min']
+                    && ($valor['max'] === null || $postulante->expectativa_renta <= (int) $valor['max']);
+            }],
             'min_anios' => ['Experiencia mínima', fn (string $valor): bool => $postulante->anios_experiencia >= (int) $valor],
             'experiencia' => ['Años de experiencia', fn (array $valor): bool => $postulante->anios_experiencia >= (int) $valor['min']
                 && ($valor['max'] === null || $postulante->anios_experiencia <= (int) $valor['max'])],
@@ -171,10 +179,10 @@ class MatchingService
                 continue;
             }
 
-            if (in_array($clave, ['edad', 'experiencia'], true)) {
+            if (in_array($clave, ['edad', 'experiencia', 'renta'], true)) {
                 $detalle[$clave] = [
                     'criterio' => $etiqueta,
-                    'valor' => $this->rangoEdadLegible($valor),
+                    'valor' => $clave === 'renta' ? $this->rangoRentaLegible($valor) : $this->rangoEdadLegible($valor),
                     'cumple' => $evaluar($valor),
                 ];
 
@@ -203,6 +211,20 @@ class MatchingService
         }
 
         return $detalle;
+    }
+
+    /** @param  array{min: int, max: int|null}  $rango */
+    private function rangoRentaLegible(array $rango): string
+    {
+        $peso = fn (int $monto): string => '$'.number_format($monto, 0, ',', '.');
+
+        if ($rango['max'] === null) {
+            return 'desde '.$peso($rango['min']);
+        }
+
+        return $rango['min'] <= 0
+            ? 'hasta '.$peso($rango['max'])
+            : $peso($rango['min']).' a '.$peso($rango['max']);
     }
 
     /** @param  array{min: int, max: int|null}  $rango */

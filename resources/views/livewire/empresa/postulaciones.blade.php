@@ -52,76 +52,54 @@
             @forelse ($postulaciones as $postulacion)
                 @php($postulante = $postulacion->postulante)
                 @php($ultimaExp = $postulante?->ultimaExperiencia())
-                <article wire:key="postulacion-{{ $postulacion->id }}" class="ad-card overflow-hidden p-4 md:p-5">
-                    <div class="flex flex-wrap items-start justify-between gap-4">
-                        <div class="flex min-w-0 items-start gap-4">
-                            <div class="grid size-12 flex-none place-items-center rounded-[12px] bg-sage-100 text-ink" aria-hidden="true"><flux:icon.user class="size-5" /></div>
+                <article wire:key="postulacion-{{ $postulacion->id }}" class="ad-card p-3.5 md:p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex min-w-0 flex-1 items-center gap-3">
+                            <div class="grid size-10 flex-none place-items-center rounded-[11px] bg-sage-100 text-ink" aria-hidden="true"><flux:icon.user class="size-5" /></div>
                             <div class="min-w-0">
-                                <p class="truncate text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $postulante?->carrera ?: 'Carrera no informada' }}</p>
-                                <h2 class="mt-0.5 truncate text-[19px] font-extrabold text-ink">{{ $postulante?->user?->name ?? 'Postulante' }}</h2>
-                                @if ($ultimaExp)
-                                    <p class="mt-1 flex items-center gap-1.5 text-[13px] text-gray-600 dark:text-gray-300">
-                                        <flux:icon.briefcase class="size-3.5 flex-none text-gray-400" />
-                                        <span class="truncate"><span class="font-semibold text-ink">{{ $ultimaExp['cargo'] }}</span>@if ($ultimaExp['empresa']) · {{ $ultimaExp['empresa'] }}@endif</span>
-                                    </p>
-                                @endif
-                                <p class="mt-1 text-[11.5px] text-gray-400">Postuló el {{ $postulacion->created_at->translatedFormat('d M Y') }}</p>
+                                {{-- El nombre abre el perfil completo sin salir del listado. --}}
+                                <button
+                                    type="button"
+                                    wire:click="verDetalle({{ $postulacion->id }})"
+                                    class="block max-w-full truncate rounded text-left text-[15px] font-extrabold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+                                >{{ $postulante?->user?->name ?? 'Postulante' }}</button>
+                                <p class="mt-0.5 truncate text-[12.5px] text-gray-500">
+                                    {{ collect([
+                                        $ultimaExp['cargo'] ?? $postulante?->cargo_actual,
+                                        $postulante?->carrera,
+                                        $postulante?->anios_experiencia ? $postulante->anios_experiencia.' años' : null,
+                                    ])->filter()->implode(' · ') ?: 'Sin experiencia informada' }}
+                                </p>
                             </div>
                         </div>
 
-                        {{-- Estado de la postulación --}}
-                        <select
-                            wire:key="estado-{{ $postulacion->id }}"
-                            wire:change="cambiarEstado({{ $postulacion->id }}, $event.target.value)"
-                            aria-label="Estado de la postulación de {{ $postulante?->user?->name }}"
-                            @class([
-                                'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
-                                'border-[#BFE6CD] bg-match-100 text-match' => $postulacion->estado === 'seleccionada',
-                                'border-[#E7B6AE] bg-[#FBEDEA] text-[#A93226]' => $postulacion->estado === 'descartada',
-                                'border-line-2 bg-paper text-gray-600' => ! in_array($postulacion->estado, ['seleccionada', 'descartada'], true),
-                            ])
-                        >
-                            @foreach ($estados as $valor => $etiqueta)
-                                <option value="{{ $valor }}" @selected($postulacion->estado === $valor)>{{ $etiqueta }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <div class="flex flex-none flex-wrap items-center gap-2">
+                            <span class="hidden text-[12px] text-gray-400 sm:inline">{{ $postulacion->created_at->translatedFormat('d M Y') }}</span>
 
-                    @if ($postulante?->resumen_profesional)
-                        <p class="mt-3 max-w-4xl text-[13px] leading-relaxed text-gray-500">{{ Str::limit($postulante->resumen_profesional, 220, '…') }}</p>
-                    @endif
+                            @if ($postulante?->cv_ruta)
+                                <flux:tooltip content="Descargar CV">
+                                    <button type="button" wire:click="descargarCv({{ $postulacion->id }})" wire:loading.attr="disabled" wire:target="descargarCv({{ $postulacion->id }})" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Descargar CV de {{ $postulante?->user?->name }}">
+                                        <flux:icon.arrow-down-tray class="size-4" />
+                                    </button>
+                                </flux:tooltip>
+                            @endif
 
-                    {{-- Contacto (visible sin desbloquear, por ser postulación directa) --}}
-                    <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[12.5px] text-gray-600 dark:text-gray-300">
-                        @if ($postulante?->rut)<span class="inline-flex items-center gap-1.5"><flux:icon.identification class="size-4 text-gray-400" />{{ $postulante->rut }}</span>@endif
-                        @if ($postulante?->telefono)<span class="inline-flex items-center gap-1.5"><flux:icon.phone class="size-4 text-gray-400" />{{ $postulante->telefono }}</span>@endif
-                        @if ($postulante?->user?->email)<span class="inline-flex items-center gap-1.5"><flux:icon.envelope class="size-4 text-gray-400" />{{ $postulante->user->email }}</span>@endif
-                        @if ($postulante?->linkedin)<a href="{{ $postulante->linkedin }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 font-semibold text-orange-600 hover:text-orange-700"><flux:icon.link class="size-4" />LinkedIn</a>@endif
-                    </div>
-
-                    {{-- Respuestas al cuestionario --}}
-                    @if (filled($publicacion->preguntas))
-                        <div class="mt-4 space-y-2.5 rounded-xl border border-line-2 bg-paper p-4 dark:bg-[#222528]">
-                            <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Respuestas</p>
-                            @foreach ($publicacion->preguntas as $i => $pregunta)
-                                <div>
-                                    <p class="text-[12.5px] font-bold text-ink">{{ $pregunta }}</p>
-                                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">{{ $postulacion->respuestas[$i] ?? '—' }}</p>
-                                </div>
-                            @endforeach
+                            <select
+                                wire:key="estado-{{ $postulacion->id }}"
+                                wire:change="cambiarEstado({{ $postulacion->id }}, $event.target.value)"
+                                aria-label="Estado de la postulación de {{ $postulante?->user?->name }}"
+                                @class([
+                                    'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
+                                    'border-[#BFE6CD] bg-match-100 text-match' => $postulacion->estado === 'seleccionada',
+                                    'border-[#E7B6AE] bg-[#FBEDEA] text-[#A93226]' => $postulacion->estado === 'descartada',
+                                    'border-line-2 bg-paper text-gray-600' => ! in_array($postulacion->estado, ['seleccionada', 'descartada'], true),
+                                ])
+                            >
+                                @foreach ($estados as $valor => $etiqueta)
+                                    <option value="{{ $valor }}" @selected($postulacion->estado === $valor)>{{ $etiqueta }}</option>
+                                @endforeach
+                            </select>
                         </div>
-                    @endif
-
-                    <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                        @if ($postulante?->cv_ruta)
-                            <button type="button" wire:click="descargarCv({{ $postulacion->id }})" wire:loading.attr="disabled" wire:target="descargarCv({{ $postulacion->id }})" class="ad-btn-primary ad-btn-sm">
-                                <flux:icon.arrow-down-tray class="size-4" />
-                                <span wire:loading.remove wire:target="descargarCv({{ $postulacion->id }})">Descargar CV</span>
-                                <span wire:loading wire:target="descargarCv({{ $postulacion->id }})">Preparando…</span>
-                            </button>
-                        @else
-                            <span class="text-[12.5px] text-gray-400">Sin CV adjunto</span>
-                        @endif
                     </div>
                 </article>
             @empty
@@ -137,4 +115,80 @@
             <div class="mt-6">{{ $postulaciones->links() }}</div>
         @endif
     </div>
+
+    {{-- Perfil completo del postulante: lo que antes estiraba cada tarjeta. --}}
+    <flux:modal name="detalle-postulante" class="max-w-2xl" wire:close="cerrarDetalle">
+        @if ($detalle)
+            @php($p = $detalle->postulante)
+            <div class="space-y-5">
+                <div>
+                    <p class="text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $p?->carrera ?: 'Carrera no informada' }}</p>
+                    <flux:heading size="lg">{{ $p?->user?->name ?? 'Postulante' }}</flux:heading>
+                    <flux:text class="mt-1">
+                        {{ collect([$p?->cargo_actual, $p?->empresa_actual, $p?->anios_experiencia ? $p->anios_experiencia.' años de experiencia' : null])->filter()->implode(' · ') ?: 'Sin experiencia informada' }}
+                    </flux:text>
+                    <p class="mt-1 text-[12px] text-gray-400">Postuló el {{ $detalle->created_at->translatedFormat('d M Y') }}</p>
+                </div>
+
+                {{-- Contacto: visible sin desbloquear, por tratarse de una postulación directa. --}}
+                <div class="flex flex-wrap gap-x-4 gap-y-1.5 rounded-xl bg-paper p-4 text-[13px] text-gray-600 dark:bg-white/5 dark:text-gray-300">
+                    @if ($p?->rut)<span class="inline-flex items-center gap-1.5"><flux:icon.identification class="size-4 text-gray-400" />{{ $p->rut }}</span>@endif
+                    @if ($p?->telefono)<span class="inline-flex items-center gap-1.5"><flux:icon.phone class="size-4 text-gray-400" />{{ $p->telefono }}</span>@endif
+                    @if ($p?->user?->email)<a href="mailto:{{ $p->user->email }}" class="inline-flex items-center gap-1.5 hover:text-orange-600"><flux:icon.envelope class="size-4 text-gray-400" />{{ $p->user->email }}</a>@endif
+                    @if ($p?->linkedin)<a href="{{ $p->linkedin }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 hover:text-orange-600"><flux:icon.link class="size-4 text-gray-400" />LinkedIn</a>@endif
+                </div>
+
+                @if ($p?->resumen_profesional)
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Acerca de</p>
+                        <p class="mt-1.5 text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-300">{{ $p->resumen_profesional }}</p>
+                    </div>
+                @endif
+
+                @if (filled($p?->experiencias))
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Experiencia</p>
+                        <ul class="mt-1.5 space-y-2">
+                            @foreach (array_slice($p->experiencias, 0, 4) as $exp)
+                                <li class="text-[13.5px] text-gray-600 dark:text-gray-300">
+                                    <b class="text-ink">{{ ($exp['cargo'] ?? '') === 'Otros' ? ($exp['cargo_otro'] ?? 'Otros') : ($exp['cargo'] ?? '—') }}</b>
+                                    {{ filled($exp['empresa'] ?? null) ? ' · '.$exp['empresa'] : '' }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (filled($p?->habilidades))
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Habilidades</p>
+                        <div class="mt-1.5 flex flex-wrap gap-1.5">
+                            @foreach (array_slice($p->habilidades, 0, 12) as $habilidad)<span class="ad-tag">{{ $habilidad }}</span>@endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if (filled($publicacion->preguntas))
+                    <div class="rounded-xl border border-line-2 p-4">
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Respuestas</p>
+                        <div class="mt-2 space-y-3">
+                            @foreach ($publicacion->preguntas as $i => $pregunta)
+                                <div>
+                                    <p class="text-[12.5px] font-bold text-ink">{{ $pregunta }}</p>
+                                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">{{ $detalle->respuestas[$i] ?? '—' }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <div class="flex justify-end gap-2 border-t border-line pt-4">
+                    @if ($p?->cv_ruta)
+                        <flux:button variant="ghost" wire:click="descargarCv({{ $detalle->id }})" icon="arrow-down-tray">Descargar CV</flux:button>
+                    @endif
+                    <flux:modal.close><flux:button variant="primary">Cerrar</flux:button></flux:modal.close>
+                </div>
+            </div>
+        @endif
+    </flux:modal>
 </div>

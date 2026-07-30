@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Empresa\FiltrosPostulaciones;
 use App\Livewire\Empresa\Postulaciones;
 use App\Models\Empresa;
 use App\Models\Postulacion;
@@ -10,9 +11,9 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 /** @return array{0: User, 1: Empresa, 2: Publicacion} */
-function empresaConPublicacion(): array
+function empresaConPublicacion(?string $email = null): array
 {
-    $user = User::factory()->create(['role' => 'empresa']);
+    $user = User::factory()->create(['role' => 'empresa', ...($email ? ['email' => $email] : [])]);
     $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'Empresa Pub', 'estado_activacion' => 'activa']);
     $publicacion = Publicacion::factory()->create([
         'empresa_id' => $empresa->id,
@@ -41,7 +42,7 @@ function postularA(Publicacion $publicacion, string $nombre, string $region, str
     ]);
 }
 
-test('an empresa sees the applicants of its publication with their answers', function () {
+test('el listado muestra a los postulantes en tarjetas compactas', function () {
     [$user, $empresa, $publicacion] = empresaConPublicacion();
     postularA($publicacion, 'Ana Torres', 'Biobío');
     postularA($publicacion, 'Beto Díaz', 'Valparaíso');
@@ -51,8 +52,36 @@ test('an empresa sees the applicants of its publication with their answers', fun
         ->assertViewHas('totalPostulaciones', 2)
         ->assertSee('Ana Torres')
         ->assertSee('Beto Díaz')
+        // El detalle (respuestas, contacto) ya no estira cada tarjeta.
+        ->assertDontSee('Me interesa por la experiencia del equipo.');
+});
+
+test('al hacer clic en el nombre se abre el detalle del postulante', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulacion = postularA($publicacion, 'Ana Torres', 'Biobío');
+    postularA($publicacion, 'Beto Díaz', 'Valparaíso');
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('verDetalle', $postulacion->id)
+        ->assertSet('detalleId', $postulacion->id)
+        // El detalle trae contacto, respuestas y perfil.
         ->assertSee('¿Por qué te interesa?')
-        ->assertSee('Me interesa por la experiencia del equipo.');
+        ->assertSee('Me interesa por la experiencia del equipo.')
+        ->assertSee('Ana Torres')
+        ->call('cerrarDetalle')
+        ->assertSet('detalleId', null);
+});
+
+test('no se puede abrir el detalle de una postulación de otra publicación', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    [, , $otraPublicacion] = empresaConPublicacion('otra@empresa.cl');
+    $ajena = postularA($otraPublicacion, 'Ajeno', 'Maule');
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('verDetalle', $ajena->id)
+        ->assertStatus(404);
 });
 
 test('an empresa can change the estado of an application', function () {
@@ -123,4 +152,49 @@ test('an empresa cannot see the applicants of another company publication', func
     Livewire::actingAs($otroUser)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
         ->assertForbidden();
+});
+
+test('el filtro de renta acota por rango, no solo por un tope', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Pide poco', 'Biobío', extra: ['expectativa_renta' => 1_000_000]);
+    postularA($publicacion, 'Pide medio', 'Biobío', extra: ['expectativa_renta' => 4_000_000]);
+    postularA($publicacion, 'Pide mucho', 'Biobío', extra: ['expectativa_renta' => 12_000_000]);
+
+    $componente = Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion]);
+
+    // Entre 3 y 5 millones: solo el del medio.
+    $componente->call('filtrar', ['renta' => ['min' => 3_000_000, 'max' => 5_000_000]])
+        ->assertViewHas('totalFiltradas', 1)
+        ->assertSee('Pide medio')
+        ->assertDontSee('Pide poco')
+        ->assertDontSee('Pide mucho');
+
+    // Sin tope superior, "o más" incluye al que está sobre el máximo del deslizador.
+    $componente->call('filtrar', ['renta' => ['min' => 4_000_000, 'max' => null]])
+        ->assertViewHas('totalFiltradas', 2)
+        ->assertSee('Pide medio')
+        ->assertSee('Pide mucho');
+
+    // Solo con tope superior se comporta como el filtro antiguo.
+    $componente->call('filtrar', ['renta' => ['min' => 0, 'max' => 2_000_000]])
+        ->assertViewHas('totalFiltradas', 1)
+        ->assertSee('Pide poco');
+});
+
+test('el panel arma el criterio de renta en pesos desde los intervalos del deslizador', function () {
+    [$user] = empresaConPublicacion();
+
+    Livewire::actingAs($user)
+        ->test(FiltrosPostulaciones::class)
+        ->set('rentaMin', 2)
+        ->set('rentaMax', 5)
+        // El deslizador trabaja en millones; el criterio viaja en pesos.
+        ->assertDispatched('criterios-postulaciones', fn (string $e, array $p): bool => $p['criterios']['renta'] === ['min' => 2_000_000, 'max' => 5_000_000]);
+
+    // Cubriendo todo el recorrido no se filtra por renta.
+    Livewire::actingAs($user)
+        ->test(FiltrosPostulaciones::class)
+        ->set('rentaMin', 0)
+        ->set('rentaMax', 8)
+        ->assertDispatched('criterios-postulaciones', fn (string $e, array $p): bool => $p['criterios']['renta'] === null);
 });

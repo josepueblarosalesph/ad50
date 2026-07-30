@@ -4,6 +4,7 @@ namespace App\Livewire\Empresa;
 
 use App\Concerns\FiltraPorEdad;
 use App\Concerns\FiltraPorExperiencia;
+use App\Concerns\FiltraPorRenta;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -20,6 +21,7 @@ class FiltrosPostulaciones extends Component
 {
     use FiltraPorEdad;
     use FiltraPorExperiencia;
+    use FiltraPorRenta;
 
     /** @var list<string> */
     public array $cargo = [];
@@ -56,8 +58,6 @@ class FiltrosPostulaciones extends Component
     /** @var list<string> */
     public array $actividadEconomica = [];
 
-    public int $rentaMax = 0;
-
     public string $institucion = '';
 
     public string $empresa = '';
@@ -72,6 +72,7 @@ class FiltrosPostulaciones extends Component
         abort_unless(auth()->user()->role === 'empresa', 403);
 
         $this->hidratarEdad([]);
+        $this->hidratarRenta([]);
         $this->hidratarExperiencia([]);
     }
 
@@ -128,9 +129,10 @@ class FiltrosPostulaciones extends Component
         $this->reset([
             'cargo', 'carrera', 'especialidad', 'industria', 'ciudad', 'habilidad',
             'situacionLaboral', 'genero', 'nivelEstudios', 'situacionEstudios', 'idioma',
-            'actividadEconomica', 'rentaMax', 'institucion', 'empresa', 'palabrasClave', 'nuevaPalabraClave',
+            'actividadEconomica', 'institucion', 'empresa', 'palabrasClave', 'nuevaPalabraClave',
         ]);
         $this->hidratarEdad([]);
+        $this->hidratarRenta([]);
         $this->hidratarExperiencia([]);
         $this->anunciar();
     }
@@ -169,13 +171,13 @@ class FiltrosPostulaciones extends Component
             'idioma.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::idiomasConNivel())],
             'actividadEconomica' => ['array'],
             'actividadEconomica.*' => ['string', 'distinct', Rule::in(CatalogosProfesionales::industrias())],
-            'rentaMax' => ['nullable', 'integer', 'min:0', 'max:100000000'],
             'institucion' => ['nullable', 'string', 'max:180'],
             'empresa' => ['nullable', 'string', 'max:180'],
             'palabrasClave' => ['array', 'max:10'],
             'palabrasClave.*' => ['string', 'max:100', 'distinct'],
             ...$this->reglasExperiencia(),
             ...$this->reglasEdad(),
+            ...$this->reglasRenta(),
         ];
     }
 
@@ -195,7 +197,7 @@ class FiltrosPostulaciones extends Component
             'situacion_estudios' => $this->situacionEstudios,
             'idioma' => $this->idioma,
             'actividad_economica' => $this->actividadEconomica,
-            'renta_max' => $this->rentaMax,
+            'renta' => $this->criterioRenta($this->rentaMin, $this->rentaMax),
             'institucion' => $this->institucion,
             'empresa' => $this->empresa,
             'experiencia' => $this->criterioExperiencia($this->expMin, $this->expMax),
@@ -212,6 +214,7 @@ class FiltrosPostulaciones extends Component
             'empresas' => CatalogosProfesionales::empresas(),
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'limitesExperiencia' => CatalogosProfesionales::rangoExperiencia(),
+            'limitesRenta' => CatalogosProfesionales::rangoSueldo(),
             'grupos' => [
                 ['Cargo', 'cargo', 'cargo'],
                 ['Carrera', 'carrera', 'carrera'],
