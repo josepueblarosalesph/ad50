@@ -6,7 +6,7 @@
     <div class="space-y-2">
         @foreach ($grupos as [$label, $model, $campo])
             <x-filtro-acordeon :titulo="$label" :count="count((array) ($$model ?? []))">
-                <livewire:empresa.selector-criterio wire:model="{{ $model }}" campo="{{ $campo }}" etiqueta="{{ $label }}" :mostrar-etiqueta="false" :criterios="$criteriosActuales" wire:key="post-sel-{{ $model }}" />
+                <livewire:empresa.selector-criterio wire:model="{{ $model }}" campo="{{ $campo }}" etiqueta="{{ $label }}" :mostrar-etiqueta="false" :criterios="$criteriosActuales" :publicacion-id="$publicacionId" wire:key="post-sel-{{ $model }}" />
             </x-filtro-acordeon>
         @endforeach
 

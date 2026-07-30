@@ -3,7 +3,7 @@
     <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
     <x-slot:sidebar>
         <div class="sticky top-24">
-            <livewire:empresa.filtros-postulaciones wire:key="filtros-postulaciones-desktop" />
+            <livewire:empresa.filtros-postulaciones :publicacion-id="$publicacion->id" wire:key="filtros-postulaciones-desktop-{{ $publicacion->id }}" />
         </div>
     </x-slot:sidebar>
 
@@ -20,7 +20,7 @@
                 <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
             </summary>
             <div class="border-t border-line px-3 pb-3 pt-3">
-                <livewire:empresa.filtros-postulaciones lazy wire:key="filtros-postulaciones-movil" />
+                <livewire:empresa.filtros-postulaciones :publicacion-id="$publicacion->id" lazy wire:key="filtros-postulaciones-movil-{{ $publicacion->id }}" />
             </div>
         </details>
 

@@ -47,6 +47,12 @@ class SelectorCriterio extends Component
     public array $criterios = [];
 
     /**
+     * Acota los conteos a los postulantes de una publicación. Sin esto, el panel de
+     * una publicación ofrecería opciones que ningún postulante suyo tiene.
+     */
+    public ?int $publicacionId = null;
+
+    /**
      * Cada vez que el panel de filtros cambia un criterio anuncia el mapa completo.
      * Sin esto, el conteo se quedaría congelado en los criterios del montaje.
      *
@@ -141,7 +147,7 @@ class SelectorCriterio extends Component
      */
     private function resultados(DisponibilidadCandidatos $disponibilidad, array $coincidencias): array
     {
-        $conteos = $disponibilidad->conteos($this->campo, $this->criterios);
+        $conteos = $disponibilidad->conteos($this->campo, $this->criterios, $this->publicacionId);
 
         return array_values(
             collect($coincidencias)

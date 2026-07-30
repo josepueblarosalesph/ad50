@@ -67,9 +67,14 @@ class FiltrosPostulaciones extends Component
 
     public string $nuevaPalabraClave = '';
 
-    public function mount(): void
+    /** Publicación cuyos postulantes acotan las opciones y conteos del panel. */
+    public ?int $publicacionId = null;
+
+    public function mount(?int $publicacionId = null): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
+
+        $this->publicacionId = $publicacionId;
 
         $this->hidratarEdad([]);
         $this->hidratarRenta([]);
@@ -215,6 +220,7 @@ class FiltrosPostulaciones extends Component
             'limitesEdad' => CatalogosProfesionales::rangoEdad(),
             'limitesExperiencia' => CatalogosProfesionales::rangoExperiencia(),
             'limitesRenta' => CatalogosProfesionales::rangoSueldo(),
+            'publicacionId' => $this->publicacionId,
             'grupos' => [
                 ['Cargo', 'cargo', 'cargo'],
                 ['Carrera', 'carrera', 'carrera'],

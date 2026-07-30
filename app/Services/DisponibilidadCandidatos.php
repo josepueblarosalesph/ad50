@@ -60,13 +60,13 @@ class DisponibilidadCandidatos
      * @param  array<string, mixed>  $criterios
      * @return array<string, int>
      */
-    public function conteos(string $campo, array $criterios = []): array
+    public function conteos(string $campo, array $criterios = [], ?int $publicacionId = null): array
     {
         if (! in_array($campo, self::CAMPOS, true)) {
             return [];
         }
 
-        return $this->facetas($criterios)[$campo] ?? [];
+        return $this->facetas($criterios, $publicacionId)[$campo] ?? [];
     }
 
     /**
@@ -75,15 +75,16 @@ class DisponibilidadCandidatos
      * @param  array<string, mixed>  $criterios
      * @return array<string, array<string, int>>
      */
-    public function facetas(array $criterios): array
+    public function facetas(array $criterios, ?int $publicacionId = null): array
     {
         $criterios = $this->soloCriteriosActivos($criterios);
-        $huella = md5(json_encode($criterios, JSON_THROW_ON_ERROR));
+        // La publicación entra en la huella: sus postulantes son otro universo.
+        $huella = md5(json_encode([$criterios, $publicacionId], JSON_THROW_ON_ERROR));
 
         return $this->memo[$huella] ??= Cache::remember(
             self::PREFIJO_CACHE.'facetas:'.$this->version().':'.$huella,
             self::TTL_SEGUNDOS,
-            fn (): array => $this->calcular($criterios),
+            fn (): array => $this->calcular($criterios, $publicacionId),
         );
     }
 
@@ -133,13 +134,19 @@ class DisponibilidadCandidatos
      * @param  array<string, mixed>  $criterios
      * @return array<string, array<string, int>>
      */
-    private function calcular(array $criterios): array
+    private function calcular(array $criterios, ?int $publicacionId = null): array
     {
         /** @var array<string, array<string, int>> $conteos */
         $conteos = array_fill_keys(self::CAMPOS, []);
 
         Postulante::query()
-            ->where('visible', true)
+            // Acotado a una publicación, el universo son quienes postularon a ella: el
+            // panel no debe ofrecer opciones que ningún postulante de esa oferta tiene.
+            ->when(
+                $publicacionId !== null,
+                fn ($query) => $query->whereHas('postulaciones', fn ($p) => $p->where('publicacion_id', $publicacionId)),
+                fn ($query) => $query->where('visible', true),
+            )
             ->chunkById(500, function ($fichas) use ($criterios, &$conteos): void {
                 foreach ($fichas as $ficha) {
                     $incumplidos = array_keys(array_filter(

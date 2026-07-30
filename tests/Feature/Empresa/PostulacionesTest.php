@@ -2,6 +2,7 @@
 
 use App\Livewire\Empresa\FiltrosPostulaciones;
 use App\Livewire\Empresa\Postulaciones;
+use App\Livewire\Empresa\SelectorCriterio;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Postulante;
@@ -208,4 +209,57 @@ test('el nombre muestra un indicador mientras se abre el detalle', function () {
         // El botón se deshabilita y aparece el spinner mientras viaja la petición.
         ->assertSee('wire:target="verDetalle('.$postulacion->id.')"', false)
         ->assertSee('animate-spin', false);
+});
+
+test('los filtros solo ofrecen datos de quienes postularon a esa publicación', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+
+    // Postuló alguien de Biobío...
+    postularA($publicacion, 'Ana Torres', 'Biobío');
+
+    // ...y existe otro postulante de Maule que NO postuló a esta publicación.
+    $ajeno = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'regiones_interes' => ['Maule'],
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(SelectorCriterio::class, [
+            'campo' => 'ciudad',
+            'publicacionId' => $publicacion->id,
+        ])
+        ->assertSee('Biobío')
+        ->assertDontSee('Maule');
+
+    // Sin acotar a la publicación, el universo es toda la plataforma.
+    Livewire::actingAs($user)
+        ->test(SelectorCriterio::class, ['campo' => 'ciudad'])
+        ->assertSee('Biobío')
+        ->assertSee('Maule');
+
+    expect($ajeno->exists)->toBeTrue();
+});
+
+test('el conteo del filtro cuenta solo postulantes de la publicación', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Torres', 'Biobío');
+    postularA($publicacion, 'Beto Díaz', 'Biobío');
+
+    // Dos postulantes más de Biobío, ajenos a esta publicación.
+    foreach (range(1, 2) as $i) {
+        Postulante::query()->create([
+            'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+            'visible' => true,
+            'regiones_interes' => ['Biobío'],
+        ]);
+    }
+
+    Livewire::actingAs($user)
+        ->test(SelectorCriterio::class, [
+            'campo' => 'ciudad',
+            'publicacionId' => $publicacion->id,
+        ])
+        // 2, no 4: el universo son los postulantes de la oferta.
+        ->assertSee('Quedan 2 candidatos si agregas', escape: false);
 });
