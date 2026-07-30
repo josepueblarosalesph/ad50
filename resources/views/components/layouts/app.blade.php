@@ -24,7 +24,7 @@
                 </a>
                 <span class="text-[12px] font-bold tracking-[0.13em] uppercase text-gray-500
                              border-l border-line-2 pl-3">
-                    {{ $context ?? 'Postulante' }}
+                    {{ $context ?? 'AD+50' }}
                 </span>
             </div>
 

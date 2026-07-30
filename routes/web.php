@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureEmpresaActiva;
 use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
 use App\Livewire\Admin\Panel as AdminPanel;
+use App\Livewire\Admin\Postulantes as AdminPostulantes;
 use App\Livewire\Auth\Register;
 use App\Livewire\Empresa\Activacion as EmpresaActivacion;
 use App\Livewire\Empresa\Busquedas as EmpresaBusquedas;
@@ -71,6 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/admin', AdminPanel::class)->name('admin.panel');
     Route::get('/admin/empresas', AdminEmpresas::class)->name('admin.empresas');
+    Route::get('/admin/postulantes', AdminPostulantes::class)->name('admin.postulantes');
 });
 
 Route::get('dashboard', function (Request $request): RedirectResponse {

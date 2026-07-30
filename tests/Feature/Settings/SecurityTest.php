@@ -25,8 +25,8 @@ test('security settings page can be rendered', function () {
 
     $response->assertOk();
 
-    $response->assertSee('Two-factor authentication');
-    $response->assertSee('Enable 2FA');
+    $response->assertSee('Verificación en dos pasos');
+    $response->assertSee('Activar 2FA');
 });
 
 test('Seguridad se abre directo en el formulario de cambio de contraseña', function () {
@@ -37,9 +37,9 @@ test('Seguridad se abre directo en el formulario de cambio de contraseña', func
         ->get(route('security.edit'))
         ->assertOk()
         ->assertDontSee(route('password.confirm'), false)
-        ->assertSee('Current password')
-        ->assertSee('New password')
-        ->assertSee('Confirm password');
+        ->assertSee('Contraseña actual')
+        ->assertSee('Nueva contraseña')
+        ->assertSee('Confirmar contraseña');
 });
 
 test('security settings page renders without two factor when feature is disabled', function () {
@@ -51,8 +51,8 @@ test('security settings page renders without two factor when feature is disabled
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertOk()
-        ->assertSee('Update password')
-        ->assertDontSee('Two-factor authentication');
+        ->assertSee('Cambiar contraseña')
+        ->assertDontSee('Verificación en dos pasos');
 });
 
 test('two factor authentication disabled when confirmation abandoned between requests', function () {

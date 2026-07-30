@@ -1,11 +1,7 @@
 <div>
     <x-slot:context>Administración</x-slot:context>
     <x-slot:status>Acceso interno</x-slot:status>
-    <x-slot:nav>
-        <a href="{{ route('admin.panel') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-ink bg-orange-100">Resumen</a>
-        <a href="{{ route('admin.empresas') }}" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Empresas</a>
-        <a href="#" class="text-[13.5px] font-semibold px-3.5 py-2 rounded-lg text-gray-500 hover:text-ink">Postulantes</a>
-    </x-slot:nav>
+    <x-slot:nav><x-nav-admin activo="panel" /></x-slot:nav>
     <x-slot:sidebar>
         <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Administración</div>
         @foreach ([['squares-2x2','Resumen', route('admin.panel')], ['building-office-2','Empresas', route('admin.empresas')], ['user','Postulantes', '#'], ['bars-3','Catálogos', '#'], ['credit-card','Suscripciones', '#'], ['shield-check','Seguridad y auditoría', '#']] as [$icon, $label, $href])

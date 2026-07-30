@@ -1,10 +1,7 @@
 <div class="ad-panel">
     <x-slot:context>Administración</x-slot:context>
     <x-slot:status>Acceso interno</x-slot:status>
-    <x-slot:nav>
-        <a href="{{ route('admin.panel') }}" class="rounded-lg px-3.5 py-2 text-[13.5px] font-semibold text-gray-500 hover:text-ink">Resumen</a>
-        <a href="{{ route('admin.empresas') }}" class="rounded-lg bg-orange-100 px-3.5 py-2 text-[13.5px] font-semibold text-ink">Empresas</a>
-    </x-slot:nav>
+    <x-slot:nav><x-nav-admin activo="empresas" /></x-slot:nav>
 
     <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div><h1 class="text-[27px] font-extrabold">Activación de empresas</h1><p class="mt-1.5 text-[14px] text-gray-500">Revisa antecedentes y habilita manualmente las cuentas verificadas.</p></div>
