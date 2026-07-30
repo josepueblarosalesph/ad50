@@ -60,7 +60,6 @@
     <div class="space-y-3">
         @forelse ($candidatos as $candidato)
             @php($desbloqueado = in_array($candidato->id, $postulantesDesbloqueados, true))
-            @php($origen = $origenPorPostulante->get($candidato->id))
             @php($ultimaExp = $candidato->ultimaExperiencia())
 
             <article wire:key="favorito-{{ $candidato->id }}" class="ad-card overflow-hidden p-4 md:p-5">
@@ -112,13 +111,9 @@
                     </div>
                 </div>
 
+                {{-- La búsqueda de origen ya se filtra desde la barra superior: en la
+                     tarjeta se omite para dejar la fila solo con la acción. --}}
                 <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                    @if ($origen?->busqueda)
-                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">Guardado desde</span>
-                        <span class="ad-chip ad-chip-sm">{{ $origen->busqueda->titulo }}</span>
-                    @else
-                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">Guardado en tus favoritos</span>
-                    @endif
                     <button
                         type="button"
                         wire:click="quitarFavorito({{ $candidato->id }})"

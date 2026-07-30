@@ -223,12 +223,6 @@ class Favoritos extends Component
             'totalFavoritos' => $totalFavoritos,
             'busquedasDisponibles' => $this->busquedasDeLaEmpresa(),
             'publicacionesDisponibles' => $this->publicacionesDeLaEmpresa(),
-            // Origen de cada favorito, para el chip "Guardado desde".
-            'origenPorPostulante' => $this->favoritosDeLaEmpresa()
-                ->whereIn('postulante_id', $candidatos->pluck('id'))
-                ->with('busqueda:id,titulo')
-                ->get()
-                ->keyBy('postulante_id'),
             'postulantesDesbloqueados' => Desbloqueo::query()
                 ->where('empresa_id', $empresaId)
                 ->whereIn('postulante_id', $candidatos->pluck('id'))

@@ -202,8 +202,14 @@ test('el menú lateral se puede plegar donde existe', function () {
         // El menú va elevado para que sus desplegables no queden bajo el contenido.
         ->assertSee('<aside class="relative z-20 hidden', false);
 
-    // Publicaciones no tiene menú lateral: no se ofrece el control.
+    // Publicaciones también lo tiene, con su propio menú de sección.
     $this->actingAs($principal)->get(route('empresa.publicaciones.index'))
+        ->assertOk()
+        ->assertSee('aria-controls="menu-lateral"', false)
+        ->assertSee('Todas las publicaciones');
+
+    // El panel no tiene menú lateral: no se ofrece el control.
+    $this->actingAs($principal)->get(route('empresa.panel'))
         ->assertOk()
         ->assertDontSee('aria-controls="menu-lateral"', false);
 });

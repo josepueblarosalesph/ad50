@@ -62,6 +62,59 @@ test('la empresa ve el detalle completo de su publicación', function () {
         ->assertSee('Eliminar');
 });
 
+test('la sección de publicaciones muestra su menú lateral en listado, detalle y formulario', function () {
+    [$user, $empresa] = empresaConPublicaciones();
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+    ]);
+
+    $rutas = [
+        route('empresa.publicaciones.index'),
+        route('empresa.publicaciones.show', $publicacion),
+        route('empresa.publicaciones.create'),
+        route('empresa.publicaciones.edit', $publicacion),
+    ];
+
+    foreach ($rutas as $ruta) {
+        $this->actingAs($user)->get($ruta)
+            ->assertOk()
+            // El <aside> lo pinta el layout solo cuando la vista llena el slot `sidebar`.
+            ->assertSee('<aside class="relative z-20 hidden border-r', false)
+            ->assertSee('Todas las publicaciones');
+    }
+
+    // En el formulario de edición el segundo ítem apunta a esa publicación.
+    $this->actingAs($user)->get(route('empresa.publicaciones.edit', $publicacion))
+        ->assertSee('Editar publicación')
+        ->assertDontSee('Nueva publicación');
+});
+
+test('cada tarjeta del detalle enlaza a su sección del formulario de edición', function () {
+    [$user, $empresa] = empresaConPublicaciones();
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+    ]);
+
+    $edicion = route('empresa.publicaciones.edit', $publicacion);
+
+    $respuesta = $this->actingAs($user)
+        ->get(route('empresa.publicaciones.show', $publicacion))
+        ->assertOk();
+
+    foreach (['descripcion-general', 'requisitos', 'preguntas', 'configuraciones'] as $ancla) {
+        $respuesta->assertSee('href="'.$edicion.'#'.$ancla.'"', false);
+    }
+
+    // El formulario declara las anclas a las que apuntan esos botones.
+    $formulario = $this->actingAs($user)->get($edicion)->assertOk();
+
+    foreach (['descripcion-general', 'requisitos', 'preguntas', 'configuraciones'] as $ancla) {
+        $formulario->assertSee('id="'.$ancla.'"', false);
+    }
+});
+
 test('una empresa no puede ver el detalle de una publicación ajena', function () {
     [, $empresa] = empresaConPublicaciones('duenio@empresa.cl');
     [$intruso] = empresaConPublicaciones('intruso@empresa.cl');

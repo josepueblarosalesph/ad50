@@ -2,6 +2,8 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
+    <x-slot:sidebar><x-nav-publicaciones /></x-slot:sidebar>
+
     <div class="mx-auto max-w-5xl">
         <a wire:navigate href="{{ route('empresa.publicaciones.index') }}" class="mb-4 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />Volver a publicaciones</a>
 
@@ -32,23 +34,29 @@
         </div>
 
         {{-- Resumen rápido --}}
-        <section class="ad-card mb-6 grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-                <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Postulaciones</p>
-                <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="mt-1 block text-[24px] font-extrabold text-orange-600 hover:text-orange-700">{{ $totalPostulaciones }}</a>
+        <section class="ad-card mb-6">
+            <div class="ad-card-head flex-wrap gap-3">
+                <h2 class="text-[16px] font-bold">Resumen</h2>
+                <x-editar-seccion :publicacion="$publicacion" seccion="la publicación" />
             </div>
-            <div>
-                <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vacantes</p>
-                <p class="mt-1 text-[24px] font-extrabold text-ink">{{ $publicacion->vacantes }}</p>
-            </div>
-            <div>
-                <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Publicada</p>
-                <p class="mt-1 text-[14px] font-bold text-ink">{{ $publicacion->created_at->translatedFormat('d M Y') }}</p>
-            </div>
-            <div>
-                <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vigente hasta</p>
-                <p class="mt-1 text-[14px] font-bold text-ink">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</p>
-                <p class="mt-0.5 text-[12px] text-gray-500">{{ $publicacion->vigencia_dias }} días de vigencia</p>
+            <div class="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Postulaciones</p>
+                    <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="mt-1 block text-[24px] font-extrabold text-orange-600 hover:text-orange-700">{{ $totalPostulaciones }}</a>
+                </div>
+                <div>
+                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vacantes</p>
+                    <p class="mt-1 text-[24px] font-extrabold text-ink">{{ $publicacion->vacantes }}</p>
+                </div>
+                <div>
+                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Publicada</p>
+                    <p class="mt-1 text-[14px] font-bold text-ink">{{ $publicacion->created_at->translatedFormat('d M Y') }}</p>
+                </div>
+                <div>
+                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vigente hasta</p>
+                    <p class="mt-1 text-[14px] font-bold text-ink">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</p>
+                    <p class="mt-0.5 text-[12px] text-gray-500">{{ $publicacion->vigencia_dias }} días de vigencia</p>
+                </div>
             </div>
         </section>
 
@@ -56,7 +64,11 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <h2 class="text-[16px] font-bold">Candidatos prospectados</h2>
-                <span class="text-[13px] font-semibold text-gray-500">{{ $candidatosAsociados->count() }} asociado(s)</span>
+                <div class="flex flex-wrap items-center gap-3">
+                    <span class="text-[13px] font-semibold text-gray-500">{{ $candidatosAsociados->count() }} asociado(s)</span>
+                    {{-- Los candidatos se asocian desde Prospección, no desde el formulario. --}}
+                    <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm flex-none whitespace-nowrap text-[14px]" aria-label="Asociar candidatos desde Prospección de Candidatos"><flux:icon.pencil-square class="size-4" />Editar</a>
+                </div>
             </div>
             <div class="divide-y divide-line px-6">
                 @forelse ($candidatosAsociados as $candidato)
@@ -84,6 +96,7 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Estado de la publicación</h2><p class="mt-1 text-[13px] text-gray-500">Controla si la oferta sigue visible en el portal de postulantes.</p></div>
+                <div class="flex flex-wrap items-center gap-3">
                 <select
                     wire:change="cambiarEstado($event.target.value)"
                     aria-label="Estado de la publicación"
@@ -97,11 +110,16 @@
                         <option value="{{ $valor }}" @selected($publicacion->estado === $valor)>{{ $etiqueta }}</option>
                     @endforeach
                 </select>
+                <x-editar-seccion :publicacion="$publicacion" ancla="configuraciones" seccion="el estado y la vigencia de la publicación" />
+                </div>
             </div>
         </section>
 
         <section class="ad-card mb-6">
-            <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Descripción general</h2><p class="mt-1 text-[13px] text-gray-500">Información principal que ve el postulante.</p></div></div>
+            <div class="ad-card-head flex-wrap gap-3">
+                <div><h2 class="text-[19px] font-extrabold">Descripción general</h2><p class="mt-1 text-[13px] text-gray-500">Información principal que ve el postulante.</p></div>
+                <x-editar-seccion :publicacion="$publicacion" ancla="descripcion-general" seccion="la descripción general" />
+            </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Tipo de cargo</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->tipo_cargo }}</dd></div>
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Jerarquía</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->jerarquia }}</dd></div>
@@ -125,7 +143,10 @@
         </section>
 
         <section class="ad-card mb-6">
-            <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Requisitos</h2><p class="mt-1 text-[13px] text-gray-500">Perfil mínimo solicitado.</p></div></div>
+            <div class="ad-card-head flex-wrap gap-3">
+                <div><h2 class="text-[19px] font-extrabold">Requisitos</h2><p class="mt-1 text-[13px] text-gray-500">Perfil mínimo solicitado.</p></div>
+                <x-editar-seccion :publicacion="$publicacion" ancla="requisitos" seccion="los requisitos" />
+            </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Experiencia laboral</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->experiencia_laboral }}</dd></div>
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Estudios mínimos</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->estudios_minimos }} · {{ $publicacion->situacion_academica }}</dd></div>
@@ -154,7 +175,10 @@
         </section>
 
         <section class="ad-card mb-6">
-            <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Preguntas generales</h2><p class="mt-1 text-[13px] text-gray-500">Los postulantes las responden al enviar su postulación.</p></div></div>
+            <div class="ad-card-head flex-wrap gap-3">
+                <div><h2 class="text-[19px] font-extrabold">Preguntas generales</h2><p class="mt-1 text-[13px] text-gray-500">Los postulantes las responden al enviar su postulación.</p></div>
+                <x-editar-seccion :publicacion="$publicacion" ancla="preguntas" seccion="las preguntas generales" />
+            </div>
             <div class="p-6">
                 @forelse ($publicacion->preguntas ?? [] as $pregunta)
                     <p wire:key="pregunta-{{ $loop->index }}" class="border-b border-line py-3 text-[14px] text-ink last:border-0 last:pb-0 first:pt-0">{{ $loop->iteration }}. {{ $pregunta }}</p>
@@ -165,7 +189,10 @@
         </section>
 
         <section class="ad-card mb-6">
-            <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Configuraciones</h2></div></div>
+            <div class="ad-card-head flex-wrap gap-3">
+                <div><h2 class="text-[19px] font-extrabold">Configuraciones</h2></div>
+                <x-editar-seccion :publicacion="$publicacion" ancla="configuraciones" seccion="las configuraciones" />
+            </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 @foreach ([
                     'Empleo inclusivo' => $publicacion->empleo_inclusivo,

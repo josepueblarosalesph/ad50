@@ -5,6 +5,7 @@ namespace App\Livewire\Empresa;
 use App\Concerns\OrdenaListado;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
+use App\Models\Publicacion;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -30,13 +31,18 @@ class Panel extends Component
     /** @return array<string, string> */
     protected function columnasOrdenables(): array
     {
-        return ['titulo' => 'titulo', 'candidatos' => 'candidatos_count', 'estado' => 'estado'];
+        return [
+            'cargo' => 'cargo',
+            'postulaciones' => 'postulaciones_count',
+            'vigente_hasta' => 'vigente_hasta',
+            'estado' => 'estado',
+        ];
     }
 
     /** @return list<string> */
     protected function columnasDescendentes(): array
     {
-        return ['candidatos'];
+        return ['postulaciones', 'vigente_hasta'];
     }
 
     #[Title('Panel de empresa · AD+50')]
@@ -44,8 +50,8 @@ class Panel extends Component
     public function render(): View
     {
         $empresa = auth()->user()->empresa;
-        $busquedas = Busqueda::query()
-            ->withCount(['candidatos' => fn ($query) => $query->confirmados()])
+        $publicaciones = Publicacion::query()
+            ->withCount('postulaciones')
             ->where('empresa_id', $empresa?->id)
             ->latest()
             ->take(5)
@@ -55,7 +61,11 @@ class Panel extends Component
             'empresa' => $empresa,
             // Se ordena la colección ya traída: hacerlo en la consulta cambiaría
             // *cuáles* son las 5 y dejarían de ser las recientes.
-            'busquedas' => $this->ordenarColeccion($busquedas),
+            'publicaciones' => $this->ordenarColeccion($publicaciones),
+            'busquedasActivas' => Busqueda::query()
+                ->where('empresa_id', $empresa?->id)
+                ->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)
+                ->count(),
             'totalCandidatos' => BusquedaCandidato::query()
                 ->confirmados()
                 ->whereHas('busqueda', fn ($query) => $query->where('empresa_id', $empresa?->id))

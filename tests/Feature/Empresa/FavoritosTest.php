@@ -84,9 +84,8 @@ test('la lista muestra solo los favoritos de la empresa, una fila por candidato'
         ->assertViewHas('candidatos', fn ($candidatos) => $candidatos->total() === 1)
         ->assertSee('Gerente de Operaciones')
         ->assertDontSee('No favorito')
-        // Se indica la búsqueda desde la que se guardó.
-        ->assertSee('Guardado desde')
-        ->assertSee('Liderazgo');
+        // La tarjeta ya no rotula la búsqueda de origen: eso vive en el filtro superior.
+        ->assertDontSee('Guardado desde');
 });
 
 test('los favoritos de otra empresa no se filtran a la lista', function () {

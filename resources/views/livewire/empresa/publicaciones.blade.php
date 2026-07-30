@@ -2,6 +2,8 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
+    <x-slot:sidebar><x-nav-publicaciones activo="todas" /></x-slot:sidebar>
+
     @if (session('status'))
         <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
     @endif

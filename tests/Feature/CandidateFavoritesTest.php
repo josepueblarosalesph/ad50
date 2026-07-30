@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Empresa\Busquedas;
 use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\FiltroActualizacion;
 use App\Livewire\Empresa\Panel;
@@ -9,6 +10,7 @@ use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\Favorito;
 use App\Models\Postulante;
+use App\Models\Publicacion;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -194,28 +196,39 @@ test('a company cannot favorite a candidate from another company search', functi
         ->and($foreignMatches[0]->busqueda->empresa->haMarcadoFavorito($foreignMatches[0]->postulante_id))->toBeFalse();
 });
 
-test('candidate totals in the company panel link to their search results', function () {
+test('candidate totals in the searches listing link to their search results', function () {
     [$empresaUser, $busqueda] = candidateSearchWithMatches();
 
     Livewire::actingAs($empresaUser)
-        ->test(Panel::class)
-        ->assertSeeHtml('aria-label="Ver los 3 candidatos de Búsqueda de liderazgo"')
+        ->test(Busquedas::class)
+        ->assertViewHas('busquedas', fn ($busquedas) => $busquedas->first()->candidatos_count === 3)
         ->assertSeeHtml('href="'.route('empresa.resultados', $busqueda).'"');
 });
 
-test('company panel summarizes at most five recent searches', function () {
-    $empresaUser = User::factory()->create(['role' => 'empresa']);
-    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Resumen']);
-
-    foreach (range(1, 7) as $index) {
-        $empresa->busquedas()->create(['titulo' => "Búsqueda {$index}", 'criterios' => []]);
-    }
+test('the company panel counts its active searches and links to the listing', function () {
+    [$empresaUser] = candidateSearchWithMatches();
 
     Livewire::actingAs($empresaUser)
         ->test(Panel::class)
-        ->assertViewHas('busquedas', fn ($busquedas) => $busquedas->count() === 5)
-        ->assertSee('Ver más')
+        ->assertViewHas('busquedasActivas', 1)
         ->assertSee(route('empresa.busquedas.index'), escape: false);
+});
+
+test('company panel summarizes at most five recent publications', function () {
+    $empresaUser = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create(['user_id' => $empresaUser->id, 'razon_social' => 'Empresa Resumen']);
+
+    Publicacion::factory()->count(7)->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+    ]);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Panel::class)
+        ->assertViewHas('publicaciones', fn ($publicaciones) => $publicaciones->count() === 5)
+        ->assertSee('Mis publicaciones recientes')
+        ->assertSee('Ver más')
+        ->assertSee(route('empresa.publicaciones.index'), escape: false);
 });
 
 test('search criterion tags filter candidates that fulfill every selected criterion', function () {

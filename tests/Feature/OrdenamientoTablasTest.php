@@ -71,26 +71,27 @@ test('el equipo se ordena por nombre y por email', function () {
     expect($nombres($componente))->toBe(['Ana', 'Zulema']);
 });
 
-test('el panel de empresa ordena las búsquedas que ya trajo, sin cambiar cuáles son', function () {
+test('el panel de empresa ordena las publicaciones que ya trajo, sin cambiar cuáles son', function () {
     [$user, $empresa] = empresaParaOrdenar();
 
-    // Seis búsquedas: el panel muestra las 5 más recientes.
-    foreach (['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis'] as $i => $titulo) {
-        $empresa->busquedas()->create([
-            'titulo' => $titulo,
-            'criterios' => [],
+    // Seis publicaciones: el panel muestra las 5 más recientes.
+    foreach (['Uno', 'Dos', 'Tres', 'Cuatro', 'Cinco', 'Seis'] as $i => $cargo) {
+        Publicacion::factory()->create([
+            'empresa_id' => $empresa->id,
+            'nombre_empresa' => $empresa->razon_social,
+            'cargo' => $cargo,
             'created_at' => now()->subDays(10 - $i),
         ]);
     }
 
     $componente = Livewire::actingAs($user)->test(EmpresaPanel::class);
-    $mostradas = fn ($c): array => $c->viewData('busquedas')->pluck('titulo')->all();
+    $mostradas = fn ($c): array => $c->viewData('publicaciones')->pluck('cargo')->all();
 
     // "Uno" es la más antigua y queda fuera de las 5 recientes.
     expect($mostradas($componente))->toHaveCount(5)
         ->and($mostradas($componente))->not->toContain('Uno');
 
-    $componente->call('ordenarPor', 'titulo');
+    $componente->call('ordenarPor', 'cargo');
 
     // Al ordenar siguen siendo las mismas 5, solo cambia el orden.
     expect($mostradas($componente))->toBe(['Cinco', 'Cuatro', 'Dos', 'Seis', 'Tres'])

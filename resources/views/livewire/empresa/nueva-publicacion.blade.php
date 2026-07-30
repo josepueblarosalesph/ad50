@@ -2,6 +2,8 @@
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="publicaciones" /></x-slot:nav>
 
+    <x-slot:sidebar><x-nav-publicaciones :activo="$editando ? 'editar' : 'nueva'" :publicacion="$publicacion" /></x-slot:sidebar>
+
     <div class="mx-auto max-w-5xl">
         <div class="mb-6">
             <a wire:navigate href="{{ $editando ? route('empresa.publicaciones.show', $publicacion) : route('empresa.publicaciones.index') }}" class="mb-4 inline-flex items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-ink"><flux:icon.arrow-left class="size-4" />{{ $editando ? 'Volver a la publicación' : 'Volver a publicaciones' }}</a>
@@ -11,7 +13,8 @@
         </div>
 
         <form wire:submit="guardar" class="space-y-6">
-            <section class="ad-card">
+            {{-- Los id anclan los botones "Editar" del detalle a la tarjeta correspondiente. --}}
+            <section id="descripcion-general" class="ad-card scroll-mt-6">
                 <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Descripción general</h2><p class="mt-1 text-[13px] text-gray-500">Información principal que verá el postulante.</p></div></div>
                 <div class="grid gap-4 p-6 md:grid-cols-2">
                     <flux:input wire:model="cargo" label="Nombre del cargo *" maxlength="100" />
@@ -44,7 +47,7 @@
                 </div>
             </section>
 
-            <section class="ad-card">
+            <section id="requisitos" class="ad-card scroll-mt-6">
                 <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Requisitos</h2><p class="mt-1 text-[13px] text-gray-500">Características mínimas del perfil requerido.</p></div></div>
                 <div class="grid gap-4 p-6 md:grid-cols-2">
                     <div class="md:col-span-2"><flux:textarea wire:model="requisitos" label="Descripción de requisitos *" rows="6" maxlength="1000" /></div>
@@ -73,7 +76,7 @@
                 </div>
             </section>
 
-            <section class="ad-card">
+            <section id="preguntas" class="ad-card scroll-mt-6">
                 <div class="ad-card-head flex-wrap gap-3">
                     <div><h2 class="text-[19px] font-extrabold">Preguntas generales</h2><p class="mt-1 text-[13px] text-gray-500">Los postulantes deberán responderlas antes de enviar su postulación.</p></div>
                     <button type="button" wire:click="agregarPregunta" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar pregunta</button>
@@ -90,7 +93,7 @@
                 </div>
             </section>
 
-            <section class="ad-card">
+            <section id="configuraciones" class="ad-card scroll-mt-6">
                 <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Configuraciones</h2><p class="mt-1 text-[13px] text-gray-500">Controla la publicación y las notificaciones.</p></div></div>
                 <div class="grid gap-5 p-6 md:grid-cols-2">
                     <flux:switch wire:model="empleoInclusivo" label="Empleo inclusivo" />
@@ -107,7 +110,7 @@
                 </div>
             </section>
 
-            <section class="ad-card">
+            <section id="evaluacion" class="ad-card scroll-mt-6">
                 <div class="ad-card-head"><div><h2 class="text-[19px] font-extrabold">Evaluación online para postulantes</h2><p class="mt-1 text-[13px] text-gray-500">Configura si esta oferta utilizará evaluación online.</p></div></div>
                 <div class="space-y-5 p-6">
                     <flux:switch wire:model.live="evaluacionOnline" label="Activar y configurar las evaluaciones" />
