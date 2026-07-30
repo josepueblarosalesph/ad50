@@ -57,12 +57,24 @@
                         <div class="flex min-w-0 flex-1 items-center gap-3">
                             <div class="grid size-10 flex-none place-items-center rounded-[11px] bg-sage-100 text-ink" aria-hidden="true"><flux:icon.user class="size-5" /></div>
                             <div class="min-w-0">
-                                {{-- El nombre abre el perfil completo sin salir del listado. --}}
+                                {{-- El nombre abre el perfil completo sin salir del listado. Mientras
+                                     viaja la petición se marca la fila como ocupada y aparece el
+                                     indicador, para que el clic no parezca no haber hecho nada. --}}
                                 <button
                                     type="button"
                                     wire:click="verDetalle({{ $postulacion->id }})"
-                                    class="block max-w-full truncate rounded text-left text-[15px] font-extrabold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-                                >{{ $postulante?->user?->name ?? 'Postulante' }}</button>
+                                    wire:loading.attr="disabled"
+                                    wire:target="verDetalle({{ $postulacion->id }})"
+                                    x-bind:aria-busy="$wire.detalleId === {{ $postulacion->id }} ? 'false' : null"
+                                    class="flex max-w-full items-center gap-2 rounded text-left text-[15px] font-extrabold text-ink transition hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-60"
+                                >
+                                    <span class="truncate underline decoration-orange-300 underline-offset-4 group-hover:decoration-orange-600">{{ $postulante?->user?->name ?? 'Postulante' }}</span>
+                                    <x-spinner
+                                        wire:loading
+                                        wire:target="verDetalle({{ $postulacion->id }})"
+                                        class="size-4 flex-none text-orange-500"
+                                    />
+                                </button>
                                 <p class="mt-0.5 truncate text-[12.5px] text-gray-500">
                                     {{ collect([
                                         $ultimaExp['cargo'] ?? $postulante?->cargo_actual,

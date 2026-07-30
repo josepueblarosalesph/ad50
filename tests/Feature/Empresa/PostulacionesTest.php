@@ -198,3 +198,14 @@ test('el panel arma el criterio de renta en pesos desde los intervalos del desli
         ->set('rentaMax', 8)
         ->assertDispatched('criterios-postulaciones', fn (string $e, array $p): bool => $p['criterios']['renta'] === null);
 });
+
+test('el nombre muestra un indicador mientras se abre el detalle', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulacion = postularA($publicacion, 'Ana Torres', 'Biobío');
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        // El botón se deshabilita y aparece el spinner mientras viaja la petición.
+        ->assertSee('wire:target="verDetalle('.$postulacion->id.')"', false)
+        ->assertSee('animate-spin', false);
+});
