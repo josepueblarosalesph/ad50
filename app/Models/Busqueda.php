@@ -14,40 +14,16 @@ class Busqueda extends Model
     /** Días que una búsqueda permanece en papelera antes de eliminarse en forma definitiva. */
     public const DIAS_RETENCION_PAPELERA = 30;
 
-    /**
-     * Estados de la búsqueda (etapa de trabajo del reclutador) (etapa del pipeline).
-     *
-     * @var array<string, string>
+    /*
+     * La búsqueda no tiene estado ni vigencia: es una configuración de filtros guardada
+     * y siempre participa del matching. La etapa del proceso de selección (Long List,
+     * Short List, Entrevistas…) vive en la publicación, que es donde se gestiona el
+     * proceso. Para dejar de usar una búsqueda se elimina (queda en papelera).
      */
-    public const ESTADOS = [
-        'long_list' => 'Long List',
-        'short_list' => 'Short List',
-        'entrevistas' => 'Entrevistas',
-        'cancelado' => 'Cancelado',
-        'cerrado' => 'Cerrado',
-        'pausado' => 'Pausado',
-    ];
-
-    /**
-     * Estados en los que la búsqueda sigue vigente y participa del matching.
-     *
-     * @var list<string>
-     */
-    public const ESTADOS_ACTIVOS = ['long_list', 'short_list', 'entrevistas'];
 
     protected $guarded = [];
 
     protected $casts = ['criterios' => 'array'];
-
-    public function estadoLabel(): string
-    {
-        return self::ESTADOS[$this->estado] ?? ucfirst((string) $this->estado);
-    }
-
-    public function estaVigente(): bool
-    {
-        return in_array($this->estado, self::ESTADOS_ACTIVOS, true);
-    }
 
     public function empresa(): BelongsTo
     {

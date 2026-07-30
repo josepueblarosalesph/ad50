@@ -67,8 +67,8 @@ class MatchingService
 
     public function sincronizarPostulante(Postulante $postulante): void
     {
+        // Toda búsqueda guardada participa del matching: no hay estado que las apague.
         Busqueda::query()
-            ->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)
             ->each(function (Busqueda $busqueda) use ($postulante): void {
                 if (! $postulante->visible) {
                     $busqueda->candidatos()->whereBelongsTo($postulante)->delete();

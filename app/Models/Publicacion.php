@@ -31,15 +31,37 @@ class Publicacion extends Model
     public const DIAS_RETENCION_PAPELERA = 30;
 
     /**
-     * Estados de la publicación en el portal de postulantes.
+     * Estado de la publicación: recorre la etapa del proceso de selección, desde que
+     * se publica hasta que se cierra. Es un único eje, no dos: la etapa determina
+     * también si la oferta sigue visible en el portal (ver ESTADOS_VISIBLES).
      *
      * @var array<string, string>
      */
     public const ESTADOS = [
         'publicada' => 'Publicada',
+        'long_list' => 'Long List',
+        'short_list' => 'Short List',
+        'entrevistas' => 'Entrevistas',
         'pausada' => 'Pausada',
         'cerrada' => 'Cerrada',
+        'cancelada' => 'Cancelada',
     ];
+
+    /**
+     * Estados en que la oferta sigue publicada para los postulantes. Mientras la
+     * empresa avanza por el pipeline la oferta sigue abierta: solo deja de verse al
+     * pausarla, cerrarla o cancelarla.
+     *
+     * @var list<string>
+     */
+    public const ESTADOS_VISIBLES = ['publicada', 'long_list', 'short_list', 'entrevistas'];
+
+    /**
+     * Estados que dan por terminado el proceso: no admiten asociar más candidatos.
+     *
+     * @var list<string>
+     */
+    public const ESTADOS_TERMINADOS = ['cerrada', 'cancelada'];
 
     protected $table = 'publicaciones';
 
@@ -108,10 +130,10 @@ class Publicacion extends Model
         return self::ESTADOS[$this->estado] ?? ucfirst((string) $this->estado);
     }
 
-    /** Visible para los postulantes: publicada y dentro del período de vigencia. */
+    /** Visible para los postulantes: en una etapa abierta y dentro del período de vigencia. */
     public function estaVigente(): bool
     {
-        return $this->estado === 'publicada' && $this->vigente_hasta?->gte(today());
+        return in_array($this->estado, self::ESTADOS_VISIBLES, true) && $this->vigente_hasta?->gte(today());
     }
 
     public function empresa(): BelongsTo
@@ -139,7 +161,7 @@ class Publicacion extends Model
     public function scopeVigentes(Builder $query): Builder
     {
         return $query
-            ->where('estado', 'publicada')
+            ->whereIn('estado', self::ESTADOS_VISIBLES)
             ->whereDate('vigente_hasta', '>=', today());
     }
 }

@@ -62,6 +62,42 @@ test('la empresa ve el detalle completo de su publicación', function () {
         ->assertSee('Eliminar');
 });
 
+test('la publicación recorre las etapas del proceso y sigue visible mientras está abierta', function () {
+    [$user, $empresa] = empresaConPublicaciones();
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Jefe de Planta',
+    ]);
+
+    // Las etapas del pipeline viven aquí, no en la búsqueda.
+    expect(Publicacion::ESTADOS)->toHaveKeys(['publicada', 'long_list', 'short_list', 'entrevistas', 'pausada', 'cerrada', 'cancelada']);
+
+    Livewire::actingAs($user)
+        ->test(Publicaciones::class)
+        ->call('cambiarEstado', $publicacion->id, 'entrevistas')
+        ->assertHasNoErrors();
+
+    expect($publicacion->fresh()->estado)->toBe('entrevistas')
+        // Avanzar en el proceso no saca la oferta del portal.
+        ->and($publicacion->fresh()->estaVigente())->toBeTrue()
+        ->and(Publicacion::vigentes()->whereKey($publicacion->id)->exists())->toBeTrue();
+
+    // Cerrarla sí la retira.
+    Livewire::actingAs($user)
+        ->test(Publicaciones::class)
+        ->call('cambiarEstado', $publicacion->id, 'cerrada');
+
+    expect($publicacion->fresh()->estaVigente())->toBeFalse()
+        ->and(Publicacion::vigentes()->whereKey($publicacion->id)->exists())->toBeFalse();
+
+    // Un estado fuera del catálogo se rechaza.
+    Livewire::actingAs($user)
+        ->test(Publicaciones::class)
+        ->call('cambiarEstado', $publicacion->id, 'inventado')
+        ->assertStatus(422);
+});
+
 test('la sección de publicaciones muestra su menú lateral en listado, detalle y formulario', function () {
     [$user, $empresa] = empresaConPublicaciones();
     $publicacion = Publicacion::factory()->create([

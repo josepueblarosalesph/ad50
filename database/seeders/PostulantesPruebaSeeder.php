@@ -192,9 +192,8 @@ class PostulantesPruebaSeeder extends Seeder
             Postulante::query()->insert($tanda->all());
         }
 
-        // 5) Recalcular el matching de los procesos vigentes contra la nueva base.
+        // 5) Recalcular el matching de todas las búsquedas contra la nueva base.
         Busqueda::query()
-            ->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)
             ->each(fn (Busqueda $busqueda) => $matching->sincronizar($busqueda));
 
         $this->command?->info('Creados '.self::CANTIDAD.' postulantes de prueba (@'.self::DOMINIO.').');

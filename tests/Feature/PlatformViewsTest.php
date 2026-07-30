@@ -390,9 +390,11 @@ test('a postulante can view the panel and professional profile', function () {
     ]);
     expect(CatalogosProfesionales::situacionesLaborales())
         ->not->toContain('Jubilado');
-    expect(Busqueda::ESTADOS)
-        ->toHaveKey('cancelado', 'Cancelado')
-        ->not->toHaveKey('cancelado_cliente');
+    // La etapa del proceso vive en la publicación, no en la búsqueda.
+    expect(Publicacion::ESTADOS)
+        ->toHaveKey('long_list', 'Long List')
+        ->toHaveKey('short_list', 'Short List')
+        ->toHaveKey('entrevistas', 'Entrevistas');
 
     $cargos = CatalogosProfesionales::cargos();
 

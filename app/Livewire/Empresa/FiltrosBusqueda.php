@@ -347,7 +347,6 @@ class FiltrosBusqueda extends Component
         $nueva = DB::transaction(function () use ($validated, $criterios, $matching): Busqueda {
             $busqueda = Busqueda::query()->create([
                 'empresa_id' => auth()->user()->empresa->id,
-                'estado' => 'long_list',
                 'titulo' => $validated['tituloNuevo'],
                 'rubro_oculto' => $criterios['industria'][0] ?? null,
                 'criterios' => $criterios,

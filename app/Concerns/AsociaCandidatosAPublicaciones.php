@@ -88,7 +88,7 @@ trait AsociaCandidatosAPublicaciones
 
         return once(fn (): Collection => Publicacion::query()
             ->whereBelongsTo($empresa)
-            ->whereIn('estado', ['publicada', 'pausada'])
+            ->whereNotIn('estado', Publicacion::ESTADOS_TERMINADOS)
             ->orderBy('cargo')
             ->get(['id', 'cargo', 'estado', 'comuna']));
     }

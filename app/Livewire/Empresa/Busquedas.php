@@ -33,22 +33,26 @@ class Busquedas extends Component
         $this->hidratarOrden();
     }
 
+    /** Sin orden elegido se respeta el `latest()` de la consulta: las más recientes primero. */
+    protected function ordenPorDefecto(): string
+    {
+        return '';
+    }
+
     /** @return array<string, string> */
     protected function columnasOrdenables(): array
     {
         return [
-            'created_at' => 'created_at',
             'titulo' => 'titulo',
             'candidatos' => 'candidatos_count',
             'favoritos' => 'favoritos_count',
-            'estado' => 'estado',
         ];
     }
 
     /** @return list<string> */
     protected function columnasDescendentes(): array
     {
-        return ['created_at', 'candidatos', 'favoritos'];
+        return ['candidatos', 'favoritos'];
     }
 
     /** Abre el modal de confirmación de borrado para una búsqueda. */
@@ -105,14 +109,6 @@ class Busquedas extends Component
         session()->flash('status', 'La búsqueda fue restaurada.');
     }
 
-    public function cambiarEstado(Busqueda $busqueda, string $estado): void
-    {
-        abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
-        abort_unless(array_key_exists($estado, Busqueda::ESTADOS), 422);
-
-        $busqueda->update(['estado' => $estado]);
-    }
-
     #[Title('Mis búsquedas · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
@@ -128,9 +124,15 @@ class Busquedas extends Component
                         Favorito::query()->where('empresa_id', auth()->user()->empresa?->id)->select('postulante_id')
                     ),
                 ])
-                ->tap(fn ($query) => $this->aplicarOrden($query))
+                ->tap(function ($query): void {
+                    $this->hidratarOrden();
+
+                    // Sin columna elegida el listado va de lo más reciente a lo más antiguo.
+                    // El `latest()` tiene que ser excluyente: aplicado siempre, mandaría por
+                    // sobre la columna que elija la empresa.
+                    $this->orden === '' ? $query->latest() : $this->aplicarOrden($query);
+                })
                 ->paginate(12),
-            'estados' => Busqueda::ESTADOS,
         ]);
     }
 }

@@ -5,6 +5,7 @@ use App\Models\Busqueda;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 
 test('an empresa can delete its own search after typing ELIMINAR', function () {
@@ -94,25 +95,19 @@ test('deleting requires typing ELIMINAR', function () {
     expect(Busqueda::query()->whereKey($busqueda->id)->exists())->toBeTrue();
 });
 
-test('an empresa can change a process state and it is validated', function () {
+test('la búsqueda ya no tiene estado ni etapa: es solo una configuración de filtros', function () {
     $user = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
-    $busqueda = $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => [], 'estado' => 'long_list']);
+    $empresa->busquedas()->create(['titulo' => 'Proceso', 'criterios' => []]);
+
+    // Ni la columna en la base ni el control en el listado.
+    expect(Schema::hasColumn('busquedas', 'estado'))->toBeFalse();
 
     Livewire::actingAs($user)
         ->test(Busquedas::class)
-        ->call('cambiarEstado', $busqueda->id, 'entrevistas')
-        ->assertHasNoErrors();
-
-    expect($busqueda->fresh()->estado)->toBe('entrevistas');
-
-    // Un estado fuera del catálogo se rechaza.
-    Livewire::actingAs($user)
-        ->test(Busquedas::class)
-        ->call('cambiarEstado', $busqueda->id, 'inventado')
-        ->assertStatus(422);
-
-    expect($busqueda->fresh()->estado)->toBe('entrevistas');
+        ->assertDontSee('Estado de la búsqueda')
+        ->assertDontSee('Long List')
+        ->assertDontSee('Fecha de creación');
 });
 
 test('an empresa cannot delete another company search', function () {
@@ -135,17 +130,18 @@ test('el listado ordena por la columna elegida e invierte al repetirla', functio
     $user = User::factory()->create(['role' => 'empresa']);
     $empresa = Empresa::query()->create(['user_id' => $user->id, 'razon_social' => 'E', 'estado_activacion' => 'activa']);
 
-    foreach (['Charlie', 'Alfa', 'Bravo'] as $titulo) {
-        $empresa->busquedas()->create(['titulo' => $titulo, 'criterios' => []]);
+    foreach (['Charlie', 'Alfa', 'Bravo'] as $i => $titulo) {
+        // Fechas distintas: sin ellas el `latest()` empata y el orden inicial no es comprobable.
+        $empresa->busquedas()->create(['titulo' => $titulo, 'criterios' => [], 'created_at' => now()->subDays(3 - $i)]);
     }
 
     $titulos = fn ($componente): array => $componente->viewData('busquedas')->pluck('titulo')->all();
 
     $componente = Livewire::actingAs($user)->test(Busquedas::class);
 
-    // Por defecto, lo más reciente primero.
-    expect($componente->get('orden'))->toBe('created_at')
-        ->and($componente->get('direccion'))->toBe('desc');
+    // Sin columna elegida manda el `latest()` de la consulta: lo más reciente primero.
+    expect($componente->get('orden'))->toBe('')
+        ->and($titulos($componente))->toBe(['Bravo', 'Alfa', 'Charlie']);
 
     // Al elegir el título parte ascendente...
     $componente->call('ordenarPor', 'titulo');
@@ -209,5 +205,5 @@ test('el encabezado marca la columna activa y su sentido', function () {
         // La columna ordenada informa el sentido a lectores de pantalla.
         ->assertSee('aria-sort="ascending"', false)
         ->assertSee('aria-sort="none"', false)
-        ->assertSee('Fecha de creación');
+        ->assertSee('Favoritos');
 });

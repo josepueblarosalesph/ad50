@@ -33,7 +33,8 @@ Esquema base en [database/migrations/2026_01_01_000001_create_ad50_schema.php](d
 | `postulantes` | [Postulante](app/Models/Postulante.php) | Ficha profesional. Campos JSON: `experiencias`, `educaciones`, `idiomas`. Flags: `visible`, `onboarding_completado`, `onboarding_paso` |
 | `empresas` | [Empresa](app/Models/Empresa.php) | Datos de empresa + workflow de activación (`estado_activacion`, contactos, `activada_por`) |
 | `planes` | [Plan](app/Models/Plan.php) | Planes de suscripción por `audiencia` (postulante/empresa), precios en CLP y UF |
-| `busquedas` | [Busqueda](app/Models/Busqueda.php) | Búsqueda de una empresa. `criterios` (JSON), `estado` (activa/pausada/cerrada), `rubro_oculto` |
+| `busquedas` | [Busqueda](app/Models/Busqueda.php) | Configuración de filtros guardada de una empresa: `criterios` (JSON), `rubro_oculto`. **No tiene estado ni vigencia**: toda búsqueda participa del matching hasta que se elimina |
+| `publicaciones` | [Publicacion](app/Models/Publicacion.php) | Oferta laboral publicada en el portal. `estado` recorre la etapa del proceso (`publicada` → `long_list` → `short_list` → `entrevistas` → `pausada`/`cerrada`/`cancelada`); sigue visible mientras esté en `ESTADOS_VISIBLES` y dentro de `vigente_hasta` |
 | `busqueda_candidato` | [BusquedaCandidato](app/Models/BusquedaCandidato.php) | **Tabla pivote del match**: `match_score`, `criterios_cumplidos/totales`, `criterios_detalle` (JSON), `estado_match` (cumple/parcial), `favorito`, `contactado_at` |
 
 Relaciones clave: `Empresa hasMany Busqueda hasMany BusquedaCandidato belongsTo Postulante`. La pareja `(busqueda_id, postulante_id)` es única.
@@ -59,7 +60,7 @@ Los criterios de selección múltiple (cargo, carrera, especialidad, industria, 
 
 ### Sincronización (cuándo se recalcula)
 - **`sincronizar(Busqueda)`** — recorre todos los postulantes visibles. Se dispara al **crear/editar una búsqueda** (dentro de una transacción, ver [NuevaBusqueda::save()](app/Livewire/Empresa/NuevaBusqueda.php)).
-- **`sincronizarPostulante(Postulante)`** — recorre todas las búsquedas activas. Se dispara cuando el **postulante actualiza su ficha** o **cambia su visibilidad** (ver [Panel::toggleVisibilidad()](app/Livewire/Postulante/Panel.php)).
+- **`sincronizarPostulante(Postulante)`** — recorre todas las búsquedas (no hay estado que las apague). Se dispara cuando el **postulante actualiza su ficha** o **cambia su visibilidad** (ver [Panel::toggleVisibilidad()](app/Livewire/Postulante/Panel.php)).
 
 El matching es **eager/precalculado**: se materializa en la tabla pivote en cada cambio relevante, no se recalcula en cada lectura.
 

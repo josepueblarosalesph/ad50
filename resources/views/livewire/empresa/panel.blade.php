@@ -8,8 +8,8 @@
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {{-- Acceso directo a Prospección de Candidatos --}}
         <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
-            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Búsquedas activas <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
-            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $busquedasActivas }}</div>
+            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Búsquedas guardadas <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $totalBusquedas }}</div>
             <div class="mt-1 text-[13px] font-semibold text-orange-600">Ver mis búsquedas</div>
         </a>
 

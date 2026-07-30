@@ -171,13 +171,12 @@ class NuevaBusqueda extends Component
             ];
 
             if ($this->busqueda) {
-                // Al editar se preservan tanto la etapa de la búsqueda como la fecha de creación.
+                // Al editar solo se tocan los criterios: la fecha de creación se preserva.
                 $this->busqueda->update($atributos);
                 $busqueda = $this->busqueda->fresh();
             } else {
                 $busqueda = Busqueda::query()->create([
                     'empresa_id' => auth()->user()->empresa->id,
-                    'estado' => 'long_list',
                     ...$atributos,
                 ]);
             }

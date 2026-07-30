@@ -205,12 +205,12 @@ test('candidate totals in the searches listing link to their search results', fu
         ->assertSeeHtml('href="'.route('empresa.resultados', $busqueda).'"');
 });
 
-test('the company panel counts its active searches and links to the listing', function () {
+test('the company panel counts its saved searches and links to the listing', function () {
     [$empresaUser] = candidateSearchWithMatches();
 
     Livewire::actingAs($empresaUser)
         ->test(Panel::class)
-        ->assertViewHas('busquedasActivas', 1)
+        ->assertViewHas('totalBusquedas', 1)
         ->assertSee(route('empresa.busquedas.index'), escape: false);
 });
 

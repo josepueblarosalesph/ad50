@@ -62,9 +62,8 @@ class Panel extends Component
             // Se ordena la colección ya traída: hacerlo en la consulta cambiaría
             // *cuáles* son las 5 y dejarían de ser las recientes.
             'publicaciones' => $this->ordenarColeccion($publicaciones),
-            'busquedasActivas' => Busqueda::query()
+            'totalBusquedas' => Busqueda::query()
                 ->where('empresa_id', $empresa?->id)
-                ->whereIn('estado', Busqueda::ESTADOS_ACTIVOS)
                 ->count(),
             'totalCandidatos' => BusquedaCandidato::query()
                 ->confirmados()

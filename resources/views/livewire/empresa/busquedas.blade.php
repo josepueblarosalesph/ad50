@@ -37,8 +37,6 @@
                             'titulo' => 'Búsqueda',
                             'candidatos' => 'Candidatos',
                             'favoritos' => 'Favoritos',
-                            'created_at' => 'Fecha de creación',
-                            'estado' => 'Estado',
                         ] as $campo => $etiqueta)
                             <x-th-ordenable :campo="$campo" :orden="$orden" :direccion="$direccion">{{ $etiqueta }}</x-th-ordenable>
                         @endforeach
@@ -51,27 +49,10 @@
                             <td class="p-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="block rounded-lg font-bold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">{{ $busqueda->titulo }}</a></td>
                             <td class="p-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="font-bold text-orange-600 underline decoration-orange-200 underline-offset-4">{{ $busqueda->candidatos_count }}</a></td>
                             <td class="p-4 text-gray-600"><span class="inline-flex items-center gap-1.5"><flux:icon.star variant="solid" class="size-4 text-orange-500" />{{ $busqueda->favoritos_count }}</span></td>
-                            <td class="p-4 text-gray-600">{{ $busqueda->created_at->translatedFormat('d M Y') }}</td>
-                            <td class="p-4">
-                                <select
-                                    wire:key="estado-{{ $busqueda->id }}"
-                                    wire:change="cambiarEstado({{ $busqueda->id }}, $event.target.value)"
-                                    aria-label="Estado de la búsqueda {{ $busqueda->titulo }}"
-                                    @class([
-                                        'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
-                                        'border-[#BFE6CD] bg-match-100 text-match' => $busqueda->estaVigente(),
-                                        'border-line-2 bg-paper text-gray-600' => ! $busqueda->estaVigente(),
-                                    ])
-                                >
-                                    @foreach ($estados as $valor => $etiqueta)
-                                        <option value="{{ $valor }}" @selected($busqueda->estado === $valor)>{{ $etiqueta }}</option>
-                                    @endforeach
-                                </select>
-                            </td>
                             <td class="p-4 text-right"><div class="flex justify-end gap-4"><a wire:navigate href="{{ route('empresa.resultados', $busqueda) }}" class="font-bold text-orange-600 hover:text-orange-700">Ver</a><a wire:navigate href="{{ route('empresa.busquedas.edit', $busqueda) }}" class="font-bold text-gray-500 hover:text-ink">Editar</a><button type="button" wire:click="confirmarBorrado({{ $busqueda->id }})" class="font-bold text-[#A93226] hover:text-red-700 dark:text-red-400">Borrar</button></div></td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="p-10 text-center"><flux:icon.magnifying-glass class="mx-auto size-8 text-gray-400" /><h2 class="mt-3 font-bold">Aún no has creado búsquedas</h2><a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm mt-4">Crear el primero</a></td></tr>
+                        <tr><td colspan="4" class="p-10 text-center"><flux:icon.magnifying-glass class="mx-auto size-8 text-gray-400" /><h2 class="mt-3 font-bold">Aún no has creado búsquedas</h2><a wire:navigate href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm mt-4">Crear el primero</a></td></tr>
                     @endforelse
                 </tbody>
             </table>

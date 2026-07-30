@@ -59,7 +59,6 @@ class BusquedaSeeder extends Seeder
                 'titulo' => $this->titulo($receta['titulo'], $ancla),
                 'rubro_oculto' => $criterios['industria'][0] ?? null,
                 'criterios' => $criterios,
-                'estado' => $receta['estado'],
             ]);
 
             $matching->sincronizar($busqueda);
@@ -81,23 +80,23 @@ class BusquedaSeeder extends Seeder
      * Recetas de procesos. `campos` decide qué criterios se derivan del postulante ancla:
      * pocas claves ⇒ proceso amplio con muchos calces; muchas ⇒ proceso muy acotado.
      *
-     * @return list<array{titulo: string, estado: string, campos: list<string>}>
+     * @return list<array{titulo: string, campos: list<string>}>
      */
     private function recetas(): array
     {
         return [
-            ['titulo' => 'Búsqueda amplia de talento senior', 'estado' => 'long_list', 'campos' => ['experiencia']],
-            ['titulo' => 'Perfil por industria y región', 'estado' => 'long_list', 'campos' => ['industria', 'ciudad']],
-            ['titulo' => 'Liderazgo por cargo', 'estado' => 'long_list', 'campos' => ['cargo', 'experiencia']],
-            ['titulo' => 'Formación universitaria titulada', 'estado' => 'long_list', 'campos' => ['nivel_estudios', 'situacion_estudios', 'ciudad']],
-            ['titulo' => 'Bilingüe para rol regional', 'estado' => 'short_list', 'campos' => ['idioma', 'industria', 'experiencia']],
-            ['titulo' => 'Especialista por habilidades', 'estado' => 'long_list', 'campos' => ['habilidad', 'experiencia']],
-            ['titulo' => 'Disponibilidad y expectativa de renta', 'estado' => 'long_list', 'campos' => ['situacion_laboral', 'renta_max']],
-            ['titulo' => 'Trayectoria por actividad económica', 'estado' => 'short_list', 'campos' => ['actividad_economica', 'experiencia', 'edad']],
-            ['titulo' => 'Carrera específica con experiencia acotada', 'estado' => 'long_list', 'campos' => ['carrera', 'experiencia']],
-            ['titulo' => 'Egresados de una casa de estudios', 'estado' => 'long_list', 'campos' => ['institucion', 'nivel_estudios']],
-            ['titulo' => 'Búsqueda por palabra clave', 'estado' => 'entrevistas', 'campos' => ['palabra_clave', 'ciudad']],
-            ['titulo' => 'Proceso ejecutivo muy acotado', 'estado' => 'entrevistas', 'campos' => ['cargo', 'industria', 'ciudad', 'experiencia', 'edad', 'nivel_estudios']],
+            ['titulo' => 'Búsqueda amplia de talento senior', 'campos' => ['experiencia']],
+            ['titulo' => 'Perfil por industria y región', 'campos' => ['industria', 'ciudad']],
+            ['titulo' => 'Liderazgo por cargo', 'campos' => ['cargo', 'experiencia']],
+            ['titulo' => 'Formación universitaria titulada', 'campos' => ['nivel_estudios', 'situacion_estudios', 'ciudad']],
+            ['titulo' => 'Bilingüe para rol regional', 'campos' => ['idioma', 'industria', 'experiencia']],
+            ['titulo' => 'Especialista por habilidades', 'campos' => ['habilidad', 'experiencia']],
+            ['titulo' => 'Disponibilidad y expectativa de renta', 'campos' => ['situacion_laboral', 'renta_max']],
+            ['titulo' => 'Trayectoria por actividad económica', 'campos' => ['actividad_economica', 'experiencia', 'edad']],
+            ['titulo' => 'Carrera específica con experiencia acotada', 'campos' => ['carrera', 'experiencia']],
+            ['titulo' => 'Egresados de una casa de estudios', 'campos' => ['institucion', 'nivel_estudios']],
+            ['titulo' => 'Búsqueda por palabra clave', 'campos' => ['palabra_clave', 'ciudad']],
+            ['titulo' => 'Proceso ejecutivo muy acotado', 'campos' => ['cargo', 'industria', 'ciudad', 'experiencia', 'edad', 'nivel_estudios']],
         ];
     }
 
