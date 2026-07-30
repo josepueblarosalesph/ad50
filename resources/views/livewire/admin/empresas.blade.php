@@ -27,6 +27,7 @@
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Cuenta</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->user->name }}</p><p class="text-[13px] text-gray-500">{{ $empresa->user->email }}</p></div>
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contacto administrador</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->contacto_principal_nombre }}</p><p class="text-[13px] text-gray-500">{{ $empresa->contacto_principal_cargo }} · {{ $empresa->contacto_principal_email }} · {{ $empresa->contacto_principal_telefono }}</p></div>
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contactos usuarios</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->usuariosAdicionales()->count() }} de {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} habilitados</p></div>
+                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Plan</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>
                 </div>
                 <div class="flex justify-end border-t border-line pt-4">
                     <button type="button" wire:click="activar({{ $empresa->id }})" wire:confirm="¿Confirmas que revisaste los antecedentes y deseas habilitar esta empresa?" class="ad-btn-primary ad-btn-sm"><flux:icon.check-badge class="size-4" />Habilitar empresa</button>
@@ -38,7 +39,41 @@
     </section>
 
     <div class="mt-8 grid gap-5 lg:grid-cols-2">
-        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Aún sin antecedentes</h2><span class="ad-chip">{{ $inactivas->count() }}</span></div><div class="divide-y divide-line">@forelse ($inactivas as $empresa)<div class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">{{ $empresa->user->email }}</p></div>@empty<p class="p-6 text-[13px] text-gray-500">Todas las empresas enviaron sus datos.</p>@endforelse</div></section>
-        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas activas</h2><span class="ad-chip ad-chip-green">{{ $activas->count() }}</span></div><div class="divide-y divide-line">@forelse ($activas as $empresa)<div class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">Habilitada {{ $empresa->activada_at?->translatedFormat('d M Y') }}{{ $empresa->activadaPor ? ' por '.$empresa->activadaPor->name : '' }}</p></div>@empty<p class="p-6 text-[13px] text-gray-500">Todavía no hay empresas activas.</p>@endforelse</div></section>
+        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Aún sin antecedentes</h2><span class="ad-chip">{{ $inactivas->count() }}</span></div><div class="divide-y divide-line">@forelse ($inactivas as $empresa)<div wire:key="inactiva-{{ $empresa->id }}" class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">{{ $empresa->user->email }}</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>@empty<p class="p-6 text-[13px] text-gray-500">Todas las empresas enviaron sus datos.</p>@endforelse</div></section>
+        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas activas</h2><span class="ad-chip ad-chip-green">{{ $activas->count() }}</span></div><div class="divide-y divide-line">@forelse ($activas as $empresa)<div wire:key="activa-{{ $empresa->id }}" class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">Habilitada {{ $empresa->activada_at?->translatedFormat('d M Y') }}{{ $empresa->activadaPor ? ' por '.$empresa->activadaPor->name : '' }}</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>@empty<p class="p-6 text-[13px] text-gray-500">Todavía no hay empresas activas.</p>@endforelse</div></section>
     </div>
+
+    {{-- Asignación manual de plan: para pagos fuera de la pasarela o extensiones. --}}
+    <flux:modal name="asignar-plan" class="max-w-lg" wire:close="$set('asignandoId', null)">
+        <form wire:submit="asignarPlan" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Asignar plan</flux:heading>
+                @if ($asignandoRazonSocial !== '')
+                    <flux:text class="mt-1 truncate">{{ $asignandoRazonSocial }}</flux:text>
+                @endif
+            </div>
+
+            <div>
+                <label for="plan-empresa" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Plan</label>
+                <select id="plan-empresa" wire:model.live="planSeleccionado" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
+                    <option value="">Selecciona un plan</option>
+                    @foreach ($planes as $plan)
+                        <option value="{{ $plan->id }}">{{ $plan->nombre }} — {{ $plan->precio_uf }} UF / {{ $plan->periodo }}</option>
+                    @endforeach
+                </select>
+                @error('planSeleccionado')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+            </div>
+
+            <div>
+                <flux:input wire:model="vigenciaHasta" type="date" label="Vigente hasta" />
+                <p class="mt-1.5 text-[12px] text-gray-500">Se propone según el período del plan; puedes ajustarla.</p>
+                @error('vigenciaHasta')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <flux:modal.close><flux:button variant="ghost" type="button">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="asignarPlan">Guardar plan</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </div>
