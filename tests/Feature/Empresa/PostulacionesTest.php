@@ -88,7 +88,9 @@ test('el listado unifica a quienes postularon y a quienes agregó la empresa, ma
         ->assertViewHas('totalAgregados', 1)
         // Las dos personas en una sola lista, cada una con su origen.
         ->assertSee('Ana Postuló')
-        ->assertSee('Beto Agregado')
+        // Del agregado sin desbloquear solo se ve el nombre de pila.
+        ->assertSee('Beto')
+        ->assertDontSee('Beto Agregado')
         ->assertSee('Postuló')
         ->assertSee('Agregado por la empresa')
         // Sin postulación no hay estado que gestionar.
@@ -121,13 +123,13 @@ test('el chip de agregados filtra por origen y los de estado solo alcanzan a qui
     $componente = Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion]);
 
     $componente->call('mostrarEstado', 'agregados')
-        ->assertSee('Beto Agregado')
+        ->assertSee('Beto')
         ->assertDontSee('Ana Postuló');
 
     // Un estado de postulación deja fuera a quien no postuló.
     $componente->call('mostrarEstado', 'enviada')
         ->assertSee('Ana Postuló')
-        ->assertDontSee('Beto Agregado');
+        ->assertDontSee('Beto');
 });
 
 test('el detalle de un agregado no muestra contacto ni respuestas', function () {
@@ -350,4 +352,59 @@ test('el conteo del filtro cuenta solo postulantes de la publicación', function
         ])
         // 2, no 4: el universo son los postulantes de la oferta.
         ->assertSee('Quedan 2 candidatos si agregas', escape: false);
+});
+
+test('al agregado sin desbloquear solo se le ve el nombre de pila', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $agregado = agregarA($publicacion, 'Beatriz Contreras Rojas');
+    $agregado->update(['telefono' => '+56 9 1111 1111']);
+
+    $componente = Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion]);
+
+    $componente->assertSee('Beatriz')
+        ->assertDontSee('Beatriz Contreras Rojas')
+        ->assertSee('Perfil sin desbloquear');
+
+    // Tampoco en el detalle, junto con el contacto.
+    $componente->call('verDetalle', $agregado->id)
+        ->assertDontSee('Beatriz Contreras Rojas')
+        ->assertDontSee('+56 9 1111 1111');
+});
+
+test('al desbloquear el perfil se muestra el nombre completo del agregado', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $agregado = agregarA($publicacion, 'Beatriz Contreras Rojas');
+    $agregado->update(['telefono' => '+56 9 1111 1111']);
+
+    $empresa->desbloqueos()->create(['postulante_id' => $agregado->id]);
+
+    Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertSee('Beatriz Contreras Rojas')
+        ->assertDontSee('Perfil sin desbloquear')
+        // Con el perfil abierto, el contacto también se muestra.
+        ->call('verDetalle', $agregado->id)
+        ->assertSee('+56 9 1111 1111');
+});
+
+test('quien postuló se identifica completo aunque no esté desbloqueado', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Torres Vega', 'Biobío');
+
+    Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertSee('Ana Torres Vega')
+        ->assertDontSee('Perfil sin desbloquear');
+});
+
+test('al agregado que además postuló se le ve el nombre completo', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulacion = postularA($publicacion, 'Ana Torres Vega', 'Biobío');
+
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $publicacion->id,
+        'postulante_id' => $postulacion->postulante_id,
+    ]);
+
+    Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertSee('Ana Torres Vega')
+        ->assertDontSee('Perfil sin desbloquear');
 });

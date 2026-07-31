@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Models\Desbloqueo;
 use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\Publicacion;
@@ -190,16 +191,28 @@ class Postulaciones extends Component
             ->filter(fn (PublicacionCandidato $asociacion): bool => $asociacion->postulante?->visible === true)
             ->keyBy('postulante_id');
 
-        return $postulaciones->keys()
-            ->merge($asociaciones->keys())
-            ->unique()
-            ->map(function (int $postulanteId) use ($postulaciones, $asociaciones): ?CandidatoDePublicacion {
+        $ids = $postulaciones->keys()->merge($asociaciones->keys())->unique();
+
+        // Perfiles que la empresa ya abrió: definen a quién se le muestra el nombre completo.
+        $desbloqueados = Desbloqueo::query()
+            ->where('empresa_id', $this->publicacion->empresa_id)
+            ->whereIn('postulante_id', $ids)
+            ->pluck('postulante_id')
+            ->all();
+
+        return $ids
+            ->map(function (int $postulanteId) use ($postulaciones, $asociaciones, $desbloqueados): ?CandidatoDePublicacion {
                 $postulacion = $postulaciones->get($postulanteId);
                 $asociacion = $asociaciones->get($postulanteId);
-                $postulante = $postulacion?->postulante ?? $asociacion?->postulante;
+                $postulante = $postulacion->postulante ?? $asociacion->postulante ?? null;
 
                 return $postulante instanceof Postulante
-                    ? new CandidatoDePublicacion($postulante, $postulacion, $asociacion)
+                    ? new CandidatoDePublicacion(
+                        $postulante,
+                        $postulacion,
+                        $asociacion,
+                        in_array($postulanteId, $desbloqueados, true),
+                    )
                     : null;
             })
             ->filter()

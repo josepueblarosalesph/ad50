@@ -141,6 +141,7 @@ class Publicacion extends Model
         return $this->belongsTo(Empresa::class);
     }
 
+    /** @return HasMany<Postulacion, $this> */
     public function postulaciones(): HasMany
     {
         return $this->hasMany(Postulacion::class);

@@ -76,7 +76,7 @@
                                     x-bind:aria-busy="$wire.detalleId === {{ $postulante->id }} ? 'false' : null"
                                     class="flex max-w-full items-center gap-2 rounded text-left text-[15px] font-extrabold text-ink transition hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-60"
                                 >
-                                    <span class="truncate underline decoration-orange-300 underline-offset-4 group-hover:decoration-orange-600">{{ $postulante->user?->name ?? 'Postulante' }}</span>
+                                    <span class="truncate underline decoration-orange-300 underline-offset-4 group-hover:decoration-orange-600">{{ $candidato->nombre() }}</span>
                                     <x-spinner
                                         wire:loading
                                         wire:target="verDetalle({{ $postulante->id }})"
@@ -94,6 +94,12 @@
                                             <span class="ad-chip ad-chip-sm"><flux:icon.user-plus class="size-3.5" />Agregado por la empresa</span>
                                         </flux:tooltip>
                                     @endif
+                                    @unless ($candidato->datosIdentificados())
+                                        {{-- No postuló y el perfil sigue cerrado: solo se muestra su nombre de pila. --}}
+                                        <flux:tooltip content="Desbloquea el perfil desde Prospección de Candidatos para ver su nombre completo y su contacto">
+                                            <span class="ad-chip ad-chip-sm text-gray-500"><flux:icon.lock-closed class="size-3.5" />Perfil sin desbloquear</span>
+                                        </flux:tooltip>
+                                    @endunless
                                 </div>
 
                                 <p class="mt-1 truncate text-[12.5px] text-gray-500">
@@ -112,7 +118,7 @@
                             {{-- El CV se descarga solo de quien postuló: es material que entregó a esta oferta. --}}
                             @if ($candidato->postulo() && $postulante->cv_ruta)
                                 <flux:tooltip content="Descargar CV">
-                                    <button type="button" wire:click="descargarCv({{ $candidato->postulacion->id }})" wire:loading.attr="disabled" wire:target="descargarCv({{ $candidato->postulacion->id }})" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Descargar CV de {{ $postulante->user?->name }}">
+                                    <button type="button" wire:click="descargarCv({{ $candidato->postulacion->id }})" wire:loading.attr="disabled" wire:target="descargarCv({{ $candidato->postulacion->id }})" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Descargar CV de {{ $candidato->nombre() }}">
                                         <flux:icon.arrow-down-tray class="size-4" />
                                     </button>
                                 </flux:tooltip>
@@ -122,7 +128,7 @@
                                 <select
                                     wire:key="estado-{{ $candidato->postulacion->id }}"
                                     wire:change="cambiarEstado({{ $candidato->postulacion->id }}, $event.target.value)"
-                                    aria-label="Estado de la postulación de {{ $postulante->user?->name }}"
+                                    aria-label="Estado de la postulación de {{ $candidato->nombre() }}"
                                     @class([
                                         'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
                                         'border-[#BFE6CD] bg-match-100 text-match' => $candidato->estado() === 'seleccionada',
@@ -163,7 +169,7 @@
             <div class="space-y-5">
                 <div>
                     <p class="text-[11px] font-extrabold uppercase tracking-[.14em] text-gray-400">{{ $p->carrera ?: 'Carrera no informada' }}</p>
-                    <flux:heading size="lg">{{ $p->user?->name ?? 'Postulante' }}</flux:heading>
+                    <flux:heading size="lg">{{ $detalle->nombre() }}</flux:heading>
                     <flux:text class="mt-1">
                         {{ collect([$p->cargo_actual, $p->empresa_actual, $p->anios_experiencia ? $p->anios_experiencia.' años de experiencia' : null])->filter()->implode(' · ') ?: 'Sin experiencia informada' }}
                     </flux:text>
@@ -176,8 +182,9 @@
                     </p>
                 </div>
 
-                @if ($detalle->postulo())
-                    {{-- Contacto: visible sin desbloquear, por tratarse de una postulación directa. --}}
+                @if ($detalle->datosIdentificados())
+                    {{-- Contacto a la vista: o postuló (entregó sus datos a esta oferta) o la
+                         empresa gastó un desbloqueo en abrir el perfil. --}}
                     <div class="flex flex-wrap gap-x-4 gap-y-1.5 rounded-xl bg-paper p-4 text-[13px] text-gray-600 dark:bg-white/5 dark:text-gray-300">
                         @if ($p->rut)<span class="inline-flex items-center gap-1.5"><flux:icon.identification class="size-4 text-gray-400" />{{ $p->rut }}</span>@endif
                         @if ($p->telefono)<span class="inline-flex items-center gap-1.5"><flux:icon.phone class="size-4 text-gray-400" />{{ $p->telefono }}</span>@endif
@@ -189,7 +196,7 @@
                          sujeto al desbloqueo del perfil, como en Prospección de Candidatos. --}}
                     <p class="flex items-start gap-2 rounded-xl border border-dashed border-line-2 p-4 text-[13px] text-gray-500">
                         <flux:icon.lock-closed class="mt-0.5 size-4 flex-none text-gray-400" />
-                        Esta persona no postuló a la oferta: sus datos de contacto se ven al desbloquear el perfil desde Prospección de Candidatos.
+                        Esta persona no postuló a la oferta: su nombre completo y sus datos de contacto se ven al desbloquear el perfil desde Prospección de Candidatos.
                     </p>
                 @endif
 

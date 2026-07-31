@@ -139,6 +139,7 @@ class Postulante extends Model
         return $anios.' '.($anios === 1 ? 'año' : 'años');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

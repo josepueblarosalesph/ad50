@@ -6,6 +6,7 @@ use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\PublicacionCandidato;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Str;
 
 /**
  * Una persona en el listado de una publicación, venga de donde venga.
@@ -24,7 +25,30 @@ final class CandidatoDePublicacion
         public readonly Postulante $postulante,
         public readonly ?Postulacion $postulacion,
         public readonly ?PublicacionCandidato $asociacion,
+        /** La empresa gastó un cupo de su plan en abrir este perfil. */
+        public readonly bool $desbloqueado = false,
     ) {}
+
+    /**
+     * Quien postuló entregó sus datos a esta oferta, así que la empresa ve su identidad
+     * completa. A quien solo fue agregado desde Prospección se le aplica la misma regla
+     * que allá: nombre de pila hasta que la empresa desbloquee el perfil.
+     */
+    public function datosIdentificados(): bool
+    {
+        return $this->postulo() || $this->desbloqueado;
+    }
+
+    public function nombre(): string
+    {
+        $completo = $this->postulante->user->name ?? 'Postulante';
+
+        if ($this->datosIdentificados()) {
+            return $completo;
+        }
+
+        return $this->postulante->user->nombres ?: Str::before($completo, ' ');
+    }
 
     /** Postuló por su cuenta desde el portal. */
     public function postulo(): bool
