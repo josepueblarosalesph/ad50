@@ -205,5 +205,5 @@ test('el encabezado marca la columna activa y su sentido', function () {
         // La columna ordenada informa el sentido a lectores de pantalla.
         ->assertSee('aria-sort="ascending"', false)
         ->assertSee('aria-sort="none"', false)
-        ->assertSee('Favoritos');
+        ->assertSee('Creada');
 });

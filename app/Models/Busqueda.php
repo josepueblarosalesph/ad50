@@ -25,9 +25,21 @@ class Busqueda extends Model
 
     protected $casts = ['criterios' => 'array'];
 
+    /** @return BelongsTo<Empresa, $this> */
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    /**
+     * Usuario del equipo que creó la búsqueda. Queda en null si esa persona sale del
+     * equipo: la búsqueda es de la empresa, no de quien la escribió.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function creador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /** @return HasMany<BusquedaCandidato, $this> */

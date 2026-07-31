@@ -4,7 +4,6 @@ namespace App\Livewire\Empresa;
 
 use App\Concerns\OrdenaListado;
 use App\Models\Busqueda;
-use App\Models\Favorito;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -45,14 +44,14 @@ class Busquedas extends Component
         return [
             'titulo' => 'titulo',
             'candidatos' => 'candidatos_count',
-            'favoritos' => 'favoritos_count',
+            'creada' => 'created_at',
         ];
     }
 
     /** @return list<string> */
     protected function columnasDescendentes(): array
     {
-        return ['candidatos', 'favoritos'];
+        return ['candidatos', 'creada'];
     }
 
     /** Abre el modal de confirmación de borrado para una búsqueda. */
@@ -116,13 +115,9 @@ class Busquedas extends Component
         return view('livewire.empresa.busquedas', [
             'busquedas' => Busqueda::query()
                 ->where('empresa_id', auth()->user()->empresa?->id)
+                ->with('creador:id,name')
                 ->withCount([
                     'candidatos' => fn ($query) => $query->confirmados(),
-                    // Candidatos de esta búsqueda que además están guardados en la cuenta.
-                    'candidatos as favoritos_count' => fn ($query) => $query->confirmados()->whereIn(
-                        'postulante_id',
-                        Favorito::query()->where('empresa_id', auth()->user()->empresa?->id)->select('postulante_id')
-                    ),
                 ])
                 ->tap(function ($query): void {
                     $this->hidratarOrden();

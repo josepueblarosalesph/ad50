@@ -177,6 +177,8 @@ class NuevaBusqueda extends Component
             } else {
                 $busqueda = Busqueda::query()->create([
                     'empresa_id' => auth()->user()->empresa->id,
+                    // El autor se fija solo al crear: editar no cambia de quién es.
+                    'user_id' => auth()->id(),
                     ...$atributos,
                 ]);
             }
