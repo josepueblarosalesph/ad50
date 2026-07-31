@@ -9,6 +9,7 @@ use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\Publicacion;
+use App\Models\PublicacionCandidato;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -487,4 +488,68 @@ test('el panel lista las ofertas vigentes y permite postular sin salir', functio
         ->assertSee('Postulaste');
 
     expect(Postulacion::query()->where('publicacion_id', $publicacion->id)->count())->toBe(1);
+});
+
+/** Postulante nuevo, listo para postular o para ser agregado a mano. */
+function postulanteDePrueba(string $nombre): Postulante
+{
+    return Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante', 'name' => $nombre])->id,
+        'visible' => true,
+    ]);
+}
+
+test('el listado de publicaciones cuenta candidatos: quienes postularon más los agregados a mano', function () {
+    [$user, $empresa] = empresaHabilitadaParaPublicar('conteo@empresa.cl');
+    $publicacion = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+    ]);
+
+    $postulo = postulanteDePrueba('Ana Postuló');
+    Postulacion::query()->create(['publicacion_id' => $publicacion->id, 'postulante_id' => $postulo->id]);
+
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $publicacion->id,
+        'postulante_id' => postulanteDePrueba('Beto Agregado')->id,
+    ]);
+
+    // Quien postuló y además fue agregado a mano es una sola persona, no dos.
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $publicacion->id,
+        'postulante_id' => $postulo->id,
+    ]);
+
+    // Un agregado que ocultó su ficha deja de contar, igual que en el detalle.
+    $oculta = postulanteDePrueba('Carla Oculta');
+    PublicacionCandidato::query()->create(['publicacion_id' => $publicacion->id, 'postulante_id' => $oculta->id]);
+    $oculta->update(['visible' => false]);
+
+    Livewire::actingAs($user)
+        ->test(Publicaciones::class)
+        ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->first()->candidatos_count === 2)
+        ->assertSee('Candidatos')
+        ->assertDontSee('Postulaciones');
+});
+
+test('el listado de publicaciones se puede ordenar por cantidad de candidatos', function () {
+    [$user, $empresa] = empresaHabilitadaParaPublicar('orden@empresa.cl');
+    $vacia = Publicacion::factory()->create(['empresa_id' => $empresa->id, 'cargo' => 'Sin candidatos']);
+    $poblada = Publicacion::factory()->create(['empresa_id' => $empresa->id, 'cargo' => 'Con candidatos']);
+
+    Postulacion::query()->create([
+        'publicacion_id' => $poblada->id,
+        'postulante_id' => postulanteDePrueba('Ana Postuló')->id,
+    ]);
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $poblada->id,
+        'postulante_id' => postulanteDePrueba('Beto Agregado')->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Publicaciones::class)
+        ->call('ordenarPor', 'candidatos')
+        ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->pluck('id')->all() === [$poblada->id, $vacia->id])
+        ->call('ordenarPor', 'candidatos')
+        ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->pluck('id')->all() === [$vacia->id, $poblada->id]);
 });

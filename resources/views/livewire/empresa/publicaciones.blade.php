@@ -54,7 +54,7 @@
                 <thead><tr class="ad-thead-row">
                             <x-th-ordenable campo="cargo" :orden="$orden" :direccion="$direccion">Publicación</x-th-ordenable>
                             <x-th-ordenable campo="comuna" :orden="$orden" :direccion="$direccion">Ubicación</x-th-ordenable>
-                            <x-th-ordenable campo="postulaciones" :orden="$orden" :direccion="$direccion">Postulaciones</x-th-ordenable>
+                            <x-th-ordenable campo="candidatos" :orden="$orden" :direccion="$direccion">Candidatos</x-th-ordenable>
                             <x-th-ordenable campo="vigente_hasta" :orden="$orden" :direccion="$direccion">Vigencia</x-th-ordenable>
                             <x-th-ordenable campo="estado" :orden="$orden" :direccion="$direccion">Estado</x-th-ordenable>
                             <th class="p-4"></th>
@@ -64,7 +64,7 @@
                         <tr wire:key="publicacion-{{ $publicacion->id }}" class="border-b border-line last:border-0">
                             <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.show', $publicacion) }}" class="rounded-lg font-bold text-ink underline decoration-orange-300 underline-offset-4 transition hover:text-orange-600 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">{{ $publicacion->cargo }}</a><p class="mt-1 text-[12px] text-gray-500">{{ $publicacion->tipo_cargo }} · {{ $publicacion->vacantes }} vacante(s)</p></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->comuna }} · {{ $publicacion->modalidad }}</td>
-                            <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 font-bold text-orange-600 underline decoration-orange-200 underline-offset-4 transition hover:bg-orange-100 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600" aria-label="Ver las {{ $publicacion->postulaciones_count }} postulaciones de {{ $publicacion->cargo }}">{{ $publicacion->postulaciones_count }}</a></td>
+                            <td class="p-4"><a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="inline-flex min-w-9 items-center justify-center rounded-lg px-2 py-1 font-bold text-orange-600 underline decoration-orange-200 underline-offset-4 transition hover:bg-orange-100 hover:decoration-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600" aria-label="Ver los {{ $publicacion->candidatos_count }} candidatos de {{ $publicacion->cargo }}">{{ $publicacion->candidatos_count }}</a></td>
                             <td class="p-4 text-gray-600">{{ $publicacion->vigente_hasta->translatedFormat('d M Y') }}</td>
                             <td class="p-4">
                                 <select

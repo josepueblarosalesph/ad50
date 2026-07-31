@@ -72,19 +72,60 @@ test('saving an empty note removes it', function () {
     expect(NotaCandidato::query()->count())->toBe(0);
 });
 
-test('the results list shows a note indicator only for candidates with a note', function () {
+test('el botón de notas del listado avisa si el candidato tiene alguna', function () {
     $match = matchConEmpresa();
     NotaCandidato::query()->create(['empresa_id' => $match->busqueda->empresa_id, 'postulante_id' => $match->postulante_id, 'user_id' => $match->busqueda->empresa->user_id, 'contenido' => 'Con nota']);
 
     Livewire::actingAs($match->busqueda->empresa->user)
         ->test(Resultados::class, ['busqueda' => $match->busqueda])
-        ->assertSee('Hay notas sobre este candidato que puedes ver');
+        ->assertSee('Ver notas de este candidato');
 
     NotaCandidato::query()->truncate();
 
+    // Sin notas el botón sigue estando, pero anuncia que no hay nada escrito.
     Livewire::actingAs($match->busqueda->empresa->user)
         ->test(Resultados::class, ['busqueda' => $match->busqueda])
-        ->assertDontSee('Hay notas sobre este candidato que puedes ver');
+        ->assertDontSee('Ver notas de este candidato')
+        ->assertSee('Sin notas todavía');
+});
+
+test('el listado abre las notas del candidato en un panel de lectura rápida', function () {
+    [$admin, $colega, $match] = equipoConCandidato();
+
+    Livewire::actingAs($colega)->test(Candidato::class, ['match' => $match])
+        ->set('nota', 'Compartida por Beto')->set('visibilidad', 'equipo')->call('guardarNota');
+
+    Livewire::actingAs($admin)->test(Candidato::class, ['match' => $match])
+        ->set('nota', 'Privada de Ana')->set('visibilidad', 'privada')->call('guardarNota');
+
+    // Ana abre el panel y lee la suya y la que su colega compartió.
+    Livewire::actingAs($admin)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('abrirNotas', $match->postulante_id)
+        ->assertSet('notasPostulanteId', $match->postulante_id)
+        ->assertSee('Notas del candidato')
+        ->assertSee('Privada de Ana')
+        ->assertSee('Compartida por Beto')
+        ->assertSee('Beto Colega')
+        ->call('cerrarNotas')
+        ->assertSet('notasPostulanteId', null);
+
+    // Beto no ve la nota privada de Ana.
+    Livewire::actingAs($colega)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('abrirNotas', $match->postulante_id)
+        ->assertSee('Compartida por Beto')
+        ->assertDontSee('Privada de Ana');
+});
+
+test('no se pueden abrir las notas de un candidato ajeno a la búsqueda', function () {
+    [$admin, , $match] = equipoConCandidato();
+    $ajeno = matchConEmpresa();
+
+    Livewire::actingAs($admin)
+        ->test(Resultados::class, ['busqueda' => $match->busqueda])
+        ->call('abrirNotas', $ajeno->postulante_id)
+        ->assertStatus(404);
 });
 
 /**
@@ -180,12 +221,13 @@ test('el indicador del listado solo cuenta las notas que ese usuario puede ver',
         ->set('visibilidad', 'privada')
         ->call('guardarNota');
 
-    // Ana ve el indicador; el colega no, porque la única nota es privada de Ana.
+    // Ana ve el aviso; el colega no, porque la única nota es privada de Ana.
     Livewire::actingAs($admin)->test(Resultados::class, ['busqueda' => $match->busqueda])
-        ->assertSee('Hay notas sobre este candidato que puedes ver');
+        ->assertSee('Ver notas de este candidato');
 
     Livewire::actingAs($colega)->test(Resultados::class, ['busqueda' => $match->busqueda])
-        ->assertDontSee('Hay notas sobre este candidato que puedes ver');
+        ->assertDontSee('Ver notas de este candidato')
+        ->assertSee('Sin notas todavía');
 });
 
 test('al sacar a alguien del equipo se van sus notas privadas y quedan las compartidas', function () {

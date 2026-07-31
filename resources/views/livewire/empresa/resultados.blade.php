@@ -81,11 +81,6 @@
                                         {{ $nombreCandidato }}
                                     @endif
                                 </h2>
-                                @if (in_array($match->postulante_id, $postulantesConNota))
-                                    <flux:tooltip content="Hay notas sobre este candidato que puedes ver">
-                                        <span class="grid size-6 flex-none place-items-center rounded-full bg-orange-100 text-orange-600" aria-label="Tiene una nota"><flux:icon.pencil-square class="size-4" /></span>
-                                    </flux:tooltip>
-                                @endif
                             </div>
                             @php($ultimaExp = $match->postulante->ultimaExperiencia())
                             @if ($ultimaExp)
@@ -132,6 +127,12 @@
                                         @endif
                                     </button>
                                 </flux:tooltip>
+                                @php($tieneNota = in_array($match->postulante_id, $postulantesConNota))
+                                <flux:tooltip :content="$tieneNota ? 'Ver notas de este candidato' : 'Sin notas todavía'">
+                                    <button type="button" wire:click="abrirNotas({{ $match->postulante_id }})" wire:loading.attr="disabled" wire:target="abrirNotas({{ $match->postulante_id }})" @class(['grid size-10 flex-none place-items-center rounded-xl border transition disabled:opacity-50', 'border-orange-300 bg-orange-100 text-orange-600' => $tieneNota, 'border-line-2 bg-white text-gray-400 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => ! $tieneNota]) aria-label="Ver notas de {{ $nombreCandidato }}">
+                                        <flux:icon.pencil-square class="size-5" />
+                                    </button>
+                                </flux:tooltip>
                                 <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}" class="ad-btn-primary ad-btn-sm whitespace-nowrap">Ver perfil</a>
                             @else
                                 <flux:tooltip content="Guarda el filtro para poder abrir y marcar este candidato">
@@ -150,11 +151,6 @@
                                         </button>
                                     </flux:tooltip>
                                 @endif
-                                <flux:tooltip content="Notas del candidato">
-                                    <a wire:navigate href="{{ route('empresa.candidatos.show', ['match' => $match, 'filtro' => $filtro, 'criterios' => $criterios]) }}#notas" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]" aria-label="Ver notas de {{ $nombreCandidato }}">
-                                        <flux:icon.pencil-square class="size-4" />
-                                    </a>
-                                </flux:tooltip>
                                 @if (filled($match->postulante->linkedin))
                                     <flux:tooltip content="Abrir LinkedIn">
                                         <a href="{{ $match->postulante->linkedin }}" target="_blank" rel="noopener noreferrer" class="grid size-9 flex-none place-items-center rounded-lg border border-line-2 bg-white text-gray-500 transition hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]" aria-label="Abrir LinkedIn de {{ $nombreCandidato }}">
@@ -178,4 +174,9 @@
     </div>
 
     <x-asociar-publicaciones-modal :publicaciones="$publicacionesAsociables" :asociadas="$publicacionesDelCandidato" />
+
+    <x-notas-candidato-modal
+        :notas="$notasDelCandidato"
+        :perfil-url="$notasMatch ? route('empresa.candidatos.show', ['match' => $notasMatch, 'filtro' => $filtro, 'criterios' => $criterios]).'#notas' : null"
+    />
 </div>

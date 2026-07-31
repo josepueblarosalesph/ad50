@@ -47,7 +47,7 @@ class Publicaciones extends Component
             'created_at' => 'created_at',
             'cargo' => 'cargo',
             'comuna' => 'comuna',
-            'postulaciones' => 'postulaciones_count',
+            'candidatos' => 'candidatos_count',
             'vigente_hasta' => 'vigente_hasta',
             'estado' => 'estado',
         ];
@@ -56,7 +56,7 @@ class Publicaciones extends Component
     /** @return list<string> */
     protected function columnasDescendentes(): array
     {
-        return ['created_at', 'postulaciones', 'vigente_hasta'];
+        return ['created_at', 'candidatos', 'vigente_hasta'];
     }
 
     public function cambiarEstado(Publicacion $publicacion, string $estado): void
@@ -130,7 +130,7 @@ class Publicaciones extends Component
         return view('livewire.empresa.publicaciones', [
             'publicaciones' => Publicacion::query()
                 ->whereBelongsTo(auth()->user()->empresa)
-                ->withCount('postulaciones')
+                ->withCandidatosCount()
                 ->tap(fn ($query) => $this->aplicarOrden($query))
                 ->paginate(12),
             'estados' => Publicacion::ESTADOS,

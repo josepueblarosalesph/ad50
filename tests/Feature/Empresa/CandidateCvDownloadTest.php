@@ -135,24 +135,25 @@ test('el listado muestra el candado abierto o cerrado segun el estado de desbloq
         ->assertSee('Perfil desbloqueado');
 });
 
-test('el listado muestra accesos rapidos de cv, notas y linkedin solo al desbloquear', function () {
+test('el listado muestra accesos rapidos de cv y linkedin solo al desbloquear', function () {
     Storage::fake('local');
     Storage::disk('local')->put('cvs/curriculum.pdf', '%PDF-1.4 archivo de prueba');
     [$empresaUser, $match] = crearMatchConCvParaEmpresa();
     $match->postulante->update(['linkedin' => 'https://linkedin.com/in/candidato']);
 
-    // Sin desbloquear: no aparecen los accesos rápidos.
+    // Sin desbloquear: no aparecen los accesos rápidos. Las notas no dependen del
+    // desbloqueo: su botón está siempre entre las acciones del candidato.
     Livewire::actingAs($empresaUser)
         ->test(Resultados::class, ['busqueda' => $match->busqueda])
         ->assertDontSeeHtml('descargarCv('.$match->postulante_id.')')
-        ->assertDontSee('https://linkedin.com/in/candidato');
+        ->assertDontSee('https://linkedin.com/in/candidato')
+        ->assertSeeHtml('abrirNotas('.$match->postulante_id.')');
 
     $empresaUser->empresa->desbloqueos()->create(['postulante_id' => $match->postulante_id]);
 
-    // Desbloqueado: aparecen CV, notas y LinkedIn.
+    // Desbloqueado: aparecen CV y LinkedIn.
     Livewire::actingAs($empresaUser)
         ->test(Resultados::class, ['busqueda' => $match->busqueda])
         ->assertSeeHtml('descargarCv('.$match->postulante_id.')')
-        ->assertSee('https://linkedin.com/in/candidato')
-        ->assertSee('#notas');
+        ->assertSee('https://linkedin.com/in/candidato');
 });

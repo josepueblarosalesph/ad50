@@ -60,6 +60,9 @@ class Resultados extends Component
      */
     public ?array $previsualizacion = null;
 
+    /** Candidato cuyas notas están abiertas en el panel rápido; null = cerrado. */
+    public ?int $notasPostulanteId = null;
+
     public function mount(Busqueda $busqueda): void
     {
         abort_unless(auth()->user()->role === 'empresa', 403);
@@ -127,6 +130,45 @@ class Resultados extends Component
 
         $this->filtro = $filtro;
         $this->resetPage(pageName: 'candidatos');
+    }
+
+    /**
+     * Abre la vista rápida de las notas del candidato. Es solo lectura: escribir o
+     * editar la propia sigue siendo cosa de la ficha (Candidato).
+     */
+    public function abrirNotas(int $postulanteId): void
+    {
+        abort_unless($this->candidatoAsociable($postulanteId), 404);
+
+        $this->notasPostulanteId = $postulanteId;
+        $this->modal('notas-candidato')->show();
+    }
+
+    public function cerrarNotas(): void
+    {
+        $this->notasPostulanteId = null;
+        $this->modal('notas-candidato')->close();
+    }
+
+    /**
+     * Notas del candidato abierto que este usuario puede leer: las que su equipo
+     * comparte más la suya propia.
+     *
+     * @return Collection<int, NotaCandidato>
+     */
+    protected function notasDelCandidato(): Collection
+    {
+        if ($this->notasPostulanteId === null) {
+            return collect();
+        }
+
+        return NotaCandidato::query()
+            ->where('empresa_id', $this->busqueda->empresa_id)
+            ->where('postulante_id', $this->notasPostulanteId)
+            ->visiblesPara(auth()->user())
+            ->with('user:id,name')
+            ->orderByDesc('updated_at')
+            ->get();
     }
 
     /** Guarda o quita al candidato de los favoritos de la empresa. */
@@ -337,6 +379,11 @@ class Resultados extends Component
             'asociacionesPorPostulante' => $this->conteoAsociaciones($idsPagina),
             'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
             'postulantesFavoritos' => $this->favoritosDeLaEmpresa(),
+            'notasDelCandidato' => $this->notasDelCandidato(),
+            // Match del candidato abierto, para enlazar su ficha desde el panel de notas.
+            'notasMatch' => $this->notasPostulanteId === null
+                ? null
+                : $this->busqueda->candidatos()->where('postulante_id', $this->notasPostulanteId)->first(),
         ]);
     }
 

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Atributos con cast declarados para el análisis estático.
@@ -122,6 +123,8 @@ class Publicacion extends Model
             'evaluacion_manual' => 'boolean',
             'mostrar_sueldo' => 'boolean',
             'vigente_hasta' => 'date',
+            // Lo agrega scopeWithCandidatosCount(); Postgres devuelve los count() como texto.
+            'candidatos_count' => 'integer',
         ];
     }
 
@@ -136,6 +139,7 @@ class Publicacion extends Model
         return in_array($this->estado, self::ESTADOS_VISIBLES, true) && $this->vigente_hasta?->gte(today());
     }
 
+    /** @return BelongsTo<Empresa, $this> */
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
@@ -159,10 +163,48 @@ class Publicacion extends Model
             ->withTimestamps();
     }
 
+    /**
+     * @param  Builder<Publicacion>  $query
+     * @return Builder<Publicacion>
+     */
     public function scopeVigentes(Builder $query): Builder
     {
         return $query
             ->whereIn('estado', self::ESTADOS_VISIBLES)
             ->whereDate('vigente_hasta', '>=', today());
+    }
+
+    /**
+     * Agrega `candidatos_count`: las personas de la publicación, vengan de haber postulado
+     * o de que la empresa las agregara a mano desde Prospección de Candidatos.
+     *
+     * Se cuenta por persona, no por origen: quien postuló y además fue agregado vale uno.
+     * Es el mismo criterio del detalle (ver Livewire\Empresa\Postulaciones::candidatos()),
+     * incluida la regla de que un agregado que ocultó su ficha deja de listarse —quien
+     * postuló, en cambio, sigue contando: esa postulación existe.
+     *
+     * @param  Builder<Publicacion>  $query
+     * @return Builder<Publicacion>
+     */
+    public function scopeWithCandidatosCount(Builder $query): Builder
+    {
+        $total = Postulante::query()
+            ->selectRaw('count(*)')
+            ->where(fn ($persona) => $persona
+                ->whereExists(fn ($sub) => $sub
+                    ->select(DB::raw(1))
+                    ->from('postulaciones')
+                    ->whereColumn('postulaciones.publicacion_id', 'publicaciones.id')
+                    ->whereColumn('postulaciones.postulante_id', 'postulantes.id'))
+                ->orWhere(fn ($agregado) => $agregado
+                    ->where('postulantes.visible', true)
+                    ->whereExists(fn ($sub) => $sub
+                        ->select(DB::raw(1))
+                        ->from('publicacion_candidato')
+                        ->whereColumn('publicacion_candidato.publicacion_id', 'publicaciones.id')
+                        ->whereColumn('publicacion_candidato.postulante_id', 'postulantes.id'))));
+
+        // Un único subselect (y no la suma de dos) para poder ordenar por el alias.
+        return $query->select('publicaciones.*')->selectSub($total, 'candidatos_count');
     }
 }
