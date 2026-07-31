@@ -93,19 +93,18 @@
                         <div>
                             <p class="text-[13px] font-bold text-ink">Solicitud enviada</p>
                             <p class="mt-1 text-[13px] leading-[1.55] text-gray-700">
-                                Avisamos al administrador de {{ $empresa_registrada_nombre }} con tus datos.
-                                Cuando te agregue al equipo recibirás tus credenciales de acceso.
+                                Cuando el administrador te agregue al equipo recibirás tus credenciales.
                             </p>
                         </div>
                     </div>
                 @else
                     <p class="text-[13px] leading-[1.55] text-gray-700">
-                        Podemos avisarle por correo al administrador de <b class="text-ink">{{ $empresa_registrada_nombre }}</b>
-                        que quieres sumarte, con tu nombre, correo y teléfono, para que te agregue desde la sección Equipo.
+                        Ya existe una cuenta con este dominio. Haz click en el siguiente botón para
+                        solicitar acceso al administrador.
                     </p>
                     <button type="button" wire:click="solicitarAcceso" class="ad-btn ad-btn-dark ad-btn-sm ad-btn-block mt-3"
                             wire:loading.attr="disabled" wire:target="solicitarAcceso">
-                        <span wire:loading.remove wire:target="solicitarAcceso">Solicitar acceso al administrador</span>
+                        <span wire:loading.remove wire:target="solicitarAcceso">Solicitar acceso</span>
                         <span wire:loading wire:target="solicitarAcceso">Enviando…</span>
                     </button>
                 @endif

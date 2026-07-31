@@ -3,8 +3,6 @@
 namespace App\Livewire\Empresa;
 
 use App\Concerns\OrdenaListado;
-use App\Models\Busqueda;
-use App\Models\BusquedaCandidato;
 use App\Models\Publicacion;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -62,13 +60,18 @@ class Panel extends Component
             // Se ordena la colección ya traída: hacerlo en la consulta cambiaría
             // *cuáles* son las 5 y dejarían de ser las recientes.
             'publicaciones' => $this->ordenarColeccion($publicaciones),
-            'totalBusquedas' => Busqueda::query()
+            'publicacionesVigentes' => Publicacion::query()
                 ->where('empresa_id', $empresa?->id)
+                ->vigentes()
                 ->count(),
-            'totalCandidatos' => BusquedaCandidato::query()
-                ->confirmados()
-                ->whereHas('busqueda', fn ($query) => $query->where('empresa_id', $empresa?->id))
-                ->count(),
+            // Cupos del plan: `disponibles`/`totales` en null son ilimitadas, y sin plan
+            // no hay cupo que mostrar (ver `tienePlan`).
+            'publicacionesDisponibles' => $empresa?->publicacionesDisponibles(),
+            'publicacionesTotales' => $empresa?->publicacionesTotales(),
+            'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,
+            'desbloqueosTotales' => $empresa?->desbloqueosTotales() ?? 0,
+            'totalFavoritos' => $empresa?->favoritos()->count() ?? 0,
+            'tienePlan' => $empresa?->plan !== null,
             'puedePublicar' => $empresa?->puedePublicar() ?? false,
         ]);
     }

@@ -1,8 +1,8 @@
 <?php
 
+use App\Livewire\Empresa\Busquedas;
 use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\FiltrosBusqueda;
-use App\Livewire\Empresa\Panel;
 use App\Livewire\Empresa\Resultados;
 use App\Models\Empresa;
 use App\Models\Postulante;
@@ -257,10 +257,10 @@ test('la previsualizacion materializa perfiles nuevos abribles y contables, sin 
         ->test(Candidato::class, ['match' => $matchValpo])
         ->assertSet('totalCandidatos', 2);
 
-    // El panel de empresa NO cuenta el temporal (sigue en 1 confirmado).
+    // El listado de búsquedas NO cuenta el temporal (sigue en 1 confirmado).
     Livewire::actingAs($user)
-        ->test(Panel::class)
-        ->assertViewHas('totalCandidatos', 1);
+        ->test(Busquedas::class)
+        ->assertViewHas('busquedas', fn ($busquedas): bool => $busquedas->first()->candidatos_count === 1);
 });
 
 test('descartar elimina las coincidencias temporales de la previsualizacion', function () {

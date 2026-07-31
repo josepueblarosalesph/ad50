@@ -9,6 +9,7 @@ use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
 use App\Models\Favorito;
+use App\Models\Plan;
 use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
@@ -205,13 +206,67 @@ test('candidate totals in the searches listing link to their search results', fu
         ->assertSeeHtml('href="'.route('empresa.resultados', $busqueda).'"');
 });
 
-test('the company panel counts its saved searches and links to the listing', function () {
+test('el resumen del panel muestra publicaciones, desbloqueos y favoritos', function () {
+    [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
+
+    $empresa = $empresaUser->empresa;
+    $empresa->update([
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'empresa_resumen',
+            'nombre' => 'AD+50 · Resumen',
+            'audiencia' => 'empresa',
+            'precio_clp' => 50000,
+            'publicaciones' => 5,
+            'desbloqueos' => 4,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+
+    // Dos publicaciones vigentes y una cerrada: el cupo se consume con las tres.
+    Publicacion::factory()->count(2)->create(['empresa_id' => $empresa->id]);
+    Publicacion::factory()->create(['empresa_id' => $empresa->id, 'estado' => 'cerrada']);
+
+    $empresa->desbloqueos()->create(['postulante_id' => $matches[0]->postulante_id]);
+
+    $empresa->alternarFavorito($matches[0]->postulante_id, $busqueda->id);
+    $empresa->alternarFavorito($matches[1]->postulante_id, $busqueda->id);
+
+    Livewire::actingAs($empresaUser)
+        ->test(Panel::class)
+        ->assertViewHas('publicacionesVigentes', 2)
+        ->assertViewHas('publicacionesDisponibles', 2)
+        ->assertViewHas('publicacionesTotales', 5)
+        // Uno de los 4 desbloqueos del plan ya está usado: quedan 3.
+        ->assertViewHas('desbloqueosDisponibles', 3)
+        ->assertViewHas('desbloqueosTotales', 4)
+        ->assertViewHas('totalFavoritos', 2)
+        ->assertSee('Publicaciones vigentes')
+        ->assertSee('Publicaciones disponibles')
+        ->assertSee('Desbloqueos disponibles (candidatos)')
+        // El número de favoritos lleva a su listado.
+        ->assertSee(route('empresa.favoritos'), escape: false);
+});
+
+test('sin plan el resumen no inventa cupos', function () {
     [$empresaUser] = candidateSearchWithMatches();
 
     Livewire::actingAs($empresaUser)
         ->test(Panel::class)
-        ->assertViewHas('totalBusquedas', 1)
-        ->assertSee(route('empresa.busquedas.index'), escape: false);
+        ->assertViewHas('tienePlan', false)
+        ->assertViewHas('publicacionesTotales', null)
+        ->assertViewHas('desbloqueosTotales', 0)
+        // Sin cupo que mostrar, la tarjeta queda en «—»: nunca en «Ilimitadas».
+        ->assertDontSee('Ilimitadas');
+});
+
+test('el panel invita a buscar candidatos en vez de a crear una búsqueda', function () {
+    [$empresaUser] = candidateSearchWithMatches();
+
+    Livewire::actingAs($empresaUser)
+        ->test(Panel::class)
+        ->assertSee('Buscar candidatos')
+        ->assertDontSee('Nueva búsqueda')
+        ->assertSee(route('empresa.busquedas.create'), escape: false);
 });
 
 test('company panel summarizes at most five recent publications', function () {

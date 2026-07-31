@@ -3,26 +3,40 @@
     <x-slot:status>{{ $empresa?->plan?->nombre ?? 'Sin plan' }}</x-slot:status>
     <x-slot:nav><x-nav-empresa activo="panel" /></x-slot:nav>
 
-    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[27px] font-extrabold">Hola, {{ $empresa?->razon_social ?? auth()->user()->name }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Resumen de tu actividad de selección.</p></div><div class="flex flex-wrap gap-3">@if ($puedePublicar)<a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm">+ Nueva publicación</a>@endif<a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm">+ Nueva búsqueda</a></div></div>
+    <div class="flex items-start justify-between gap-5 mb-6 flex-wrap"><div><h1 class="text-[27px] font-extrabold">Hola, {{ $empresa?->razon_social ?? auth()->user()->name }}</h1><p class="text-[14px] text-gray-500 mt-1.5">Resumen de tu actividad de selección.</p></div><div class="flex flex-wrap gap-3">@if ($puedePublicar)<a wire:navigate href="{{ route('empresa.publicaciones.create') }}" class="ad-btn-primary ad-btn-sm">Nueva publicación</a>@endif<a href="{{ route('empresa.busquedas.create') }}" class="ad-btn-primary ad-btn-sm">Buscar candidatos</a></div></div>
 
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        {{-- Acceso directo a Prospección de Candidatos --}}
-        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
-            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Búsquedas guardadas <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
-            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $totalBusquedas }}</div>
-            <div class="mt-1 text-[13px] font-semibold text-orange-600">Ver mis búsquedas</div>
+        <div class="ad-card p-5">
+            <span class="text-[13px] font-semibold text-gray-500">Publicaciones vigentes</span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $publicacionesVigentes }}</div>
+        </div>
+
+        {{-- Cupos del plan: sin plan no hay cupo, y `totales` en null son ilimitadas. --}}
+        <div class="ad-card p-5">
+            <span class="text-[13px] font-semibold text-gray-500">Publicaciones disponibles</span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">
+                @if (! $tienePlan)
+                    —
+                @elseif ($publicacionesTotales === null)
+                    Ilimitadas
+                @else
+                    {{ $publicacionesDisponibles }} <span class="text-[16px] font-bold text-gray-400">de {{ $publicacionesTotales }}</span>
+                @endif
+            </div>
+        </div>
+
+        <div class="ad-card p-5">
+            <span class="text-[13px] font-semibold text-gray-500">Desbloqueos disponibles (candidatos)</span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">
+                {{ $desbloqueosDisponibles }} <span class="text-[16px] font-bold text-gray-400">de {{ $desbloqueosTotales }}</span>
+            </div>
+        </div>
+
+        {{-- Acceso directo al listado de favoritos --}}
+        <a wire:navigate href="{{ route('empresa.favoritos') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
+            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Favoritos <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
+            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $totalFavoritos }}</div>
         </a>
-
-        <div class="ad-card p-5"><span class="text-[13px] text-gray-500 font-semibold">Candidatos que cumplen</span><div class="text-[25px] font-extrabold mt-3 truncate">{{ $totalCandidatos }}</div><div class="mt-1 text-[13px] font-semibold text-match">Resultados acumulados</div></div>
-
-        {{-- Acceso directo a la suscripción --}}
-        <a wire:navigate href="{{ route('empresa.planes') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
-            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Plan <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
-            <div class="mt-3 truncate text-[25px] font-extrabold">{{ $empresa?->plan?->nombre ?? 'Sin plan' }}</div>
-            <div class="mt-1 text-[13px] font-semibold text-orange-600">Ver planes y suscripción</div>
-        </a>
-
-        <div class="ad-card p-5"><span class="text-[13px] text-gray-500 font-semibold">Vigencia</span><div class="text-[25px] font-extrabold mt-3 truncate">{{ $empresa?->plan_hasta?->translatedFormat('d M Y') ?? '—' }}</div><div class="mt-1 text-[13px] font-semibold text-match">Fecha de renovación</div></div>
     </div>
 
     <section class="ad-card overflow-hidden">

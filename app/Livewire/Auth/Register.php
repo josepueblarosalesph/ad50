@@ -49,8 +49,6 @@ class Register extends Component
      */
     public ?int $empresa_registrada_id = null;
 
-    public string $empresa_registrada_nombre = '';
-
     public bool $solicitud_enviada = false;
 
     public function setRole(string $role): void
@@ -75,6 +73,15 @@ class Register extends Component
         $this->rut = Rut::formatear($this->rut);
 
         $this->recordarEmpresaRegistrada();
+
+        // El dominio ya tiene cuenta: el aviso es la tarjeta con el botón de solicitud, no un
+        // error bajo el campo. Se corta acá para no duplicar el mensaje; la regla
+        // EmpresaYaRegistrada sigue en rules() como resguardo del registro.
+        if ($this->empresa_registrada_id !== null) {
+            $this->resetValidation();
+
+            return;
+        }
 
         $this->validate(messages: [
             'acepta.accepted' => 'Debes autorizar el tratamiento de datos.',
@@ -192,13 +199,11 @@ class Register extends Component
         }
 
         $this->empresa_registrada_id = $empresa->id;
-        $this->empresa_registrada_nombre = (string) $empresa->razon_social;
     }
 
     protected function olvidarEmpresaRegistrada(): void
     {
         $this->empresa_registrada_id = null;
-        $this->empresa_registrada_nombre = '';
         $this->solicitud_enviada = false;
     }
 

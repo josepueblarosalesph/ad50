@@ -5,6 +5,7 @@ use App\Mail\SolicitudAccesoEquipo;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Rules\EmpresaYaRegistrada;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Features\SupportTesting\Testable;
@@ -130,43 +131,33 @@ function empresaRegistradaCon(string $email, string $razonSocial = 'Ejemplo SpA'
     return $admin->fresh();
 }
 
-test('quien comparte el dominio de una empresa ya registrada debe pedir acceso a su administrador', function () {
+test('quien comparte el dominio de una empresa ya registrada ve solo la tarjeta con el botón', function () {
     empresaRegistradaCon('admin@ejemplo.cl', 'Ejemplo SpA');
 
-    Livewire::test(Register::class)
-        ->set('role', 'empresa')
-        ->set('nombre', 'Ana')
-        ->set('apellidos', 'Silva')
-        ->set('email', 'ana@ejemplo.cl')
-        ->set('password', 'password')
-        ->set('razon_social', 'Ejemplo SpA')
-        ->set('rut', '761234560')
-        ->set('telefono', '+56 9 8765 4321')
-        ->set('acepta', true)
-        ->call('submit')
-        ->assertHasErrors('email');
-
-    // El mensaje nombra la empresa y el camino a seguir, pero no expone el correo del
-    // administrador: para eso está el botón que le envía la solicitud.
-    $mensaje = Livewire::test(Register::class)
-        ->set('role', 'empresa')
-        ->set('nombre', 'Ana')
-        ->set('apellidos', 'Silva')
-        ->set('email', 'ana@ejemplo.cl')
-        ->set('password', 'password')
-        ->set('razon_social', 'Ejemplo SpA')
-        ->set('rut', '761234560')
-        ->set('telefono', '+56 9 8765 4321')
-        ->set('acepta', true)
-        ->call('submit')
-        ->errors()->first('email');
-
-    expect($mensaje)->toContain('Ejemplo SpA')
-        ->toContain('@ejemplo.cl')
-        ->not->toContain('admin@ejemplo.cl')
-        ->toContain('Equipo');
+    // El bloqueo se comunica con la tarjeta, no con un error bajo el campo.
+    registroEmpresaBloqueado()
+        ->assertHasNoErrors()
+        ->assertSee('Ya existe una cuenta con este dominio')
+        ->assertSee('Solicitar acceso')
+        // Ni el correo del administrador ni el mensaje largo de la regla.
+        ->assertDontSee('admin@ejemplo.cl')
+        ->assertDontSee('sección Equipo');
 
     expect(User::query()->where('email', 'ana@ejemplo.cl')->exists())->toBeFalse();
+});
+
+test('la regla de dominio sigue blindando el registro', function () {
+    empresaRegistradaCon('admin@ejemplo.cl', 'Ejemplo SpA');
+
+    // La tarjeta es la vía normal, pero la regla se mantiene en rules() como resguardo:
+    // si el formulario dejara de cortar antes, el registro igual no se crearía.
+    $validador = validator(['email' => 'ana@ejemplo.cl'], ['email' => [new EmpresaYaRegistrada]]);
+
+    expect($validador->fails())->toBeTrue();
+    expect($validador->errors()->first('email'))
+        ->toContain('Ejemplo SpA')
+        ->toContain('@ejemplo.cl')
+        ->not->toContain('admin@ejemplo.cl');
 });
 
 test('quien comparte el dominio puede pedir por correo que el administrador lo sume al equipo', function () {
@@ -176,10 +167,9 @@ test('quien comparte el dominio puede pedir por correo que el administrador lo s
 
     $componente = registroEmpresaBloqueado()
         ->assertSet('empresa_registrada_id', $admin->empresa->id)
-        ->assertSet('empresa_registrada_nombre', 'Ejemplo SpA')
         ->assertSet('solicitud_enviada', false)
         // El botón aparece; el correo del administrador no.
-        ->assertSee('Solicitar acceso al administrador')
+        ->assertSee('Solicitar acceso')
         ->assertDontSee('admin@ejemplo.cl');
 
     $componente->call('solicitarAcceso')
@@ -236,7 +226,7 @@ test('cambiar el correo descarta el aviso de la empresa ya registrada', function
         ->set('email', 'ana@otra-empresa.cl')
         ->assertSet('empresa_registrada_id', null)
         ->assertSet('solicitud_enviada', false)
-        ->assertDontSee('Solicitar acceso al administrador');
+        ->assertDontSee('Solicitar acceso');
 });
 
 /** Deja el formulario en el estado en que el registro quedó bloqueado por dominio. */
@@ -253,7 +243,7 @@ function registroEmpresaBloqueado(): Testable
         ->set('telefono', '+56 9 8765 4321')
         ->set('acepta', true)
         ->call('submit')
-        ->assertHasErrors('email');
+        ->assertSet('empresa_registrada_id', fn (?int $id): bool => $id !== null);
 }
 
 test('el dominio se compara completo: un dominio parecido no bloquea el registro', function () {
@@ -330,7 +320,9 @@ test('un usuario del equipo también reserva el dominio, no solo el administrado
         ->set('telefono', '+56 9 8765 4321')
         ->set('acepta', true)
         ->call('submit')
-        ->assertHasErrors('email');
+        ->assertSee('Ya existe una cuenta con este dominio');
+
+    expect(User::query()->where('email', 'ana@corporativo.cl')->exists())->toBeFalse();
 });
 
 test('an empresa must provide a contact phone number', function () {
