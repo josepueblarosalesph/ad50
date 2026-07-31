@@ -82,6 +82,35 @@
         <div class="mt-3.5">
             <flux:input wire:model="email" type="email" label="Email *" placeholder="tu@correo.cl" />
         </div>
+
+        {{-- La empresa ya tiene cuenta: en vez de mostrar el correo del administrador, se le
+             envía la solicitud con los datos de esta persona (Register::solicitarAcceso). --}}
+        @if ($empresa_registrada_id)
+            <div class="mt-3.5 rounded-[12px] border border-orange-200 bg-orange-50 p-4">
+                @if ($solicitud_enviada)
+                    <div class="flex gap-3">
+                        <flux:icon.check-circle class="mt-0.5 size-5 flex-none text-orange-600" />
+                        <div>
+                            <p class="text-[13px] font-bold text-ink">Solicitud enviada</p>
+                            <p class="mt-1 text-[13px] leading-[1.55] text-gray-700">
+                                Avisamos al administrador de {{ $empresa_registrada_nombre }} con tus datos.
+                                Cuando te agregue al equipo recibirás tus credenciales de acceso.
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <p class="text-[13px] leading-[1.55] text-gray-700">
+                        Podemos avisarle por correo al administrador de <b class="text-ink">{{ $empresa_registrada_nombre }}</b>
+                        que quieres sumarte, con tu nombre, correo y teléfono, para que te agregue desde la sección Equipo.
+                    </p>
+                    <button type="button" wire:click="solicitarAcceso" class="ad-btn ad-btn-dark ad-btn-sm ad-btn-block mt-3"
+                            wire:loading.attr="disabled" wire:target="solicitarAcceso">
+                        <span wire:loading.remove wire:target="solicitarAcceso">Solicitar acceso al administrador</span>
+                        <span wire:loading wire:target="solicitarAcceso">Enviando…</span>
+                    </button>
+                @endif
+            </div>
+        @endif
         <div class="mt-3.5">
             <flux:input wire:model="password" type="password" label="Contraseña *" placeholder="••••••••••" viewable />
         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Auth;
 
+use App\Mail\SolicitudAccesoEquipo;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
@@ -13,6 +14,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -39,9 +42,27 @@ class Register extends Component
 
     public bool $acepta = true;
 
+    /**
+     * Empresa que ya tiene cuenta con el dominio del correo escrito. Mientras esté fijada,
+     * el formulario ofrece enviarle la solicitud de acceso a su administrador en vez de
+     * dejar a la persona en un callejón sin salida (ver Rules\EmpresaYaRegistrada).
+     */
+    public ?int $empresa_registrada_id = null;
+
+    public string $empresa_registrada_nombre = '';
+
+    public bool $solicitud_enviada = false;
+
     public function setRole(string $role): void
     {
         $this->role = in_array($role, ['postulante', 'empresa'], true) ? $role : 'postulante';
+        $this->olvidarEmpresaRegistrada();
+    }
+
+    public function updatedEmail(): void
+    {
+        // El aviso pertenece al correo con el que se intentó registrar: si lo cambia, se cae.
+        $this->olvidarEmpresaRegistrada();
     }
 
     public function updatedRut(): void
@@ -52,6 +73,8 @@ class Register extends Component
     public function submit(): void
     {
         $this->rut = Rut::formatear($this->rut);
+
+        $this->recordarEmpresaRegistrada();
 
         $this->validate(messages: [
             'acepta.accepted' => 'Debes autorizar el tratamiento de datos.',
@@ -100,6 +123,103 @@ class Register extends Component
 
         // TEMPORAL: sin verificación de correo, se va directo al panel.
         $this->redirect(route('dashboard'), navigate: true);
+    }
+
+    /**
+     * Avisa al administrador de la empresa ya registrada que esta persona quiere sumarse,
+     * con los datos que necesita para crearle el usuario desde Equipo.
+     */
+    public function solicitarAcceso(): void
+    {
+        $empresa = $this->empresa_registrada_id === null
+            ? null
+            : Empresa::query()->with('user:id,email,name')->find($this->empresa_registrada_id);
+
+        // Se revalida el dominio: los datos del formulario pudieron cambiar desde el aviso.
+        if ($empresa === null || $this->empresaConDominioDelCorreo()?->id !== $empresa->id) {
+            $this->olvidarEmpresaRegistrada();
+            $this->addError('email', 'No pudimos identificar la cuenta de tu empresa. Revisa tu correo e inténtalo de nuevo.');
+
+            return;
+        }
+
+        $this->validate([
+            'nombre' => ['required', 'string', 'max:80'],
+            'apellidos' => ['required', 'string', 'max:80'],
+            'telefono' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $administrador = $empresa->user?->email;
+
+        if ($administrador === null) {
+            $this->addError('email', 'Esa cuenta no tiene un administrador con correo registrado. Escríbenos a contacto@adconsulting.cl y te ayudamos.');
+
+            return;
+        }
+
+        // Una solicitud por correo cada 15 minutos: evita que el botón se use para spamear
+        // la bandeja del administrador.
+        $llave = 'solicitud-acceso-equipo:'.mb_strtolower($this->email);
+
+        if (RateLimiter::tooManyAttempts($llave, 1)) {
+            $this->solicitud_enviada = true;
+
+            return;
+        }
+
+        RateLimiter::hit($llave, 900);
+
+        Mail::to($administrador)->send(new SolicitudAccesoEquipo(
+            empresa: $empresa,
+            nombre: $this->nombre,
+            apellidos: $this->apellidos,
+            email: $this->email,
+            telefono: $this->telefono !== '' ? $this->telefono : null,
+        ));
+
+        $this->solicitud_enviada = true;
+    }
+
+    /** Fija (o limpia) la empresa que ya tiene cuenta con el dominio del correo escrito. */
+    protected function recordarEmpresaRegistrada(): void
+    {
+        $empresa = $this->empresaConDominioDelCorreo();
+
+        if ($empresa === null) {
+            $this->olvidarEmpresaRegistrada();
+
+            return;
+        }
+
+        $this->empresa_registrada_id = $empresa->id;
+        $this->empresa_registrada_nombre = (string) $empresa->razon_social;
+    }
+
+    protected function olvidarEmpresaRegistrada(): void
+    {
+        $this->empresa_registrada_id = null;
+        $this->empresa_registrada_nombre = '';
+        $this->solicitud_enviada = false;
+    }
+
+    /**
+     * Empresa con cuenta para el dominio del correo escrito, solo cuando pedir acceso es
+     * la salida correcta: registro de empresa y correo que todavía no es de nadie (si ya
+     * existe el usuario, lo que corresponde es iniciar sesión).
+     */
+    protected function empresaConDominioDelCorreo(): ?Empresa
+    {
+        if ($this->role !== 'empresa' || $this->email === '') {
+            return null;
+        }
+
+        if (User::query()->whereRaw('lower(email) = ?', [mb_strtolower(trim($this->email))])->exists()) {
+            return null;
+        }
+
+        $dominio = EmpresaYaRegistrada::dominioDe($this->email);
+
+        return $dominio === null ? null : EmpresaYaRegistrada::empresaConDominio($dominio);
     }
 
     /**

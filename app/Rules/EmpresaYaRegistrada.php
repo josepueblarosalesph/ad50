@@ -17,8 +17,9 @@ use Illuminate\Translation\PotentiallyTranslatedString;
  * usuarios de @ejemplo.cl, el camino correcto es que el administrador de esa cuenta lo
  * sume desde Equipo, no crear una cuenta paralela.
  *
- * El mensaje nombra la empresa y al administrador para que la persona sepa a quién
- * recurrir; sin ese dato el aviso sería un callejón sin salida.
+ * El mensaje nombra la empresa, pero no expone el correo de quien la administra: el
+ * formulario ofrece un botón para enviarle la solicitud (ver Auth\Register::solicitarAcceso()),
+ * así la persona sale del paso sin que publiquemos datos de contacto de terceros.
  */
 class EmpresaYaRegistrada implements ValidationRule
 {
@@ -45,15 +46,10 @@ class EmpresaYaRegistrada implements ValidationRule
             return;
         }
 
-        $administrador = $empresa->user?->email;
-
         $fail(sprintf(
-            'Ya existe una cuenta de %s registrada con el dominio @%s. Para sumarte a esa cuenta, pide %s que te agregue como usuario desde la sección Equipo.',
+            'Ya existe una cuenta de %s registrada con el dominio @%s. Para sumarte a esa cuenta, solicita al administrador que te agregue como usuario desde la sección Equipo.',
             $empresa->razon_social,
             $dominio,
-            $administrador === null
-                ? 'a quien la administra'
-                : 'al administrador de la cuenta ('.$administrador.')',
         ));
     }
 

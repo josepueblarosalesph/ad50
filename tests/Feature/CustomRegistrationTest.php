@@ -1,10 +1,13 @@
 <?php
 
 use App\Livewire\Auth\Register;
+use App\Mail\SolicitudAccesoEquipo;
 use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
 test('a postulante can create an account', function () {
@@ -143,7 +146,8 @@ test('quien comparte el dominio de una empresa ya registrada debe pedir acceso a
         ->call('submit')
         ->assertHasErrors('email');
 
-    // El mensaje nombra la empresa y a quién recurrir.
+    // El mensaje nombra la empresa y el camino a seguir, pero no expone el correo del
+    // administrador: para eso está el botón que le envía la solicitud.
     $mensaje = Livewire::test(Register::class)
         ->set('role', 'empresa')
         ->set('nombre', 'Ana')
@@ -159,11 +163,98 @@ test('quien comparte el dominio de una empresa ya registrada debe pedir acceso a
 
     expect($mensaje)->toContain('Ejemplo SpA')
         ->toContain('@ejemplo.cl')
-        ->toContain('admin@ejemplo.cl')
+        ->not->toContain('admin@ejemplo.cl')
         ->toContain('Equipo');
 
     expect(User::query()->where('email', 'ana@ejemplo.cl')->exists())->toBeFalse();
 });
+
+test('quien comparte el dominio puede pedir por correo que el administrador lo sume al equipo', function () {
+    Mail::fake();
+
+    $admin = empresaRegistradaCon('admin@ejemplo.cl', 'Ejemplo SpA');
+
+    $componente = registroEmpresaBloqueado()
+        ->assertSet('empresa_registrada_id', $admin->empresa->id)
+        ->assertSet('empresa_registrada_nombre', 'Ejemplo SpA')
+        ->assertSet('solicitud_enviada', false)
+        // El botón aparece; el correo del administrador no.
+        ->assertSee('Solicitar acceso al administrador')
+        ->assertDontSee('admin@ejemplo.cl');
+
+    $componente->call('solicitarAcceso')
+        ->assertHasNoErrors()
+        ->assertSet('solicitud_enviada', true)
+        ->assertSee('Solicitud enviada');
+
+    Mail::assertSent(SolicitudAccesoEquipo::class, function (SolicitudAccesoEquipo $mail) use ($admin) {
+        $mail->assertSeeInHtml('Ana Silva');
+        $mail->assertSeeInHtml('ana@ejemplo.cl');
+        $mail->assertSeeInHtml('+56 9 8765 4321');
+        $mail->assertSeeInHtml(route('empresa.equipo'));
+
+        return $mail->hasTo($admin->email)
+            && $mail->hasReplyTo('ana@ejemplo.cl')
+            && $mail->empresa->is($admin->empresa);
+    });
+
+    // Sigue sin crearse una segunda cuenta: el acceso lo da el administrador.
+    expect(User::query()->where('email', 'ana@ejemplo.cl')->exists())->toBeFalse();
+});
+
+test('la solicitud de acceso no se puede repetir a voluntad', function () {
+    Mail::fake();
+
+    empresaRegistradaCon('admin@ejemplo.cl');
+
+    registroEmpresaBloqueado()
+        ->call('solicitarAcceso')
+        ->call('solicitarAcceso')
+        ->assertSet('solicitud_enviada', true);
+
+    Mail::assertSentCount(1);
+});
+
+test('sin empresa bloqueada no se envía ninguna solicitud', function () {
+    Mail::fake();
+
+    // Nadie fijó empresa_registrada_id: el botón ni siquiera se muestra, y la acción
+    // llamada a mano no envía correo.
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('email', 'ana@ejemplo.cl')
+        ->call('solicitarAcceso')
+        ->assertHasErrors('email');
+
+    Mail::assertNothingSent();
+});
+
+test('cambiar el correo descarta el aviso de la empresa ya registrada', function () {
+    empresaRegistradaCon('admin@ejemplo.cl');
+
+    registroEmpresaBloqueado()
+        ->set('email', 'ana@otra-empresa.cl')
+        ->assertSet('empresa_registrada_id', null)
+        ->assertSet('solicitud_enviada', false)
+        ->assertDontSee('Solicitar acceso al administrador');
+});
+
+/** Deja el formulario en el estado en que el registro quedó bloqueado por dominio. */
+function registroEmpresaBloqueado(): Testable
+{
+    return Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@ejemplo.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Ejemplo SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasErrors('email');
+}
 
 test('el dominio se compara completo: un dominio parecido no bloquea el registro', function () {
     empresaRegistradaCon('admin@ejemplo.cl');
