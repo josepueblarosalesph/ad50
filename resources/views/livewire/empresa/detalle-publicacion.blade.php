@@ -37,7 +37,6 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <h2 class="text-[16px] font-bold">Resumen</h2>
-                <x-editar-seccion :publicacion="$publicacion" seccion="la publicación" />
             </div>
             <div class="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
@@ -71,8 +70,6 @@
                         <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="font-bold text-orange-600 underline underline-offset-2 hover:text-orange-700">Ver el listado completo de postulantes</a>
                     </p>
                 </div>
-                {{-- Los candidatos se agregan desde Prospección, no desde el formulario. --}}
-                <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm flex-none whitespace-nowrap text-[14px]" aria-label="Agregar candidatos desde Prospección de Candidatos"><flux:icon.pencil-square class="size-4" />Editar</a>
             </div>
             <div class="divide-y divide-line px-6">
                 @forelse ($candidatosAsociados as $candidato)
@@ -100,12 +97,11 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Estado de la publicación</h2><p class="mt-1 text-[13px] text-gray-500">Controla si la oferta sigue visible en el portal de postulantes.</p></div>
-                <div class="flex flex-wrap items-center gap-3">
                 <select
                     wire:change="cambiarEstado($event.target.value)"
                     aria-label="Estado de la publicación"
                     @class([
-                        'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
+                        'flex-none rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
                         'border-[#BFE6CD] bg-match-100 text-match' => $publicacion->estaVigente(),
                         'border-line-2 bg-paper text-gray-600' => ! $publicacion->estaVigente(),
                     ])
@@ -114,15 +110,12 @@
                         <option value="{{ $valor }}" @selected($publicacion->estado === $valor)>{{ $etiqueta }}</option>
                     @endforeach
                 </select>
-                <x-editar-seccion :publicacion="$publicacion" ancla="configuraciones" seccion="el estado y la vigencia de la publicación" />
-                </div>
             </div>
         </section>
 
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Descripción general</h2><p class="mt-1 text-[13px] text-gray-500">Información principal que ve el postulante.</p></div>
-                <x-editar-seccion :publicacion="$publicacion" ancla="descripcion-general" seccion="la descripción general" />
             </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Tipo de cargo</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->tipo_cargo }}</dd></div>
@@ -149,7 +142,6 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Requisitos</h2><p class="mt-1 text-[13px] text-gray-500">Perfil mínimo solicitado.</p></div>
-                <x-editar-seccion :publicacion="$publicacion" ancla="requisitos" seccion="los requisitos" />
             </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 <div><dt class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Experiencia laboral</dt><dd class="mt-1 text-[14px] text-ink">{{ $publicacion->experiencia_laboral }}</dd></div>
@@ -181,7 +173,6 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Preguntas generales</h2><p class="mt-1 text-[13px] text-gray-500">Los postulantes las responden al enviar su postulación.</p></div>
-                <x-editar-seccion :publicacion="$publicacion" ancla="preguntas" seccion="las preguntas generales" />
             </div>
             <div class="p-6">
                 @forelse ($publicacion->preguntas ?? [] as $pregunta)
@@ -195,7 +186,6 @@
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
                 <div><h2 class="text-[19px] font-extrabold">Configuraciones</h2></div>
-                <x-editar-seccion :publicacion="$publicacion" ancla="configuraciones" seccion="las configuraciones" />
             </div>
             <dl class="grid gap-5 p-6 md:grid-cols-2">
                 @foreach ([

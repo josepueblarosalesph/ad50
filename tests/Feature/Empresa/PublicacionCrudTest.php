@@ -126,7 +126,7 @@ test('la sección de publicaciones muestra su menú lateral en listado, detalle 
         ->assertDontSee('Nueva publicación');
 });
 
-test('cada tarjeta del detalle enlaza a su sección del formulario de edición', function () {
+test('el detalle tiene un único botón de editar, el del encabezado', function () {
     [$user, $empresa] = empresaConPublicaciones();
     $publicacion = Publicacion::factory()->create([
         'empresa_id' => $empresa->id,
@@ -135,20 +135,15 @@ test('cada tarjeta del detalle enlaza a su sección del formulario de edición',
 
     $edicion = route('empresa.publicaciones.edit', $publicacion);
 
-    $respuesta = $this->actingAs($user)
+    $html = $this->actingAs($user)
         ->get(route('empresa.publicaciones.show', $publicacion))
-        ->assertOk();
+        ->assertOk()
+        ->assertSee('href="'.$edicion.'"', false)
+        ->getContent();
 
-    foreach (['descripcion-general', 'requisitos', 'preguntas', 'configuraciones'] as $ancla) {
-        $respuesta->assertSee('href="'.$edicion.'#'.$ancla.'"', false);
-    }
-
-    // El formulario declara las anclas a las que apuntan esos botones.
-    $formulario = $this->actingAs($user)->get($edicion)->assertOk();
-
-    foreach (['descripcion-general', 'requisitos', 'preguntas', 'configuraciones'] as $ancla) {
-        $formulario->assertSee('id="'.$ancla.'"', false);
-    }
+    // Las tarjetas ya no repiten el botón, ni con ancla a una sección del formulario.
+    expect(substr_count($html, $edicion))->toBe(1)
+        ->and($html)->not->toContain($edicion.'#');
 });
 
 test('una empresa no puede ver el detalle de una publicación ajena', function () {
