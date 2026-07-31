@@ -10,39 +10,25 @@
         <h1 class="text-[27px] font-extrabold tracking-[-0.02em]">Hola, {{ Str::of(auth()->user()->name)->before(' ') }}</h1>
         <p class="text-[14px] text-gray-500 mt-1.5">Así se ve tu presencia en AD+50</p>
     </div>
+    @php($completitud = $postulante?->completitud ?? 0)
     <div class="flex flex-wrap items-center gap-3">
+        {{-- La completitud solo se muestra mientras haya algo que completar: con el perfil
+             al 100% la barra no aporta y ocupaba una tarjeta entera. --}}
+        @if ($completitud < 100)
+            <a href="{{ route('postulante.ficha') }}" class="ad-toggle-row gap-2.5 py-2 transition hover:border-orange-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" title="Completa tu perfil para llegar al 100%">
+                <span class="text-[13px] font-bold text-gray-500">Perfil</span>
+                <span class="block h-1.5 w-16 flex-none overflow-hidden rounded-full bg-line">
+                    <span class="block h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></span>
+                </span>
+                <span class="text-[13px] font-extrabold text-ink">{{ $completitud }}%</span>
+            </a>
+        @endif
+
         <div class="ad-toggle-row py-2">
             <div><b class="block text-[13px]">{{ $postulante?->visible ? 'Visible para reclutadores' : 'Perfil pausado' }}</b></div>
             <flux:switch wire:click="toggleVisibilidad" :checked="$postulante?->visible ?? false" aria-label="Cambiar visibilidad del perfil" />
         </div>
         <a href="{{ route('postulante.ficha') }}" class="ad-btn-primary ad-btn-sm">Editar mi perfil</a>
-    </div>
-</div>
-
-{{-- ====== Completitud del perfil ====== --}}
-@php($completitud = $postulante?->completitud ?? 0)
-<div class="ad-card mb-6 p-5">
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-4">
-        <span class="grid size-11 flex-none place-items-center rounded-[12px] bg-orange-100 text-orange-600">
-            <flux:icon.user class="size-5" />
-        </span>
-
-        <div class="min-w-[220px] flex-1">
-            <div class="flex items-baseline justify-between gap-3">
-                <span class="text-[13px] font-semibold text-gray-500">Completitud del perfil</span>
-                <span class="text-[26px] font-extrabold leading-none tracking-[-0.02em]">{{ $completitud }}%</span>
-            </div>
-            <div class="mt-2 h-2 overflow-hidden rounded-full bg-line">
-                <div class="h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></div>
-            </div>
-            <p @class(['mt-2 text-[13px] font-semibold', 'text-match' => $completitud >= 100, 'text-gray-500' => $completitud < 100])>
-                {{ $completitud >= 100 ? '¡Tu perfil está completo!' : 'Completa tu perfil para llegar a 100%' }}
-            </p>
-        </div>
-
-        @if ($completitud < 100)
-            <a href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm flex-none">Completar perfil</a>
-        @endif
     </div>
 </div>
 

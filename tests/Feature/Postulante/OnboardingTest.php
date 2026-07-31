@@ -251,3 +251,31 @@ test('at least one education entry is required to advance past the education ste
         ->assertHasErrors('educaciones')
         ->assertSet('pasoActual', 4);
 });
+
+test('el panel muestra la completitud junto a la visibilidad y la esconde al llegar al 100%', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    $postulante = Postulante::query()->create([
+        'user_id' => $user->id,
+        'completitud' => 75,
+        'onboarding_completado' => true,
+        'onboarding_paso' => 6,
+        'visible' => true,
+    ]);
+
+    // Con el perfil incompleto: indicador compacto en la cabecera, sin la tarjeta antigua.
+    $this->actingAs($user)->get(route('postulante.panel'))
+        ->assertOk()
+        ->assertSee('title="Completa tu perfil para llegar al 100%"', false)
+        ->assertSee('75%')
+        ->assertSee('Visible para reclutadores')
+        ->assertDontSee('Completitud del perfil');
+
+    $postulante->update(['completitud' => 100]);
+
+    // Al 100% no queda rastro de la barra. Se autentica una instancia nueva: la anterior
+    // ya trae cargada la relación `postulante` con el valor viejo.
+    $this->actingAs($user->fresh())->get(route('postulante.panel'))
+        ->assertOk()
+        ->assertDontSee('title="Completa tu perfil para llegar al 100%"', false)
+        ->assertSee('Visible para reclutadores');
+});
