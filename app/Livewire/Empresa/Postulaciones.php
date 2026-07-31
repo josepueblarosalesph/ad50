@@ -3,8 +3,11 @@
 namespace App\Livewire\Empresa;
 
 use App\Models\Postulacion;
+use App\Models\Postulante;
 use App\Models\Publicacion;
+use App\Models\PublicacionCandidato;
 use App\Services\MatchingService;
+use App\Support\CandidatoDePublicacion;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
@@ -24,9 +27,12 @@ class Postulaciones extends Component
 
     public Publicacion $publicacion;
 
-    /** Filtro por estado de la postulación (todas | enviada | en_revision | seleccionada | descartada). */
+    /** Chip activo: `todas`, un estado de postulación, o `agregados` (los que sumó la empresa). */
     #[Url(history: true)]
     public string $estado = 'todas';
+
+    /** Valor del chip que filtra por origen en vez de por estado de postulación. */
+    private const FILTRO_AGREGADOS = 'agregados';
 
     /**
      * Criterios de perfil provenientes del panel lateral (mismos de Prospección de Candidatos), aplicados al vuelo.
@@ -35,16 +41,27 @@ class Postulaciones extends Component
      */
     public ?array $criterios = null;
 
-    /** Postulación cuyo detalle está abierto; null con el panel cerrado. */
+    /** Postulante cuyo detalle está abierto; null con el panel cerrado. */
     public ?int $detalleId = null;
 
-    /** Abre el perfil completo del postulante sin salir del listado. */
-    public function verDetalle(int $postulacionId): void
+    /**
+     * Abre el perfil completo sin salir del listado. La clave es el postulante y no la
+     * postulación, porque la fila puede ser de alguien que la empresa agregó y que por
+     * tanto no tiene postulación.
+     */
+    public function verDetalle(int $postulanteId): void
     {
-        abort_unless($this->publicacion->postulaciones()->whereKey($postulacionId)->exists(), 404);
+        abort_unless($this->esCandidatoDeLaPublicacion($postulanteId), 404);
 
-        $this->detalleId = $postulacionId;
+        $this->detalleId = $postulanteId;
         $this->modal('detalle-postulante')->show();
+    }
+
+    /** El postulante llegó a esta publicación por alguno de los dos caminos. */
+    private function esCandidatoDeLaPublicacion(int $postulanteId): bool
+    {
+        return $this->publicacion->postulaciones()->where('postulante_id', $postulanteId)->exists()
+            || $this->publicacion->candidatos()->whereKey($postulanteId)->exists();
     }
 
     public function cerrarDetalle(): void
@@ -70,7 +87,10 @@ class Postulaciones extends Component
 
     public function mostrarEstado(string $estado): void
     {
-        abort_unless($estado === 'todas' || array_key_exists($estado, Postulacion::ESTADOS), 404);
+        abort_unless(
+            in_array($estado, ['todas', self::FILTRO_AGREGADOS], true) || array_key_exists($estado, Postulacion::ESTADOS),
+            404
+        );
 
         $this->estado = $estado;
         $this->resetPage(pageName: 'postulaciones');
@@ -105,28 +125,22 @@ class Postulaciones extends Component
         );
     }
 
-    #[Title('Postulaciones · AD+50')]
+    #[Title('Postulantes · AD+50')]
     #[Layout('components.layouts.app')]
     public function render(): View
     {
-        $base = $this->publicacion->postulaciones()->with('postulante.user');
+        $candidatos = $this->candidatos();
 
-        // Conteos por estado (sin filtro de perfil) para los chips.
-        $conteoPorEstado = (clone $base)->selectRaw('estado, count(*) as total')
-            ->groupBy('estado')->pluck('total', 'estado');
+        $filtrados = $candidatos
+            ->filter(fn (CandidatoDePublicacion $candidato): bool => $this->cumpleFiltroDeChip($candidato))
+            ->filter(fn (CandidatoDePublicacion $candidato): bool => $this->cumpleCriterios($candidato->postulante))
+            ->values();
 
-        /** @var Collection<int, Postulacion> $postulaciones */
-        $postulaciones = (clone $base)
-            ->when($this->estado !== 'todas', fn ($query) => $query->where('estado', $this->estado))
-            ->latest()
-            ->get()
-            ->filter(fn (Postulacion $postulacion): bool => $this->cumpleCriterios($postulacion));
-
-        $total = $postulaciones->count();
+        $total = $filtrados->count();
         $pagina = Paginator::resolveCurrentPage('postulaciones');
 
         $pagina = new LengthAwarePaginator(
-            $postulaciones->forPage($pagina, 15)->values(),
+            $filtrados->forPage($pagina, 15)->values(),
             $total,
             15,
             $pagina,
@@ -135,33 +149,84 @@ class Postulaciones extends Component
 
         return view('livewire.empresa.postulaciones', [
             'publicacion' => $this->publicacion,
-            'postulaciones' => $pagina,
-            'totalPostulaciones' => (int) $conteoPorEstado->sum(),
+            'candidatos' => $pagina,
+            'totalCandidatos' => $candidatos->count(),
+            'totalPostularon' => $candidatos->filter(fn (CandidatoDePublicacion $c): bool => $c->postulo())->count(),
+            'totalAgregados' => $candidatos->filter(fn (CandidatoDePublicacion $c): bool => $c->agregado())->count(),
             'totalFiltradas' => $total,
-            'conteoPorEstado' => $conteoPorEstado,
+            'conteoPorEstado' => $candidatos
+                ->filter(fn (CandidatoDePublicacion $c): bool => $c->postulo())
+                ->countBy(fn (CandidatoDePublicacion $c): string => (string) $c->estado()),
             'estados' => Postulacion::ESTADOS,
+            'filtroAgregados' => self::FILTRO_AGREGADOS,
             'detalle' => $this->detalleId === null
                 ? null
-                : $this->publicacion->postulaciones()
-                    ->with('postulante.user')
-                    ->find($this->detalleId),
+                : $candidatos->first(fn (CandidatoDePublicacion $c): bool => $c->postulante->id === $this->detalleId),
         ]);
     }
 
-    /** Evalúa el perfil del postulante contra los criterios del panel lateral (si hay). */
-    private function cumpleCriterios(Postulacion $postulacion): bool
+    /**
+     * Todas las personas de la publicación, vengan de una postulación o de haber sido
+     * agregadas por la empresa. Se agrupan por postulante: quien fue agregado y además
+     * postuló es una sola fila con los dos orígenes, no dos.
+     *
+     * @return Collection<int, CandidatoDePublicacion>
+     */
+    private function candidatos(): Collection
     {
-        if ($postulacion->postulante === null) {
-            return false;
-        }
+        /** @var Collection<int, Postulacion> $postulaciones */
+        $postulaciones = $this->publicacion->postulaciones()
+            ->with('postulante.user')
+            ->get()
+            ->filter(fn (Postulacion $postulacion): bool => $postulacion->postulante !== null)
+            ->keyBy('postulante_id');
 
+        /** @var Collection<int, PublicacionCandidato> $asociaciones */
+        $asociaciones = PublicacionCandidato::query()
+            ->where('publicacion_id', $this->publicacion->id)
+            ->with(['postulante.user', 'busqueda:id,titulo'])
+            ->get()
+            // Un candidato que ocultó su perfil deja de listarse, igual que en Prospección.
+            ->filter(fn (PublicacionCandidato $asociacion): bool => $asociacion->postulante?->visible === true)
+            ->keyBy('postulante_id');
+
+        return $postulaciones->keys()
+            ->merge($asociaciones->keys())
+            ->unique()
+            ->map(function (int $postulanteId) use ($postulaciones, $asociaciones): ?CandidatoDePublicacion {
+                $postulacion = $postulaciones->get($postulanteId);
+                $asociacion = $asociaciones->get($postulanteId);
+                $postulante = $postulacion?->postulante ?? $asociacion?->postulante;
+
+                return $postulante instanceof Postulante
+                    ? new CandidatoDePublicacion($postulante, $postulacion, $asociacion)
+                    : null;
+            })
+            ->filter()
+            ->sortByDesc(fn (CandidatoDePublicacion $candidato) => $candidato->fecha())
+            ->values();
+    }
+
+    /** Chip activo: `todas`, un estado de postulación o los agregados por la empresa. */
+    private function cumpleFiltroDeChip(CandidatoDePublicacion $candidato): bool
+    {
+        return match ($this->estado) {
+            'todas' => true,
+            self::FILTRO_AGREGADOS => $candidato->agregado(),
+            default => $candidato->estado() === $this->estado,
+        };
+    }
+
+    /** Evalúa el perfil del postulante contra los criterios del panel lateral (si hay). */
+    private function cumpleCriterios(Postulante $postulante): bool
+    {
         $criterios = $this->criterios ?? [];
 
         if ($criterios === []) {
             return true;
         }
 
-        $detalle = app(MatchingService::class)->evaluar($postulacion->postulante, $criterios);
+        $detalle = app(MatchingService::class)->evaluar($postulante, $criterios);
 
         return ! collect($detalle)->contains(fn (array $criterio): bool => ! ($criterio['cumple'] ?? false));
     }

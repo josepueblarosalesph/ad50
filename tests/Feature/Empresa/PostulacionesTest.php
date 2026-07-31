@@ -3,10 +3,12 @@
 use App\Livewire\Empresa\FiltrosPostulaciones;
 use App\Livewire\Empresa\Postulaciones;
 use App\Livewire\Empresa\SelectorCriterio;
+use App\Models\Busqueda;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\Publicacion;
+use App\Models\PublicacionCandidato;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -50,11 +52,97 @@ test('el listado muestra a los postulantes en tarjetas compactas', function () {
 
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->assertViewHas('totalPostulaciones', 2)
+        ->assertViewHas('totalCandidatos', 2)
+        ->assertViewHas('totalPostularon', 2)
+        ->assertViewHas('totalAgregados', 0)
         ->assertSee('Ana Torres')
         ->assertSee('Beto Díaz')
         // El detalle (respuestas, contacto) ya no estira cada tarjeta.
         ->assertDontSee('Me interesa por la experiencia del equipo.');
+});
+
+/** Agrega un candidato a la publicación como lo hace la empresa desde Prospección. */
+function agregarA(Publicacion $publicacion, string $nombre, ?Busqueda $busqueda = null): Postulante
+{
+    $user = User::factory()->create(['role' => 'postulante', 'name' => $nombre]);
+    $postulante = Postulante::query()->create(['user_id' => $user->id, 'visible' => true]);
+
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $publicacion->id,
+        'postulante_id' => $postulante->id,
+        'busqueda_id' => $busqueda?->id,
+    ]);
+
+    return $postulante;
+}
+
+test('el listado unifica a quienes postularon y a quienes agregó la empresa, marcando el origen', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Postuló', 'Biobío');
+    agregarA($publicacion, 'Beto Agregado');
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertViewHas('totalCandidatos', 2)
+        ->assertViewHas('totalPostularon', 1)
+        ->assertViewHas('totalAgregados', 1)
+        // Las dos personas en una sola lista, cada una con su origen.
+        ->assertSee('Ana Postuló')
+        ->assertSee('Beto Agregado')
+        ->assertSee('Postuló')
+        ->assertSee('Agregado por la empresa')
+        // Sin postulación no hay estado que gestionar.
+        ->assertSee('Sin postulación');
+});
+
+test('quien fue agregado y además postuló ocupa una sola fila con los dos orígenes', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulacion = postularA($publicacion, 'Ana Ambas', 'Biobío');
+
+    PublicacionCandidato::query()->create([
+        'publicacion_id' => $publicacion->id,
+        'postulante_id' => $postulacion->postulante_id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        // Una sola persona, contada en ambos orígenes.
+        ->assertViewHas('totalCandidatos', 1)
+        ->assertViewHas('totalPostularon', 1)
+        ->assertViewHas('totalAgregados', 1)
+        ->assertViewHas('candidatos', fn ($candidatos): bool => $candidatos->total() === 1);
+});
+
+test('el chip de agregados filtra por origen y los de estado solo alcanzan a quien postuló', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Postuló', 'Biobío');
+    agregarA($publicacion, 'Beto Agregado');
+
+    $componente = Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion]);
+
+    $componente->call('mostrarEstado', 'agregados')
+        ->assertSee('Beto Agregado')
+        ->assertDontSee('Ana Postuló');
+
+    // Un estado de postulación deja fuera a quien no postuló.
+    $componente->call('mostrarEstado', 'enviada')
+        ->assertSee('Ana Postuló')
+        ->assertDontSee('Beto Agregado');
+});
+
+test('el detalle de un agregado no muestra contacto ni respuestas', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $agregado = agregarA($publicacion, 'Beto Agregado');
+    $agregado->update(['telefono' => '+56 9 1111 1111']);
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('verDetalle', $agregado->id)
+        ->assertSet('detalleId', $agregado->id)
+        ->assertSee('Agregado por la empresa el')
+        ->assertSee('sus datos de contacto se ven al desbloquear el perfil')
+        ->assertDontSee('+56 9 1111 1111')
+        ->assertDontSee('¿Por qué te interesa?');
 });
 
 test('al hacer clic en el nombre se abre el detalle del postulante', function () {
@@ -64,8 +152,8 @@ test('al hacer clic en el nombre se abre el detalle del postulante', function ()
 
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->call('verDetalle', $postulacion->id)
-        ->assertSet('detalleId', $postulacion->id)
+        ->call('verDetalle', $postulacion->postulante_id)
+        ->assertSet('detalleId', $postulacion->postulante_id)
         // El detalle trae contacto, respuestas y perfil.
         ->assertSee('¿Por qué te interesa?')
         ->assertSee('Me interesa por la experiencia del equipo.')
@@ -81,7 +169,7 @@ test('no se puede abrir el detalle de una postulación de otra publicación', fu
 
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->call('verDetalle', $ajena->id)
+        ->call('verDetalle', $ajena->postulante_id)
         ->assertStatus(404);
 });
 
@@ -207,7 +295,7 @@ test('el nombre muestra un indicador mientras se abre el detalle', function () {
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
         // El botón se deshabilita y aparece el spinner mientras viaja la petición.
-        ->assertSee('wire:target="verDetalle('.$postulacion->id.')"', false)
+        ->assertSee('wire:target="verDetalle('.$postulacion->postulante_id.')"', false)
         ->assertSee('animate-spin', false);
 });
 

@@ -64,14 +64,21 @@ class DetallePublicacion extends Component
     #[Layout('components.layouts.app')]
     public function render(): View
     {
+        $candidatosAsociados = $this->publicacion->candidatos()
+            ->where('visible', true)
+            ->with('user')
+            ->orderBy('postulantes.id')
+            ->get();
+
         return view('livewire.empresa.detalle-publicacion', [
             'totalPostulaciones' => $this->publicacion->postulaciones()->count(),
             'estados' => Publicacion::ESTADOS,
-            'candidatosAsociados' => $this->publicacion->candidatos()
-                ->where('visible', true)
-                ->with('user')
-                ->orderBy('postulantes.id')
-                ->get(),
+            'candidatosAsociados' => $candidatosAsociados,
+            // Personas distintas en la publicación: quien postuló más quien fue agregado,
+            // sin contar dos veces a quien llegó por los dos caminos.
+            'totalCandidatos' => $this->publicacion->postulaciones()
+                ->whereNotIn('postulante_id', $candidatosAsociados->modelKeys())
+                ->count() + $candidatosAsociados->count(),
         ])->title($this->publicacion->cargo.' · AD+50');
     }
 }

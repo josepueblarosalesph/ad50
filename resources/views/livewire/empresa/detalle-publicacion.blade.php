@@ -41,8 +41,9 @@
             </div>
             <div class="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Postulaciones</p>
-                    <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="mt-1 block text-[24px] font-extrabold text-orange-600 hover:text-orange-700">{{ $totalPostulaciones }}</a>
+                    <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Postulantes</p>
+                    <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="mt-1 block text-[24px] font-extrabold text-orange-600 hover:text-orange-700">{{ $totalCandidatos }}</a>
+                    <p class="mt-0.5 text-[12px] text-gray-500">{{ $totalPostulaciones }} postularon · {{ $candidatosAsociados->count() }} agregados</p>
                 </div>
                 <div>
                     <p class="text-[12px] font-bold uppercase tracking-[0.1em] text-gray-400">Vacantes</p>
@@ -63,12 +64,15 @@
         {{-- Candidatos que la empresa asoció a esta publicación desde Prospección de Candidatos. --}}
         <section class="ad-card mb-6">
             <div class="ad-card-head flex-wrap gap-3">
-                <h2 class="text-[16px] font-bold">Candidatos prospectados</h2>
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="text-[13px] font-semibold text-gray-500">{{ $candidatosAsociados->count() }} asociado(s)</span>
-                    {{-- Los candidatos se asocian desde Prospección, no desde el formulario. --}}
-                    <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm flex-none whitespace-nowrap text-[14px]" aria-label="Asociar candidatos desde Prospección de Candidatos"><flux:icon.pencil-square class="size-4" />Editar</a>
+                <div>
+                    <h2 class="text-[16px] font-bold">Candidatos agregados por la empresa</h2>
+                    <p class="mt-1 text-[13px] text-gray-500">
+                        {{ $candidatosAsociados->count() }} agregado(s) desde Prospección.
+                        <a wire:navigate href="{{ route('empresa.publicaciones.postulaciones', $publicacion) }}" class="font-bold text-orange-600 underline underline-offset-2 hover:text-orange-700">Ver el listado completo de postulantes</a>
+                    </p>
                 </div>
+                {{-- Los candidatos se agregan desde Prospección, no desde el formulario. --}}
+                <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-ghost ad-btn-sm flex-none whitespace-nowrap text-[14px]" aria-label="Agregar candidatos desde Prospección de Candidatos"><flux:icon.pencil-square class="size-4" />Editar</a>
             </div>
             <div class="divide-y divide-line px-6">
                 @forelse ($candidatosAsociados as $candidato)

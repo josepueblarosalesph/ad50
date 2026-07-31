@@ -111,9 +111,19 @@
                     </div>
                 </div>
 
-                {{-- La búsqueda de origen ya se filtra desde la barra superior: en la
-                     tarjeta se omite para dejar la fila solo con la acción. --}}
-                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                {{-- Pie de la tarjeta: las publicaciones asociadas a la izquierda y la acción
+                     a la derecha. Van en la misma fila porque, sin la búsqueda de origen, una
+                     fila propia para el botón dejaba una franja vacía sobre las publicaciones. --}}
+                <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-line pt-3">
+                    @if ($candidato->publicacionesAsociadas->isNotEmpty())
+                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">En publicaciones</span>
+                        @foreach ($candidato->publicacionesAsociadas as $publicacionAsociada)
+                            <a wire:navigate href="{{ route('empresa.publicaciones.show', $publicacionAsociada) }}" class="ad-chip hover:border-orange-300 hover:text-orange-600">
+                                <flux:icon.megaphone class="size-3.5" />{{ $publicacionAsociada->cargo }}
+                            </a>
+                        @endforeach
+                    @endif
+
                     <button
                         type="button"
                         wire:click="quitarFavorito({{ $candidato->id }})"
@@ -124,17 +134,6 @@
                         <flux:icon.x-mark class="size-3.5" />Quitar de favoritos
                     </button>
                 </div>
-
-                @if ($candidato->publicacionesAsociadas->isNotEmpty())
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">En publicaciones</span>
-                        @foreach ($candidato->publicacionesAsociadas as $publicacionAsociada)
-                            <a wire:navigate href="{{ route('empresa.publicaciones.show', $publicacionAsociada) }}" class="ad-chip hover:border-orange-300 hover:text-orange-600">
-                                <flux:icon.megaphone class="size-3.5" />{{ $publicacionAsociada->cargo }}
-                            </a>
-                        @endforeach
-                    </div>
-                @endif
             </article>
         @empty
             <div class="ad-card p-10 text-center">
