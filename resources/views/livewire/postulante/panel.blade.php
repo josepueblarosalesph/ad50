@@ -49,8 +49,8 @@
                             {{ $publicacion->nombre_empresa }} · {{ $publicacion->comuna }} · {{ $publicacion->modalidad }}
                         </span>
                     </div>
-                    @if ($publicacion->postulada)
-                        <span class="ad-chip ad-chip-green ad-chip-sm flex-none"><flux:icon.check class="size-3.5" />Postulaste</span>
+                    @if ($publicacion->postulada_en)
+                        <span class="ad-chip ad-chip-green ad-chip-sm flex-none"><flux:icon.check class="size-3.5" />Postulaste el {{ $publicacion->postulada_en->translatedFormat('d M Y') }}</span>
                     @else
                         <button type="button" wire:click="abrirPostulacion({{ $publicacion->id }})" wire:loading.attr="disabled" wire:target="abrirPostulacion({{ $publicacion->id }})" class="ad-btn-primary ad-btn-sm flex-none">Postular</button>
                     @endif

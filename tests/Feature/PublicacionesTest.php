@@ -484,8 +484,8 @@ test('el panel lista las ofertas vigentes y permite postular sin salir', functio
         ->call('abrirPostulacion', $publicacion->id)
         ->call('postular')
         ->assertHasNoErrors()
-        // Ya postulada, el panel deja de ofrecer el botón para esa oferta.
-        ->assertSee('Postulaste');
+        // Ya postulada, el panel deja de ofrecer el botón y muestra cuándo fue.
+        ->assertSee('Postulaste el '.today()->translatedFormat('d M Y'));
 
     expect(Postulacion::query()->where('publicacion_id', $publicacion->id)->count())->toBe(1);
 });
@@ -552,4 +552,81 @@ test('el listado de publicaciones se puede ordenar por cantidad de candidatos', 
         ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->pluck('id')->all() === [$poblada->id, $vacia->id])
         ->call('ordenarPor', 'candidatos')
         ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->pluck('id')->all() === [$vacia->id, $poblada->id]);
+});
+
+test('el listado de oportunidades muestra la fecha en que el postulante postuló', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('fechas@empresa.cl');
+    $postulanteUser = postulanteHabilitadoParaPostular('fechas@ejemplo.cl');
+
+    $postulada = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Jefe de Bodega',
+    ]);
+    $sinPostular = Publicacion::factory()->create([
+        'empresa_id' => $empresa->id,
+        'nombre_empresa' => $empresa->razon_social,
+        'cargo' => 'Analista de Compras',
+    ]);
+
+    // `created_at` no es fillable: se fuerza para simular una postulación de hace días.
+    Postulacion::query()->create([
+        'publicacion_id' => $postulada->id,
+        'postulante_id' => $postulanteUser->postulante->id,
+    ])->forceFill(['created_at' => now()->subDays(5)])->save();
+
+    $fecha = now()->subDays(5)->translatedFormat('d M Y');
+
+    // En Oportunidades y en el panel se ve la misma fecha; la oferta sin postular no la trae.
+    Livewire::actingAs($postulanteUser)
+        ->test(PortalOportunidades::class)
+        ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones
+            ->firstWhere('id', $postulada->id)->postulada_en->isSameDay(now()->subDays(5))
+            && $publicaciones->firstWhere('id', $sinPostular->id)->postulada_en === null)
+        ->assertSee('Postulaste el '.$fecha);
+
+    Livewire::actingAs($postulanteUser)
+        ->test(PanelPostulante::class)
+        ->assertSee('Postulaste el '.$fecha)
+        ->assertSee('Analista de Compras');
+});
+
+test('el listado de oportunidades no filtra por el perfil del postulante', function () {
+    [, $empresa] = empresaHabilitadaParaPublicar('abierto@empresa.cl');
+
+    // Postulante con un perfil muy acotado: junior, una sola industria y otra región.
+    $user = User::factory()->create(['role' => 'postulante', 'email' => 'junior@ejemplo.cl']);
+    Postulante::factory()->create([
+        'user_id' => $user->id,
+        'onboarding_completado' => true,
+        'onboarding_paso' => 6,
+        'anios_experiencia' => 1,
+        'industrias_interes' => ['Tecnología de la Información'],
+        'regiones_interes' => ['Biobío'],
+    ]);
+
+    // Ofertas que no calzan con nada de ese perfil, incluida una sin sueldo informado.
+    $ofertas = [
+        ['cargo' => 'Gerente General', 'experiencia_laboral' => '10 años o más', 'jerarquia' => 'Gerencia / Dirección', 'comuna' => 'Santiago', 'actividad_empresa' => 'Minería', 'sueldo' => 9_000_000],
+        ['cargo' => 'Operario de Planta', 'experiencia_laboral' => 'Sin experiencia', 'comuna' => 'Antofagasta', 'actividad_empresa' => 'Forestal / Papelera', 'sueldo' => null, 'mostrar_sueldo' => false],
+    ];
+
+    foreach ($ofertas as $oferta) {
+        Publicacion::factory()->create([...$oferta, 'empresa_id' => $empresa->id, 'nombre_empresa' => $empresa->razon_social]);
+    }
+
+    // Las dos aparecen: el único recorte del listado es la vigencia de la oferta.
+    Livewire::actingAs($user)
+        ->test(PortalOportunidades::class)
+        ->assertViewHas('publicaciones', fn ($publicaciones): bool => $publicaciones->total() === 2)
+        ->assertSee('Oportunidades')
+        ->assertDontSee('para tu experiencia')
+        ->assertSee('Gerente General')
+        ->assertSee('Operario de Planta');
+
+    // Y lo mismo en el resumen del panel.
+    Livewire::actingAs($user)
+        ->test(PanelPostulante::class)
+        ->assertSee('Gerente General')
+        ->assertSee('Operario de Planta');
 });

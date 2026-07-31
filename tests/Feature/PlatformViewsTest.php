@@ -330,7 +330,7 @@ test('a postulante can view the panel and professional profile', function () {
 
     $this->actingAs($user)->get(route('postulante.busquedas'))
         ->assertOk()
-        ->assertSee('Oportunidades para tu experiencia');
+        ->assertSee('Oportunidades');
 
     $ficha = file_get_contents(resource_path('views/livewire/postulante/ficha.blade.php'));
 

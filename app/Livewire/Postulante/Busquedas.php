@@ -201,9 +201,12 @@ class Busquedas extends Component
         return view('livewire.postulante.busquedas', [
             'publicaciones' => Publicacion::query()
                 ->vigentes()
-                ->withExists([
-                    'postulaciones as postulada' => fn (Builder $query) => $query->where('postulante_id', $postulante?->id),
-                ])
+                // La fecha hace las veces de marca de "ya postulé": null = todavía no.
+                ->withMax(
+                    ['postulaciones as postulada_en' => fn (Builder $query) => $query->where('postulante_id', $postulante?->id)],
+                    'created_at'
+                )
+                ->withCasts(['postulada_en' => 'datetime'])
                 ->when($this->buscar !== '', fn (Builder $query) => $query->where(function (Builder $query): void {
                     $query
                         ->whereLike('cargo', '%'.$this->buscar.'%')

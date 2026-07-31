@@ -12,7 +12,7 @@
     @endif
 
     <div class="mb-5">
-        <h1 class="text-[27px] font-extrabold">Oportunidades para tu experiencia</h1>
+        <h1 class="text-[27px] font-extrabold">Oportunidades</h1>
         <p class="mt-1.5 text-[14px] text-gray-500">
             {{ $publicaciones->total() }}
             {{ $publicaciones->total() === 1 ? 'oferta vigente' : 'ofertas vigentes' }}{{ $filtrosActivos > 0 ? ' con los filtros aplicados' : '' }}.
@@ -70,8 +70,9 @@
                         @endif
                     </div>
                     <div class="flex flex-none flex-col items-stretch gap-2 lg:min-w-40 lg:items-end">
-                        @if ($publicacion->postulada)
+                        @if ($publicacion->postulada_en)
                             <span class="ad-chip ad-chip-green ad-chip-sm justify-center"><flux:icon.check class="size-4" />Postulación enviada</span>
+                            <span class="text-[12px] text-gray-500 lg:text-right">Postulaste el {{ $publicacion->postulada_en->translatedFormat('d M Y') }}</span>
                         @else
                             <button type="button" wire:click="abrirPostulacion({{ $publicacion->id }})" class="ad-btn-primary ad-btn-sm justify-center">Postular</button>
                         @endif

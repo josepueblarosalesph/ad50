@@ -41,9 +41,12 @@ class Panel extends Component
             'postulante' => $postulante,
             'publicaciones' => Publicacion::query()
                 ->vigentes()
-                ->withExists([
-                    'postulaciones as postulada' => fn (Builder $query) => $query->where('postulante_id', $postulante?->id),
-                ])
+                // La fecha hace las veces de marca de "ya postulé": null = todavía no.
+                ->withMax(
+                    ['postulaciones as postulada_en' => fn (Builder $query) => $query->where('postulante_id', $postulante?->id)],
+                    'created_at'
+                )
+                ->withCasts(['postulada_en' => 'datetime'])
                 ->latest()
                 ->take(self::OFERTAS_EN_PANEL)
                 ->get(),
