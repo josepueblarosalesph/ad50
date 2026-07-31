@@ -93,9 +93,29 @@
 
         <div class="space-y-5">
         <section id="notas" class="ad-card scroll-mt-24 border-orange-200">
-            <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[16px] font-bold text-orange-700 dark:text-orange-600 flex items-center gap-2"><flux:icon.pencil-square class="size-4" />Notas privadas</h2><p class="mt-1 text-[13px] text-gray-500">Solo tu empresa puede verlas. El postulante no las ve.</p></div></div>
+            <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[16px] font-bold text-orange-700 dark:text-orange-600 flex items-center gap-2"><flux:icon.pencil-square class="size-4" />Mi nota</h2><p class="mt-1 text-[13px] text-gray-500">El postulante nunca la ve. Tú eliges si la comparten tus colegas.</p></div></div>
             <div class="p-5">
                 <flux:textarea wire:model.blur="nota" rows="4" maxlength="2000" placeholder="Anota aquí tus comentarios sobre este candidato…" />
+
+                {{-- Quién más la lee. La nota es de quien la escribe: nadie del equipo
+                     puede editarla, y con "Solo yo" tampoco leerla. --}}
+                <fieldset class="mt-3">
+                    <legend class="text-[12px] font-bold uppercase tracking-[.1em] text-gray-400">Quién puede verla</legend>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        @foreach ($visibilidades as $valor => $etiqueta)
+                            <label @class([
+                                'inline-flex cursor-pointer items-center gap-2 rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition',
+                                'border-orange-300 bg-orange-100 text-orange-700' => $visibilidad === $valor,
+                                'border-line-2 bg-white text-gray-500 hover:text-ink dark:bg-[#222528]' => $visibilidad !== $valor,
+                            ])>
+                                <input type="radio" wire:model.live="visibilidad" value="{{ $valor }}" class="sr-only" />
+                                <flux:icon :name="$valor === 'privada' ? 'lock-closed' : 'user-group'" class="size-4" />
+                                {{ $etiqueta }}
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+
                 <div class="mt-3 flex items-center justify-between gap-3">
                     @if ($notaGuardada)
                         <span class="inline-flex items-center gap-1 text-[12px] font-bold text-match"><flux:icon.check class="size-4" /> Nota guardada</span>
@@ -105,6 +125,24 @@
                     <button type="button" wire:click="guardarNota" class="ad-btn-primary ad-btn-sm" wire:loading.attr="disabled" wire:target="guardarNota"><span wire:loading.remove wire:target="guardarNota">Guardar nota</span><span wire:loading wire:target="guardarNota">Guardando…</span></button>
                 </div>
             </div>
+
+            {{-- Lo que compartió el resto del equipo: se lee, no se edita. --}}
+            @if ($notasDelEquipo->isNotEmpty())
+                <div class="border-t border-line p-5">
+                    <p class="text-[12px] font-bold uppercase tracking-[.1em] text-gray-400">Notas de mi equipo</p>
+                    <ul class="mt-3 space-y-3">
+                        @foreach ($notasDelEquipo as $notaEquipo)
+                            <li wire:key="nota-equipo-{{ $notaEquipo->id }}" class="rounded-xl border border-line-2 p-4">
+                                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                                    <span class="text-[13px] font-bold text-ink">{{ $notaEquipo->autorLabel() }}</span>
+                                    <span class="text-[12px] text-gray-400">{{ $notaEquipo->updated_at?->translatedFormat('d M Y') }}</span>
+                                </div>
+                                <p class="mt-1.5 whitespace-pre-line text-[13.5px] leading-relaxed text-gray-600 dark:text-gray-300">{{ $notaEquipo->contenido }}</p>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
         </section>
 
         <aside id="contacto" @class(['ad-card overflow-hidden', 'border-[#BFE6CD]' => $puedeVerContacto, 'border-line-2' => ! $puedeVerContacto])><div @class(['ad-card-head', 'bg-match-100/50' => $puedeVerContacto, 'bg-paper' => ! $puedeVerContacto])><h2 class="text-[16px] font-bold flex items-center gap-2"><flux:icon :name="$puedeVerContacto ? 'lock-open' : 'lock-closed'" class="{{ $puedeVerContacto ? 'size-4 text-match' : 'size-4 text-gray-500' }}" />Datos de contacto</h2><span @class(['ad-chip ad-chip-dot', 'ad-chip-green' => $puedeVerContacto, 'ad-chip-gray' => ! $puedeVerContacto])>{{ $puedeVerContacto ? 'Visible' : 'Restringido' }}</span></div><div class="p-5 space-y-3">

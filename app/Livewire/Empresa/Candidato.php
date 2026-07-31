@@ -12,6 +12,7 @@ use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
@@ -59,7 +60,11 @@ class Candidato extends Component
 
     public bool $esFavorito = false;
 
+    /** Nota de quien está mirando: cada usuario del equipo tiene la suya. */
     public string $nota = '';
+
+    /** Quién más puede leerla: `equipo` o `privada` (ver NotaCandidato::VISIBILIDADES). */
+    public string $visibilidad = 'equipo';
 
     public bool $notaGuardada = false;
 
@@ -78,10 +83,11 @@ class Candidato extends Component
         }
 
         $this->match = $match->load('busqueda', 'postulante.user');
-        $this->nota = NotaCandidato::query()
-            ->where('empresa_id', $match->busqueda->empresa_id)
-            ->where('postulante_id', $match->postulante_id)
-            ->value('contenido') ?? '';
+
+        $mia = NotaCandidato::query()->where($this->claveDeMiNota())->first();
+        $this->nota = $mia->contenido ?? '';
+        $this->visibilidad = $mia->visibilidad ?? 'equipo';
+
         $this->criterios = array_values(array_intersect($this->criterios, array_keys($this->criteriosDisponibles())));
         $this->cvDisponible = filled($this->match->postulante->cv_ruta)
             && Storage::disk('local')->exists($this->match->postulante->cv_ruta);
@@ -182,17 +188,18 @@ class Candidato extends Component
     {
         $validated = $this->validate([
             'nota' => ['nullable', 'string', 'max:2000'],
+            'visibilidad' => ['required', Rule::in(array_keys(NotaCandidato::VISIBILIDADES))],
         ]);
 
-        $clave = [
-            'empresa_id' => $this->match->busqueda->empresa_id,
-            'postulante_id' => $this->match->postulante_id,
-        ];
+        $clave = $this->claveDeMiNota();
 
         if (blank($validated['nota'])) {
             NotaCandidato::query()->where($clave)->delete();
         } else {
-            NotaCandidato::query()->updateOrCreate($clave, ['contenido' => $validated['nota']]);
+            NotaCandidato::query()->updateOrCreate($clave, [
+                'contenido' => $validated['nota'],
+                'visibilidad' => $validated['visibilidad'],
+            ]);
         }
 
         $this->notaGuardada = true;
@@ -201,6 +208,43 @@ class Candidato extends Component
     public function updatedNota(): void
     {
         $this->notaGuardada = false;
+    }
+
+    public function updatedVisibilidad(): void
+    {
+        $this->notaGuardada = false;
+    }
+
+    /**
+     * Identifica la nota de quien está mirando: una por empresa, candidato y usuario.
+     *
+     * @return array<string, int>
+     */
+    private function claveDeMiNota(): array
+    {
+        return [
+            'empresa_id' => (int) $this->match->busqueda->empresa_id,
+            'postulante_id' => (int) $this->match->postulante_id,
+            'user_id' => auth()->user()->id,
+        ];
+    }
+
+    /**
+     * Notas de otros usuarios del equipo que compartieron con la empresa. La propia no
+     * va aquí: se edita arriba.
+     *
+     * @return Collection<int, NotaCandidato>
+     */
+    private function notasDelEquipo(): Collection
+    {
+        return NotaCandidato::query()
+            ->where('empresa_id', $this->match->busqueda->empresa_id)
+            ->where('postulante_id', $this->match->postulante_id)
+            ->where('visibilidad', 'equipo')
+            ->where(fn ($query) => $query->whereNull('user_id')->orWhere('user_id', '!=', auth()->user()->id))
+            ->with('user:id,name')
+            ->latest('updated_at')
+            ->get();
     }
 
     public function descargarCv(): StreamedResponse
@@ -429,6 +473,8 @@ class Candidato extends Component
             'publicacionesAsociables' => $this->publicacionesAsociables(),
             'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
             'totalAsociaciones' => $this->conteoAsociaciones([$this->match->postulante_id])[$this->match->postulante_id] ?? 0,
+            'notasDelEquipo' => $this->notasDelEquipo(),
+            'visibilidades' => NotaCandidato::VISIBILIDADES,
         ]);
     }
 }

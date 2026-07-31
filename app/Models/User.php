@@ -39,6 +39,19 @@ class User extends Authenticatable implements MustVerifyEmail
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    protected static function booted(): void
+    {
+        // Al sacar a alguien del equipo, sus notas privadas se van con él: nadie más
+        // podía leerlas. Las que compartió se quedan (con el autor en null) porque ya
+        // son parte de lo que el equipo sabe del candidato.
+        static::deleting(function (User $user): void {
+            NotaCandidato::query()
+                ->where('user_id', $user->id)
+                ->where('visibilidad', 'privada')
+                ->delete();
+        });
+    }
+
     /**
      * Get the attributes that should be cast.
      *

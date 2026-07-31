@@ -298,9 +298,11 @@ class Resultados extends Component
 
         $idsPagina = $candidatos->pluck('postulante_id');
 
+        // Solo cuenta lo que este usuario puede leer: su nota o la que su equipo comparte.
         $postulantesConNota = NotaCandidato::query()
             ->where('empresa_id', $this->busqueda->empresa_id)
             ->whereIn('postulante_id', $idsPagina)
+            ->visiblesPara(auth()->user())
             ->pluck('postulante_id')
             ->all();
 

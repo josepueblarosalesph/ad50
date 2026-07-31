@@ -82,7 +82,7 @@
                                     @endif
                                 </h2>
                                 @if (in_array($match->postulante_id, $postulantesConNota))
-                                    <flux:tooltip content="Tienes una nota sobre este candidato">
+                                    <flux:tooltip content="Hay notas sobre este candidato que puedes ver">
                                         <span class="grid size-6 flex-none place-items-center rounded-full bg-orange-100 text-orange-600" aria-label="Tiene una nota"><flux:icon.pencil-square class="size-4" /></span>
                                     </flux:tooltip>
                                 @endif

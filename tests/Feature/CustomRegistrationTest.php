@@ -1,8 +1,9 @@
 <?php
 
 use App\Livewire\Auth\Register;
+use App\Models\Empresa;
+use App\Models\Postulante;
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
@@ -18,12 +19,15 @@ test('a postulante can create an account', function () {
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors()
-        ->assertRedirect(route('verification.notice'));
+        // TEMPORAL: mientras Auth\Register omite la verificación de correo se entra
+        // directo al panel. Al restaurarla, este destino vuelve a verification.notice.
+        ->assertRedirect(route('dashboard'));
 
     $user = User::query()->where('email', 'maria@example.com')->firstOrFail();
 
     expect($user->role)->toBe('postulante')
-        ->and($user->acepta_ley_21719)->toBeTrue();
+        ->and($user->acepta_ley_21719)->toBeTrue()
+        ->and($user->hasVerifiedEmail())->toBeTrue();
 
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseHas('postulantes', [
@@ -31,7 +35,7 @@ test('a postulante can create an account', function () {
         'onboarding_paso' => 1,
         'onboarding_completado' => false,
     ]);
-    Notification::assertSentTo($user, VerifyEmail::class);
+    Notification::assertNothingSentTo($user);
 });
 
 test('an empresa can create an account', function () {
@@ -59,12 +63,14 @@ test('an empresa can create an account', function () {
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors()
-        ->assertRedirect(route('verification.notice'));
+        // TEMPORAL: ver la nota del test anterior.
+        ->assertRedirect(route('dashboard'));
 
     $user = User::query()->where('email', 'ana@empresa.cl')->firstOrFail();
 
     expect($user->role)->toBe('empresa')
-        ->and($user->acepta_ley_21719)->toBeTrue();
+        ->and($user->acepta_ley_21719)->toBeTrue()
+        ->and($user->hasVerifiedEmail())->toBeTrue();
 
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseHas('empresas', [
@@ -74,7 +80,7 @@ test('an empresa can create an account', function () {
         'telefono' => '+56 9 8765 4321',
         'estado_activacion' => 'inactiva',
     ]);
-    Notification::assertSentTo($user, VerifyEmail::class);
+    Notification::assertNothingSentTo($user);
 });
 
 test('an empresa cannot register with a free personal email', function () {
@@ -106,6 +112,134 @@ test('a postulante can register with a free personal email', function () {
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors();
+});
+
+/** Registra la primera cuenta de una empresa y devuelve a su administrador. */
+function empresaRegistradaCon(string $email, string $razonSocial = 'Ejemplo SpA'): User
+{
+    $admin = User::factory()->create(['role' => 'empresa', 'email' => $email]);
+    Empresa::query()->create([
+        'user_id' => $admin->id,
+        'razon_social' => $razonSocial,
+        'estado_activacion' => 'activa',
+    ]);
+
+    return $admin->fresh();
+}
+
+test('quien comparte el dominio de una empresa ya registrada debe pedir acceso a su administrador', function () {
+    empresaRegistradaCon('admin@ejemplo.cl', 'Ejemplo SpA');
+
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@ejemplo.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Ejemplo SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasErrors('email');
+
+    // El mensaje nombra la empresa y a quién recurrir.
+    $mensaje = Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@ejemplo.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Ejemplo SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->errors()->first('email');
+
+    expect($mensaje)->toContain('Ejemplo SpA')
+        ->toContain('@ejemplo.cl')
+        ->toContain('admin@ejemplo.cl')
+        ->toContain('Equipo');
+
+    expect(User::query()->where('email', 'ana@ejemplo.cl')->exists())->toBeFalse();
+});
+
+test('el dominio se compara completo: un dominio parecido no bloquea el registro', function () {
+    empresaRegistradaCon('admin@ejemplo.cl');
+
+    // Ni un dominio que termina igual ni un subdominio son la misma organización.
+    foreach (['ana@otro-ejemplo.cl', 'ana@sub.ejemplo.cl'] as $email) {
+        Livewire::test(Register::class)
+            ->set('role', 'empresa')
+            ->set('nombre', 'Ana')
+            ->set('apellidos', 'Silva')
+            ->set('email', $email)
+            ->set('password', 'password')
+            ->set('razon_social', 'Otra SpA')
+            ->set('rut', '761234560')
+            ->set('telefono', '+56 9 8765 4321')
+            ->set('acepta', true)
+            ->call('submit')
+            ->assertHasNoErrors('email');
+    }
+});
+
+test('el dominio de un postulante no reserva la cuenta de empresa', function () {
+    // Un postulante con correo de ese dominio no crea una cuenta de empresa: no bloquea.
+    $postulanteUser = User::factory()->create(['role' => 'postulante', 'email' => 'juan@libre.cl']);
+    Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true]);
+
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@libre.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Libre SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasNoErrors('email');
+});
+
+test('un postulante puede registrarse aunque su dominio ya tenga cuenta de empresa', function () {
+    empresaRegistradaCon('admin@ejemplo.cl');
+
+    Livewire::test(Register::class)
+        ->set('role', 'postulante')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@ejemplo.cl')
+        ->set('password', 'password')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasNoErrors();
+});
+
+test('un usuario del equipo también reserva el dominio, no solo el administrador', function () {
+    $admin = empresaRegistradaCon('admin@corporativo.cl', 'Corporativo SpA');
+
+    // Un contacto adicional agregado desde Equipo, con el mismo dominio.
+    User::factory()->create([
+        'role' => 'empresa',
+        'email' => 'equipo@corporativo.cl',
+        'empresa_id' => $admin->empresa_id,
+    ]);
+
+    Livewire::test(Register::class)
+        ->set('role', 'empresa')
+        ->set('nombre', 'Ana')
+        ->set('apellidos', 'Silva')
+        ->set('email', 'ana@corporativo.cl')
+        ->set('password', 'password')
+        ->set('razon_social', 'Corporativo SpA')
+        ->set('rut', '761234560')
+        ->set('telefono', '+56 9 8765 4321')
+        ->set('acepta', true)
+        ->call('submit')
+        ->assertHasErrors('email');
 });
 
 test('an empresa must provide a contact phone number', function () {
