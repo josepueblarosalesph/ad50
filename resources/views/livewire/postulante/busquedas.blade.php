@@ -11,13 +11,43 @@
         <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
     @endif
 
-    <div class="mb-5">
-        <h1 class="text-[27px] font-extrabold">Oportunidades</h1>
-        <p class="mt-1.5 text-[14px] text-gray-500">
-            {{ $publicaciones->total() }}
-            {{ $publicaciones->total() === 1 ? 'oferta vigente' : 'ofertas vigentes' }}{{ $filtrosActivos > 0 ? ' con los filtros aplicados' : '' }}.
-        </p>
+    {{-- Encabezado: es la pantalla de entrada del postulante, así que aquí viven la
+         completitud del perfil y el interruptor de visibilidad. --}}
+    @php($completitud = $postulante?->completitud ?? 0)
+    <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <h1 class="text-[27px] font-extrabold">Oportunidades</h1>
+            <p class="mt-1.5 text-[14px] text-gray-500">
+                {{ $publicaciones->total() }}
+                {{ $publicaciones->total() === 1 ? 'oferta vigente' : 'ofertas vigentes' }}{{ $filtrosActivos > 0 ? ' con los filtros aplicados' : '' }}.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            @if ($completitud < 100)
+                <a wire:navigate href="{{ route('postulante.ficha') }}" class="ad-toggle-row gap-2.5 py-2 transition hover:border-orange-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500" title="Completa tu perfil para llegar al 100%">
+                    <span class="text-[13px] font-bold text-gray-500">Perfil</span>
+                    <span class="block h-1.5 w-16 flex-none overflow-hidden rounded-full bg-line">
+                        <span class="block h-full bg-gradient-to-r from-orange-500 to-[#F59A53]" style="width: {{ $completitud }}%"></span>
+                    </span>
+                    <span class="text-[13px] font-extrabold text-ink">{{ $completitud }}%</span>
+                </a>
+            @endif
+
+            <div class="ad-toggle-row py-2">
+                <div><b class="block text-[13px]">{{ $postulante?->visible ? 'Visible para reclutadores' : 'Perfil pausado' }}</b></div>
+                <flux:switch wire:click="toggleVisibilidad" :checked="$postulante?->visible ?? false" aria-label="Cambiar visibilidad del perfil" />
+            </div>
+        </div>
     </div>
+
+    {{-- Ficha sin tocar hace medio año: recordatorio para que siga apareciendo en búsquedas. --}}
+    @if ($postulante?->updated_at?->lt(now()->subMonths(6)))
+        <div class="mb-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5">
+            <b class="text-[14px]">¿Cambió tu trayectoria?</b>
+            <p class="mt-1 text-[13px] text-gray-700">Actualiza tu perfil profesional para seguir apareciendo en búsquedas relevantes.</p>
+            <a wire:navigate href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-3">Revisar mi perfil profesional</a>
+        </div>
+    @endif
 
     {{-- En móvil el mismo panel va plegado sobre el listado. --}}
     <details class="group mb-4 rounded-xl border border-line-2 bg-white dark:bg-[#222528] md:hidden">

@@ -89,6 +89,45 @@ class Favoritos extends Component
         $this->resetPage(pageName: 'favoritos');
     }
 
+    /**
+     * Desbloquea el perfil de un favorito consumiendo un cupo del plan. Espeja la lógica
+     * de Resultados::desbloquear; los errores se informan por flash.
+     */
+    public function desbloquear(int $postulanteId): void
+    {
+        $empresa = auth()->user()->empresa;
+
+        abort_unless(auth()->user()->role === 'empresa' && $empresa !== null, 403);
+        abort_unless($this->favoritosDeLaEmpresa()->where('postulante_id', $postulanteId)->exists(), 404);
+
+        if ($empresa->haDesbloqueado($postulanteId)) {
+            return;
+        }
+
+        if (! $empresa->planVigente()) {
+            session()->flash('desbloqueo_error', 'Necesitas una suscripción activa para desbloquear perfiles.');
+
+            return;
+        }
+
+        if ($empresa->desbloqueosDisponibles() < 1) {
+            session()->flash('desbloqueo_error', 'No te quedan desbloqueos disponibles en tu plan.');
+
+            return;
+        }
+
+        $empresa->desbloqueos()->create(['postulante_id' => $postulanteId]);
+
+        // Deja la marca de contacto en la coincidencia por la que se abre su perfil, igual
+        // que al desbloquear desde la búsqueda. Un favorito puede no tener ninguna.
+        BusquedaCandidato::query()
+            ->where('postulante_id', $postulanteId)
+            ->whereNull('contactado_at')
+            ->where('temporal', false)
+            ->whereIn('busqueda_id', Busqueda::query()->where('empresa_id', $empresa->id)->select('id'))
+            ->update(['contactado_at' => now()]);
+    }
+
     protected function empresaDeAsociacion(): ?Empresa
     {
         return auth()->user()->empresa;
@@ -230,6 +269,7 @@ class Favoritos extends Component
                 ->all(),
             'hayFiltros' => $this->busqueda !== 'todas' || $this->publicacion !== 'todas' || $this->desbloqueo !== 'todos',
             'planVigente' => $empresa?->planVigente() ?? false,
+            'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,
             'publicacionesAsociables' => $this->publicacionesAsociables(),
             'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
         ]);

@@ -4,7 +4,6 @@ use App\Livewire\Empresa\NuevaPublicacion;
 use App\Livewire\Empresa\Publicaciones;
 use App\Livewire\Postulante\Busquedas as PortalOportunidades;
 use App\Livewire\Postulante\DetallePublicacion as DetalleOportunidad;
-use App\Livewire\Postulante\Panel as PanelPostulante;
 use App\Models\Empresa;
 use App\Models\Postulacion;
 use App\Models\Postulante;
@@ -477,7 +476,7 @@ test('el panel lista las ofertas vigentes y permite postular sin salir', functio
     ]);
 
     Livewire::actingAs($postulanteUser)
-        ->test(PanelPostulante::class)
+        ->test(PortalOportunidades::class)
         ->assertSee('Supervisor de Turno')
         ->assertDontSee('Oferta vencida')
         ->assertSee('href="'.route('postulante.publicaciones.show', $publicacion).'"', false)
@@ -586,7 +585,7 @@ test('el listado de oportunidades muestra la fecha en que el postulante postuló
         ->assertSee('Postulaste el '.$fecha);
 
     Livewire::actingAs($postulanteUser)
-        ->test(PanelPostulante::class)
+        ->test(PortalOportunidades::class)
         ->assertSee('Postulaste el '.$fecha)
         ->assertSee('Analista de Compras');
 });
@@ -626,7 +625,7 @@ test('el listado de oportunidades no filtra por el perfil del postulante', funct
 
     // Y lo mismo en el resumen del panel.
     Livewire::actingAs($user)
-        ->test(PanelPostulante::class)
+        ->test(PortalOportunidades::class)
         ->assertSee('Gerente General')
         ->assertSee('Operario de Planta');
 });

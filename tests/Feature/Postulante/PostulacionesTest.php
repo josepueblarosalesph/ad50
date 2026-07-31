@@ -147,7 +147,7 @@ test('el menú del postulante ofrece Mis postulaciones', function () {
 
     // Y también desde el resto del panel.
     $this->actingAs($user)
-        ->get(route('postulante.panel'))
+        ->get(route('postulante.busquedas'))
         ->assertOk()
         ->assertSee('href="'.route('postulante.postulaciones').'"', false);
 });

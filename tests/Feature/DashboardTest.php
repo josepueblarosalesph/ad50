@@ -12,5 +12,5 @@ test('the legacy dashboard redirects authenticated users to their role destinati
 
     $this->actingAs($user)
         ->get(route('dashboard'))
-        ->assertRedirect(route('postulante.panel'));
+        ->assertRedirect(route('postulante.busquedas'));
 });

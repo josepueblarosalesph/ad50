@@ -3,7 +3,6 @@
 use App\Livewire\Empresa\NuevaBusqueda;
 use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\Ficha;
-use App\Livewire\Postulante\Panel as PostulantePanel;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
@@ -290,11 +289,11 @@ test('the candidate plans page no longer exists', function () {
     $this->get('/planes/postulantes')->assertNotFound();
 });
 
-test('a postulante can view the panel and professional profile', function () {
+test('a postulante can view the opportunities screen and professional profile', function () {
     $user = User::factory()->create(['role' => 'postulante']);
     Postulante::query()->create(['user_id' => $user->id, 'completitud' => 72]);
 
-    $this->actingAs($user)->get(route('postulante.panel'))
+    $this->actingAs($user)->get(route('postulante.busquedas'))
         ->assertOk()
         ->assertSee('id="application-mobile-navigation"', false)
         ->assertSee('aria-label="Navegación móvil"', false)
@@ -302,7 +301,7 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertSee('Mi cuenta')
         ->assertSee('Configuración')
         ->assertSee('Cerrar sesión')
-        ->assertSee('Así se ve tu presencia')
+        ->assertSee('Oportunidades')
         ->assertSee('aria-label="Cambiar visibilidad del perfil"', false)
         ->assertSee(route('postulante.busquedas'), false)
         ->assertDontSee('Solicitar eliminación de mis datos')
@@ -322,7 +321,7 @@ test('a postulante can view the panel and professional profile', function () {
         ->assertSee('Editar')
         ->assertSee("wire:click=\"editarSeccion('datos')\"", false)
         ->assertSee('href="'.route('postulante.busquedas').'"', false)
-        ->assertDontSee(route('postulante.panel').'#coincidencias', false)
+        ->assertDontSee(route('postulante.busquedas').'#coincidencias', false)
         ->assertDontSee('Mi activación')
         ->assertDontSee('Titular *')
         ->assertDontSee('Sección 1 de 5')
@@ -436,7 +435,7 @@ test('a postulante cannot save a gender outside the available options', function
         ->assertHasErrors(['genero' => 'in']);
 });
 
-test('el panel del postulante lista oportunidades y la pantalla de oportunidades las pagina', function () {
+test('la pantalla de oportunidades lista y pagina las ofertas vigentes', function () {
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true]);
     $empresaUser = User::factory()->create(['role' => 'empresa']);
@@ -457,12 +456,11 @@ test('el panel del postulante lista oportunidades y la pantalla de oportunidades
         ]);
     }
 
-    // El panel ya no resume coincidencias: lista las ofertas vigentes con su enlace al detalle.
+    // La pantalla no resume coincidencias: lista las ofertas vigentes con su enlace al detalle.
     Livewire::actingAs($postulanteUser)
-        ->test(PostulantePanel::class)
+        ->test(PostulanteBusquedas::class)
         ->assertViewHas('publicaciones', fn ($publicaciones) => $publicaciones->count() === 5)
         ->assertSee('Publicación 1')
-        ->assertSee('Ver más oportunidades')
         ->assertDontSee('Búsquedas que me incluyen');
 
     Livewire::actingAs($postulanteUser)

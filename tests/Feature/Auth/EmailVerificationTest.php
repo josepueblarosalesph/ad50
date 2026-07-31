@@ -26,7 +26,7 @@ test('unverified users cannot access their account until confirming their email'
     $user = User::factory()->unverified()->create(['role' => 'postulante']);
 
     $this->actingAs($user)
-        ->get(route('postulante.panel'))
+        ->get(route('postulante.busquedas'))
         ->assertRedirect(route('verification.notice'));
 });
 
@@ -46,7 +46,7 @@ test('email can be verified', function () {
     Event::assertDispatched(Verified::class);
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
-    $response->assertRedirect(route('postulante.panel', ['verified' => 1]));
+    $response->assertRedirect(route('postulante.busquedas', ['verified' => 1]));
 });
 
 test('a newly verified postulante is redirected to onboarding', function () {
@@ -116,7 +116,7 @@ test('already verified user visiting verification link is redirected without fir
     );
 
     $this->actingAs($user)->get($verificationUrl)
-        ->assertRedirect(route('postulante.panel', ['verified' => 1]));
+        ->assertRedirect(route('postulante.busquedas', ['verified' => 1]));
 
     expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
     Event::assertNotDispatched(Verified::class);

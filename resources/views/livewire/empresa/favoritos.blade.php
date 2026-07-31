@@ -12,6 +12,12 @@
         </div>
     </div>
 
+    @if (session('desbloqueo_error'))
+        <div class="mb-4 flex items-center gap-2 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            <flux:icon.exclamation-triangle class="size-4 flex-none" />{{ session('desbloqueo_error') }}
+        </div>
+    @endif
+
     {{-- Filtros --}}
     <section class="ad-card mb-5 p-4 md:p-5">
         <div class="grid gap-4 md:grid-cols-3">
@@ -81,16 +87,27 @@
                     </div>
 
                     <div class="flex flex-none flex-wrap items-center gap-2">
-                        {{-- Solo el candado: el estado se lee por el icono y el color. --}}
-                        <flux:tooltip :content="$desbloqueado ? 'Perfil desbloqueado' : 'Perfil sin desbloquear'">
-                            <span @class([
-                                'grid size-10 flex-none place-items-center rounded-xl border',
-                                'border-[#BFE6CD] bg-match-100 text-match' => $desbloqueado,
-                                'border-line-2 bg-paper text-gray-400 dark:bg-[#222528]' => ! $desbloqueado,
-                            ]) aria-label="{{ $desbloqueado ? 'Perfil desbloqueado' : 'Perfil sin desbloquear' }}">
-                                <flux:icon :name="$desbloqueado ? 'lock-open' : 'lock-closed'" class="size-5" />
-                            </span>
-                        </flux:tooltip>
+                        {{-- El candado es la acción: con cupo del plan desbloquea el perfil aquí
+                             mismo; sin cupo (o ya desbloqueado) queda como indicador de estado. --}}
+                        @if ($desbloqueado)
+                            <flux:tooltip content="Perfil desbloqueado">
+                                <span class="grid size-10 flex-none place-items-center rounded-xl border border-[#BFE6CD] bg-match-100 text-match" aria-label="Perfil desbloqueado">
+                                    <flux:icon.lock-open class="size-5" />
+                                </span>
+                            </flux:tooltip>
+                        @elseif ($planVigente && $desbloqueosDisponibles > 0)
+                            <flux:tooltip content="Desbloquear perfil (usa 1 desbloqueo)">
+                                <button type="button" wire:click="desbloquear({{ $candidato->id }})" wire:confirm="Desbloquear este perfil descontará 1 desbloqueo de tu plan. ¿Continuar?" wire:loading.attr="disabled" wire:target="desbloquear({{ $candidato->id }})" class="grid size-10 flex-none place-items-center rounded-xl border border-line-2 bg-white text-gray-400 transition hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:bg-[#2A2D30]" aria-label="Desbloquear perfil del candidato">
+                                    <flux:icon.lock-closed class="size-5" />
+                                </button>
+                            </flux:tooltip>
+                        @else
+                            <flux:tooltip :content="$planVigente ? 'Sin desbloqueos disponibles en tu plan' : 'Necesitas una suscripción activa para desbloquear'">
+                                <span class="grid size-10 flex-none place-items-center rounded-xl border border-line-2 bg-paper text-gray-400 dark:bg-[#222528]" aria-label="Perfil sin desbloquear">
+                                    <flux:icon.lock-closed class="size-5" />
+                                </span>
+                            </flux:tooltip>
+                        @endif
 
                         @php($asociadas = $candidato->publicacionesAsociadas->count())
                         <button type="button" wire:click="abrirAsociacion({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $candidato->id }})" @class([

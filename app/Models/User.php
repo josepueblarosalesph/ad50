@@ -81,7 +81,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
-            'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.panel',
+            // Sin panel propio, el postulante entra directo a Oportunidades.
+            'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.busquedas',
             'empresa' => match (true) {
                 ! ($this->empresa?->planVigente()) => 'empresa.planes',
                 ! $this->empresa->datosEnviados() => 'empresa.activacion',

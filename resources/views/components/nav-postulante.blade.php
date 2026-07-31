@@ -1,17 +1,16 @@
 @props(['activo' => null])
 
 {{--
-    Menú superior del panel de postulante. Fuente única, igual que <x-nav-empresa>:
-    `activo` recibe la clave de la sección actual (panel, ficha, busquedas,
-    postulaciones); null no resalta ninguna.
+    Menú superior del postulante. Fuente única, igual que <x-nav-empresa>: `activo`
+    recibe la clave de la sección actual (busquedas, postulaciones, ficha); null no
+    resalta ninguna. Oportunidades va primero: es la pantalla de entrada.
 --}}
 
 @php
     $enlaces = [
-        'panel' => ['postulante.panel', 'Mi panel'],
-        'ficha' => ['postulante.ficha', 'Mi perfil'],
         'busquedas' => ['postulante.busquedas', 'Oportunidades'],
         'postulaciones' => ['postulante.postulaciones', 'Mis postulaciones'],
+        'ficha' => ['postulante.ficha', 'Mi perfil'],
     ];
 @endphp
 

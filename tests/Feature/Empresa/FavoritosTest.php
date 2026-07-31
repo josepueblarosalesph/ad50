@@ -284,10 +284,11 @@ test('la tarjeta muestra el candado como icono y el botón rotulado de asociar',
     [$user, $empresa, $liderazgo] = empresaConFavoritos();
     $match = candidatoEnBusqueda($liderazgo);
 
-    // Sin desbloquear: candado cerrado, sin la etiqueta de texto.
+    // Sin desbloquear y con cupo: el candado es el botón que desbloquea.
     Livewire::actingAs($user)
         ->test(Favoritos::class)
-        ->assertSee('aria-label="Perfil sin desbloquear"', false)
+        ->assertSeeHtml('desbloquear('.$match->postulante_id.')')
+        ->assertSee('aria-label="Desbloquear perfil del candidato"', false)
         ->assertSee('Asociar a publicación');
 
     Desbloqueo::query()->create([
@@ -367,4 +368,66 @@ test('el panel de asociación usa un desplegable con casillas y resume lo elegid
     $componente->call('toggleAsociacion', $publicacion->id)
         ->assertSee('1 publicación seleccionada')
         ->assertDontSee('Elige una o más publicaciones');
+});
+
+test('desde favoritos se desbloquea el perfil de un candidato', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+
+    $componente = Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('desbloquear', $match->postulante_id)
+        ->assertHasNoErrors();
+
+    expect($empresa->fresh()->haDesbloqueado($match->postulante_id))->toBeTrue()
+        ->and($empresa->fresh()->desbloqueosUsados())->toBe(1)
+        // Queda la marca de contacto en la coincidencia, igual que al desbloquear desde la búsqueda.
+        ->and($match->fresh()->contactado_at)->not->toBeNull();
+
+    // Repetir no vuelve a cobrar el cupo y la tarjeta pasa a mostrarse desbloqueada.
+    $componente->call('desbloquear', $match->postulante_id)
+        ->assertSee('aria-label="Perfil desbloqueado"', false);
+
+    expect($empresa->fresh()->desbloqueosUsados())->toBe(1);
+});
+
+test('sin cupo ni plan vigente el desbloqueo desde favoritos avisa y no cobra', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+
+    // El plan vence: ya no se puede desbloquear.
+    $empresa->update(['plan_hasta' => now()->subDay()]);
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('desbloquear', $match->postulante_id)
+        ->assertSee('Necesitas una suscripción activa para desbloquear perfiles.')
+        // Sin poder desbloquear, el candado vuelve a ser un indicador.
+        ->assertSee('aria-label="Perfil sin desbloquear"', false);
+
+    expect($empresa->fresh()->desbloqueosUsados())->toBe(0);
+
+    // Con el plan al día pero sin cupo, el aviso cambia y tampoco se crea el desbloqueo.
+    $empresa->update(['plan_hasta' => now()->addMonth()]);
+    $empresa->plan->update(['desbloqueos' => 0]);
+
+    // Instancia nueva: la anterior trae cargados la empresa y su plan con los valores viejos.
+    Livewire::actingAs($user->fresh())
+        ->test(Favoritos::class)
+        ->call('desbloquear', $match->postulante_id)
+        ->assertSee('No te quedan desbloqueos disponibles en tu plan.');
+
+    expect($empresa->fresh()->desbloqueosUsados())->toBe(0);
+});
+
+test('no se puede desbloquear desde favoritos a alguien que no es favorito', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $noFavorito = candidatoEnBusqueda($liderazgo, favorito: false);
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('desbloquear', $noFavorito->postulante_id)
+        ->assertStatus(404);
+
+    expect($empresa->fresh()->desbloqueosUsados())->toBe(0);
 });

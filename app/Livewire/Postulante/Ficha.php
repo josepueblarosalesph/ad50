@@ -432,7 +432,7 @@ class Ficha extends Component
 
         $matching->sincronizarPostulante($postulante->fresh());
         $this->modoOnboarding = false;
-        $this->redirectRoute('postulante.panel', navigate: true);
+        $this->redirectRoute('postulante.busquedas', navigate: true);
     }
 
     private function continuarOnboarding(): void

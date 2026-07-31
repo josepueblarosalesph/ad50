@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Postulante\Busquedas;
 use App\Livewire\Postulante\Ficha;
 use App\Models\Postulante;
 use App\Models\User;
@@ -22,7 +23,7 @@ test('a new postulante cannot access the panel before completing onboarding', fu
     $user = postulanteEnOnboarding();
 
     $this->actingAs($user)
-        ->get(route('postulante.panel'))
+        ->get(route('postulante.busquedas'))
         ->assertRedirect(route('postulante.ficha'));
 
     $this->actingAs($user)
@@ -189,7 +190,7 @@ test('a postulante can skip the curriculum and enter the panel', function () {
         ->assertSet('pasoActual', 6)
         ->assertSee('Completar después')
         ->call('omitir')
-        ->assertRedirect(route('postulante.panel'));
+        ->assertRedirect(route('postulante.busquedas'));
 
     $this->assertDatabaseHas('postulantes', [
         'user_id' => $user->id,
@@ -198,7 +199,7 @@ test('a postulante can skip the curriculum and enter the panel', function () {
     ]);
 
     $this->actingAs($user->fresh())
-        ->get(route('postulante.panel'))
+        ->get(route('postulante.busquedas'))
         ->assertOk();
 });
 
@@ -263,7 +264,7 @@ test('el panel muestra la completitud junto a la visibilidad y la esconde al lle
     ]);
 
     // Con el perfil incompleto: indicador compacto en la cabecera, sin la tarjeta antigua.
-    $this->actingAs($user)->get(route('postulante.panel'))
+    $this->actingAs($user)->get(route('postulante.busquedas'))
         ->assertOk()
         ->assertSee('title="Completa tu perfil para llegar al 100%"', false)
         ->assertSee('75%')
@@ -274,8 +275,41 @@ test('el panel muestra la completitud junto a la visibilidad y la esconde al lle
 
     // Al 100% no queda rastro de la barra. Se autentica una instancia nueva: la anterior
     // ya trae cargada la relación `postulante` con el valor viejo.
-    $this->actingAs($user->fresh())->get(route('postulante.panel'))
+    $this->actingAs($user->fresh())->get(route('postulante.busquedas'))
         ->assertOk()
         ->assertDontSee('title="Completa tu perfil para llegar al 100%"', false)
         ->assertSee('Visible para reclutadores');
+});
+
+test('el postulante entra a Oportunidades y desde ahí controla su visibilidad', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    $postulante = Postulante::query()->create([
+        'user_id' => $user->id,
+        'completitud' => 100,
+        'onboarding_completado' => true,
+        'onboarding_paso' => 6,
+        'visible' => true,
+    ]);
+
+    expect($user->fresh()->dashboardRouteName())->toBe('postulante.busquedas');
+
+    // La URL del panel antiguo ya no tiene pantalla propia: redirige a Oportunidades.
+    $this->actingAs($user)->get('/postulante')->assertRedirect('/postulante/busquedas');
+
+    // El menú superior parte por Oportunidades y ya no ofrece "Mi panel".
+    $this->actingAs($user)->get(route('postulante.busquedas'))
+        ->assertOk()
+        ->assertSee('Oportunidades')
+        ->assertSee('Mis postulaciones')
+        ->assertSee('Mi perfil')
+        ->assertDontSee('Mi panel');
+
+    // El interruptor de visibilidad se mudó aquí y sigue funcionando.
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->assertSee('Visible para reclutadores')
+        ->call('toggleVisibilidad')
+        ->assertSee('Perfil pausado');
+
+    expect($postulante->fresh()->visible)->toBeFalse();
 });

@@ -26,7 +26,6 @@ use App\Livewire\Planes;
 use App\Livewire\Postulante\Busquedas as PostulanteBusquedas;
 use App\Livewire\Postulante\DetallePublicacion as PostulanteDetallePublicacion;
 use App\Livewire\Postulante\Ficha;
-use App\Livewire\Postulante\Panel;
 use App\Livewire\Postulante\Postulaciones as PostulantePostulaciones;
 use App\Livewire\QuienesSomos;
 use Illuminate\Http\RedirectResponse;
@@ -45,7 +44,9 @@ Route::match(['get', 'post'], '/pagos/flow/retorno', [FlowController::class, 're
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/postulante/ficha', Ficha::class)->name('postulante.ficha');
     Route::middleware(EnsurePostulanteOnboardingComplete::class)->group(function () {
-        Route::get('/postulante', Panel::class)->name('postulante.panel');
+        // El postulante ya no tiene panel propio: entra a Oportunidades. La URL antigua
+        // se conserva redirigiendo, para no romper enlaces guardados.
+        Route::redirect('/postulante', '/postulante/busquedas');
         Route::get('/postulante/busquedas', PostulanteBusquedas::class)->name('postulante.busquedas');
         Route::get('/postulante/postulaciones', PostulantePostulaciones::class)->name('postulante.postulaciones');
         Route::get('/postulante/oportunidades/{publicacion}', PostulanteDetallePublicacion::class)->name('postulante.publicaciones.show');
