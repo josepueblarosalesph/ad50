@@ -2,7 +2,11 @@
 
 namespace App\Livewire\Empresa;
 
+use App\Concerns\AsociaCandidatosAPublicaciones;
 use App\Models\Desbloqueo;
+use App\Models\Empresa;
+use App\Models\Favorito;
+use App\Models\NotaCandidato;
 use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\Publicacion;
@@ -24,6 +28,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Postulaciones extends Component
 {
+    use AsociaCandidatosAPublicaciones;
     use WithPagination;
 
     public Publicacion $publicacion;
@@ -44,6 +49,90 @@ class Postulaciones extends Component
 
     /** Postulante cuyo detalle está abierto; null con el panel cerrado. */
     public ?int $detalleId = null;
+
+    /** Candidato cuyas notas están abiertas en el panel rápido; null = cerrado. */
+    public ?int $notasPostulanteId = null;
+
+    /**
+     * Las acciones sobre el candidato (favorito, notas, asociar) son de la cuenta, no de
+     * esta publicación: se comportan igual que en Prospección de Candidatos.
+     */
+    public function toggleFavorito(int $postulanteId): void
+    {
+        abort_unless($this->candidatoAsociable($postulanteId), 404);
+
+        auth()->user()->empresa->alternarFavorito($postulanteId);
+    }
+
+    /**
+     * Postulantes que la empresa tiene guardados. Se consulta una vez por render y la
+     * vista pregunta contra esta lista.
+     *
+     * @return list<int>
+     */
+    private function favoritosDeLaEmpresa(): array
+    {
+        return once(fn (): array => array_values(
+            Favorito::query()
+                ->where('empresa_id', $this->publicacion->empresa_id)
+                ->pluck('postulante_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all()
+        ));
+    }
+
+    /** Abre la vista rápida de las notas del candidato; escribirlas sigue siendo cosa de su ficha. */
+    public function abrirNotas(int $postulanteId): void
+    {
+        abort_unless($this->candidatoAsociable($postulanteId), 404);
+
+        $this->notasPostulanteId = $postulanteId;
+        $this->modal('notas-candidato')->show();
+    }
+
+    public function cerrarNotas(): void
+    {
+        $this->notasPostulanteId = null;
+        $this->modal('notas-candidato')->close();
+    }
+
+    /**
+     * Notas del candidato abierto que este usuario puede leer.
+     *
+     * @return Collection<int, NotaCandidato>
+     */
+    private function notasDelCandidato(): Collection
+    {
+        if ($this->notasPostulanteId === null) {
+            return collect();
+        }
+
+        return NotaCandidato::query()
+            ->where('empresa_id', $this->publicacion->empresa_id)
+            ->where('postulante_id', $this->notasPostulanteId)
+            ->visiblesPara(auth()->user())
+            ->with('user:id,name')
+            ->orderByDesc('updated_at')
+            ->get();
+    }
+
+    protected function empresaDeAsociacion(): ?Empresa
+    {
+        return auth()->user()->empresa;
+    }
+
+    /** Aquí no se asocia desde una búsqueda, sino desde el listado de la publicación. */
+    protected function busquedaDeAsociacion(): ?int
+    {
+        return null;
+    }
+
+    protected function candidatoAsociable(int $postulanteId): bool
+    {
+        return auth()->user()->role === 'empresa'
+            && auth()->user()->empresa?->id === $this->publicacion->empresa_id
+            && $this->esCandidatoDeLaPublicacion($postulanteId);
+    }
 
     /**
      * Abre el perfil completo sin salir del listado. La clave es el postulante y no la
@@ -163,6 +252,17 @@ class Postulaciones extends Component
             'detalle' => $this->detalleId === null
                 ? null
                 : $candidatos->first(fn (CandidatoDePublicacion $c): bool => $c->postulante->id === $this->detalleId),
+            'postulantesFavoritos' => $this->favoritosDeLaEmpresa(),
+            'postulantesConNota' => NotaCandidato::query()
+                ->where('empresa_id', $this->publicacion->empresa_id)
+                ->whereIn('postulante_id', $pagina->pluck('postulante.id'))
+                ->visiblesPara(auth()->user())
+                ->pluck('postulante_id')
+                ->all(),
+            'notasDelCandidato' => $this->notasDelCandidato(),
+            'publicacionesAsociables' => $this->publicacionesAsociables(),
+            'publicacionesDelCandidato' => $this->publicacionesDelCandidato(),
+            'asociacionesPorPostulante' => $this->conteoAsociaciones($pagina->pluck('postulante.id')),
         ]);
     }
 

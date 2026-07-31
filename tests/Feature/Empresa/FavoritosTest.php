@@ -347,3 +347,24 @@ test('no se abre como favorito un candidato que no lo es', function () {
         ->test(Candidato::class, ['match' => $noFavorito, 'origen' => 'favoritos'])
         ->assertStatus(404);
 });
+
+test('el panel de asociación usa un desplegable con casillas y resume lo elegido', function () {
+    [$user, , $liderazgo, , $publicacion] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+
+    $componente = Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('abrirAsociacion', $match->postulante_id);
+
+    // Sin nada elegido: el desplegable invita a elegir y ofrece el buscador.
+    $componente
+        ->assertSee('Elige una o más publicaciones')
+        ->assertSee('Buscar publicación')
+        ->assertSeeHtml('type="checkbox"')
+        ->assertSeeHtml('toggleAsociacion('.$publicacion->id.')');
+
+    // Con una publicación marcada, el resumen la cuenta sin desplegar la lista.
+    $componente->call('toggleAsociacion', $publicacion->id)
+        ->assertSee('1 publicación seleccionada')
+        ->assertDontSee('Elige una o más publicaciones');
+});

@@ -5,6 +5,7 @@ use App\Livewire\Empresa\Postulaciones;
 use App\Livewire\Empresa\SelectorCriterio;
 use App\Models\Busqueda;
 use App\Models\Empresa;
+use App\Models\NotaCandidato;
 use App\Models\Postulacion;
 use App\Models\Postulante;
 use App\Models\Publicacion;
@@ -407,4 +408,72 @@ test('al agregado que además postuló se le ve el nombre completo', function ()
     Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion])
         ->assertSee('Ana Torres Vega')
         ->assertDontSee('Perfil sin desbloquear');
+});
+
+test('las tarjetas del listado traen las mismas acciones que Prospección', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulacion = postularA($publicacion, 'Ana Torres Vega', 'Biobío');
+    $postulante = $postulacion->postulante;
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        // Favorito, asociar a otra publicación, notas y ficha completa.
+        ->assertSeeHtml('toggleFavorito('.$postulante->id.')')
+        ->assertSeeHtml('abrirAsociacion('.$postulante->id.')')
+        ->assertSeeHtml('abrirNotas('.$postulante->id.')')
+        ->assertSeeHtml('verDetalle('.$postulante->id.')')
+        // Y lo propio de una publicación: el combobox de estado.
+        ->assertSeeHtml('cambiarEstado('.$postulacion->id.', $event.target.value)')
+        ->assertSee('Postuló');
+});
+
+test('desde el listado de una publicación se guarda al candidato como favorito', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulante = postularA($publicacion, 'Ana Torres Vega', 'Biobío')->postulante;
+
+    $componente = Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('toggleFavorito', $postulante->id);
+
+    expect($empresa->fresh()->haMarcadoFavorito($postulante->id))->toBeTrue();
+
+    $componente->call('toggleFavorito', $postulante->id);
+
+    expect($empresa->fresh()->haMarcadoFavorito($postulante->id))->toBeFalse();
+});
+
+test('el listado de una publicación abre las notas del candidato en el panel rápido', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $postulante = postularA($publicacion, 'Ana Torres Vega', 'Biobío')->postulante;
+
+    NotaCandidato::query()->create([
+        'empresa_id' => $empresa->id,
+        'postulante_id' => $postulante->id,
+        'user_id' => $user->id,
+        'contenido' => 'Muy buena entrevista telefónica',
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertSee('Ver notas de este candidato')
+        ->call('abrirNotas', $postulante->id)
+        ->assertSee('Muy buena entrevista telefónica')
+        ->call('cerrarNotas')
+        ->assertSet('notasPostulanteId', null);
+});
+
+test('no se pueden accionar candidatos ajenos a la publicación', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    [, , $otraPublicacion] = empresaConPublicacion('otra@empresa.cl');
+    $ajeno = postularA($otraPublicacion, 'Beto Ajeno', 'Biobío')->postulante;
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('toggleFavorito', $ajeno->id)
+        ->assertStatus(404);
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('abrirNotas', $ajeno->id)
+        ->assertStatus(404);
 });

@@ -3,7 +3,8 @@
     <x-slot:status>{{ $planActual?->nombre ?? 'Sin plan' }}</x-slot:status>
     <x-slot:nav><x-nav-empresa /></x-slot:nav>
 
-    <div class="mx-auto max-w-5xl">
+    {{-- Alineada a la izquierda, igual que Mi cuenta y Configuración (ver equipo.blade.php). --}}
+    <div class="max-w-5xl">
         <div class="mb-6">
             <span class="ad-eyebrow">Suscripción</span>
             <h1 class="mt-3 text-[27px] font-extrabold">Planes para tu empresa</h1>

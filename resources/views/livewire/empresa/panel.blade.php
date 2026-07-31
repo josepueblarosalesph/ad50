@@ -34,7 +34,7 @@
 
         {{-- Acceso directo al listado de favoritos --}}
         <a wire:navigate href="{{ route('empresa.favoritos') }}" class="ad-card block p-5 transition hover:border-orange-300 hover:shadow-[var(--shadow-card)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">
-            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Favoritos <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
+            <span class="flex items-center justify-between text-[13px] font-semibold text-gray-500">Candidatos favoritos <flux:icon.arrow-up-right class="size-4 text-gray-400" /></span>
             <div class="mt-3 truncate text-[25px] font-extrabold">{{ $totalFavoritos }}</div>
         </a>
     </div>

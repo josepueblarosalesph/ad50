@@ -3,7 +3,9 @@
     <x-slot:status>{{ $empresa?->plan?->nombre ?? 'Sin plan' }}</x-slot:status>
     <x-slot:nav><x-nav-empresa /></x-slot:nav>
 
-    <div class="mx-auto max-w-4xl">
+    {{-- Alineada a la izquierda, como el resto de las pantallas de cuenta del menú
+         superior (Mi cuenta, Configuración): el ancho se acota, pero no se centra. --}}
+    <div class="max-w-4xl">
         <div class="mb-6">
             <span class="ad-eyebrow">Usuarios de la empresa</span>
             <h1 class="mt-3 text-[30px] font-extrabold">Equipo de {{ $empresa->razon_social }}</h1>
