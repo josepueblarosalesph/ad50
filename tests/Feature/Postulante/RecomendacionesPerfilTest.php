@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Postulante\Busquedas;
 use App\Livewire\Postulante\Ficha;
 use App\Models\Postulante;
 use App\Models\User;
@@ -66,6 +67,71 @@ test('el aviso de Oportunidades muestra solo las tres recomendaciones que más s
         // La cuarta ya no cabe en el aviso compacto: se ve entrando a la ficha.
         ->assertDontSee('Sube tu currículum en PDF')
         ->assertSee('Completar mi perfil');
+});
+
+test('cerrar el aviso lo oculta y anota el porcentaje que tenía en ese momento', function () {
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->assertSee('Escribe tu presentación profesional')
+        ->call('ocultarRecomendaciones')
+        ->assertDontSee('Escribe tu presentación profesional')
+        ->assertDontSee('Completar mi perfil');
+
+    expect($user->postulante->fresh()->recomendaciones_ocultas_hasta)->toBe(55);
+
+    // Y sigue oculto al volver a entrar.
+    $this->actingAs($user->fresh())->get(route('postulante.busquedas'))
+        ->assertOk()
+        ->assertDontSee('Escribe tu presentación profesional');
+});
+
+test('el aviso cerrado vuelve a aparecer en cuanto la persona completa algo', function () {
+    $user = postulanteQueSaltoLoOpcional();
+    $postulante = $user->postulante;
+
+    Livewire::actingAs($user)->test(Busquedas::class)->call('ocultarRecomendaciones');
+
+    expect($postulante->fresh()->recomendaciones_ocultas_hasta)->toBe(55);
+
+    // Agrega su presentación: 55 % -> 63 %, así que el aviso reaparece con lo que queda.
+    $postulante->update(['resumen_profesional' => 'Veinte años liderando equipos financieros.']);
+
+    Livewire::actingAs($user->fresh())
+        ->test(Busquedas::class)
+        ->assertSee('Tu perfil está al 63%')
+        ->assertSee('Selecciona tus habilidades')
+        // Lo que ya completó deja de aparecer.
+        ->assertDontSee('Escribe tu presentación profesional');
+});
+
+test('borrar información no hace reaparecer el aviso cerrado', function () {
+    $user = postulanteQueSaltoLoOpcional();
+    $postulante = $user->postulante;
+    $postulante->update(['resumen_profesional' => 'Veinte años liderando equipos financieros.']);
+
+    Livewire::actingAs($user->fresh())->test(Busquedas::class)->call('ocultarRecomendaciones');
+    expect($postulante->fresh()->recomendaciones_ocultas_hasta)->toBe(63);
+
+    // Quitar el resumen baja a 55 %: no completó nada, así que el aviso sigue cerrado.
+    $postulante->update(['resumen_profesional' => null]);
+
+    Livewire::actingAs($user->fresh())
+        ->test(Busquedas::class)
+        ->assertDontSee('Completar mi perfil');
+});
+
+test('la tarjeta de la ficha no se ve afectada por cerrar el aviso', function () {
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)->test(Busquedas::class)->call('ocultarRecomendaciones');
+
+    // El detalle completo sigue donde la persona entra a propósito a trabajar su perfil.
+    Livewire::actingAs($user->fresh())
+        ->test(Ficha::class)
+        ->assertSee('Recomendaciones para destacar')
+        ->assertSee('Escribe tu presentación profesional');
 });
 
 test('el aviso desaparece cuando el perfil llega al 100%', function () {

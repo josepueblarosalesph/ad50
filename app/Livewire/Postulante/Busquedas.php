@@ -90,6 +90,21 @@ class Busquedas extends Component
         $matching->sincronizarPostulante($postulante);
     }
 
+    /**
+     * Cierra el aviso de recomendaciones. Se anota el porcentaje actual, así que el
+     * aviso vuelve a salir en cuanto complete algo (ver Postulante::ocultaRecomendaciones).
+     */
+    public function ocultarRecomendaciones(): void
+    {
+        $postulante = auth()->user()->postulante;
+
+        abort_if($postulante === null, 404);
+
+        $postulante->update([
+            'recomendaciones_ocultas_hasta' => CompletitudPerfil::porcentaje($postulante),
+        ]);
+    }
+
     public function limpiarFiltros(): void
     {
         $limites = CatalogosProfesionales::rangoSueldo();
@@ -215,13 +230,18 @@ class Busquedas extends Component
     public function render(): View
     {
         $postulante = auth()->user()->postulante;
+        $completitud = CompletitudPerfil::porcentaje($postulante);
 
         return view('livewire.postulante.busquedas', [
             'postulante' => $postulante,
             // Esta es la pantalla de entrada: quien terminó el asistente saltándose lo
             // opcional se entera aquí de qué le falta, sin tener que entrar a su ficha.
-            'completitud' => CompletitudPerfil::porcentaje($postulante),
-            'recomendaciones' => CompletitudPerfil::pendientes($postulante, CompletitudPerfil::MAXIMO_EN_AVISO),
+            // Si cerró el aviso, no vuelve hasta que complete algo; el detalle completo
+            // sigue estando siempre en su ficha.
+            'completitud' => $completitud,
+            'recomendaciones' => $postulante?->ocultaRecomendaciones($completitud) ?? false
+                ? []
+                : CompletitudPerfil::pendientes($postulante, CompletitudPerfil::MAXIMO_EN_AVISO),
             'publicaciones' => Publicacion::query()
                 ->vigentes()
                 // La fecha hace las veces de marca de "ya postulé": null = todavía no.

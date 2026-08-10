@@ -39,9 +39,21 @@
         </div>
     </div>
 
-    {{-- Perfil a medias: se muestra lo que más suma, con el detalle completo en la ficha. --}}
+    {{-- Perfil a medias: se muestra lo que más suma, con el detalle completo en la ficha.
+         Se puede cerrar; vuelve a salir cuando la persona complete algo. --}}
     @if (count($recomendaciones) > 0)
-        <div class="mb-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5">
+        <div class="relative mb-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5 pe-12">
+            <button
+                type="button"
+                wire:click="ocultarRecomendaciones"
+                wire:loading.attr="disabled"
+                wire:target="ocultarRecomendaciones"
+                class="absolute end-3 top-3 grid size-8 place-items-center rounded-lg text-orange-700/60 transition hover:bg-orange-200 hover:text-orange-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:opacity-50"
+                aria-label="Cerrar las recomendaciones para completar mi perfil"
+                title="Cerrar. Volverá a aparecer cuando completes algo de tu perfil."
+            >
+                <flux:icon.x-mark class="size-4" />
+            </button>
             <b class="text-[14px]">Tu perfil está al {{ $completitud }}%</b>
             <p class="mt-1 text-[13px] text-gray-700">Completa estos datos para aparecer mejor posicionado ante las empresas:</p>
             <ul class="mt-3 space-y-1.5">

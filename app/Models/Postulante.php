@@ -36,6 +36,7 @@ class Postulante extends Model
         'experiencias' => 'array',
         'onboarding_paso' => 'integer',
         'onboarding_completado' => 'boolean',
+        'recomendaciones_ocultas_hasta' => 'integer',
     ];
 
     /**
@@ -137,6 +138,19 @@ class Postulante extends Model
         }
 
         return $anios.' '.($anios === 1 ? 'año' : 'años');
+    }
+
+    /**
+     * Cerró el aviso de recomendaciones y todavía no ha avanzado desde entonces.
+     *
+     * Se compara contra el porcentaje que tenía al cerrarlo: en cuanto complete
+     * cualquier ítem el número sube y el aviso vuelve, con lo que aún le falte. Si baja
+     * (borró información) sigue oculto: no completó nada, que es lo que lo hace volver.
+     */
+    public function ocultaRecomendaciones(int $completitudActual): bool
+    {
+        return $this->recomendaciones_ocultas_hasta !== null
+            && $completitudActual <= $this->recomendaciones_ocultas_hasta;
     }
 
     /** @return BelongsTo<User, $this> */
