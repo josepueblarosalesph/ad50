@@ -3,6 +3,7 @@
 namespace App\Livewire\Empresa;
 
 use App\Concerns\AsociaCandidatosAPublicaciones;
+use App\Concerns\OrganizaFavoritosEnCarpetas;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Desbloqueo;
@@ -25,11 +26,19 @@ use Livewire\WithPagination;
  * El favorito es de la cuenta (tabla `favoritos`), así que hay uno por candidato sin
  * importar desde qué búsqueda se marcó. `busqueda_id` guarda ese origen y alimenta el
  * filtro "Búsqueda de origen".
+ *
+ * Sobre esa lista compartida, cada usuario del equipo arma sus propias carpetas para
+ * agrupar perfiles (ver [OrganizaFavoritosEnCarpetas]).
  */
 class Favoritos extends Component
 {
     use AsociaCandidatosAPublicaciones;
+    use OrganizaFavoritosEnCarpetas;
     use WithPagination;
+
+    /** Carpeta activa: 'todas', 'sin' (sin carpeta) o el id de una carpeta propia. */
+    #[Url(history: true)]
+    public string $carpeta = 'todas';
 
     /** Búsqueda de origen: 'todas' o el id de una búsqueda de la empresa. */
     #[Url(history: true)]
@@ -61,6 +70,12 @@ class Favoritos extends Component
         if (! in_array($this->desbloqueo, ['todos', 'desbloqueados', 'bloqueados'], true)) {
             $this->desbloqueo = 'todos';
         }
+
+        // Una carpeta ajena o ya borrada equivale a no filtrar por carpeta.
+        if ($this->carpeta !== 'todas' && $this->carpeta !== 'sin'
+            && ! $this->carpetasDelUsuario()->contains('id', (int) $this->carpeta)) {
+            $this->carpeta = 'todas';
+        }
     }
 
     public function updated(string $campo): void
@@ -68,6 +83,18 @@ class Favoritos extends Component
         if (in_array($campo, ['busqueda', 'publicacion', 'desbloqueo'], true)) {
             $this->resetPage(pageName: 'favoritos');
         }
+    }
+
+    /** Cambia la carpeta activa desde la barra lateral. */
+    public function verCarpeta(string $carpeta): void
+    {
+        abort_unless(
+            in_array($carpeta, ['todas', 'sin'], true) || $this->carpetasDelUsuario()->contains('id', (int) $carpeta),
+            404,
+        );
+
+        $this->carpeta = $carpeta;
+        $this->resetPage(pageName: 'favoritos');
     }
 
     public function limpiarFiltros(): void
@@ -131,6 +158,25 @@ class Favoritos extends Component
     protected function empresaDeAsociacion(): ?Empresa
     {
         return auth()->user()->empresa;
+    }
+
+    protected function empresaDeCarpetas(): ?Empresa
+    {
+        return auth()->user()->empresa;
+    }
+
+    protected function favoritoDeCandidato(int $postulanteId): ?Favorito
+    {
+        return $this->favoritosDeLaEmpresa()->where('postulante_id', $postulanteId)->first();
+    }
+
+    /** Si se borró la carpeta que se estaba viendo, se vuelve a la lista completa. */
+    protected function carpetaEliminada(int $carpetaId): void
+    {
+        if ($this->carpeta === (string) $carpetaId) {
+            $this->carpeta = 'todas';
+            $this->resetPage(pageName: 'favoritos');
+        }
     }
 
     /** Si hay un filtro de búsqueda activo se usa como origen; si no, queda sin trazabilidad. */
@@ -224,6 +270,18 @@ class Favoritos extends Component
 
         $totalFavoritos = (clone $query)->count();
 
+        // Carpeta activa. Es navegación, no filtro: vive en la barra lateral y "Limpiar
+        // filtros" no la toca, igual que cambiar de carpeta no borra los filtros.
+        if ($this->carpeta === 'sin') {
+            $query->whereIn('id', $this->favoritosDeLaEmpresa()
+                ->whereDoesntHave('carpetas', fn (Builder $q) => $q->where('carpetas_favoritos.user_id', auth()->id()))
+                ->select('postulante_id'));
+        } elseif ($this->carpeta !== 'todas') {
+            $query->whereIn('id', $this->favoritosDeLaEmpresa()
+                ->whereHas('carpetas', fn (Builder $q) => $q->where('carpetas_favoritos.id', (int) $this->carpeta))
+                ->select('postulante_id'));
+        }
+
         // Filtro por la búsqueda desde la que se guardó.
         if ($this->busqueda !== 'todas') {
             $query->whereIn('id', $this->favoritosDeLaEmpresa()
@@ -267,6 +325,13 @@ class Favoritos extends Component
                 ->whereIn('postulante_id', $candidatos->pluck('id'))
                 ->pluck('postulante_id')
                 ->all(),
+            'carpetas' => $this->carpetasDelUsuario(),
+            'carpetaActiva' => $this->carpetasDelUsuario()->firstWhere('id', (int) $this->carpeta),
+            'carpetasPorCandidato' => $this->carpetasPorPostulante($candidatos->pluck('id')),
+            'carpetasDelCandidato' => $this->carpetasDelCandidato(),
+            'sinCarpeta' => $this->favoritosDeLaEmpresa()
+                ->whereDoesntHave('carpetas', fn (Builder $q) => $q->where('carpetas_favoritos.user_id', auth()->id()))
+                ->count(),
             'hayFiltros' => $this->busqueda !== 'todas' || $this->publicacion !== 'todas' || $this->desbloqueo !== 'todos',
             'planVigente' => $empresa?->planVigente() ?? false,
             'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,

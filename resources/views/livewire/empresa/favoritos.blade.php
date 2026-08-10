@@ -1,13 +1,41 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="favoritos" /></x-slot:nav>
+    <x-slot:sidebar>
+        <div class="sticky top-24">
+            @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'escritorio'])
+        </div>
+    </x-slot:sidebar>
+
+    {{-- El sidebar del layout se oculta bajo md: en móvil las carpetas van plegadas. --}}
+    <details class="group mb-4 rounded-xl border border-line-2 bg-white dark:bg-[#222528] md:hidden">
+        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[14px] font-bold text-ink">
+            <span class="inline-flex items-center gap-2">
+                <flux:icon.folder class="size-4 text-orange-500" />
+                {{ $carpetaActiva?->nombre ?? ($carpeta === 'sin' ? 'Sin carpeta' : 'Mis carpetas') }}
+            </span>
+            <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
+        </summary>
+        <div class="border-t border-line px-3 pb-3 pt-3">
+            @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'movil'])
+        </div>
+    </details>
 
     <div class="mb-6 flex flex-wrap items-start justify-between gap-5">
         <div>
-            <h1 class="text-[30px] font-extrabold">Mis favoritos</h1>
+            <h1 class="text-[30px] font-extrabold">{{ $carpetaActiva?->nombre ?? 'Mis favoritos' }}</h1>
             <p class="mt-2 text-[14px] text-gray-500">
-                {{ $totalFavoritos }} {{ $totalFavoritos === 1 ? 'candidato guardado' : 'candidatos guardados' }}
-                en tu cuenta.
+                @if ($carpetaActiva)
+                    {{ $carpetaActiva->favoritos_count }}
+                    {{ $carpetaActiva->favoritos_count === 1 ? 'candidato agrupado' : 'candidatos agrupados' }}
+                    en esta carpeta, de {{ $totalFavoritos }} guardados en tu cuenta.
+                @elseif ($carpeta === 'sin')
+                    {{ $sinCarpeta }} {{ $sinCarpeta === 1 ? 'candidato guardado aún sin carpeta' : 'candidatos guardados aún sin carpeta' }},
+                    de {{ $totalFavoritos }} en tu cuenta.
+                @else
+                    {{ $totalFavoritos }} {{ $totalFavoritos === 1 ? 'candidato guardado' : 'candidatos guardados' }}
+                    en tu cuenta.
+                @endif
             </p>
         </div>
     </div>
@@ -109,6 +137,19 @@
                             </flux:tooltip>
                         @endif
 
+                        @php($enCarpetas = $carpetasPorCandidato[$candidato->id] ?? [])
+                        <button type="button" wire:click="abrirCarpetas({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirCarpetas({{ $candidato->id }})" @class([
+                            'ad-btn-sm inline-flex items-center gap-2 whitespace-nowrap rounded-xl border font-bold transition disabled:opacity-50',
+                            'border-orange-300 bg-orange-100 text-orange-600' => $enCarpetas !== [],
+                            'border-line-2 bg-white text-gray-500 hover:border-orange-300 hover:text-orange-600 dark:bg-[#2A2D30]' => $enCarpetas === [],
+                        ])>
+                            <flux:icon.folder class="size-4" />
+                            Carpetas
+                            @if ($enCarpetas !== [])
+                                <span class="grid min-w-[18px] place-items-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white">{{ count($enCarpetas) }}</span>
+                            @endif
+                        </button>
+
                         @php($asociadas = $candidato->publicacionesAsociadas->count())
                         <button type="button" wire:click="abrirAsociacion({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $candidato->id }})" @class([
                             'ad-btn-sm inline-flex items-center gap-2 whitespace-nowrap rounded-xl border font-bold transition disabled:opacity-50',
@@ -132,6 +173,13 @@
                      a la derecha. Van en la misma fila porque, sin la búsqueda de origen, una
                      fila propia para el botón dejaba una franja vacía sobre las publicaciones. --}}
                 <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-line pt-3">
+                    @if ($enCarpetas !== [])
+                        <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">En carpetas</span>
+                        @foreach ($enCarpetas as $nombreCarpeta)
+                            <span class="ad-chip ad-chip-sm"><flux:icon.folder class="size-3.5" />{{ $nombreCarpeta }}</span>
+                        @endforeach
+                    @endif
+
                     @if ($candidato->publicacionesAsociadas->isNotEmpty())
                         <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">En publicaciones</span>
                         @foreach ($candidato->publicacionesAsociadas as $publicacionAsociada)
@@ -154,17 +202,25 @@
             </article>
         @empty
             <div class="ad-card p-10 text-center">
-                <flux:icon.star class="mx-auto size-8 text-gray-400" />
-                <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ningún favorito cumple estos filtros' : 'Aún no guardas favoritos' }}</h2>
-                <p class="mt-2 text-[13px] text-gray-500">
-                    {{ $hayFiltros
-                        ? 'Prueba ampliando los filtros para ver más candidatos.'
-                        : 'Marca candidatos con la estrella desde los resultados de una búsqueda y aparecerán aquí.' }}
-                </p>
-                @if ($hayFiltros)
-                    <button type="button" wire:click="limpiarFiltros" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>
+                @if ($carpetaActiva && ! $hayFiltros)
+                    {{-- Carpeta recién creada: se llena desde la propia lista, no desde las búsquedas. --}}
+                    <flux:icon.folder-open class="mx-auto size-8 text-gray-400" />
+                    <h2 class="mt-3 font-bold">La carpeta «{{ $carpetaActiva->nombre }}» está vacía</h2>
+                    <p class="mt-2 text-[13px] text-gray-500">Abre «Carpetas» en cualquier candidato guardado para agruparlo aquí.</p>
+                    <button type="button" wire:click="verCarpeta('todas')" class="ad-btn-primary ad-btn-sm mt-4">Ver todos mis favoritos</button>
                 @else
-                    <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-primary ad-btn-sm mt-4">Ir a Prospección de Candidatos</a>
+                    <flux:icon.star class="mx-auto size-8 text-gray-400" />
+                    <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ningún favorito cumple estos filtros' : 'Aún no guardas favoritos' }}</h2>
+                    <p class="mt-2 text-[13px] text-gray-500">
+                        {{ $hayFiltros
+                            ? 'Prueba ampliando los filtros para ver más candidatos.'
+                            : 'Marca candidatos con la estrella desde los resultados de una búsqueda y aparecerán aquí.' }}
+                    </p>
+                    @if ($hayFiltros)
+                        <button type="button" wire:click="limpiarFiltros" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>
+                    @else
+                        <a wire:navigate href="{{ route('empresa.busquedas.index') }}" class="ad-btn-primary ad-btn-sm mt-4">Ir a Prospección de Candidatos</a>
+                    @endif
                 @endif
             </div>
         @endforelse
@@ -175,4 +231,5 @@
     @endif
 
     <x-asociar-publicaciones-modal :publicaciones="$publicacionesAsociables" :asociadas="$publicacionesDelCandidato" />
+    <x-organizar-carpetas-modal :carpetas="$carpetas" :asignadas="$carpetasDelCandidato" />
 </div>

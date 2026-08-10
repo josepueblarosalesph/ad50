@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Candidato guardado por una empresa.
@@ -38,5 +39,17 @@ class Favorito extends Model
     public function busqueda(): BelongsTo
     {
         return $this->belongsTo(Busqueda::class);
+    }
+
+    /**
+     * Carpetas en las que está agrupado. Son de cada usuario del equipo, así que al
+     * consultarlas hay que acotar por `carpetas_favoritos.user_id`.
+     *
+     * @return BelongsToMany<CarpetaFavoritos, $this>
+     */
+    public function carpetas(): BelongsToMany
+    {
+        return $this->belongsToMany(CarpetaFavoritos::class, 'carpeta_favorito', 'favorito_id', 'carpeta_id')
+            ->withTimestamps();
     }
 }

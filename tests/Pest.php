@@ -1,7 +1,13 @@
 <?php
 
+use App\Models\Busqueda;
+use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
+use App\Models\Favorito;
 use App\Models\Plan;
+use App\Models\Postulante;
+use App\Models\Publicacion;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -92,6 +98,58 @@ function fichaOpcionalCompleta(): array
         'situacion_laboral' => 'Trabajando actualmente',
         'expectativa_renta' => 2500000,
     ];
+}
+
+/**
+ * Empresa operativa con dos búsquedas y una publicación.
+ *
+ * @return array{0: User, 1: Empresa, 2: Busqueda, 3: Busqueda, 4: Publicacion}
+ */
+function empresaConFavoritos(): array
+{
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa Favoritos '.fake()->unique()->numerify('####'),
+        'estado_activacion' => 'activa',
+    ]);
+    hacerEmpresaOperativa($empresa);
+
+    $liderazgo = $empresa->busquedas()->create(['titulo' => 'Liderazgo', 'criterios' => []]);
+    $planta = $empresa->busquedas()->create(['titulo' => 'Planta Sur', 'criterios' => []]);
+    $publicacion = Publicacion::factory()->create(['empresa_id' => $empresa->id, 'cargo' => 'Jefe de Planta']);
+
+    return [$user->fresh(), $empresa->fresh(), $liderazgo, $planta, $publicacion];
+}
+
+/**
+ * Crea un candidato que calza con la búsqueda y, si corresponde, lo guarda en los
+ * favoritos de la empresa (que ya no dependen de la búsqueda: solo registra el origen).
+ */
+function candidatoEnBusqueda(Busqueda $busqueda, bool $favorito = true, string $cargo = 'Gerente'): BusquedaCandidato
+{
+    $postulante = Postulante::query()->create([
+        'user_id' => User::factory()->create(['role' => 'postulante'])->id,
+        'visible' => true,
+        'cargo_actual' => $cargo,
+    ]);
+
+    $match = $busqueda->candidatos()->create([
+        'postulante_id' => $postulante->id,
+        'criterios_cumplidos' => 1,
+        'criterios_totales' => 1,
+        'estado_match' => 'cumple',
+    ]);
+
+    if ($favorito) {
+        Favorito::query()->create([
+            'empresa_id' => $busqueda->empresa_id,
+            'postulante_id' => $postulante->id,
+            'busqueda_id' => $busqueda->id,
+        ]);
+    }
+
+    return $match;
 }
 
 /**
