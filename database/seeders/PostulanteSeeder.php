@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Postulante;
 use App\Models\User;
+use App\Services\CompletitudPerfil;
 use App\Support\CatalogosProfesionales;
 use App\Support\SecuenciasPostgres;
 use Illuminate\Database\Seeder;
@@ -61,6 +62,25 @@ class PostulanteSeeder extends Seeder
         // El upsert fija los ids a mano y eso no mueve la secuencia de Postgres: sin
         // esto, el siguiente registro real chocaría con una de estas filas.
         SecuenciasPostgres::sincronizar('postulantes');
+
+        $this->recalcularCompletitud($usuarios->all());
+    }
+
+    /**
+     * `completitud` es una copia persistida del cálculo de CompletitudPerfil, así que no
+     * se puede fijar a mano: si estos perfiles demo dijeran 100 % contradirían a las
+     * recomendaciones que ve el propio postulante en su ficha.
+     *
+     * @param  array<int|string, int>  $usuarios
+     */
+    private function recalcularCompletitud(array $usuarios): void
+    {
+        Postulante::query()
+            ->whereIn('user_id', array_values($usuarios))
+            ->get()
+            ->each(fn (Postulante $postulante) => $postulante->updateQuietly([
+                'completitud' => CompletitudPerfil::porcentaje($postulante),
+            ]));
     }
 
     /**
@@ -96,7 +116,6 @@ class PostulanteSeeder extends Seeder
             'experiencias' => $this->experiencias($perfil, $anioInicio),
             'resumen_profesional' => $perfil['resumen'],
             'anios_experiencia' => $perfil['anios_experiencia'],
-            'completitud' => 100,
             'visible' => true,
             'suscripcion_hasta' => now()->addYear(),
         ];

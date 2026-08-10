@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Busqueda;
 use App\Models\Postulante;
 use App\Models\User;
+use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Database\Seeder;
@@ -178,7 +179,6 @@ class PostulantesPruebaSeeder extends Seeder
                 'experiencias' => json_encode($experiencias, JSON_THROW_ON_ERROR),
                 'resumen_profesional' => 'Profesional de '.$carrera.' con '.$anios.' años de experiencia en '.$industria.', radicado en '.$region.'.',
                 'anios_experiencia' => $anios,
-                'completitud' => 100,
                 'visible' => true,
                 'created_at' => $ahora,
                 'updated_at' => $ahora,
@@ -191,6 +191,15 @@ class PostulantesPruebaSeeder extends Seeder
         foreach ($postulantes->chunk(100) as $tanda) {
             Postulante::query()->insert($tanda->all());
         }
+
+        // `completitud` es una copia del cálculo de CompletitudPerfil, no un valor a
+        // elegir: fijarla a mano haría que el admin mostrara un número que contradice
+        // las recomendaciones que ve el propio postulante.
+        Postulante::query()
+            ->whereIn('user_id', $idsPorEmail->values())
+            ->each(fn (Postulante $postulante) => $postulante->updateQuietly([
+                'completitud' => CompletitudPerfil::porcentaje($postulante),
+            ]));
 
         // 5) Recalcular el matching de todas las búsquedas contra la nueva base.
         Busqueda::query()

@@ -13,7 +13,6 @@
 
     {{-- Encabezado: es la pantalla de entrada del postulante, así que aquí viven la
          completitud del perfil y el interruptor de visibilidad. --}}
-    @php($completitud = $postulante?->completitud ?? 0)
     <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
             <h1 class="text-[27px] font-extrabold">Oportunidades</h1>
@@ -39,6 +38,23 @@
             </div>
         </div>
     </div>
+
+    {{-- Perfil a medias: se muestra lo que más suma, con el detalle completo en la ficha. --}}
+    @if (count($recomendaciones) > 0)
+        <div class="mb-5 rounded-[14px] border border-orange-200 bg-orange-50 p-5">
+            <b class="text-[14px]">Tu perfil está al {{ $completitud }}%</b>
+            <p class="mt-1 text-[13px] text-gray-700">Completa estos datos para aparecer mejor posicionado ante las empresas:</p>
+            <ul class="mt-3 space-y-1.5">
+                @foreach ($recomendaciones as $recomendacion)
+                    <li class="flex gap-2 text-[13px] text-gray-700">
+                        <flux:icon.plus-circle class="mt-0.5 size-4 flex-none text-orange-500" />
+                        <span><b>{{ $recomendacion->titulo }}.</b> {{ $recomendacion->detalle }}</span>
+                    </li>
+                @endforeach
+            </ul>
+            <a wire:navigate href="{{ route('postulante.ficha') }}" class="ad-btn-ghost ad-btn-sm mt-4">Completar mi perfil</a>
+        </div>
+    @endif
 
     {{-- Ficha sin tocar hace medio año: recordatorio para que siga apareciendo en búsquedas. --}}
     @if ($postulante?->updated_at?->lt(now()->subMonths(6)))

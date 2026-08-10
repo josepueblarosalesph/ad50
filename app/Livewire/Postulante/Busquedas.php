@@ -4,6 +4,7 @@ namespace App\Livewire\Postulante;
 
 use App\Concerns\PostulaAOfertas;
 use App\Models\Publicacion;
+use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
@@ -217,6 +218,10 @@ class Busquedas extends Component
 
         return view('livewire.postulante.busquedas', [
             'postulante' => $postulante,
+            // Esta es la pantalla de entrada: quien terminó el asistente saltándose lo
+            // opcional se entera aquí de qué le falta, sin tener que entrar a su ficha.
+            'completitud' => CompletitudPerfil::porcentaje($postulante),
+            'recomendaciones' => CompletitudPerfil::pendientes($postulante, CompletitudPerfil::MAXIMO_EN_AVISO),
             'publicaciones' => Publicacion::query()
                 ->vigentes()
                 // La fecha hace las veces de marca de "ya postulé": null = todavía no.

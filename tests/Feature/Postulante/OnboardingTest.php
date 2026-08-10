@@ -255,9 +255,10 @@ test('at least one education entry is required to advance past the education ste
 
 test('el panel muestra la completitud junto a la visibilidad y la esconde al llegar al 100%', function () {
     $user = User::factory()->create(['role' => 'postulante']);
+    // Ficha recién salida del asistente: lo obligatorio lleno y lo opcional saltado.
     $postulante = Postulante::query()->create([
         'user_id' => $user->id,
-        'completitud' => 75,
+        ...fichaMinimaDelAsistente(),
         'onboarding_completado' => true,
         'onboarding_paso' => 6,
         'visible' => true,
@@ -267,11 +268,11 @@ test('el panel muestra la completitud junto a la visibilidad y la esconde al lle
     $this->actingAs($user)->get(route('postulante.busquedas'))
         ->assertOk()
         ->assertSee('title="Completa tu perfil para llegar al 100%"', false)
-        ->assertSee('75%')
+        ->assertSee('55%')
         ->assertSee('Visible para reclutadores')
         ->assertDontSee('Completitud del perfil');
 
-    $postulante->update(['completitud' => 100]);
+    $postulante->update(fichaOpcionalCompleta());
 
     // Al 100% no queda rastro de la barra. Se autentica una instancia nueva: la anterior
     // ya trae cargada la relación `postulante` con el valor viejo.

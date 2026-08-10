@@ -4,6 +4,7 @@ namespace App\Livewire\Postulante;
 
 use App\Models\Postulante;
 use App\Rules\RutValido;
+use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use App\Support\Rut;
@@ -186,7 +187,10 @@ class Ficha extends Component
             ->map(fn (array $experiencia): array => $this->normalizarExperiencia($experiencia))
             ->values()
             ->all();
-        $this->completitud = $postulante?->completitud ?? 0;
+        // Se recalcula en vez de leer la columna: esa es solo una copia persistida y
+        // puede venir desfasada (fichas anteriores al cálculo por datos, escrituras de
+        // seeders). Así la barra nunca contradice a las recomendaciones de más abajo.
+        $this->completitud = CompletitudPerfil::porcentaje($postulante);
         $this->visible = $postulante?->visible ?? true;
         $this->cvRutaExistente = $postulante?->cv_ruta;
     }
@@ -413,6 +417,7 @@ class Ficha extends Component
         }
 
         if ($this->pasoActual < 6) {
+            $this->sincronizarCompletitud();
             $this->continuarOnboarding();
 
             return;
@@ -427,12 +432,29 @@ class Ficha extends Component
         $postulante->update([
             'onboarding_paso' => 6,
             'onboarding_completado' => true,
-            'completitud' => max(100, $postulante->completitud),
         ]);
 
-        $matching->sincronizarPostulante($postulante->fresh());
+        // Terminar el asistente no implica un perfil completo: se puede llegar al final
+        // saltando todo lo opcional, y el porcentaje debe reflejarlo.
+        $matching->sincronizarPostulante($this->sincronizarCompletitud($postulante));
         $this->modoOnboarding = false;
         $this->redirectRoute('postulante.busquedas', navigate: true);
+    }
+
+    /**
+     * Recalcula la completitud desde la ficha ya guardada y la persiste.
+     *
+     * Se llama siempre DESPUÉS de guardar, porque el porcentaje sale de los datos
+     * almacenados y no del paso del asistente en que va la persona.
+     */
+    private function sincronizarCompletitud(?Postulante $postulante = null): Postulante
+    {
+        $postulante = ($postulante ?? auth()->user()->postulante()->firstOrFail())->fresh();
+
+        $this->completitud = CompletitudPerfil::porcentaje($postulante);
+        $postulante->update(['completitud' => $this->completitud]);
+
+        return $postulante;
     }
 
     private function continuarOnboarding(): void
@@ -457,13 +479,8 @@ class Ficha extends Component
                 'apellidos' => $validated['apellidos'],
                 'email' => $validated['email'],
             ]);
-            auth()->user()->postulante()->update([
-                ...$this->atributosDatos($validated),
-                'completitud' => max(25, $this->completitud),
-            ]);
+            auth()->user()->postulante()->update($this->atributosDatos($validated));
         });
-
-        $this->completitud = max(25, $this->completitud);
 
         return true;
     }
@@ -600,12 +617,7 @@ class Ficha extends Component
     {
         $validated = $this->validate($this->reglasAcercaDeMi());
 
-        auth()->user()->postulante()->update([
-            ...$this->atributosAcercaDeMi($validated),
-            'completitud' => max(35, $this->completitud),
-        ]);
-
-        $this->completitud = max(35, $this->completitud);
+        auth()->user()->postulante()->update($this->atributosAcercaDeMi($validated));
 
         return true;
     }
@@ -679,10 +691,7 @@ class Ficha extends Component
             'experiencia_inicio' => $principal['inicio_anio'],
             'experiencia_fin' => $principal['fin_anio'],
             'experiencias' => $validated['experiencias'],
-            'completitud' => max(50, $this->completitud),
         ]);
-
-        $this->completitud = max(50, $this->completitud);
 
         return true;
     }
@@ -758,10 +767,7 @@ class Ficha extends Component
             'especialidad' => $principal['mencion'],
             'postgrado' => in_array($principal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $principal['carrera'] : null,
             'educaciones' => $validated['educaciones'],
-            'completitud' => max(75, $this->completitud),
         ]);
-
-        $this->completitud = max(75, $this->completitud);
 
         return true;
     }
@@ -878,10 +884,7 @@ class Ficha extends Component
             return;
         }
 
-        $postulante = Postulante::query()->where('user_id', auth()->id())->firstOrFail();
-        $this->completitud = $this->completitudEditor();
-        $postulante->update(['completitud' => $this->completitud]);
-        $postulante->refresh();
+        $postulante = $this->sincronizarCompletitud();
 
         // El guardado ya está persistido; un caso borde del matching no debe bloquearlo.
         try {
@@ -893,24 +896,6 @@ class Ficha extends Component
         $this->seccionEditando = '';
         $this->modal('editor')->close();
         session()->flash('status', 'Guardamos los cambios de esta sección.');
-    }
-
-    private function completitudEditor(): int
-    {
-        $campos = [
-            $this->nombres,
-            $this->email,
-            $this->rut,
-            $this->anioNacimiento,
-            $this->industriasInteres,
-            $this->educaciones,
-            $this->idiomas,
-            $this->experiencias,
-        ];
-
-        $completos = collect($campos)->filter(fn (mixed $valor): bool => filled($valor))->count();
-
-        return (int) round(($completos / count($campos)) * 100);
     }
 
     public function save(MatchingService $matching): void
@@ -1043,8 +1028,6 @@ class Ficha extends Component
             ->first(fn (array $educacion): bool => ! in_array($educacion['nivel'], CatalogosProfesionales::nivelesEscolares(), true))
             ?? $validated['educaciones'][0];
 
-        $completitud = $this->calculateCompletitud($validated);
-
         $cvRutaAnterior = auth()->user()->postulante?->cv_ruta;
         $cvRutaNueva = isset($validated['cv']) && $validated['cv'] !== null
             ? $validated['cv']->store('cvs', 'local')
@@ -1057,7 +1040,7 @@ class Ficha extends Component
         }
 
         try {
-            $postulante = DB::transaction(function () use ($validated, $completitud, $principal, $educacionPrincipal, $cvRutaAnterior, $cvRutaNueva): Postulante {
+            $postulante = DB::transaction(function () use ($validated, $principal, $educacionPrincipal, $cvRutaAnterior, $cvRutaNueva): Postulante {
                 auth()->user()->update([
                     'name' => trim($validated['nombres'].' '.$validated['apellidos']),
                     'nombres' => $validated['nombres'],
@@ -1081,7 +1064,6 @@ class Ficha extends Component
                     'experiencia_fin' => $principal['fin_anio'],
                     'experiencias' => $validated['experiencias'],
                     'visible' => $validated['visible'],
-                    'completitud' => $completitud,
                     'cv_ruta' => $cvRutaNueva ?? $cvRutaAnterior,
                 ]);
             });
@@ -1097,36 +1079,12 @@ class Ficha extends Component
             Storage::disk('local')->delete($cvRutaAnterior);
         }
 
-        $matching->sincronizarPostulante($postulante);
+        $matching->sincronizarPostulante($this->sincronizarCompletitud($postulante));
 
-        $this->completitud = $completitud;
         $this->cvRutaExistente = $postulante->cv_ruta;
         $this->reset('cv');
 
         session()->flash('status', 'Perfil profesional actualizado correctamente.');
-    }
-
-    /**
-     * @param  array<string, mixed>  $validated
-     */
-    private function calculateCompletitud(array $validated): int
-    {
-        $requiredFields = [
-            'nombres',
-            'email',
-            'rut',
-            'anioNacimiento',
-            'industriasInteres',
-            'educaciones',
-            'idiomas',
-            'experiencias',
-        ];
-
-        $completedFields = collect($requiredFields)
-            ->filter(fn (string $field): bool => filled($validated[$field] ?? null))
-            ->count();
-
-        return (int) round(($completedFields / count($requiredFields)) * 100);
     }
 
     /** @return array<string, mixed> */
@@ -1211,6 +1169,12 @@ class Ficha extends Component
     public function render(): View
     {
         return view('livewire.postulante.ficha', [
+            // Lo que falta por llenar, para sugerirlo en el editor. Sale de la ficha
+            // guardada, así que no se muestra a mitad del asistente. Se relee de la BD
+            // para no quedar desfasado respecto de la barra tras guardar una sección.
+            'recomendaciones' => $this->modoOnboarding
+                ? []
+                : CompletitudPerfil::pendientes(auth()->user()->postulante()->first()),
             'industrias' => CatalogosProfesionales::industrias(),
             'generos' => CatalogosProfesionales::generos(),
             'nacionalidades' => CatalogosProfesionales::nacionalidades(),

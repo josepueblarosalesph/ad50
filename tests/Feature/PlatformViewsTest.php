@@ -557,7 +557,8 @@ test('a postulante can update every section of the professional profile', functi
         ->set('experiencias.0.cargo', 'Gerente Finanza')
         ->call('save')
         ->assertHasNoErrors()
-        ->assertSet('completitud', 100);
+        // 94 y no 100: la ficha queda completa salvo el CV, que aquí no se sube.
+        ->assertSet('completitud', 94);
 
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
@@ -580,7 +581,7 @@ test('a postulante can update every section of the professional profile', functi
         'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
         'universidad' => 'Universidad de Concepción',
         'empresa_actual' => 'Codelco',
-        'completitud' => 100,
+        'completitud' => 94,
     ]);
     expect($user->postulante->fresh())
         ->regiones_interes->toBe(['Biobío', 'Ñuble', 'La Araucanía'])

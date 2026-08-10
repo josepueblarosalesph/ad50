@@ -30,7 +30,9 @@ test('database seeders create diverse and filterable demo data', function () {
         ->and(Plan::query()->where('codigo', 'empresa_pro')->firstOrFail()->precio_uf)->toBe('30.00')
         ->and(Plan::query()->where('codigo', 'empresa_premium')->firstOrFail()->precio_uf)->toBe('45.00')
         ->and(Plan::query()->where('codigo', 'empresa_premium')->firstOrFail()->destacado)->toBeTrue()
-        ->and(User::query()->where('email', 'maria@adconsulting.cl')->firstOrFail()->postulante?->completitud)->toBe(100);
+        // La completitud del seeder no se fija a mano: sale de los datos del perfil demo,
+        // al que le faltan nacionalidad y CV.
+        ->and(User::query()->where('email', 'maria@adconsulting.cl')->firstOrFail()->postulante?->completitud)->toBe(68);
 });
 
 test('database seeders are idempotent', function () {

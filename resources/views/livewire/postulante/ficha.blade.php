@@ -83,6 +83,38 @@
             </div>
         @endunless
 
+        {{-- El asistente de bienvenida deja saltar todo lo opcional, así que aquí se
+             enumera exactamente qué falta y cada ítem abre su propio formulario. --}}
+        @if (! $modoOnboarding && count($recomendaciones) > 0)
+            <div class="ad-card mb-5 p-5">
+                <div class="flex items-start gap-3">
+                    <flux:icon.light-bulb class="mt-0.5 size-5 flex-none text-orange-500" />
+                    <div>
+                        <h2 class="text-[16px] font-extrabold">Recomendaciones para destacar</h2>
+                        <p class="mt-1 text-[13px] text-gray-500">Te falta {{ 100 - $completitud }}% para tener el perfil completo. Las empresas revisan primero las fichas con más información.</p>
+                    </div>
+                </div>
+                <ul class="mt-4 divide-y divide-line border-t border-line">
+                    @foreach ($recomendaciones as $recomendacion)
+                        <li wire:key="recomendacion-{{ $recomendacion->clave }}" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+                            <div class="min-w-60 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <b class="text-[14px] text-ink">{{ $recomendacion->titulo }}</b>
+                                    @if ($recomendacion->obligatoria)
+                                        <span class="ad-chip ad-chip-sm ad-chip-orange">Obligatorio</span>
+                                    @else
+                                        <span class="text-[12px] font-bold text-gray-400">+{{ $recomendacion->peso }}%</span>
+                                    @endif
+                                </div>
+                                <p class="mt-0.5 text-[13px] leading-relaxed text-gray-500">{{ $recomendacion->detalle }}</p>
+                            </div>
+                            <button type="button" wire:click="editarSeccion('{{ $recomendacion->seccion }}')" class="ad-btn-ghost ad-btn-sm flex-none">Completar<flux:icon.arrow-right class="size-4" /></button>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if ($modoOnboarding)
         {{-- Flujo paso a paso: secciones editables en línea --}}
         <div class="flex flex-col">

@@ -52,6 +52,49 @@ function something()
 }
 
 /**
+ * Ficha tal como queda al terminar el asistente de bienvenida sin llenar nada opcional:
+ * solo lo que el asistente no deja saltar. Vale 55 % según CompletitudPerfil.
+ *
+ * @return array<string, mixed>
+ */
+function fichaMinimaDelAsistente(): array
+{
+    return [
+        'rut' => '9.842.115-7',
+        'telefono' => '+56 9 5555 1234',
+        'anio_nacimiento' => 1971,
+        'genero' => 'Femenino',
+        'nacionalidad' => 'Chilena',
+        'ciudad' => 'Biobío',
+        'anios_experiencia' => 17,
+        'titular' => 'Gerenta de Finanzas',
+        'experiencias' => [['cargo' => 'Gerente Finanza', 'empresa' => 'Codelco']],
+        'educaciones' => [['nivel' => 'Universitaria', 'institucion' => 'Universidad de Prueba']],
+    ];
+}
+
+/**
+ * Todo lo que el asistente permite saltar. Sumado a fichaMinimaDelAsistente() da 100 %.
+ *
+ * @return array<string, mixed>
+ */
+function fichaOpcionalCompleta(): array
+{
+    return [
+        'resumen_profesional' => 'Experiencia liderando equipos financieros.',
+        'habilidades' => ['Liderazgo'],
+        'industrias_interes' => ['Banca y servicios financieros'],
+        'cv_ruta' => 'cvs/prueba.pdf',
+        'idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Intermedio']],
+        'regiones_interes' => ['Biobío'],
+        'linkedin' => 'https://linkedin.com/in/prueba',
+        'modalidad_trabajo' => ['Jornada Parcial'],
+        'situacion_laboral' => 'Trabajando actualmente',
+        'expectativa_renta' => 2500000,
+    ];
+}
+
+/**
  * Deja una empresa lista para operar el panel: datos enviados + plan pagado vigente.
  * (Con el onboarding por pago, el panel exige ambos.)
  */
