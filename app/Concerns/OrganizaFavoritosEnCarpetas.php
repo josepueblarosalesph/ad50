@@ -7,6 +7,7 @@ use App\Models\Empresa;
 use App\Models\Favorito;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
@@ -209,12 +210,13 @@ trait OrganizaFavoritosEnCarpetas
             return [];
         }
 
-        return $favorito->carpetas()
-            ->where('carpetas_favoritos.user_id', auth()->id())
-            ->pluck('carpetas_favoritos.id')
-            ->map(fn (mixed $id): int => (int) $id)
-            ->values()
-            ->all();
+        return array_values(
+            $favorito->carpetas()
+                ->where('carpetas_favoritos.user_id', auth()->id())
+                ->pluck('carpetas_favoritos.id')
+                ->map(fn (mixed $id): int => (int) $id)
+                ->all()
+        );
     }
 
     /**
@@ -233,17 +235,27 @@ trait OrganizaFavoritosEnCarpetas
             return [];
         }
 
-        return Favorito::query()
+        // Query builder y no Favorito::query(): esto es una proyección de dos columnas
+        // del join, no entidades. Hidratar modelos con columnas ajenas a su tabla es
+        // caro y además hace que `$fila->nombre` no exista para el análisis estático.
+        $filas = DB::table('favoritos')
             ->join('carpeta_favorito', 'carpeta_favorito.favorito_id', '=', 'favoritos.id')
             ->join('carpetas_favoritos', 'carpetas_favoritos.id', '=', 'carpeta_favorito.carpeta_id')
             ->where('favoritos.empresa_id', $empresa->id)
             ->where('carpetas_favoritos.user_id', auth()->id())
             ->whereIn('favoritos.postulante_id', $ids)
             ->orderBy('carpetas_favoritos.nombre')
-            ->get(['favoritos.postulante_id', 'carpetas_favoritos.nombre'])
-            ->groupBy('postulante_id')
-            ->map(fn (Collection $filas): array => $filas->pluck('nombre')->all())
-            ->all();
+            ->get(['favoritos.postulante_id', 'carpetas_favoritos.nombre']);
+
+        // Se agrupa a mano en vez de con groupBy()->map(): así el tipo del resultado es
+        // exactamente array<int, list<string>>, que es lo que la vista espera indexar.
+        $porPostulante = [];
+
+        foreach ($filas as $fila) {
+            $porPostulante[(int) $fila->postulante_id][] = (string) $fila->nombre;
+        }
+
+        return $porPostulante;
     }
 
     /**
