@@ -7,6 +7,7 @@ use App\Models\Publicacion;
 use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
+use App\Support\Funcionalidades;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
@@ -96,6 +97,8 @@ class Busquedas extends Component
      */
     public function ocultarRecomendaciones(): void
     {
+        abort_unless(Funcionalidades::recomendacionesDePerfil(), 404);
+
         $postulante = auth()->user()->postulante;
 
         abort_if($postulante === null, 404);
@@ -239,9 +242,10 @@ class Busquedas extends Component
             // Si cerró el aviso, no vuelve hasta que complete algo; el detalle completo
             // sigue estando siempre en su ficha.
             'completitud' => $completitud,
-            'recomendaciones' => $postulante?->ocultaRecomendaciones($completitud) ?? false
-                ? []
-                : CompletitudPerfil::pendientes($postulante, CompletitudPerfil::MAXIMO_EN_AVISO),
+            'recomendaciones' => ! Funcionalidades::recomendacionesDePerfil()
+                || ($postulante?->ocultaRecomendaciones($completitud) ?? false)
+                    ? []
+                    : CompletitudPerfil::pendientes($postulante, CompletitudPerfil::MAXIMO_EN_AVISO),
             'publicaciones' => Publicacion::query()
                 ->vigentes()
                 // La fecha hace las veces de marca de "ya postulé": null = todavía no.

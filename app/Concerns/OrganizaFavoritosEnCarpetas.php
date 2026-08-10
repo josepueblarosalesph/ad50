@@ -5,6 +5,7 @@ namespace App\Concerns;
 use App\Models\CarpetaFavoritos;
 use App\Models\Empresa;
 use App\Models\Favorito;
+use App\Support\Funcionalidades;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,16 @@ trait OrganizaFavoritosEnCarpetas
      */
     private ?Collection $carpetasMemo = null;
 
+    /**
+     * La funcionalidad está publicada. Mientras esté apagada (ver config/ad50.php) no
+     * se pinta nada y toda acción responde 404: el id de una carpeta puede llegar desde
+     * el cliente, así que no basta con esconder los botones.
+     */
+    protected function carpetasHabilitadas(): bool
+    {
+        return Funcionalidades::carpetasDeFavoritos();
+    }
+
     /** Empresa dueña de los favoritos que se agrupan. */
     abstract protected function empresaDeCarpetas(): ?Empresa;
 
@@ -53,6 +64,8 @@ trait OrganizaFavoritosEnCarpetas
 
     public function crearCarpeta(): void
     {
+        abort_unless($this->carpetasHabilitadas(), 404);
+
         $empresa = $this->empresaDeCarpetas();
 
         abort_if($empresa === null, 403);
@@ -138,6 +151,7 @@ trait OrganizaFavoritosEnCarpetas
 
     public function abrirCarpetas(int $postulanteId): void
     {
+        abort_unless($this->carpetasHabilitadas(), 404);
         abort_if($this->favoritoDeCandidato($postulanteId) === null, 404);
 
         $this->organizandoPostulanteId = $postulanteId;
@@ -180,7 +194,7 @@ trait OrganizaFavoritosEnCarpetas
 
         $empresa = $this->empresaDeCarpetas();
 
-        if ($empresa === null) {
+        if ($empresa === null || ! $this->carpetasHabilitadas()) {
             return collect();
         }
 
@@ -200,7 +214,7 @@ trait OrganizaFavoritosEnCarpetas
      */
     protected function carpetasDelCandidato(): array
     {
-        if ($this->organizandoPostulanteId === null) {
+        if ($this->organizandoPostulanteId === null || ! $this->carpetasHabilitadas()) {
             return [];
         }
 
@@ -231,7 +245,7 @@ trait OrganizaFavoritosEnCarpetas
         $ids = collect($postulanteIds)->all();
         $empresa = $this->empresaDeCarpetas();
 
-        if ($ids === [] || $empresa === null) {
+        if ($ids === [] || $empresa === null || ! $this->carpetasHabilitadas()) {
             return [];
         }
 
@@ -264,6 +278,8 @@ trait OrganizaFavoritosEnCarpetas
      */
     private function carpetaPropia(int $carpetaId): CarpetaFavoritos
     {
+        abort_unless($this->carpetasHabilitadas(), 404);
+
         $empresa = $this->empresaDeCarpetas();
 
         abort_if($empresa === null, 403);

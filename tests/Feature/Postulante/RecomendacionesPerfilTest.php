@@ -7,6 +7,10 @@ use App\Models\User;
 use App\Services\CompletitudPerfil;
 use Livewire\Livewire;
 
+// La funcionalidad va apagada por omisión (ver config/ad50.php). Estos tests describen
+// cómo se comporta publicada, así que la encienden; los del final cubren el apagado.
+beforeEach(fn () => config()->set('ad50.funcionalidades.recomendaciones_perfil', true));
+
 /** Postulante que terminó el asistente llenando solo lo obligatorio. */
 function postulanteQueSaltoLoOpcional(): User
 {
@@ -209,4 +213,49 @@ test('guardar una sección desde el editor actualiza la completitud persistida',
         'user_id' => $user->id,
         'completitud' => 75,
     ]);
+});
+
+test('con la funcionalidad apagada no se ven las recomendaciones en ninguna pantalla', function () {
+    config()->set('ad50.funcionalidades.recomendaciones_perfil', false);
+
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->assertDontSee('Tu perfil está al')
+        ->assertDontSee('Escribe tu presentación profesional')
+        ->assertDontSee('Completar mi perfil');
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->assertDontSee('Recomendaciones para destacar')
+        ->assertDontSee('Escribe tu presentación profesional');
+});
+
+test('con la funcionalidad apagada cerrar el aviso responde 404', function () {
+    config()->set('ad50.funcionalidades.recomendaciones_perfil', false);
+
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->call('ocultarRecomendaciones')
+        ->assertStatus(404);
+
+    expect($user->postulante->fresh()->recomendaciones_ocultas_hasta)->toBeNull();
+});
+
+test('apagar las recomendaciones no toca el cálculo de completitud', function () {
+    config()->set('ad50.funcionalidades.recomendaciones_perfil', false);
+
+    $user = postulanteQueSaltoLoOpcional();
+
+    // Decisión explícita: se oculta el mensaje, no el porcentaje. La ficha sigue
+    // valiendo 55 % y la píldora de Oportunidades se sigue viendo.
+    expect(CompletitudPerfil::porcentaje($user->postulante))->toBe(55);
+
+    Livewire::actingAs($user)
+        ->test(Busquedas::class)
+        ->assertViewHas('completitud', 55)
+        ->assertSee('55%');
 });

@@ -1,25 +1,27 @@
 <div class="ad-panel">
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="favoritos" /></x-slot:nav>
-    <x-slot:sidebar>
-        <div class="sticky top-24">
-            @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'escritorio'])
-        </div>
-    </x-slot:sidebar>
+    @if ($carpetasVisibles)
+        <x-slot:sidebar>
+            <div class="sticky top-24">
+                @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'escritorio'])
+            </div>
+        </x-slot:sidebar>
 
-    {{-- El sidebar del layout se oculta bajo md: en móvil las carpetas van plegadas. --}}
-    <details class="group mb-4 rounded-xl border border-line-2 bg-white dark:bg-[#222528] md:hidden">
-        <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[14px] font-bold text-ink">
-            <span class="inline-flex items-center gap-2">
-                <flux:icon.folder class="size-4 text-orange-500" />
-                {{ $carpetaActiva?->nombre ?? ($carpeta === 'sin' ? 'Sin carpeta' : 'Mis carpetas') }}
-            </span>
-            <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
-        </summary>
-        <div class="border-t border-line px-3 pb-3 pt-3">
-            @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'movil'])
-        </div>
-    </details>
+        {{-- El sidebar del layout se oculta bajo md: en móvil las carpetas van plegadas. --}}
+        <details class="group mb-4 rounded-xl border border-line-2 bg-white dark:bg-[#222528] md:hidden">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[14px] font-bold text-ink">
+                <span class="inline-flex items-center gap-2">
+                    <flux:icon.folder class="size-4 text-orange-500" />
+                    {{ $carpetaActiva?->nombre ?? ($carpeta === 'sin' ? 'Sin carpeta' : 'Mis carpetas') }}
+                </span>
+                <flux:icon.chevron-down class="size-4 text-gray-400 transition group-open:rotate-180" />
+            </summary>
+            <div class="border-t border-line px-3 pb-3 pt-3">
+                @include('livewire.empresa.partials.carpetas-favoritos', ['prefijo' => 'movil'])
+            </div>
+        </details>
+    @endif
 
     <div class="mb-6 flex flex-wrap items-start justify-between gap-5">
         <div>
@@ -138,6 +140,7 @@
                         @endif
 
                         @php($enCarpetas = $carpetasPorCandidato[$candidato->id] ?? [])
+                        @if ($carpetasVisibles)
                         <button type="button" wire:click="abrirCarpetas({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirCarpetas({{ $candidato->id }})" @class([
                             'ad-btn-sm inline-flex items-center gap-2 whitespace-nowrap rounded-xl border font-bold transition disabled:opacity-50',
                             'border-orange-300 bg-orange-100 text-orange-600' => $enCarpetas !== [],
@@ -149,6 +152,7 @@
                                 <span class="grid min-w-[18px] place-items-center rounded-full bg-orange-600 px-1 text-[10px] font-bold text-white">{{ count($enCarpetas) }}</span>
                             @endif
                         </button>
+                        @endif
 
                         @php($asociadas = $candidato->publicacionesAsociadas->count())
                         <button type="button" wire:click="abrirAsociacion({{ $candidato->id }})" wire:loading.attr="disabled" wire:target="abrirAsociacion({{ $candidato->id }})" @class([
@@ -173,7 +177,7 @@
                      a la derecha. Van en la misma fila porque, sin la búsqueda de origen, una
                      fila propia para el botón dejaba una franja vacía sobre las publicaciones. --}}
                 <div class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-line pt-3">
-                    @if ($enCarpetas !== [])
+                    @if ($carpetasVisibles && $enCarpetas !== [])
                         <span class="text-[11.5px] font-bold uppercase tracking-[.1em] text-gray-400">En carpetas</span>
                         @foreach ($enCarpetas as $nombreCarpeta)
                             <span class="ad-chip ad-chip-sm"><flux:icon.folder class="size-3.5" />{{ $nombreCarpeta }}</span>
@@ -231,5 +235,7 @@
     @endif
 
     <x-asociar-publicaciones-modal :publicaciones="$publicacionesAsociables" :asociadas="$publicacionesDelCandidato" />
-    <x-organizar-carpetas-modal :carpetas="$carpetas" :asignadas="$carpetasDelCandidato" />
+    @if ($carpetasVisibles)
+        <x-organizar-carpetas-modal :carpetas="$carpetas" :asignadas="$carpetasDelCandidato" />
+    @endif
 </div>

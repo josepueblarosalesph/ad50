@@ -7,6 +7,7 @@ use App\Rules\RutValido;
 use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
+use App\Support\Funcionalidades;
 use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -1172,7 +1173,7 @@ class Ficha extends Component
             // Lo que falta por llenar, para sugerirlo en el editor. Sale de la ficha
             // guardada, así que no se muestra a mitad del asistente. Se relee de la BD
             // para no quedar desfasado respecto de la barra tras guardar una sección.
-            'recomendaciones' => $this->modoOnboarding
+            'recomendaciones' => $this->modoOnboarding || ! Funcionalidades::recomendacionesDePerfil()
                 ? []
                 : CompletitudPerfil::pendientes(auth()->user()->postulante()->first()),
             'industrias' => CatalogosProfesionales::industrias(),

@@ -71,8 +71,12 @@ class Favoritos extends Component
             $this->desbloqueo = 'todos';
         }
 
-        // Una carpeta ajena o ya borrada equivale a no filtrar por carpeta.
-        if ($this->carpeta !== 'todas' && $this->carpeta !== 'sin'
+        // Una carpeta ajena o ya borrada equivale a no filtrar por carpeta. Con la
+        // funcionalidad apagada se ignora cualquier valor: si no, un `?carpeta=sin`
+        // en la URL delataría en el encabezado una función que no debería verse.
+        if (! $this->carpetasHabilitadas()) {
+            $this->carpeta = 'todas';
+        } elseif ($this->carpeta !== 'todas' && $this->carpeta !== 'sin'
             && ! $this->carpetasDelUsuario()->contains('id', (int) $this->carpeta)) {
             $this->carpeta = 'todas';
         }
@@ -88,6 +92,7 @@ class Favoritos extends Component
     /** Cambia la carpeta activa desde la barra lateral. */
     public function verCarpeta(string $carpeta): void
     {
+        abort_unless($this->carpetasHabilitadas(), 404);
         abort_unless(
             in_array($carpeta, ['todas', 'sin'], true) || $this->carpetasDelUsuario()->contains('id', (int) $carpeta),
             404,
@@ -325,6 +330,7 @@ class Favoritos extends Component
                 ->whereIn('postulante_id', $candidatos->pluck('id'))
                 ->pluck('postulante_id')
                 ->all(),
+            'carpetasVisibles' => $this->carpetasHabilitadas(),
             'carpetas' => $this->carpetasDelUsuario(),
             'carpetaActiva' => $this->carpetasDelUsuario()->firstWhere('id', (int) $this->carpeta),
             'carpetasPorCandidato' => $this->carpetasPorPostulante($candidatos->pluck('id')),

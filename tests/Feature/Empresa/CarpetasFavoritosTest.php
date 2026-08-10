@@ -7,6 +7,10 @@ use App\Models\Favorito;
 use App\Models\User;
 use Livewire\Livewire;
 
+// La funcionalidad va apagada por omisión (ver config/ad50.php). Estos tests describen
+// cómo se comporta publicada, así que la encienden; los de más abajo cubren el apagado.
+beforeEach(fn () => config()->set('ad50.funcionalidades.carpetas_favoritos', true));
+
 /** Segundo usuario del equipo de la misma empresa. */
 function companeroDeEquipo(Empresa $empresa): User
 {
@@ -294,4 +298,64 @@ test('el tope de carpetas por usuario se respeta', function () {
 
     expect(CarpetaFavoritos::query()->where('user_id', $user->id)->count())
         ->toBe(CarpetaFavoritos::MAXIMO_POR_USUARIO);
+});
+
+test('con la funcionalidad apagada no se ve nada de carpetas en Favoritos', function () {
+    config()->set('ad50.funcionalidades.carpetas_favoritos', false);
+
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+    // Aunque ya existieran carpetas creadas antes de apagarla, no deben asomar.
+    carpetaCon($user, $empresa, 'Finanzas senior', favoritoDe($empresa, $match->postulante_id));
+
+    $html = $this->actingAs($user)->get(route('empresa.favoritos'))->assertOk()->getContent();
+
+    expect($html)
+        ->not->toContain('Mis carpetas')
+        ->not->toContain('Finanzas senior')
+        ->not->toContain('Nueva carpeta')
+        ->not->toContain('En carpetas')
+        ->not->toContain('Agrupar en carpetas')
+        // El resto de la pantalla sigue funcionando igual.
+        ->toContain('Mis favoritos')
+        ->toContain('Gerente de Finanzas');
+});
+
+test('con la funcionalidad apagada las acciones de carpetas responden 404', function () {
+    config()->set('ad50.funcionalidades.carpetas_favoritos', false);
+
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+    $carpeta = carpetaCon($user, $empresa, 'Finanzas senior');
+
+    // Esconder los botones no basta: los ids viajan desde el cliente.
+    foreach ([
+        ['crearCarpeta', []],
+        ['editarCarpeta', [$carpeta->id]],
+        ['eliminarCarpeta', [$carpeta->id]],
+        ['alternarCarpeta', [$carpeta->id]],
+        ['abrirCarpetas', [$match->postulante_id]],
+        ['verCarpeta', [(string) $carpeta->id]],
+    ] as [$accion, $argumentos]) {
+        Livewire::actingAs($user)
+            ->test(Favoritos::class)
+            ->call($accion, ...$argumentos)
+            ->assertStatus(404, "«{$accion}» debería responder 404 con la funcionalidad apagada");
+    }
+
+    expect(CarpetaFavoritos::query()->where('user_id', $user->id)->count())->toBe(1);
+});
+
+test('con la funcionalidad apagada un ?carpeta=sin en la URL no delata nada', function () {
+    config()->set('ad50.funcionalidades.carpetas_favoritos', false);
+
+    [$user, , $liderazgo] = empresaConFavoritos();
+    candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    Livewire::withQueryParams(['carpeta' => 'sin'])
+        ->actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSet('carpeta', 'todas')
+        ->assertSee('Gerente de Finanzas')
+        ->assertDontSee('sin carpeta');
 });
