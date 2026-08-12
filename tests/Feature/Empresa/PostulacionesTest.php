@@ -29,7 +29,7 @@ function empresaConPublicacion(?string $email = null): array
     return [$user->fresh(), $empresa, $publicacion];
 }
 
-function postularA(Publicacion $publicacion, string $nombre, string $region, string $estado = 'enviada', array $extra = []): Postulacion
+function postularA(Publicacion $publicacion, string $nombre, string $region, string $estado = 'recibida', array $extra = []): Postulacion
 {
     $user = User::factory()->create(['role' => 'postulante', 'name' => $nombre]);
     $postulante = Postulante::query()->create(array_merge([
@@ -94,8 +94,8 @@ test('el listado unifica a quienes postularon y a quienes agregó la empresa, ma
         ->assertDontSee('Beto Agregado')
         ->assertSee('Postuló')
         ->assertSee('Agregado por la empresa')
-        // Sin postulación no hay estado que gestionar.
-        ->assertSee('Sin postulación');
+        // Ahora el agregado también tiene etapa, y arranca en revisión.
+        ->assertSee('En revisión');
 });
 
 test('quien fue agregado y además postuló ocupa una sola fila con los dos orígenes', function () {
@@ -116,21 +116,29 @@ test('quien fue agregado y además postuló ocupa una sola fila con los dos orí
         ->assertViewHas('candidatos', fn ($candidatos): bool => $candidatos->total() === 1);
 });
 
-test('el chip de agregados filtra por origen y los de estado solo alcanzan a quien postuló', function () {
+test('los filtros de origen y de etapa son independientes y se combinan', function () {
     [$user, $empresa, $publicacion] = empresaConPublicacion();
     postularA($publicacion, 'Ana Postuló', 'Biobío');
     agregarA($publicacion, 'Beto Agregado');
 
     $componente = Livewire::actingAs($user)->test(Postulaciones::class, ['publicacion' => $publicacion]);
 
-    $componente->call('mostrarEstado', 'agregados')
+    $componente->set('origen', 'agregados')
         ->assertSee('Beto')
         ->assertDontSee('Ana Postuló');
 
-    // Un estado de postulación deja fuera a quien no postuló.
-    $componente->call('mostrarEstado', 'enviada')
+    $componente->set('origen', 'postularon')
         ->assertSee('Ana Postuló')
         ->assertDontSee('Beto');
+
+    // Los dos ejes se combinan: quien postuló llega en "recibida", así que buscar
+    // agregados en esa etapa no devuelve a nadie.
+    $componente->set('origen', 'agregados')->set('estado', 'recibida')
+        ->assertDontSee('Ana Postuló')
+        ->assertDontSee('Beto');
+
+    // Y el agregado sí aparece en la etapa en que arranca.
+    $componente->set('estado', 'en_revision')->assertSee('Beto');
 });
 
 test('el detalle de un agregado no muestra contacto ni respuestas', function () {
@@ -182,7 +190,7 @@ test('an empresa can change the estado of an application', function () {
 
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->call('cambiarEstado', $postulacion->id, 'seleccionada')
+        ->call('cambiarEstado', $postulacion->postulante_id, 'seleccionada')
         ->assertHasNoErrors();
 
     expect($postulacion->fresh()->estado)->toBe('seleccionada');
@@ -190,7 +198,7 @@ test('an empresa can change the estado of an application', function () {
     // Un estado inválido se rechaza.
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->call('cambiarEstado', $postulacion->id, 'inventado')
+        ->call('cambiarEstado', $postulacion->postulante_id, 'inventado')
         ->assertStatus(422);
 });
 
@@ -226,11 +234,11 @@ test('the side filters narrow the applicants by profile', function () {
 test('the estado filter narrows by application status', function () {
     [$user, $empresa, $publicacion] = empresaConPublicacion();
     postularA($publicacion, 'Ana Torres', 'Biobío', 'seleccionada');
-    postularA($publicacion, 'Beto Díaz', 'Valparaíso', 'enviada');
+    postularA($publicacion, 'Beto Díaz', 'Valparaíso', 'recibida');
 
     Livewire::actingAs($user)
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
-        ->call('mostrarEstado', 'seleccionada')
+        ->set('estado', 'seleccionada')
         ->assertSee('Ana Torres')
         ->assertDontSee('Beto Díaz');
 });
@@ -422,8 +430,9 @@ test('las tarjetas del listado traen las mismas acciones que Prospección', func
         ->assertSeeHtml('abrirAsociacion('.$postulante->id.')')
         ->assertSeeHtml('abrirNotas('.$postulante->id.')')
         ->assertSeeHtml('verDetalle('.$postulante->id.')')
-        // Y lo propio de una publicación: el combobox de estado.
-        ->assertSeeHtml('cambiarEstado('.$postulacion->id.', $event.target.value)')
+        // Y lo propio de una publicación: el combobox de etapa. Va por id de postulante
+        // y no de postulación, porque ahora también lo tienen los agregados.
+        ->assertSeeHtml('cambiarEstado('.$postulante->id.', $event.target.value)')
         ->assertSee('Postuló');
 });
 
@@ -476,4 +485,53 @@ test('no se pueden accionar candidatos ajenos a la publicación', function () {
         ->test(Postulaciones::class, ['publicacion' => $publicacion])
         ->call('abrirNotas', $ajeno->id)
         ->assertStatus(404);
+});
+
+test('el candidato agregado por la empresa arranca en revisión y se le puede cambiar la etapa', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    $agregado = agregarA($publicacion, 'Beto Agregado');
+
+    $asociacion = PublicacionCandidato::query()
+        ->where('publicacion_id', $publicacion->id)
+        ->where('postulante_id', $agregado->id)
+        ->firstOrFail();
+
+    expect($asociacion->estado)->toBe('en_revision');
+
+    // Y se mueve de etapa como cualquier otro, sin haber postulado nunca.
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->call('cambiarEstado', $agregado->id, 'seleccionada')
+        ->assertHasNoErrors();
+
+    expect($asociacion->fresh()->estado)->toBe('seleccionada')
+        ->and(Postulacion::query()->count())->toBe(0);
+});
+
+test('el estado "Recibida" reemplaza a "Enviada" en el listado', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Postuló', 'Biobío');
+
+    Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->assertSee('Recibida')
+        ->assertDontSee('Enviada');
+});
+
+test('los filtros se ofrecen como desplegables y no como filas de chips', function () {
+    [$user, $empresa, $publicacion] = empresaConPublicacion();
+    postularA($publicacion, 'Ana Postuló', 'Biobío');
+    agregarA($publicacion, 'Beto Agregado');
+
+    $html = Livewire::actingAs($user)
+        ->test(Postulaciones::class, ['publicacion' => $publicacion])
+        ->html();
+
+    expect($html)
+        ->toContain('id="filtro-origen"')
+        ->toContain('id="filtro-etapa"')
+        // El conteo viaja dentro de cada opción para no perder la información.
+        ->toContain('Recibidos (1)')
+        ->toContain('Agregados (1)')
+        ->toContain('En revisión (1)');
 });

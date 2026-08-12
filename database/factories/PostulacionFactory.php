@@ -28,7 +28,7 @@ class PostulacionFactory extends Factory
                 return Postulante::factory()->create(['user_id' => $user->id])->id;
             },
             'respuestas' => ['Me interesa aportar mi experiencia al equipo.'],
-            'estado' => 'enviada',
+            'estado' => 'recibida',
         ];
     }
 }

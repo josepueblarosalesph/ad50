@@ -14,7 +14,7 @@ class Postulacion extends Model
 
     /** Estados de la postulación en el flujo de revisión de la empresa. */
     public const ESTADOS = [
-        'enviada' => 'Enviada',
+        'recibida' => 'Recibida',
         'en_revision' => 'En revisión',
         'seleccionada' => 'Seleccionada',
         'descartada' => 'Descartada',
@@ -30,7 +30,7 @@ class Postulacion extends Model
     ];
 
     protected $attributes = [
-        'estado' => 'enviada',
+        'estado' => 'recibida',
     ];
 
     protected function casts(): array

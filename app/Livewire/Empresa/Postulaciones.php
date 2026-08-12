@@ -33,12 +33,27 @@ class Postulaciones extends Component
 
     public Publicacion $publicacion;
 
-    /** Chip activo: `todas`, un estado de postulación, o `agregados` (los que sumó la empresa). */
-    #[Url(history: true)]
-    public string $estado = 'todas';
+    /**
+     * Los dos filtros son ejes independientes y se combinan: de dónde viene la persona
+     * y en qué etapa está. Antes iban mezclados en una sola fila de chips, donde
+     * "Agregados" competía con los estados y no se podía, por ejemplo, ver los agregados
+     * que ya están seleccionados.
+     */
 
-    /** Valor del chip que filtra por origen en vez de por estado de postulación. */
-    private const FILTRO_AGREGADOS = 'agregados';
+    /** Origen: `todos`, `postularon` o `agregados`. */
+    #[Url(history: true)]
+    public string $origen = 'todos';
+
+    /** Etapa: `todos` o una clave de Postulacion::ESTADOS. */
+    #[Url(history: true)]
+    public string $estado = 'todos';
+
+    /** @var array<string, string> */
+    public const ORIGENES = [
+        'todos' => 'Todos',
+        'postularon' => 'Recibidos',
+        'agregados' => 'Agregados',
+    ];
 
     /**
      * Criterios de perfil provenientes del panel lateral (mismos de Prospección de Candidatos), aplicados al vuelo.
@@ -165,6 +180,16 @@ class Postulaciones extends Component
         abort_unless($publicacion->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->publicacion = $publicacion;
+
+        // Los dos filtros viajan en la URL: un valor de un enlace viejo o manipulado
+        // equivale a no filtrar por ese eje.
+        if (! array_key_exists($this->origen, self::ORIGENES)) {
+            $this->origen = 'todos';
+        }
+
+        if ($this->estado !== 'todos' && ! array_key_exists($this->estado, Postulacion::ESTADOS)) {
+            $this->estado = 'todos';
+        }
     }
 
     /** @param  array<string, mixed>  $criterios */
@@ -175,26 +200,45 @@ class Postulaciones extends Component
         $this->resetPage(pageName: 'postulaciones');
     }
 
-    public function mostrarEstado(string $estado): void
+    /**
+     * Los filtros llegan por wire:model desde dos desplegables, así que un valor
+     * inventado se descarta en vez de reventar: se vuelve a "todos".
+     */
+    public function updated(string $campo): void
     {
-        abort_unless(
-            in_array($estado, ['todas', self::FILTRO_AGREGADOS], true) || array_key_exists($estado, Postulacion::ESTADOS),
-            404
-        );
+        if ($campo === 'origen') {
+            if (! array_key_exists($this->origen, self::ORIGENES)) {
+                $this->origen = 'todos';
+            }
 
-        $this->estado = $estado;
-        $this->resetPage(pageName: 'postulaciones');
+            $this->resetPage(pageName: 'postulaciones');
+        }
+
+        if ($campo === 'estado') {
+            if ($this->estado !== 'todos' && ! array_key_exists($this->estado, Postulacion::ESTADOS)) {
+                $this->estado = 'todos';
+            }
+
+            $this->resetPage(pageName: 'postulaciones');
+        }
     }
 
-    public function cambiarEstado(int $postulacionId, string $estado): void
+    /**
+     * Mueve de etapa a un candidato de esta publicación, haya postulado o lo haya
+     * agregado la empresa: el estado se guarda donde corresponda a cada caso.
+     */
+    public function cambiarEstado(int $postulanteId, string $estado): void
     {
         abort_unless(array_key_exists($estado, Postulacion::ESTADOS), 422);
 
-        $postulacion = $this->publicacion->postulaciones()->find($postulacionId);
+        $candidato = $this->candidatos()
+            ->first(fn (CandidatoDePublicacion $c): bool => $c->postulante->id === $postulanteId);
 
-        abort_if($postulacion === null, 404);
+        $registro = $candidato?->registroDeEstado();
 
-        $postulacion->update(['estado' => $estado]);
+        abort_if($registro === null, 404);
+
+        $registro->update(['estado' => $estado]);
     }
 
     /** Descarga del CV de un postulante que aplicó a esta publicación. No consume desbloqueos. */
@@ -244,11 +288,12 @@ class Postulaciones extends Component
             'totalPostularon' => $candidatos->filter(fn (CandidatoDePublicacion $c): bool => $c->postulo())->count(),
             'totalAgregados' => $candidatos->filter(fn (CandidatoDePublicacion $c): bool => $c->agregado())->count(),
             'totalFiltradas' => $total,
+            // Cuenta a todos, no solo a quienes postularon: los agregados también tienen
+            // etapa, y si no aparecerían en el chip "En revisión" con un cero engañoso.
             'conteoPorEstado' => $candidatos
-                ->filter(fn (CandidatoDePublicacion $c): bool => $c->postulo())
                 ->countBy(fn (CandidatoDePublicacion $c): string => (string) $c->estado()),
             'estados' => Postulacion::ESTADOS,
-            'filtroAgregados' => self::FILTRO_AGREGADOS,
+            'origenes' => self::ORIGENES,
             'detalle' => $this->detalleId === null
                 ? null
                 : $candidatos->first(fn (CandidatoDePublicacion $c): bool => $c->postulante->id === $this->detalleId),
@@ -320,14 +365,18 @@ class Postulaciones extends Component
             ->values();
     }
 
-    /** Chip activo: `todas`, un estado de postulación o los agregados por la empresa. */
+    /** Los dos filtros se aplican a la vez: origen Y etapa. */
     private function cumpleFiltroDeChip(CandidatoDePublicacion $candidato): bool
     {
-        return match ($this->estado) {
-            'todas' => true,
-            self::FILTRO_AGREGADOS => $candidato->agregado(),
-            default => $candidato->estado() === $this->estado,
+        $porOrigen = match ($this->origen) {
+            'postularon' => $candidato->postulo(),
+            'agregados' => $candidato->agregado(),
+            default => true,
         };
+
+        $porEstado = $this->estado === 'todos' || $candidato->estado() === $this->estado;
+
+        return $porOrigen && $porEstado;
     }
 
     /** Evalúa el perfil del postulante contra los criterios del panel lateral (si hay). */

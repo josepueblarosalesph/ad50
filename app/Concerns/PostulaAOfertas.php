@@ -60,7 +60,7 @@ trait PostulaAOfertas
             ],
             [
                 'respuestas' => $validated['respuestas'],
-                'estado' => 'enviada',
+                'estado' => 'recibida',
             ],
         );
 

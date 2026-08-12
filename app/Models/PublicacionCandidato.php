@@ -17,6 +17,20 @@ class PublicacionCandidato extends Model
 
     protected $guarded = [];
 
+    /**
+     * Arranca en revisión y no en "recibida": a esta persona la empresa la buscó y la
+     * eligió a mano, así que ya está mirándola. "Recibida" describe lo que llega solo.
+     */
+    protected $attributes = [
+        'estado' => 'en_revision',
+    ];
+
+    /** Comparte el catálogo de estados con la postulación: es el mismo proceso. */
+    public function estadoLabel(): string
+    {
+        return Postulacion::ESTADOS[$this->estado] ?? ucfirst((string) $this->estado);
+    }
+
     /** @return BelongsTo<Publicacion, $this> */
     public function publicacion(): BelongsTo
     {

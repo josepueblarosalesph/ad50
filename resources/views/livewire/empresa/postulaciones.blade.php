@@ -24,32 +24,53 @@
             </div>
         </details>
 
-        <div class="mb-5">
-            <h1 class="text-[25px] font-extrabold">{{ $publicacion->cargo }}</h1>
-            <p class="mt-1.5 text-[14px] text-gray-500">
-                {{ $totalCandidatos }} {{ $totalCandidatos === 1 ? 'persona' : 'personas' }} en esta publicación:
-                <b class="text-ink">{{ $totalPostularon }}</b> {{ $totalPostularon === 1 ? 'postuló' : 'postularon' }}
-                y <b class="text-ink">{{ $totalAgregados }}</b> {{ $totalAgregados === 1 ? 'fue agregada' : 'fueron agregadas' }} por la empresa.
-            </p>
+        {{-- Título y filtros en la misma fila: los desplegables se alinean a la derecha
+             en vez de ocupar una franja propia debajo. Bajo `sm` se envuelven solos y
+             quedan bajo el título, que es lo razonable en pantalla estrecha. --}}
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+            <div class="min-w-0">
+                <h1 class="text-[25px] font-extrabold">{{ $publicacion->cargo }}</h1>
+                <p class="mt-1.5 text-[14px] text-gray-500">
+                    {{ $totalCandidatos }} {{ $totalCandidatos === 1 ? 'persona' : 'personas' }} en esta publicación:
+                    <b class="text-ink">{{ $totalPostularon }}</b> {{ $totalPostularon === 1 ? 'postuló' : 'postularon' }}
+                    y <b class="text-ink">{{ $totalAgregados }}</b> {{ $totalAgregados === 1 ? 'fue agregada' : 'fueron agregadas' }} por la empresa.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div class="flex items-center gap-2">
+                <label for="filtro-origen" class="text-[12px] font-bold text-gray-500">Origen</label>
+                <select id="filtro-origen" wire:model.live="origen" @class([
+                    'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
+                    'border-orange-300 bg-orange-100 text-orange-700' => $origen !== 'todos',
+                    'border-line-2 bg-white text-gray-600 dark:bg-[#222528]' => $origen === 'todos',
+                ])>
+                    @foreach ($origenes as $valor => $etiqueta)
+                        @php($conteo = match ($valor) {
+                            'postularon' => $totalPostularon,
+                            'agregados' => $totalAgregados,
+                            default => $totalCandidatos,
+                        })
+                        <option value="{{ $valor }}">{{ $etiqueta }} ({{ $conteo }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <label for="filtro-etapa" class="text-[12px] font-bold text-gray-500">Etapa</label>
+                <select id="filtro-etapa" wire:model.live="estado" @class([
+                    'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
+                    'border-orange-300 bg-orange-100 text-orange-700' => $estado !== 'todos',
+                    'border-line-2 bg-white text-gray-600 dark:bg-[#222528]' => $estado === 'todos',
+                ])>
+                    <option value="todos">Todas las etapas ({{ $totalCandidatos }})</option>
+                    @foreach ($estados as $valor => $etiqueta)
+                        <option value="{{ $valor }}">{{ $etiqueta }} ({{ (int) ($conteoPorEstado[$valor] ?? 0) }})</option>
+                    @endforeach
+                </select>
+                </div>
         </div>
 
-        {{-- Filtro por estado de la postulación, más un chip por el otro origen. --}}
-        <div class="mb-5 flex flex-wrap gap-2">
-            @php($estadoChips = array_merge(['todas' => 'Todas'], $estados, [$filtroAgregados => 'Agregados']))
-            @foreach ($estadoChips as $valor => $etiqueta)
-                @php($conteo = match ($valor) {
-                    'todas' => $totalCandidatos,
-                    $filtroAgregados => $totalAgregados,
-                    default => (int) ($conteoPorEstado[$valor] ?? 0),
-                })
-                <button type="button" wire:click="mostrarEstado('{{ $valor }}')" @class([
-                    'inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition',
-                    'border-orange-300 bg-orange-100 text-orange-700' => $estado === $valor,
-                    'border-line-2 bg-white text-gray-500 hover:text-ink dark:bg-[#222528]' => $estado !== $valor,
-                ])>
-                    {{ $etiqueta }} <span class="opacity-70">{{ $conteo }}</span>
-                </button>
-            @endforeach
         </div>
 
         @if ($criterios !== null && $totalFiltradas < $totalCandidatos)
@@ -170,27 +191,23 @@
                                     </flux:tooltip>
                                 @endif
 
-                                @if ($candidato->postulo())
-                                    <select
-                                        wire:key="estado-{{ $candidato->postulacion->id }}"
-                                        wire:change="cambiarEstado({{ $candidato->postulacion->id }}, $event.target.value)"
-                                        aria-label="Estado de la postulación de {{ $candidato->nombre() }}"
-                                        @class([
-                                            'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
-                                            'border-[#BFE6CD] bg-match-100 text-match' => $candidato->estado() === 'seleccionada',
-                                            'border-[#E7B6AE] bg-[#FBEDEA] text-[#A93226]' => $candidato->estado() === 'descartada',
-                                            'border-line-2 bg-paper text-gray-600' => ! in_array($candidato->estado(), ['seleccionada', 'descartada'], true),
-                                        ])
-                                    >
-                                        @foreach ($estados as $valor => $etiqueta)
-                                            <option value="{{ $valor }}" @selected($candidato->estado() === $valor)>{{ $etiqueta }}</option>
-                                        @endforeach
-                                    </select>
-                                @else
-                                    {{-- Sin postulación no hay estado que gestionar: el flujo de revisión
-                                         empieza cuando la persona postula. --}}
-                                    <span class="rounded-lg border border-dashed border-line-2 px-2.5 py-1.5 text-[13px] font-bold text-gray-400">Sin postulación</span>
-                                @endif
+                                {{-- Ahora todos tienen etapa, hayan postulado o los haya agregado
+                                     la empresa: el proceso de revisión es el mismo. --}}
+                                <select
+                                    wire:key="estado-{{ $candidato->postulante->id }}"
+                                    wire:change="cambiarEstado({{ $candidato->postulante->id }}, $event.target.value)"
+                                    aria-label="Etapa de {{ $candidato->nombre() }} en esta publicación"
+                                    @class([
+                                        'rounded-lg border px-2.5 py-1.5 text-[13px] font-bold focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500',
+                                        'border-[#BFE6CD] bg-match-100 text-match' => $candidato->estado() === 'seleccionada',
+                                        'border-[#E7B6AE] bg-[#FBEDEA] text-[#A93226]' => $candidato->estado() === 'descartada',
+                                        'border-line-2 bg-paper text-gray-600' => ! in_array($candidato->estado(), ['seleccionada', 'descartada'], true),
+                                    ])
+                                >
+                                    @foreach ($estados as $valor => $etiqueta)
+                                        <option value="{{ $valor }}" @selected($candidato->estado() === $valor)>{{ $etiqueta }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
                     </div>

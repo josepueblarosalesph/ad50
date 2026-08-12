@@ -62,15 +62,30 @@ final class CandidatoDePublicacion
         return $this->asociacion !== null;
     }
 
-    /** Estado de la postulación; null en quien solo fue agregado (no hay postulación que gestionar). */
+    /**
+     * Etapa en la que está esta persona dentro de la publicación.
+     *
+     * Manda la postulación cuando la hay: si alguien agregado a mano acaba postulando,
+     * su postulación es el hecho que la empresa gestiona. Quien solo fue agregado tiene
+     * el estado de esa asociación, que arranca en revisión.
+     */
     public function estado(): ?string
     {
-        return $this->postulacion?->estado;
+        return $this->postulacion?->estado ?? $this->asociacion?->estado;
     }
 
     public function estadoLabel(): ?string
     {
-        return $this->postulacion?->estadoLabel();
+        return $this->postulacion?->estadoLabel() ?? $this->asociacion?->estadoLabel();
+    }
+
+    /**
+     * Fila que guarda el estado de esta persona, para poder cambiárselo.
+     * Es la postulación si postuló; si no, la asociación.
+     */
+    public function registroDeEstado(): Postulacion|PublicacionCandidato|null
+    {
+        return $this->postulacion ?? $this->asociacion;
     }
 
     /**

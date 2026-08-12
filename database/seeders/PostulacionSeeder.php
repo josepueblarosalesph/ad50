@@ -30,7 +30,7 @@ class PostulacionSeeder extends Seeder
                         ],
                         [
                             'respuestas' => ['Me interesa aportar mi experiencia al equipo.'],
-                            'estado' => 'enviada',
+                            'estado' => 'recibida',
                         ],
                     );
                 }
