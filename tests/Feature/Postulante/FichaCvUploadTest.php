@@ -20,13 +20,13 @@ function completarFichaParaAdjuntarCv(Testable $component): Testable
         ->set('ciudad', 'Biobío')
         ->set('industriasInteres', ['Banca y servicios financieros'])
         ->set('educaciones', [[
-            'nivel' => 'Universitaria',
+            'nivel' => 'Título Profesional',
             'pais' => 'Chile',
             'institucion' => 'Universidad de Concepción',
             'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
             'mencion' => 'Finanzas',
             'modalidad' => 'Presencial',
-            'situacion' => 'Titulado / Titulada',
+            'situacion' => 'Titulado/a',
             'inicio_anio' => 1989,
             'termino_anio' => 1995,
             'egreso_anio' => null,

@@ -151,16 +151,16 @@ test('cuenta idiomas por combinación idioma y nivel', function () {
 test('cuenta instituciones y niveles desde educaciones', function () {
     postulanteVisible([
         'universidad' => 'Universidad de Concepción',
-        'educaciones' => [['institucion' => 'Universidad de Concepción', 'nivel' => 'Universitaria', 'situacion' => 'Titulado / Titulada']],
+        'educaciones' => [['institucion' => 'Universidad de Concepción', 'nivel' => 'Título Profesional', 'situacion' => 'Titulado/a']],
     ]);
     postulanteVisible([
-        'educaciones' => [['institucion' => 'Universidad de Chile', 'nivel' => 'Magíster', 'situacion' => 'Egresado']],
+        'educaciones' => [['institucion' => 'Universidad de Chile', 'nivel' => 'Magíster', 'situacion' => 'Egresado/a']],
     ]);
 
     expect(conteo('institucion', 'Universidad de Concepción'))->toBe(1)
         ->and(conteo('institucion', 'Universidad de Chile'))->toBe(1)
-        ->and(conteo('nivel_estudios', 'Universitaria'))->toBe(1)
-        ->and(conteo('situacion_estudios', 'Egresado'))->toBe(1);
+        ->and(conteo('nivel_estudios', 'Título Profesional'))->toBe(1)
+        ->and(conteo('situacion_estudios', 'Egresado/a'))->toBe(1);
 });
 
 test('la comparación de valores ignora mayúsculas y espacios, igual que el matching', function () {

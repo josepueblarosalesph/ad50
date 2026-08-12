@@ -52,7 +52,9 @@ test('una empresa puede acceder a la pestaña publicaciones', function () {
     $this->actingAs($user)
         ->get(route('empresa.publicaciones.index'))
         ->assertOk()
-        ->assertSee('Nueva publicación');
+        ->assertSee('Nueva publicación')
+        ->assertSee('Publicación de oportunidades laborales')
+        ->assertDontSee('Portal laboral');
 });
 
 test('una empresa crea una publicación con los campos del formulario', function () {
@@ -72,8 +74,8 @@ test('una empresa crea una publicación con los campos del formulario', function
         ->set('mostrarSueldo', true)
         ->set('requisitos', 'Experiencia liderando equipos multidisciplinarios y controlando presupuestos.')
         ->set('experienciaLaboral', '10 años o más')
-        ->set('estudiosMinimos', 'Universitaria')
-        ->set('situacionAcademica', 'Titulado / Titulada')
+        ->set('estudiosMinimos', 'Título Profesional')
+        ->set('situacionAcademica', 'Titulado/a')
         ->set('competenciasTexto', 'Liderazgo, Planificación, Liderazgo')
         ->set('idiomas', ['Español', 'Inglés'])
         ->set('preguntas', ['¿Por qué te interesa este cargo?'])
@@ -278,8 +280,8 @@ test('los filtros de catálogo acotan por los campos de la publicación', functi
         'cargo' => 'Gerente de Mina',
         'tipo_cargo' => 'Jornada completa',
         'jerarquia' => 'Gerencia / Dirección',
-        'estudios_minimos' => 'Universitaria',
-        'situacion_academica' => 'Titulado / Titulada',
+        'estudios_minimos' => 'Título Profesional',
+        'situacion_academica' => 'Titulado/a',
         'idiomas' => ['Inglés', 'Español'],
     ]);
     Publicacion::factory()->create([
@@ -288,8 +290,8 @@ test('los filtros de catálogo acotan por los campos de la publicación', functi
         'cargo' => 'Asesor por Proyecto',
         'tipo_cargo' => 'Por proyecto',
         'jerarquia' => 'Profesional / Especialista',
-        'estudios_minimos' => 'Media',
-        'situacion_academica' => 'Egresado',
+        'estudios_minimos' => 'Otro',
+        'situacion_academica' => 'Egresado/a',
         'idiomas' => ['Francés'],
     ]);
 
@@ -298,8 +300,8 @@ test('los filtros de catálogo acotan por los campos de la publicación', functi
     $soloPrimera = [
         'seleccion.tipo_cargo' => ['Jornada completa'],
         'seleccion.jerarquia' => ['Gerencia / Dirección'],
-        'seleccion.estudios_minimos' => ['Universitaria'],
-        'seleccion.situacion_academica' => ['Titulado / Titulada'],
+        'seleccion.estudios_minimos' => ['Título Profesional'],
+        'seleccion.situacion_academica' => ['Titulado/a'],
         'seleccion.idiomas' => ['Inglés'],
     ];
 

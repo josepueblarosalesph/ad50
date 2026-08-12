@@ -180,7 +180,7 @@ test('new criteria (idioma, nivel de estudios, situación laboral, expectativa d
         'situacion_laboral' => 'Buscando trabajo',
         'expectativa_renta' => 2000000,
         'idiomas' => [['idioma' => 'Inglés', 'nivel' => 'Avanzado']],
-        'educaciones' => [['nivel' => 'Universitaria', 'situacion' => 'Titulado / Titulada']],
+        'educaciones' => [['nivel' => 'Título Profesional', 'situacion' => 'Titulado/a']],
     ]);
 
     $noCalza = Postulante::query()->create([
@@ -189,7 +189,7 @@ test('new criteria (idioma, nivel de estudios, situación laboral, expectativa d
         'situacion_laboral' => 'Jubilado',
         'expectativa_renta' => 5000000,
         'idiomas' => [['idioma' => 'Francés', 'nivel' => 'Básico']],
-        'educaciones' => [['nivel' => 'Media', 'situacion' => 'Egresado']],
+        'educaciones' => [['nivel' => 'Otro', 'situacion' => 'Egresado/a']],
     ]);
 
     Livewire::actingAs($empresaUser)
@@ -197,7 +197,7 @@ test('new criteria (idioma, nivel de estudios, situación laboral, expectativa d
         ->set('titulo', 'Perfil exigente')
         ->set('situacionLaboral', ['Buscando trabajo'])
         ->set('idioma', ['Inglés · Avanzado'])
-        ->set('nivelEstudios', ['Universitaria'])
+        ->set('nivelEstudios', ['Título Profesional'])
         ->set('rentaMax', 3000000)
         ->call('save')
         ->assertHasNoErrors();
@@ -281,15 +281,16 @@ test('a postulante can add and remove multiple languages', function () {
 
 test('unlocking a candidate reveals contact details and consumes a plan quota', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
-    $empresa = Empresa::query()->create([
-        'user_id' => $empresaUser->id,
-        'razon_social' => 'Empresa Activa',
-        'estado_activacion' => 'activa',
-        'plan_id' => Plan::query()->create([
+    $empresa = darPlanA(
+        Empresa::query()->create([
+            'user_id' => $empresaUser->id,
+            'razon_social' => 'Empresa Activa',
+            'estado_activacion' => 'activa',
+        ]),
+        Plan::query()->create([
             'codigo' => 'empresa_test', 'nombre' => 'Empresa Test', 'audiencia' => 'empresa', 'precio_clp' => 1, 'desbloqueos' => 2,
-        ])->id,
-        'plan_hasta' => now()->addMonth(),
-    ]);
+        ]),
+    );
     $postulanteUser = User::factory()->create(['role' => 'postulante', 'email' => 'privado@example.com']);
     $postulante = Postulante::query()->create(['user_id' => $postulanteUser->id, 'visible' => true, 'rut' => '1-9', 'telefono' => '+56911111111']);
     $busqueda = $empresa->busquedas()->create(['titulo' => 'Búsqueda', 'criterios' => []]);
@@ -311,11 +312,12 @@ test('unlocking a candidate reveals contact details and consumes a plan quota', 
 
 test('unlocking is blocked when the plan has no available quota', function () {
     $empresaUser = User::factory()->create(['role' => 'empresa']);
-    $empresa = Empresa::query()->create([
-        'user_id' => $empresaUser->id, 'razon_social' => 'Empresa Sin Cupo', 'estado_activacion' => 'activa',
-        'plan_id' => Plan::query()->create(['codigo' => 'empresa_sin_cupo', 'nombre' => 'Sin cupo', 'audiencia' => 'empresa', 'precio_clp' => 1, 'desbloqueos' => 0])->id,
-        'plan_hasta' => now()->addMonth(),
-    ]);
+    $empresa = darPlanA(
+        Empresa::query()->create([
+            'user_id' => $empresaUser->id, 'razon_social' => 'Empresa Sin Cupo', 'estado_activacion' => 'activa',
+        ]),
+        Plan::query()->create(['codigo' => 'empresa_sin_cupo', 'nombre' => 'Sin cupo', 'audiencia' => 'empresa', 'precio_clp' => 1, 'desbloqueos' => 0]),
+    );
     $postulante = Postulante::query()->create(['user_id' => User::factory()->create(['role' => 'postulante', 'email' => 'oculto@example.com'])->id, 'visible' => true]);
     $match = $empresa->busquedas()->create(['titulo' => 'B', 'criterios' => []])->candidatos()->create(['postulante_id' => $postulante->id, 'estado_match' => 'cumple']);
 

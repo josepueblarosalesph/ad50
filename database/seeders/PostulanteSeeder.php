@@ -127,13 +127,13 @@ class PostulanteSeeder extends Seeder
     private function educaciones(array $perfil, int $anioInicio): array
     {
         $educaciones = [[
-            'nivel' => 'Universitaria',
+            'nivel' => 'Título Profesional',
             'pais' => 'Chile',
             'institucion' => $perfil['institucion'],
             'carrera' => $perfil['carrera'],
             'mencion' => $perfil['especialidad'],
             'modalidad' => 'Presencial',
-            'situacion' => 'Titulado / Titulada',
+            'situacion' => 'Titulado/a',
             'inicio_anio' => $anioInicio - 5,
             'termino_anio' => $anioInicio,
             'egreso_anio' => null,
@@ -147,7 +147,7 @@ class PostulanteSeeder extends Seeder
                 'carrera' => $perfil['postgrado'],
                 'mencion' => 'Gestión',
                 'modalidad' => 'Semi-presencial',
-                'situacion' => 'Titulado / Titulada',
+                'situacion' => 'Titulado/a',
                 'inicio_anio' => $anioInicio + 7,
                 'termino_anio' => $anioInicio + 9,
                 'egreso_anio' => null,

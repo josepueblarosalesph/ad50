@@ -70,9 +70,12 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Publicaciones ilimitadas')
         ->assertSee('Más elegido')
         ->assertSee('Beneficios para tu proceso de selección')
-        ->assertSee('Confiaron en nosotros')
-        ->assertSee('alt="Microsoft"', false)
-        ->assertSee('alt="IBM"', false)
+        // La sección "Confiaron en nosotros" está oculta: sus logos eran marcas de
+        // ejemplo, así que ni la frase ni las imágenes deben llegar al HTML servido.
+        ->assertDontSee('Confiaron en nosotros')
+        ->assertDontSee('alt="Microsoft"', false)
+        ->assertDontSee('alt="IBM"', false)
+        ->assertDontSee('simple-icons')
         ->assertDontSee('Empresa Uno')
         ->assertSee('Recibe candidatos compatibles automáticamente')
         ->assertSee('Accede a perfiles y currículums completos')
@@ -114,9 +117,6 @@ test('the landing page presents the experience-led visual direction', function (
         ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-empresas"'))
         ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
         ->and(strpos($landing, 'id="como-postulantes"'))->toBeLessThan(strpos($landing, 'id="planes"'));
-
-    expect(strpos($landing, 'id="planes"'))
-        ->toBeLessThan(strpos($landing, 'id="confiaron"'));
 });
 
 test('the interface uses the official brand typography and color tokens', function () {
@@ -498,29 +498,31 @@ test('a postulante can update every section of the professional profile', functi
         ->set('universidad', 'Universidad de Concepción')
         ->set('especialidad', 'Finanzas')
         ->set('postgrado', 'MBA')
+        // El título profesional va primero: de la primera educación salen carrera y
+        // especialidad, y el formulario ahora lo pide así explícitamente.
         ->set('educaciones', [
             [
-                'nivel' => 'Básica',
-                'pais' => 'Chile',
-                'institucion' => 'Colegio de Prueba',
-                'carrera' => null,
-                'mencion' => null,
-                'modalidad' => null,
-                'situacion' => null,
-                'inicio_anio' => null,
-                'termino_anio' => null,
-                'egreso_anio' => 1983,
-            ],
-            [
-                'nivel' => 'Universitaria',
+                'nivel' => 'Título Profesional',
                 'pais' => 'Chile',
                 'institucion' => 'Universidad de Concepción',
                 'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
                 'mencion' => 'Finanzas',
                 'modalidad' => 'Presencial',
-                'situacion' => 'Titulado / Titulada',
+                'situacion' => 'Titulado/a',
                 'inicio_anio' => 1989,
                 'termino_anio' => 1995,
+                'egreso_anio' => null,
+            ],
+            [
+                'nivel' => 'Diplomado / Postítulo',
+                'pais' => 'Chile',
+                'institucion' => 'Universidad de Chile',
+                'carrera' => 'Finanzas Corporativas',
+                'mencion' => null,
+                'modalidad' => 'Online',
+                'situacion' => 'Titulado/a',
+                'inicio_anio' => 2010,
+                'termino_anio' => 2011,
                 'egreso_anio' => null,
             ],
         ])
@@ -605,14 +607,14 @@ test('a postulante can update every section of the professional profile', functi
         ])
         ->and($educaciones)->toHaveCount(2)
         ->and($educaciones[0])->toMatchArray([
-            'nivel' => 'Básica',
-            'institucion' => 'Colegio de Prueba',
-            'egreso_anio' => 1983,
+            'nivel' => 'Título Profesional',
+            'institucion' => 'Universidad de Concepción',
+            'modalidad' => 'Presencial',
+            'situacion' => 'Titulado/a',
         ])
         ->and($educaciones[1])->toMatchArray([
-            'nivel' => 'Universitaria',
-            'modalidad' => 'Presencial',
-            'situacion' => 'Titulado / Titulada',
+            'nivel' => 'Diplomado / Postítulo',
+            'institucion' => 'Universidad de Chile',
         ])
         ->and($idiomas)->toBe([
             ['idioma' => 'Español', 'nivel' => 'Avanzado'],

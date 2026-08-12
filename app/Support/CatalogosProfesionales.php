@@ -452,16 +452,34 @@ class CatalogosProfesionales
     private static function nivelesEstudioPorDefecto(): array
     {
         return [
-            'Básica', 'Media', 'Técnico Medio / Colegio Técnico',
-            'Técnico profesional superior', 'Universitaria', 'Diplomado',
-            'Postgrado', 'Magíster', 'Doctorado', 'Otro',
+            'CFT / Instituto Profesional', 'Título Profesional', 'Diplomado / Postítulo',
+            'Magíster', 'Especialidad Área Salud', 'Doctorado', 'Otro',
         ];
     }
 
-    /** @return array<int, string> */
+    /**
+     * Niveles escolares (básica, media): ya no se ofrecen.
+     *
+     * La ficha arranca en el título profesional, así que la lista quedó vacía a
+     * propósito. Se conserva el método porque de él cuelga el formulario, que para un
+     * nivel escolar pedía año de egreso en vez de carrera y fechas: con la lista vacía
+     * esa rama simplemente no se activa nunca.
+     *
+     * @return array<int, string>
+     */
     public static function nivelesEscolares(): array
     {
-        return ['Básica', 'Media', 'Técnico Medio / Colegio Técnico'];
+        return [];
+    }
+
+    /**
+     * Niveles que se consideran postgrado, para rellenar `postulantes.postgrado`.
+     *
+     * @return array<int, string>
+     */
+    public static function nivelesDePostgrado(): array
+    {
+        return ['Diplomado / Postítulo', 'Magíster', 'Especialidad Área Salud', 'Doctorado'];
     }
 
     /** @return array<int, string> */
@@ -479,7 +497,7 @@ class CatalogosProfesionales
     /** @return list<string> */
     private static function situacionesEstudioPorDefecto(): array
     {
-        return ['Egresado', 'Titulado / Titulada', 'Estudiando', 'Incompleto'];
+        return ['Titulado/a', 'Egresado/a', 'Estudiando', 'Incompleto'];
     }
 
     /** @return list<string> */
@@ -492,8 +510,10 @@ class CatalogosProfesionales
     private static function idiomasPorDefecto(): array
     {
         return [
-            'Alemán', 'Chino Mandarín', 'Coreano', 'Español', 'Francés', 'Inglés',
-            'Italiano', 'Japonés', 'Mapudungun', 'Polaco', 'Portugués', 'Ruso',
+            // Los cinco más habituales primero, para no obligar a bajar por la lista;
+            // el resto en orden alfabético.
+            'Español', 'Inglés', 'Portugués', 'Francés', 'Alemán',
+            'Chino Mandarín', 'Coreano', 'Italiano', 'Japonés', 'Mapudungun', 'Polaco', 'Ruso',
         ];
     }
 
@@ -506,7 +526,7 @@ class CatalogosProfesionales
     /** @return list<string> */
     private static function nivelesIdiomaPorDefecto(): array
     {
-        return ['Intermedio', 'Avanzado'];
+        return ['Bilingüe / Nativo', 'Avanzado', 'Intermedio'];
     }
 
     /**

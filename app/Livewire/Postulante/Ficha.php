@@ -8,6 +8,7 @@ use App\Services\CompletitudPerfil;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
 use App\Support\Funcionalidades;
+use App\Support\RecomendacionPerfil;
 use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -157,13 +158,13 @@ class Ficha extends Component
         $this->especialidad = $postulante?->especialidad ?? '';
         $this->postgrado = $postulante?->postgrado ?? '';
         $educacionesGuardadas = $postulante?->educaciones ?: [[
-            'nivel' => filled($postulante?->postgrado) ? 'Postgrado' : 'Universitaria',
+            'nivel' => filled($postulante?->postgrado) ? 'Magíster' : 'Título Profesional',
             'pais' => 'Chile',
             'institucion' => $postulante?->universidad ?? '',
             'carrera' => $postulante?->carrera ?? '',
             'mencion' => $postulante?->especialidad ?? '',
             'modalidad' => '',
-            'situacion' => filled($postulante?->carrera) ? 'Titulado / Titulada' : '',
+            'situacion' => filled($postulante?->carrera) ? 'Titulado/a' : '',
         ]];
         $this->educaciones = collect($educacionesGuardadas)
             ->map(fn (array $educacion): array => $this->normalizarEducacion($educacion))
@@ -443,6 +444,48 @@ class Ficha extends Component
     }
 
     /**
+     * Lo que le falta al perfil, para la tarjeta de sugerencias del editor.
+     *
+     * No sale durante el asistente (ahí el propio paso a paso hace de guía) ni si la
+     * persona cerró las sugerencias y todavía no ha avanzado. El descarte es el mismo
+     * que el del aviso de Oportunidades: es una sola decisión —"no me las muestres
+     * ahora"— y tenerla por pantalla obligaría a cerrarlas dos veces.
+     *
+     * @return list<RecomendacionPerfil>
+     */
+    private function recomendacionesPendientes(): array
+    {
+        if ($this->modoOnboarding || ! Funcionalidades::recomendacionesDePerfil()) {
+            return [];
+        }
+
+        $postulante = auth()->user()->postulante()->first();
+
+        if ($postulante?->ocultaRecomendaciones(CompletitudPerfil::porcentaje($postulante)) ?? false) {
+            return [];
+        }
+
+        return CompletitudPerfil::pendientes($postulante);
+    }
+
+    /**
+     * Cierra la tarjeta de sugerencias. Anota el porcentaje actual, así que vuelve a
+     * aparecer —aquí y en Oportunidades— en cuanto complete algo.
+     */
+    public function ocultarRecomendaciones(): void
+    {
+        abort_unless(Funcionalidades::recomendacionesDePerfil(), 404);
+
+        $postulante = auth()->user()->postulante()->first();
+
+        abort_if($postulante === null, 404);
+
+        $postulante->update([
+            'recomendaciones_ocultas_hasta' => CompletitudPerfil::porcentaje($postulante),
+        ]);
+    }
+
+    /**
      * Recalcula la completitud desde la ficha ya guardada y la persiste.
      *
      * Se llama siempre DESPUÉS de guardar, porque el porcentaje sale de los datos
@@ -639,7 +682,7 @@ class Ficha extends Component
             'experiencias.*.actualmente' => ['boolean'],
             'experiencias.*.fin_mes' => ['nullable', 'integer', 'between:1,12'],
             'experiencias.*.fin_anio' => ['nullable', 'integer', 'min:1950', 'max:'.now()->year],
-            'experiencias.*.responsabilidades' => ['required', 'string', 'max:3000'],
+            'experiencias.*.responsabilidades' => ['nullable', 'string', 'max:3000'],
         ]);
 
         foreach ($validated['experiencias'] as $index => $experiencia) {
@@ -766,7 +809,7 @@ class Ficha extends Component
             'carrera' => $principal['carrera'],
             'universidad' => $principal['institucion'],
             'especialidad' => $principal['mencion'],
-            'postgrado' => in_array($principal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $principal['carrera'] : null,
+            'postgrado' => in_array($principal['nivel'], CatalogosProfesionales::nivelesDePostgrado(), true) ? $principal['carrera'] : null,
             'educaciones' => $validated['educaciones'],
         ]);
 
@@ -935,7 +978,7 @@ class Ficha extends Component
             'experiencias.*.actualmente' => ['boolean'],
             'experiencias.*.fin_mes' => ['nullable', 'integer', 'between:1,12'],
             'experiencias.*.fin_anio' => ['nullable', 'integer', 'min:1950', 'max:'.now()->year],
-            'experiencias.*.responsabilidades' => ['required', 'string', 'max:3000'],
+            'experiencias.*.responsabilidades' => ['nullable', 'string', 'max:3000'],
             'visible' => ['boolean'],
             'cv' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
@@ -1056,7 +1099,7 @@ class Ficha extends Component
                     'carrera' => $educacionPrincipal['carrera'],
                     'universidad' => $educacionPrincipal['institucion'],
                     'especialidad' => $educacionPrincipal['mencion'],
-                    'postgrado' => in_array($educacionPrincipal['nivel'], ['Postgrado', 'Magíster', 'Doctorado'], true) ? $educacionPrincipal['carrera'] : null,
+                    'postgrado' => in_array($educacionPrincipal['nivel'], CatalogosProfesionales::nivelesDePostgrado(), true) ? $educacionPrincipal['carrera'] : null,
                     'educaciones' => $validated['educaciones'],
                     'idiomas' => $validated['idiomas'],
                     'empresa_actual' => in_array($principal['empresa'], ['Otra', 'Otros'], true) ? ($principal['empresa_otro'] ?: 'Otra') : $principal['empresa'],
@@ -1173,9 +1216,7 @@ class Ficha extends Component
             // Lo que falta por llenar, para sugerirlo en el editor. Sale de la ficha
             // guardada, así que no se muestra a mitad del asistente. Se relee de la BD
             // para no quedar desfasado respecto de la barra tras guardar una sección.
-            'recomendaciones' => $this->modoOnboarding || ! Funcionalidades::recomendacionesDePerfil()
-                ? []
-                : CompletitudPerfil::pendientes(auth()->user()->postulante()->first()),
+            'recomendaciones' => $this->recomendacionesPendientes(),
             'industrias' => CatalogosProfesionales::industrias(),
             'generos' => CatalogosProfesionales::generos(),
             'nacionalidades' => CatalogosProfesionales::nacionalidades(),
