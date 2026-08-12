@@ -51,7 +51,10 @@
                 <article @class(['ad-card flex h-full flex-col p-6', 'border-2 border-orange-500' => $plan->destacado])>
                     <h2 class="text-[18px] font-extrabold">{{ \Illuminate\Support\Str::after($plan->nombre, '· ') }}</h2>
                     <div class="mt-3 text-[30px] font-extrabold">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} <small class="text-[11px] font-medium text-gray-400">UF + IVA</small></div>
-                    <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->periodo === 'anual' ? 'por año' : 'por mes' }}</p>
+                    @if ($plan->esPagoUnico())
+                        <p class="mb-1 text-[12.5px] font-bold text-orange-600">Pago único · acceso por un año</p>
+                    @endif
+                    <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->esPagoUnico() ? 'no se renueva automáticamente' : ($plan->periodo === 'anual' ? 'por año' : 'por mes') }}</p>
 
                     <ul class="mb-6 flex-1 space-y-2.5">
                         @foreach ($plan->features ?? [] as $feature)
@@ -59,14 +62,32 @@
                         @endforeach
                     </ul>
 
+                    {{-- Planes con tope: se avisa cuánto queda antes de pulsar, y al agotarse
+                         se dice desde cuándo vuelve a poder contratarse. --}}
+                    @php($restantes = $restantesPorPlan[$plan->id] ?? null)
+                    @if ($restantes !== null)
+                        <p class="mb-3 text-[12px] text-gray-500">
+                            @if ($restantes > 0)
+                                Te {{ $restantes === 1 ? 'queda' : 'quedan' }} <b class="text-ink">{{ $restantes }}</b>
+                                de {{ $plan->max_contrataciones_anuales }} {{ $restantes === 1 ? 'contratación' : 'contrataciones' }} en 12 meses.
+                            @else
+                                Alcanzaste las {{ $plan->max_contrataciones_anuales }} contrataciones permitidas en 12 meses.
+                                @if ($liberacionPorPlan[$plan->id] ?? null)
+                                    Podrás contratarlo otra vez el {{ $liberacionPorPlan[$plan->id]->translatedFormat('j \d\e F \d\e Y') }}.
+                                @endif
+                            @endif
+                        </p>
+                    @endif
+
                     <button
                         type="button"
                         wire:click="contratar({{ $plan->id }})"
                         wire:loading.attr="disabled"
                         wire:target="contratar({{ $plan->id }})"
-                        class="ad-btn-primary ad-btn-sm ad-btn-block justify-center"
+                        @disabled($restantes === 0)
+                        class="ad-btn-primary ad-btn-sm ad-btn-block justify-center disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <span wire:loading.remove wire:target="contratar({{ $plan->id }})">{{ $planVigente ? 'Renovar / cambiar' : 'Contratar' }}</span>
+                        <span wire:loading.remove wire:target="contratar({{ $plan->id }})">{{ $restantes === 0 ? 'Sin cupos disponibles' : ($planVigente ? 'Renovar / cambiar' : 'Contratar') }}</span>
                         <span wire:loading wire:target="contratar({{ $plan->id }})">Redirigiendo a Flow…</span>
                     </button>
                 </article>

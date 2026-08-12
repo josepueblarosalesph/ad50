@@ -36,6 +36,19 @@ class Planes extends Component
         $plan = Plan::query()->where('audiencia', 'empresa')->find($planId);
         abort_if($plan === null, 404);
 
+        // El tope se comprueba aquí y no solo al pintar los botones: el id del plan llega
+        // desde el cliente. Se cuentan los pagos confirmados, así que dejar un intento a
+        // medias no gasta cupo.
+        if (! $empresa->puedeContratar($plan)) {
+            $liberacion = $empresa->proximaLiberacionDeCupo($plan);
+
+            $this->addError('pago', $liberacion === null
+                ? 'Ya alcanzaste el máximo de contrataciones de este plan.'
+                : 'Ya contrataste el plan '.$plan->nombre.' '.$plan->max_contrataciones_anuales.' veces en los últimos 12 meses. Podrás volver a contratarlo el '.$liberacion->translatedFormat('j \d\e F \d\e Y').'.');
+
+            return null;
+        }
+
         // Monto en CLP a partir de la UF del día (+ IVA).
         try {
             $amount = $plan->precioClp(app(ValorUf::class)->actual());
@@ -95,11 +108,20 @@ class Planes extends Component
         $empresa = auth()->user()->empresa;
 
         // Los precios se muestran en UF; la conversión a CLP se hace al pagar (contratar).
+        $planes = Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get();
+
         return view('livewire.empresa.planes', [
             'empresa' => $empresa,
             'planActual' => $empresa?->plan,
             'planVigente' => $empresa?->planVigente() ?? false,
-            'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
+            'planes' => $planes,
+            // Contrataciones que le quedan de cada plan con tope; NULL = sin tope.
+            'restantesPorPlan' => $planes
+                ->mapWithKeys(fn (Plan $plan): array => [$plan->id => $empresa?->contratacionesRestantes($plan)])
+                ->all(),
+            'liberacionPorPlan' => $planes
+                ->mapWithKeys(fn (Plan $plan): array => [$plan->id => $empresa?->proximaLiberacionDeCupo($plan)])
+                ->all(),
         ]);
     }
 }

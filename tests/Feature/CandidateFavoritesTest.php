@@ -210,17 +210,14 @@ test('el resumen del panel muestra publicaciones, desbloqueos y favoritos', func
     [$empresaUser, $busqueda, $matches] = candidateSearchWithMatches();
 
     $empresa = $empresaUser->empresa;
-    $empresa->update([
-        'plan_id' => Plan::query()->create([
-            'codigo' => 'empresa_resumen',
-            'nombre' => 'AD+50 · Resumen',
-            'audiencia' => 'empresa',
-            'precio_clp' => 50000,
-            'publicaciones' => 5,
-            'desbloqueos' => 4,
-        ])->id,
-        'plan_hasta' => now()->addMonth(),
-    ]);
+    darPlanA($empresa, Plan::query()->create([
+        'codigo' => 'empresa_resumen',
+        'nombre' => 'AD+50 · Resumen',
+        'audiencia' => 'empresa',
+        'precio_clp' => 50000,
+        'publicaciones' => 5,
+        'desbloqueos' => 4,
+    ]));
 
     // Dos publicaciones vigentes y una cerrada: el cupo se consume con las tres.
     Publicacion::factory()->count(2)->create(['empresa_id' => $empresa->id]);

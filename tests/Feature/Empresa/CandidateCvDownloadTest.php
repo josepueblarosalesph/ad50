@@ -22,9 +22,11 @@ function crearMatchConCvParaEmpresa(bool $planActivo = true): array
     $empresa = Empresa::query()->create([
         'user_id' => $empresaUser->id,
         'razon_social' => 'Empresa de Prueba',
-        'plan_id' => $planActivo ? $plan->id : null,
-        'plan_hasta' => $planActivo ? now()->addMonth() : null,
     ]);
+
+    if ($planActivo) {
+        $empresa = darPlanA($empresa, $plan);
+    }
     $postulanteUser = User::factory()->create(['role' => 'postulante']);
     $postulante = Postulante::query()->create([
         'user_id' => $postulanteUser->id,

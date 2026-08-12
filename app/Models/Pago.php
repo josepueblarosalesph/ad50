@@ -17,11 +17,13 @@ class Pago extends Model
         'pagado_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Empresa, $this> */
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
     }
 
+    /** @return BelongsTo<Plan, $this> */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);

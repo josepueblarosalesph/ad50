@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +19,7 @@ class Empresa extends Model
         'plan_hasta' => 'date',
         'datos_enviados_at' => 'datetime',
         'activada_at' => 'datetime',
+        'desbloqueos_cupo' => 'integer',
     ];
 
     protected static function booted(): void
@@ -79,6 +82,12 @@ class Empresa extends Model
     public function publicaciones(): HasMany
     {
         return $this->hasMany(Publicacion::class);
+    }
+
+    /** @return HasMany<Pago, $this> */
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class);
     }
 
     /** Todos los usuarios del equipo (principal + adicionales). */
@@ -154,9 +163,103 @@ class Empresa extends Model
             && $this->plan_hasta->endOfDay()->isFuture();
     }
 
+    /**
+     * Cupo de desbloqueos acumulado por todo lo que la empresa ha contratado.
+     *
+     * Vive en la empresa y no en el plan porque un plan de pago único se puede contratar
+     * varias veces y cada compra suma la suya: leerlo del plan daría siempre lo mismo,
+     * y volver a comprar no serviría de nada.
+     */
     public function desbloqueosTotales(): int
     {
-        return (int) ($this->plan?->desbloqueos ?? 0);
+        return (int) $this->desbloqueos_cupo;
+    }
+
+    /**
+     * Deja a la empresa con el plan contratado: vigencia y cupos, en un solo sitio.
+     *
+     * Van juntos a propósito. Antes se asignaba `plan_id` por su cuenta y el cupo salía
+     * del plan, así que daba igual; ahora el cupo se acumula en la empresa, y separarlos
+     * deja a alguien con plan vigente y cero desbloqueos. Lo usan tanto el pago
+     * confirmado como la asignación manual desde el panel de admin.
+     */
+    public function activarPlan(Plan $plan, ?CarbonInterface $hasta = null): void
+    {
+        $this->update([
+            'plan_id' => $plan->id,
+            'plan_hasta' => $hasta ?? $plan->vigenciaDesde($this->plan_hasta),
+        ]);
+
+        $this->acumularCupos($plan);
+    }
+
+    /**
+     * Suma a los cupos lo que concede el plan recién pagado. Publicaciones ilimitadas
+     * (NULL en el plan) dejan a la empresa ilimitada para siempre: no hay vuelta atrás
+     * a un número, porque sería quitarle algo que ya compró.
+     */
+    public function acumularCupos(Plan $plan): void
+    {
+        $this->desbloqueos_cupo = $this->desbloqueosTotales() + (int) ($plan->desbloqueos ?? 0);
+
+        if ($plan->publicaciones === null) {
+            $this->publicaciones_cupo = null;
+        } elseif ($this->publicaciones_cupo !== null) {
+            $this->publicaciones_cupo = (int) $this->publicaciones_cupo + (int) $plan->publicaciones;
+        }
+
+        $this->save();
+    }
+
+    /**
+     * Veces que esta empresa contrató (y pagó) ese plan en los últimos 12 meses.
+     *
+     * La ventana es móvil, no de año calendario: se cuenta hacia atrás desde hoy, así que
+     * un cupo se libera al cumplirse el año de la compra que lo ocupaba.
+     */
+    public function contratacionesUltimoAnio(Plan $plan): int
+    {
+        return $this->pagos()
+            ->where('plan_id', $plan->id)
+            ->where('estado', 'pagado')
+            ->where('pagado_at', '>=', now()->subYear())
+            ->count();
+    }
+
+    /** Le quedan contrataciones de ese plan dentro de la ventana de 12 meses. */
+    public function puedeContratar(Plan $plan): bool
+    {
+        return $this->contratacionesRestantes($plan) !== 0;
+    }
+
+    /** Contrataciones que le quedan del plan; NULL si no tiene tope. */
+    public function contratacionesRestantes(Plan $plan): ?int
+    {
+        if (! $plan->tieneTopeAnual()) {
+            return null;
+        }
+
+        return max(0, (int) $plan->max_contrataciones_anuales - $this->contratacionesUltimoAnio($plan));
+    }
+
+    /**
+     * Cuándo se libera el próximo cupo: al cumplir un año la compra más antigua de las
+     * que hoy ocupan el tope. Null si no está al tope.
+     */
+    public function proximaLiberacionDeCupo(Plan $plan): ?CarbonInterface
+    {
+        if ($this->contratacionesRestantes($plan) !== 0) {
+            return null;
+        }
+
+        $masAntigua = $this->pagos()
+            ->where('plan_id', $plan->id)
+            ->where('estado', 'pagado')
+            ->where('pagado_at', '>=', now()->subYear())
+            ->orderBy('pagado_at')
+            ->value('pagado_at');
+
+        return $masAntigua === null ? null : Carbon::parse($masAntigua)->addYear();
     }
 
     public function desbloqueosUsados(): int
@@ -177,9 +280,7 @@ class Empresa extends Model
     /** Cupo de publicaciones del plan. NULL = ilimitadas. */
     public function publicacionesTotales(): ?int
     {
-        $cupo = $this->plan?->publicaciones;
-
-        return $cupo === null ? null : (int) $cupo;
+        return $this->publicaciones_cupo === null ? null : (int) $this->publicaciones_cupo;
     }
 
     /**

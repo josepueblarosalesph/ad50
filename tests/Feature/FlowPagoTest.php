@@ -100,8 +100,11 @@ test('todos los planes muestran el mismo boton naranja', function () {
 
     Livewire::actingAs($user)
         ->test(Planes::class)
-        ->assertSeeHtml('class="ad-btn-primary ad-btn-sm ad-btn-block justify-center"')
-        ->assertDontSeeHtml('class="ad-btn-ghost ad-btn-sm ad-btn-block justify-center"');
+        // Sin comilla de cierre: al botón se le añadieron modificadores :disabled para
+        // los planes con tope agotado, y lo que este test fija es que todos sean el
+        // mismo botón primario y ninguno el fantasma.
+        ->assertSeeHtml('class="ad-btn-primary ad-btn-sm ad-btn-block justify-center')
+        ->assertDontSeeHtml('class="ad-btn-ghost ad-btn-sm ad-btn-block justify-center');
 });
 
 test('el webhook de Flow confirma el pago y activa la suscripcion de la empresa', function () {

@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Empresa;
 use App\Models\Plan;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -78,10 +79,12 @@ class Empresas extends Component
 
         $empresa = Empresa::query()->findOrFail($this->asignandoId);
 
-        $empresa->update([
-            'plan_id' => $validado['planSeleccionado'],
-            'plan_hasta' => $validado['vigenciaHasta'],
-        ]);
+        // activarPlan y no update: asignar el plan tiene que conceder también sus cupos,
+        // o la empresa queda con plan vigente y cero desbloqueos.
+        $empresa->activarPlan(
+            Plan::query()->whereKey($validado['planSeleccionado'])->firstOrFail(),
+            Carbon::parse($validado['vigenciaHasta']),
+        );
 
         $this->reset('asignandoId', 'asignandoRazonSocial', 'planSeleccionado', 'vigenciaHasta');
         $this->modal('asignar-plan')->close();

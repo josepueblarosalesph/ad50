@@ -30,19 +30,17 @@ function empresaConCupo(?int $cupo): array
         'estado_activacion' => 'activa',
     ]);
 
-    $empresa->update([
-        'datos_enviados_at' => now(),
-        'plan_id' => Plan::query()->create([
-            'codigo' => 'cupo_'.str()->random(8),
-            'nombre' => 'Plan con cupo',
-            'audiencia' => 'empresa',
-            'precio_clp' => 50000,
-            'periodo' => 'mensual',
-            'desbloqueos' => 10,
-            'publicaciones' => $cupo,
-        ])->id,
-        'plan_hasta' => now()->addMonth(),
-    ]);
+    $empresa->update(['datos_enviados_at' => now()]);
+
+    $empresa = darPlanA($empresa, Plan::query()->create([
+        'codigo' => 'cupo_'.str()->random(8),
+        'nombre' => 'Plan con cupo',
+        'audiencia' => 'empresa',
+        'precio_clp' => 50000,
+        'periodo' => 'mensual',
+        'desbloqueos' => 10,
+        'publicaciones' => $cupo,
+    ]));
 
     return [$user->fresh(), $empresa->fresh()];
 }

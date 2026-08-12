@@ -17,8 +17,31 @@ class Plan extends Model
     protected $casts = [
         'features' => 'array',
         'destacado' => 'bool',
+        'pago_unico' => 'bool',
+        'max_contrataciones_anuales' => 'integer',
         'precio_uf' => 'decimal:2',
     ];
+
+    /** Se cobra una sola vez y no se renueva solo; la vigencia la sigue dando `periodo`. */
+    public function esPagoUnico(): bool
+    {
+        return (bool) $this->pago_unico;
+    }
+
+    /** Tiene tope de contrataciones por empresa en 12 meses. */
+    public function tieneTopeAnual(): bool
+    {
+        return $this->max_contrataciones_anuales !== null;
+    }
+
+    public function periodoLabel(): string
+    {
+        if ($this->esPagoUnico()) {
+            return 'pago único';
+        }
+
+        return $this->periodo === 'anual' ? 'al año' : 'al mes';
+    }
 
     /** Precio del plan en CLP (UF × valor de la UF + IVA), redondeado a peso. */
     public function precioClp(float $valorUf): int

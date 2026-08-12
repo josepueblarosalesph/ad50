@@ -100,11 +100,10 @@ class FlowController extends Controller
                 'flow_order' => $estado['flowOrder'] ?? $pago->flow_order,
             ]);
 
-            // Activa (o renueva) la suscripción de la empresa.
-            $pago->empresa->update([
-                'plan_id' => $pago->plan_id,
-                'plan_hasta' => $pago->plan->vigenciaDesde($pago->empresa->plan_hasta),
-            ]);
+            // Activa (o renueva) la suscripción de la empresa. El cupo se suma, no se
+            // reemplaza: un plan de pago único se puede contratar varias veces y cada
+            // compra aporta el suyo.
+            $pago->empresa->activarPlan($pago->plan);
         } elseif ($status === 3 && $pago->estado === 'pendiente') {
             $pago->update(['estado' => 'rechazado']);
         } elseif ($status === 4 && $pago->estado === 'pendiente') {

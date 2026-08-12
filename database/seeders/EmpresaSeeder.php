@@ -73,6 +73,20 @@ class EmpresaSeeder extends Seeder
         // El upsert fija los ids a mano y eso no mueve la secuencia de Postgres: sin
         // esto, el siguiente registro real chocaría con una de estas filas.
         SecuenciasPostgres::sincronizar('empresas');
+
+        // El upsert escribe `plan_id` por query builder, que no pasa por activarPlan():
+        // sin esto, las empresas demo quedarían con plan vigente y cero cupos.
+        //
+        // Se FIJA el cupo del plan en vez de acumularlo (que es lo que hace una compra):
+        // el seeder es declarativo y debe poder correrse dos veces sin duplicar nada.
+        Empresa::query()
+            ->whereIn('user_id', $usuarios->values())
+            ->whereNotNull('plan_id')
+            ->with('plan')
+            ->each(fn (Empresa $empresa) => $empresa->update([
+                'desbloqueos_cupo' => (int) ($empresa->plan->desbloqueos ?? 0),
+                'publicaciones_cupo' => $empresa->plan->publicaciones,
+            ]));
     }
 
     /** @return list<array<string, string>> */

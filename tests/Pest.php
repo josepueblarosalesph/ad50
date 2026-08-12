@@ -8,6 +8,7 @@ use App\Models\Plan;
 use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -75,7 +76,7 @@ function fichaMinimaDelAsistente(): array
         'anios_experiencia' => 17,
         'titular' => 'Gerenta de Finanzas',
         'experiencias' => [['cargo' => 'Gerente Finanza', 'empresa' => 'Codelco']],
-        'educaciones' => [['nivel' => 'Universitaria', 'institucion' => 'Universidad de Prueba']],
+        'educaciones' => [['nivel' => 'Título Profesional', 'institucion' => 'Universidad de Prueba']],
     ];
 }
 
@@ -153,6 +154,25 @@ function candidatoEnBusqueda(Busqueda $busqueda, bool $favorito = true, string $
 }
 
 /**
+ * Deja a la empresa con exactamente este plan y sus cupos.
+ *
+ * Fija los cupos en lugar de acumularlos (que es lo que hace `activarPlan()` al comprar):
+ * estos tests parten de un plan concreto y afirman números exactos, así que sumar lo que
+ * la empresa ya tuviera los volvería frágiles.
+ */
+function darPlanA(Empresa $empresa, Plan $plan, ?CarbonInterface $hasta = null): Empresa
+{
+    $empresa->update([
+        'plan_id' => $plan->id,
+        'plan_hasta' => $hasta ?? now()->addMonth(),
+        'desbloqueos_cupo' => (int) ($plan->desbloqueos ?? 0),
+        'publicaciones_cupo' => $plan->publicaciones,
+    ]);
+
+    return $empresa->fresh();
+}
+
+/**
  * Deja una empresa lista para operar el panel: datos enviados + plan pagado vigente.
  * (Con el onboarding por pago, el panel exige ambos.)
  */
@@ -161,16 +181,19 @@ function hacerEmpresaOperativa(Empresa $empresa): Empresa
     $empresa->update([
         'datos_enviados_at' => now(),
         'estado_activacion' => 'activa',
-        'plan_id' => Plan::query()->create([
-            'codigo' => 'empresa_op_'.str()->random(8),
-            'nombre' => 'AD+50 · Operativa',
-            'audiencia' => 'empresa',
-            'precio_clp' => 50000,
-            'periodo' => 'mensual',
-            'desbloqueos' => 10,
-        ])->id,
-        'plan_hasta' => now()->addMonth(),
     ]);
+
+    // activarPlan y no un update suelto: el cupo de desbloqueos y publicaciones se
+    // acumula en la empresa, así que asignar el plan sin concederlos la dejaría con plan
+    // vigente y cero cupos.
+    $empresa->activarPlan(Plan::query()->create([
+        'codigo' => 'empresa_op_'.str()->random(8),
+        'nombre' => 'AD+50 · Operativa',
+        'audiencia' => 'empresa',
+        'precio_clp' => 50000,
+        'periodo' => 'mensual',
+        'desbloqueos' => 10,
+    ]), now()->addMonth());
 
     return $empresa;
 }
