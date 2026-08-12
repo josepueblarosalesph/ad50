@@ -5,9 +5,11 @@ use App\Http\Middleware\EnsureEmpresaActiva;
 use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
 use App\Livewire\Admin\Catalogos as AdminCatalogos;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
+use App\Livewire\Admin\Mensajes as AdminMensajes;
 use App\Livewire\Admin\Panel as AdminPanel;
 use App\Livewire\Admin\Postulantes as AdminPostulantes;
 use App\Livewire\Auth\Register;
+use App\Livewire\Ayuda;
 use App\Livewire\Empresa\Activacion as EmpresaActivacion;
 use App\Livewire\Empresa\Busquedas as EmpresaBusquedas;
 use App\Livewire\Empresa\Candidato;
@@ -42,6 +44,11 @@ Route::post('/pagos/flow/confirmar', [FlowController::class, 'confirmar'])->name
 Route::match(['get', 'post'], '/pagos/flow/retorno', [FlowController::class, 'retorno'])->name('pagos.flow.retorno');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Ayuda va fuera de los grupos por rol: la usan postulantes, empresas y admin, y
+    // queda antes del gating de onboarding y de activación a propósito, porque quien
+    // está atascado en esos pasos es justamente quien necesita escribirnos.
+    Route::get('/ayuda', Ayuda::class)->name('ayuda');
+
     Route::get('/postulante/ficha', Ficha::class)->name('postulante.ficha');
     Route::middleware(EnsurePostulanteOnboardingComplete::class)->group(function () {
         // El postulante ya no tiene panel propio: entra a Oportunidades. La URL antigua
@@ -76,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/empresas', AdminEmpresas::class)->name('admin.empresas');
     Route::get('/admin/postulantes', AdminPostulantes::class)->name('admin.postulantes');
     Route::get('/admin/catalogos', AdminCatalogos::class)->name('admin.catalogos');
+    Route::get('/admin/mensajes', AdminMensajes::class)->name('admin.mensajes');
 });
 
 Route::get('dashboard', function (Request $request): RedirectResponse {

@@ -47,6 +47,9 @@
                                 <flux:menu.item :href="route('empresa.planes')" icon="credit-card">Mi suscripción</flux:menu.item>
                             @endif
                             <flux:menu.item :href="route('appearance.edit')" icon="cog-6-tooth">Configuración</flux:menu.item>
+                            {{-- Ayuda vive aquí y no en el menú superior: se busca cuando
+                                 hace falta, no es parte del trabajo diario. --}}
+                            <flux:menu.item :href="route('ayuda')" icon="question-mark-circle">Ayuda y contacto</flux:menu.item>
                             <flux:menu.separator />
                             <form method="POST" action="{{ route('logout') }}">@csrf
                                 <flux:menu.item as="button" type="submit" icon="arrow-right-start-on-rectangle" variant="danger">

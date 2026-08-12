@@ -12,6 +12,7 @@
         'empresas' => ['admin.empresas', 'Empresas'],
         'postulantes' => ['admin.postulantes', 'Postulantes'],
         'catalogos' => ['admin.catalogos', 'Catálogos'],
+        'mensajes' => ['admin.mensajes', 'Mensajes'],
     ];
 @endphp
 
