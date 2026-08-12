@@ -40,9 +40,17 @@ class BusquedaCandidato extends Model
     }
 
     /** @return BelongsTo<Busqueda, $this> */
+    /**
+     * Búsqueda a la que pertenece la coincidencia, incluidas las que están en la
+     * papelera: un favorito sobrevive a que su búsqueda se elimine, y al abrir su perfil
+     * hay que poder llegar igual a la coincidencia de origen. Sin `withTrashed()` la
+     * relación devolvería null y la ficha reventaría al comprobar de quién es.
+     *
+     * @return BelongsTo<Busqueda, $this>
+     */
     public function busqueda(): BelongsTo
     {
-        return $this->belongsTo(Busqueda::class);
+        return $this->belongsTo(Busqueda::class)->withTrashed();
     }
 
     /** @return BelongsTo<Postulante, $this> */

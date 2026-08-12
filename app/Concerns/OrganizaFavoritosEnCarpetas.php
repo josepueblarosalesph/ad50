@@ -62,6 +62,23 @@ trait OrganizaFavoritosEnCarpetas
     /** Favorito vigente del candidato en esa empresa, o null si ya no está guardado. */
     abstract protected function favoritoDeCandidato(int $postulanteId): ?Favorito;
 
+    /** Abre el popup de crear carpeta, en limpio. */
+    public function abrirNuevaCarpeta(): void
+    {
+        abort_unless($this->carpetasHabilitadas(), 404);
+
+        $this->resetValidation('nuevaCarpeta');
+        $this->nuevaCarpeta = '';
+        $this->modal('nueva-carpeta')->show();
+    }
+
+    public function cerrarNuevaCarpeta(): void
+    {
+        $this->resetValidation('nuevaCarpeta');
+        $this->nuevaCarpeta = '';
+        $this->modal('nueva-carpeta')->close();
+    }
+
     public function crearCarpeta(): void
     {
         abort_unless($this->carpetasHabilitadas(), 404);
@@ -89,6 +106,11 @@ trait OrganizaFavoritosEnCarpetas
 
         $this->nuevaCarpeta = '';
         $this->olvidarCarpetas();
+
+        // Se cierra el popup si venía de ahí. Crear también se puede desde el panel de
+        // agrupar, y cerrar un modal que no está abierto no hace nada.
+        $this->modal('nueva-carpeta')->close();
+        $this->avisarCambio();
     }
 
     public function editarCarpeta(int $carpetaId): void
@@ -122,6 +144,7 @@ trait OrganizaFavoritosEnCarpetas
 
         $this->cancelarEdicionCarpeta();
         $this->olvidarCarpetas();
+        $this->avisarCambio();
     }
 
     /**
@@ -138,6 +161,14 @@ trait OrganizaFavoritosEnCarpetas
 
         $this->olvidarCarpetas();
         $this->carpetaEliminada($carpetaId);
+    }
+
+    /**
+     * Gancho para avisar de que los nombres o los conteos cambiaron. No-op por omisión.
+     */
+    protected function avisarCambio(): void
+    {
+        //
     }
 
     /**
@@ -176,6 +207,7 @@ trait OrganizaFavoritosEnCarpetas
         $this->carpetaPropia($carpetaId)->favoritos()->toggle($favorito->id);
 
         $this->olvidarCarpetas();
+        $this->avisarCambio();
     }
 
     /**

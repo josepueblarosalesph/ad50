@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Empresa\CarpetasFavoritos;
 use App\Livewire\Empresa\Favoritos;
 use App\Models\CarpetaFavoritos;
 use App\Models\Empresa;
@@ -196,10 +197,16 @@ test('eliminar la carpeta que se está viendo no borra los favoritos y vuelve a 
     $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
     $carpeta = carpetaCon($user, $empresa, 'Finanzas senior', favoritoDe($empresa, $match->postulante_id));
 
+    // Borrar ocurre en el panel de la barra lateral, que avisa al listado por evento.
     Livewire::actingAs($user)
-        ->test(Favoritos::class)
-        ->call('verCarpeta', (string) $carpeta->id)
+        ->test(CarpetasFavoritos::class, ['activa' => (string) $carpeta->id])
         ->call('eliminarCarpeta', $carpeta->id)
+        ->assertSet('activa', 'todas')
+        ->assertDispatched('carpeta-seleccionada', carpeta: 'todas');
+
+    // Y el listado, al recibirlo, vuelve a mostrarlo todo.
+    Livewire::actingAs($user)
+        ->test(Favoritos::class, ['carpeta' => 'todas'])
         ->assertSet('carpeta', 'todas')
         ->assertSee('Gerente de Finanzas');
 
@@ -264,10 +271,54 @@ test('la página completa pinta el panel de carpetas en la barra lateral y en el
 
     expect($html)
         ->toContain('Mis carpetas')
-        ->toContain('escritorio-nueva-carpeta')   // panel de la barra lateral
-        ->toContain('movil-nueva-carpeta')        // panel del plegable en móvil
-        // El panel se pinta en ambos sitios, así que la carpeta aparece dos veces.
-        ->and(substr_count($html, 'Finanzas senior'))->toBeGreaterThanOrEqual(2);
+        // Crear ya no es un formulario fijo al pie: es el "+" de la cabecera.
+        ->toContain('aria-label="Crear una carpeta nueva"')
+        ->toContain('abrirNuevaCarpeta')
+        // El panel se pinta en la barra lateral y en el plegable móvil, así que la
+        // carpeta y el "+" aparecen dos veces.
+        ->and(substr_count($html, 'Finanzas senior'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($html, 'abrirNuevaCarpeta'))->toBeGreaterThanOrEqual(2)
+        // El popup, en cambio, se monta una sola vez: lo pinta el listado, no el panel.
+        ->and(substr_count($html, 'id="nueva-carpeta-nombre"'))->toBe(1);
+});
+
+test('el "+" abre el popup de nueva carpeta y desde ahí se crea', function () {
+    [$user, $empresa] = empresaConFavoritos();
+
+    // El "+" vive en el panel lateral, que pide al listado que abra el popup: el popup
+    // se monta una sola vez, y el panel se pinta dos (escritorio y móvil).
+    Livewire::actingAs($user)
+        ->test(CarpetasFavoritos::class)
+        ->call('abrirNuevaCarpeta')
+        ->assertDispatched('abrir-nueva-carpeta');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('abrirNuevaCarpeta')
+        ->assertSet('nuevaCarpeta', '')
+        ->set('nuevaCarpeta', 'Finanzas senior')
+        ->call('crearCarpeta')
+        ->assertHasNoErrors()
+        ->assertSet('nuevaCarpeta', '')
+        ->assertSee('Finanzas senior');
+
+    $this->assertDatabaseHas('carpetas_favoritos', [
+        'user_id' => $user->id,
+        'nombre' => 'Finanzas senior',
+    ]);
+});
+
+test('cancelar el popup no deja el nombre a medio escribir', function () {
+    [$user, $empresa] = empresaConFavoritos();
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('abrirNuevaCarpeta')
+        ->set('nuevaCarpeta', 'A medias')
+        ->call('cerrarNuevaCarpeta')
+        ->assertSet('nuevaCarpeta', '');
+
+    expect(CarpetaFavoritos::query()->count())->toBe(0);
 });
 
 test('el encabezado y el título cambian al entrar en una carpeta', function () {
@@ -358,4 +409,69 @@ test('con la funcionalidad apagada un ?carpeta=sin en la URL no delata nada', fu
         ->assertSet('carpeta', 'todas')
         ->assertSee('Gerente de Finanzas')
         ->assertDontSee('sin carpeta');
+});
+
+test('los botones del panel lateral quedan dentro de una raíz Livewire, no huérfanos', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+    carpetaCon($user, $empresa, 'Finanzas senior', favoritoDe($empresa, $match->postulante_id));
+
+    $html = $this->actingAs($user)->get(route('empresa.favoritos'))->assertOk()->getContent();
+
+    // El layout pinta el slot `sidebar` fuera de la raíz del componente que lo declara.
+    // Si el panel fuera un simple parcial, sus wire:click no los enlazaría nadie y no
+    // harían nada. Aquí se comprueba que cada wire:click del panel cae dentro de algún
+    // elemento con wire:id, es decir, dentro de un componente Livewire montado.
+    $raices = [];
+    preg_match_all('/wire:id="[^"]+"/', $html, $coincidencias, PREG_OFFSET_CAPTURE);
+    foreach ($coincidencias[0] as [$_, $posicion]) {
+        $raices[] = $posicion;
+    }
+
+    expect($raices)->not->toBeEmpty();
+
+    foreach (['verCarpeta(', 'abrirNuevaCarpeta', 'eliminarCarpeta(', 'editarCarpeta('] as $accion) {
+        $posicion = strpos($html, 'wire:click="'.$accion);
+
+        expect($posicion)->not->toBeFalse("«{$accion}» debería estar en el HTML");
+
+        // Hay al menos una raíz de componente declarada antes de la acción.
+        expect(collect($raices)->filter(fn (int $inicio): bool => $inicio < $posicion))
+            ->not->toBeEmpty("«{$accion}» quedó fuera de toda raíz Livewire: no funcionaría");
+    }
+});
+
+test('las carpetas creadas se listan plegadas y sin mensaje de vacío', function () {
+    [$user, $empresa] = empresaConFavoritos();
+
+    // Sin carpetas: ni bloque plegable ni el texto explicativo que había antes.
+    $sinCarpetas = Livewire::actingAs($user)->test(CarpetasFavoritos::class)->html();
+
+    expect($sinCarpetas)
+        ->not->toContain('Aún no tienes carpetas')
+        ->not->toContain('lista-carpetas')
+        // Las dos vistas fijas sí están siempre.
+        ->toContain('Todos los favoritos')
+        ->toContain('Sin carpeta');
+
+    carpetaCon($user, $empresa, 'Finanzas senior');
+    carpetaCon($user, $empresa, 'Proceso Gerente TI');
+
+    $conCarpetas = Livewire::actingAs($user)->test(CarpetasFavoritos::class)->html();
+
+    expect($conCarpetas)
+        ->toContain('2 carpetas')
+        // Arranca plegado: Alpine parte en false mientras la activa no sea una carpeta.
+        ->toContain('abierto: false');
+});
+
+test('entrar en una carpeta deja la lista desplegada para no esconder dónde estás', function () {
+    [$user, $empresa] = empresaConFavoritos();
+    $carpeta = carpetaCon($user, $empresa, 'Finanzas senior');
+
+    $html = Livewire::actingAs($user)
+        ->test(CarpetasFavoritos::class, ['activa' => (string) $carpeta->id])
+        ->html();
+
+    expect($html)->toContain('abierto: true');
 });

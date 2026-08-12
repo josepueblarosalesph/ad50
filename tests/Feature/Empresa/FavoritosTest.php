@@ -4,6 +4,7 @@ use App\Livewire\Empresa\Candidato;
 use App\Livewire\Empresa\Favoritos;
 use App\Models\Desbloqueo;
 use App\Models\Favorito;
+use App\Models\NotaCandidato;
 use App\Models\User;
 use Livewire\Livewire;
 
@@ -60,20 +61,9 @@ test('un candidato que deja de estar visible desaparece de la lista', function (
         ->assertViewHas('totalFavoritos', 0);
 });
 
-test('el filtro por búsqueda de origen acota la lista', function () {
-    [$user, , $liderazgo, $planta] = empresaConFavoritos();
-    candidatoEnBusqueda($liderazgo, cargo: 'Solo liderazgo');
-    candidatoEnBusqueda($planta, cargo: 'Solo planta');
-
-    $componente = Livewire::actingAs($user)->test(Favoritos::class);
-
-    $componente->assertViewHas('candidatos', fn ($c) => $c->total() === 2);
-
-    $componente->set('busqueda', (string) $liderazgo->id)
-        ->assertViewHas('candidatos', fn ($c) => $c->total() === 1)
-        ->assertSee('Solo liderazgo')
-        ->assertDontSee('Solo planta');
-});
+// El test "el filtro por búsqueda de origen acota la lista" se eliminó: ese filtro se
+// retiró de Favoritos. La búsqueda desde la que se guardó sigue anotándose en
+// `favoritos.busqueda_id` como trazabilidad, pero ya no se ofrece para filtrar.
 
 test('el filtro por publicación asociada distingue asociados y sin asociar', function () {
     [$user, , $liderazgo, , $publicacion] = empresaConFavoritos();
@@ -123,13 +113,11 @@ test('los filtros se combinan y se pueden limpiar de una vez', function () {
 
     Livewire::actingAs($user)
         ->test(Favoritos::class)
-        ->set('busqueda', (string) $liderazgo->id)
         ->set('publicacion', (string) $publicacion->id)
         ->set('desbloqueo', 'bloqueados')
         ->assertViewHas('hayFiltros', true)
         ->assertViewHas('candidatos', fn ($c) => $c->total() === 1)
         ->call('limpiarFiltros')
-        ->assertSet('busqueda', 'todas')
         ->assertSet('publicacion', 'todas')
         ->assertSet('desbloqueo', 'todos')
         ->assertViewHas('candidatos', fn ($c) => $c->total() === 2);
@@ -227,16 +215,19 @@ test('un postulante no puede entrar a los favoritos de una empresa', function ()
         ->assertForbidden();
 });
 
-test('la tarjeta muestra el candado como icono y el botón rotulado de asociar', function () {
+test('la tarjeta trae la misma columna de acciones que Prospección de Candidatos', function () {
     [$user, $empresa, $liderazgo] = empresaConFavoritos();
     $match = candidatoEnBusqueda($liderazgo);
 
-    // Sin desbloquear y con cupo: el candado es el botón que desbloquea.
+    // Sin desbloquear y con cupo: el candado es el botón que desbloquea. Las acciones
+    // son iconos, como en Prospección, y no botones rotulados.
     Livewire::actingAs($user)
         ->test(Favoritos::class)
         ->assertSeeHtml('desbloquear('.$match->postulante_id.')')
-        ->assertSee('aria-label="Desbloquear perfil del candidato"', false)
-        ->assertSee('Asociar a publicación');
+        ->assertSeeHtml('abrirAsociacion('.$match->postulante_id.')')
+        ->assertSeeHtml('abrirNotas('.$match->postulante_id.')')
+        ->assertSeeHtml('quitarFavorito('.$match->postulante_id.')')
+        ->assertSee('Ver perfil');
 
     Desbloqueo::query()->create([
         'empresa_id' => $empresa->id,
@@ -355,8 +346,8 @@ test('sin cupo ni plan vigente el desbloqueo desde favoritos avisa y no cobra', 
     expect($empresa->fresh()->desbloqueosUsados())->toBe(0);
 
     // Con el plan al día pero sin cupo, el aviso cambia y tampoco se crea el desbloqueo.
-    $empresa->update(['plan_hasta' => now()->addMonth()]);
-    $empresa->plan->update(['desbloqueos' => 0]);
+    // El cupo se vacía en la empresa, no en el plan: ahí es donde se acumula.
+    $empresa->update(['plan_hasta' => now()->addMonth(), 'desbloqueos_cupo' => 0]);
 
     // Instancia nueva: la anterior trae cargados la empresa y su plan con los valores viejos.
     Livewire::actingAs($user->fresh())
@@ -377,4 +368,217 @@ test('no se puede desbloquear desde favoritos a alguien que no es favorito', fun
         ->assertStatus(404);
 
     expect($empresa->fresh()->desbloqueosUsados())->toBe(0);
+});
+
+/** Nota de un usuario sobre un candidato. */
+function notaSobre(int $empresaId, int $postulanteId, User $autor, string $contenido, string $visibilidad = 'equipo'): NotaCandidato
+{
+    return NotaCandidato::query()->create([
+        'empresa_id' => $empresaId,
+        'postulante_id' => $postulanteId,
+        'user_id' => $autor->id,
+        'contenido' => $contenido,
+        'visibilidad' => $visibilidad,
+    ]);
+}
+
+test('la tarjeta muestra el texto de la nota, no solo un icono', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    notaSobre($empresa->id, $match->postulante_id, $user, 'Muy buen manejo de equipos grandes.');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Muy buen manejo de equipos grandes.')
+        // La nota propia sin nada que matizar no lleva pie: ni autor, ni "Privada",
+        // ni "+N más". El texto habla solo.
+        ->assertViewHas('notasPorCandidato', fn (array $notas) => $notas[$match->postulante_id] === [
+            'contenido' => 'Muy buen manejo de equipos grandes.',
+            'autor' => null,
+            'privada' => false,
+            'otras' => 0,
+        ]);
+});
+
+test('un candidato sin notas no pinta el bloque', function () {
+    [$user, , $liderazgo] = empresaConFavoritos();
+    candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Gerente de Finanzas')
+        ->assertViewHas('notasPorCandidato', fn (array $notas) => $notas === []);
+});
+
+test('en la tarjeta manda la nota propia sobre la del equipo, y el resto se cuenta', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $colega = User::factory()->create(['role' => 'empresa', 'empresa_id' => $empresa->id]);
+    $match = candidatoEnBusqueda($liderazgo);
+
+    // La del colega es más reciente, pero en la tarjeta pesa más la propia.
+    notaSobre($empresa->id, $match->postulante_id, $user, 'Lo entrevisté en 2024.');
+    notaSobre($empresa->id, $match->postulante_id, $colega, 'Me lo recomendó un proveedor.');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Lo entrevisté en 2024.')
+        ->assertDontSee('Me lo recomendó un proveedor.')
+        ->assertSee('+1 más');
+});
+
+test('sin nota propia se muestra la del equipo, rotulada con su autor', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $colega = User::factory()->create(['role' => 'empresa', 'empresa_id' => $empresa->id, 'name' => 'Ana Torres']);
+    $match = candidatoEnBusqueda($liderazgo);
+
+    notaSobre($empresa->id, $match->postulante_id, $colega, 'Disponible desde marzo.');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Disponible desde marzo.')
+        // El autor solo se rotula cuando la nota es de otra persona del equipo.
+        ->assertSee('Ana Torres');
+});
+
+test('la nota privada de un colega no se filtra a la tarjeta', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $colega = User::factory()->create(['role' => 'empresa', 'empresa_id' => $empresa->id]);
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    notaSobre($empresa->id, $match->postulante_id, $colega, 'Reserva mía sobre su sueldo.', 'privada');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Gerente de Finanzas')
+        ->assertDontSee('Reserva mía sobre su sueldo.')
+        ->assertViewHas('notasPorCandidato', fn (array $notas) => $notas === []);
+});
+
+test('la propia nota privada sí se ve, marcada como privada', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo);
+
+    notaSobre($empresa->id, $match->postulante_id, $user, 'Pretensión de renta alta.', 'privada');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Pretensión de renta alta.')
+        ->assertSee('Privada');
+});
+
+test('desde la tarjeta se abre el panel con todas las notas legibles', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $colega = User::factory()->create(['role' => 'empresa', 'empresa_id' => $empresa->id]);
+    $match = candidatoEnBusqueda($liderazgo);
+
+    notaSobre($empresa->id, $match->postulante_id, $user, 'Lo entrevisté en 2024.');
+    notaSobre($empresa->id, $match->postulante_id, $colega, 'Me lo recomendó un proveedor.');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('abrirNotas', $match->postulante_id)
+        ->assertSet('notasPostulanteId', $match->postulante_id)
+        ->assertViewHas('notasDelCandidato', fn ($notas) => $notas->count() === 2)
+        // En el panel sí aparece la del colega.
+        ->assertSee('Me lo recomendó un proveedor.');
+});
+
+test('no se pueden abrir las notas de un candidato que no es favorito', function () {
+    [$user, , $liderazgo] = empresaConFavoritos();
+    $noFavorito = candidatoEnBusqueda($liderazgo, favorito: false);
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->call('abrirNotas', $noFavorito->postulante_id)
+        ->assertStatus(404);
+});
+
+test('las notas de otra empresa sobre el mismo candidato no se ven', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    [$ajeno, $otraEmpresa] = empresaConFavoritos();
+    notaSobre($otraEmpresa->id, $match->postulante_id, $ajeno, 'Nota de la competencia.');
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertSee('Gerente de Finanzas')
+        ->assertDontSee('Nota de la competencia.');
+});
+
+test('el panel de criterios acota los favoritos con el mismo motor del matching', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+
+    $calza = candidatoEnBusqueda($liderazgo, cargo: 'Gerente Finanza');
+    $calza->postulante->update(['ciudad' => 'Biobío', 'regiones_interes' => ['Biobío']]);
+
+    $noCalza = candidatoEnBusqueda($liderazgo, cargo: 'Contador');
+    $noCalza->postulante->update(['ciudad' => 'Maule', 'regiones_interes' => ['Maule']]);
+
+    $componente = Livewire::actingAs($user)->test(Favoritos::class);
+
+    $componente->assertViewHas('candidatos', fn ($c) => $c->total() === 2);
+
+    // Los criterios llegan por el mismo evento que emite el panel lateral compartido.
+    $componente->dispatch('criterios-postulaciones', criterios: ['ciudad' => ['Biobío']])
+        ->assertViewHas('candidatos', fn ($c) => $c->total() === 1)
+        ->assertViewHas('hayCriterios', true)
+        ->assertSee('Gerente Finanza')
+        ->assertDontSee('Contador');
+
+    // Sin criterios vuelven los dos.
+    $componente->dispatch('criterios-postulaciones', criterios: [])
+        ->assertViewHas('candidatos', fn ($c) => $c->total() === 2);
+});
+
+test('los criterios se combinan con los filtros propios de favoritos', function () {
+    [$user, $empresa, $liderazgo, $planta] = empresaConFavoritos();
+
+    $enLiderazgo = candidatoEnBusqueda($liderazgo, cargo: 'Gerente Finanza');
+    $enLiderazgo->postulante->update(['ciudad' => 'Biobío', 'regiones_interes' => ['Biobío']]);
+
+    $enPlanta = candidatoEnBusqueda($planta, cargo: 'Jefe de Turno');
+    $enPlanta->postulante->update(['ciudad' => 'Biobío', 'regiones_interes' => ['Biobío']]);
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->dispatch('criterios-postulaciones', criterios: ['ciudad' => ['Biobío']])
+        ->assertViewHas('candidatos', fn ($c) => $c->total() === 2)
+        // Y encima el filtro por estado de desbloqueo.
+        ->set('desbloqueo', 'desbloqueados')
+        ->assertViewHas('candidatos', fn ($c) => $c->total() === 0);
+});
+
+test('el favorito conserva el botón de perfil aunque su búsqueda esté en la papelera', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    // Antes de borrar la búsqueda, el enlace está.
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertViewHas('candidatos', fn ($c) => $c->first()->match_visible_id !== null)
+        ->assertSee('Ver perfil');
+
+    // El favorito es de la cuenta y sobrevive al borrado de su búsqueda; el enlace al
+    // perfil también tiene que sobrevivir, o el candidato queda inalcanzable.
+    $liderazgo->delete();
+
+    Livewire::actingAs($user)
+        ->test(Favoritos::class)
+        ->assertViewHas('candidatos', fn ($c) => $c->first()->match_visible_id === $match->id)
+        ->assertSee('Ver perfil');
+});
+
+test('la ficha se abre desde un favorito cuya búsqueda está en la papelera', function () {
+    [$user, $empresa, $liderazgo] = empresaConFavoritos();
+    $match = candidatoEnBusqueda($liderazgo, cargo: 'Gerente de Finanzas');
+
+    $liderazgo->delete();
+
+    // La relación con la búsqueda tiene que resolver aunque esté en la papelera: si no,
+    // la comprobación de a qué empresa pertenece reventaría al abrir la ficha.
+    $this->actingAs($user)
+        ->get(route('empresa.candidatos.show', ['match' => $match->id, 'origen' => 'favoritos']))
+        ->assertOk();
 });
