@@ -475,3 +475,30 @@ test('entrar en una carpeta deja la lista desplegada para no esconder dónde est
 
     expect($html)->toContain('abierto: true');
 });
+
+test('las dos funcionalidades vienen encendidas por omisión, sin definir ninguna variable', function () {
+    $claves = ['AD50_CARPETAS_FAVORITOS', 'AD50_RECOMENDACIONES_PERFIL'];
+    $previos = [];
+
+    // Se borran del entorno de verdad: con el .env definiéndolas, leer el config sin
+    // más pasaría el test aunque el valor por omisión siguiera siendo false.
+    foreach ($claves as $clave) {
+        $previos[$clave] = $_SERVER[$clave] ?? $_ENV[$clave] ?? null;
+        unset($_ENV[$clave], $_SERVER[$clave]);
+        putenv($clave);
+    }
+
+    try {
+        $ad50 = require config_path('ad50.php');
+
+        expect($ad50['funcionalidades']['carpetas_favoritos'])->toBeTrue()
+            ->and($ad50['funcionalidades']['recomendaciones_perfil'])->toBeTrue();
+    } finally {
+        foreach ($previos as $clave => $valor) {
+            if ($valor !== null) {
+                $_ENV[$clave] = $_SERVER[$clave] = $valor;
+                putenv("{$clave}={$valor}");
+            }
+        }
+    }
+});
