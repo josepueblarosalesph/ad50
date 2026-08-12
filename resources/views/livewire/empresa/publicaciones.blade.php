@@ -28,8 +28,7 @@
 
     <div class="mb-6 flex flex-wrap items-start justify-between gap-5">
         <div>
-            <span class="ad-eyebrow">Portal laboral</span>
-            <h1 class="mt-3 text-[30px] font-extrabold">Publicaciones</h1>
+            <h1 class="text-[30px] font-extrabold">Publicación de oportunidades laborales</h1>
             <p class="mt-2 text-[14px] text-gray-500">Administra las oportunidades visibles para los postulantes.</p>
             <p class="mt-2 text-[13px] font-semibold text-gray-600">
                 @if ($publicacionesTotales === null)

@@ -24,7 +24,11 @@
         </div>
     </details>
 
-    <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
+    {{-- Dos filas en vez de dos columnas: antes el bloque derecho apilaba los chips y
+         dos textos, así que arrancaba mucho más alto que el título y este quedaba
+         descolgado. Ahora el título y los chips comparten línea, y las aclaraciones
+         bajan a la fila del subtítulo. Ocupa menos alto y queda alineado. --}}
+    <div class="mb-1.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div class="min-w-0">
             @if ($editandoTitulo)
                 <form wire:submit="guardarTitulo" class="flex flex-wrap items-center gap-2">
@@ -41,15 +45,19 @@
                     </button>
                 </div>
             @endif
-            <p class="mt-1.5 text-[14px] text-gray-500">Candidatos ordenados por nivel de coincidencia.</p>
         </div>
 
-        <div class="flex flex-col items-start gap-1.5 sm:items-end">
-            <div class="inline-flex rounded-xl border border-line-2 bg-white p-1 transition-colors dark:bg-[#222528]" aria-label="Filtrar candidatos">
-                <button type="button" wire:click="mostrar('todos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-ink text-white dark:bg-orange-600 dark:text-white' => $filtro === 'todos', 'text-gray-500 hover:text-ink dark:hover:bg-white/5' => $filtro !== 'todos'])>Todos <span class="ml-1 opacity-70">{{ $totalCandidatos }}</span></button>
-                <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
-            </div>
-            <p class="max-w-xs text-[13px] text-gray-500 sm:text-right">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
+        <div class="inline-flex flex-none rounded-xl border border-line-2 bg-white p-1 transition-colors dark:bg-[#222528]" aria-label="Filtrar candidatos">
+            <button type="button" wire:click="mostrar('todos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-ink text-white dark:bg-orange-600 dark:text-white' => $filtro === 'todos', 'text-gray-500 hover:text-ink dark:hover:bg-white/5' => $filtro !== 'todos'])>Todos <span class="ml-1 opacity-70">{{ $totalCandidatos }}</span></button>
+            <button type="button" wire:click="mostrar('favoritos')" @class(['rounded-lg px-4 py-2 text-[13px] font-bold transition', 'bg-orange-600 text-white' => $filtro === 'favoritos', 'text-gray-500 hover:text-orange-600' => $filtro !== 'favoritos'])><flux:icon.star class="inline size-4" /> Favoritos <span class="ml-1 opacity-70">{{ $totalFavoritos }}</span></button>
+        </div>
+    </div>
+
+    <div class="mb-5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p class="text-[14px] text-gray-500">Candidatos ordenados por nivel de coincidencia.</p>
+
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:justify-end">
+            <p class="text-[13px] text-gray-500">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
             @if ($planVigente)
                 <p class="inline-flex items-center gap-1 text-[12px] font-bold text-orange-600"><flux:icon.lock-open class="size-3.5" />{{ $desbloqueosDisponibles }} {{ $desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles' }}</p>
             @endif

@@ -311,7 +311,16 @@
         </div>
     </section>
 
-    {{-- Confiaron en nosotros --}}
+    {{--
+        Sección "Confiaron en nosotros", oculta.
+
+        Va comentada y no con class="hidden" (la otra forma que usa este archivo) porque
+        afirma que Microsoft, IBM, Siemens, DHL, SAP y Oracle fueron clientes, y eran
+        logos de ejemplo. Con `hidden` la frase seguiría en el HTML servido, al alcance
+        de cualquiera que mire el código fuente o de un rastreador; así no se sirve.
+
+        Para recuperarla, quita este comentario y sustituye las marcas por clientes reales.
+
     <section id="confiaron" class="border-y border-line bg-paper">
         <div class="mx-auto max-w-[1240px] px-6 py-14 lg:px-10 lg:py-16">
             <p class="text-center text-[12px] font-extrabold uppercase tracking-[.2em] text-gray-500">Confiaron en nosotros</p>
@@ -337,6 +346,7 @@
             </ul>
         </div>
     </section>
+    --}}
 
     {{-- La tarjeta toma la claridad y estructura de la dirección corporativa elegida en el test. --}}
     <section class="hidden">
