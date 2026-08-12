@@ -86,8 +86,19 @@
         {{-- El asistente de bienvenida deja saltar todo lo opcional, así que aquí se
              enumera exactamente qué falta y cada ítem abre su propio formulario. --}}
         @if (! $modoOnboarding && count($recomendaciones) > 0)
-            <div class="ad-card mb-5 p-5">
-                <div class="flex items-start gap-3">
+            <div class="relative ad-card mb-5 p-5">
+                <button
+                    type="button"
+                    wire:click="ocultarRecomendaciones"
+                    wire:loading.attr="disabled"
+                    wire:target="ocultarRecomendaciones"
+                    class="absolute end-3 top-3 grid size-8 place-items-center rounded-lg text-gray-400 transition hover:bg-paper hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:opacity-50 dark:hover:bg-white/10"
+                    aria-label="Cerrar las recomendaciones para completar mi perfil"
+                    title="Cerrar. Volverán a aparecer cuando completes algo de tu perfil."
+                >
+                    <flux:icon.x-mark class="size-4" />
+                </button>
+                <div class="flex items-start gap-3 pe-9">
                     <flux:icon.light-bulb class="mt-0.5 size-5 flex-none text-orange-500" />
                     <div>
                         <h2 class="text-[16px] font-extrabold">Recomendaciones para destacar</h2>

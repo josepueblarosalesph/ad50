@@ -126,16 +126,48 @@ test('borrar información no hace reaparecer el aviso cerrado', function () {
         ->assertDontSee('Completar mi perfil');
 });
 
-test('la tarjeta de la ficha no se ve afectada por cerrar el aviso', function () {
+test('cerrar en una pantalla las oculta en las dos', function () {
     $user = postulanteQueSaltoLoOpcional();
 
+    // Cerrar es una sola decisión: no tiene sentido pedirla dos veces.
     Livewire::actingAs($user)->test(Busquedas::class)->call('ocultarRecomendaciones');
 
-    // El detalle completo sigue donde la persona entra a propósito a trabajar su perfil.
     Livewire::actingAs($user->fresh())
         ->test(Ficha::class)
+        ->assertDontSee('Recomendaciones para destacar')
+        ->assertDontSee('Escribe tu presentación profesional');
+});
+
+test('la tarjeta de la ficha también se puede cerrar con su propia X', function () {
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
         ->assertSee('Recomendaciones para destacar')
-        ->assertSee('Escribe tu presentación profesional');
+        ->call('ocultarRecomendaciones')
+        ->assertDontSee('Recomendaciones para destacar');
+
+    expect($user->postulante->fresh()->recomendaciones_ocultas_hasta)->toBe(55);
+
+    // Y el aviso de Oportunidades queda cerrado también.
+    Livewire::actingAs($user->fresh())
+        ->test(Busquedas::class)
+        ->assertDontSee('Completar mi perfil');
+});
+
+test('cerradas desde la ficha, vuelven en las dos pantallas al completar algo', function () {
+    $user = postulanteQueSaltoLoOpcional();
+
+    Livewire::actingAs($user)->test(Ficha::class)->call('ocultarRecomendaciones');
+    $user->postulante->update(['resumen_profesional' => 'Veinte años liderando equipos financieros.']);
+
+    Livewire::actingAs($user->fresh())
+        ->test(Ficha::class)
+        ->assertSee('Recomendaciones para destacar');
+
+    Livewire::actingAs($user->fresh())
+        ->test(Busquedas::class)
+        ->assertSee('Tu perfil está al 63%');
 });
 
 test('el aviso desaparece cuando el perfil llega al 100%', function () {
@@ -258,4 +290,11 @@ test('apagar las recomendaciones no toca el cálculo de completitud', function (
         ->test(Busquedas::class)
         ->assertViewHas('completitud', 55)
         ->assertSee('55%');
+});
+
+test('el encabezado de la pantalla de entrada dice "Oportunidades Laborales"', function () {
+    $this->actingAs(postulanteQueSaltoLoOpcional())
+        ->get(route('postulante.busquedas'))
+        ->assertOk()
+        ->assertSee('Oportunidades Laborales');
 });

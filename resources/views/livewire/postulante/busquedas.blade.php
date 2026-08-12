@@ -15,7 +15,7 @@
          completitud del perfil y el interruptor de visibilidad. --}}
     <div class="mb-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-            <h1 class="text-[27px] font-extrabold">Oportunidades</h1>
+            <h1 class="text-[27px] font-extrabold">Oportunidades Laborales</h1>
             <p class="mt-1.5 text-[14px] text-gray-500">
                 {{ $publicaciones->total() }}
                 {{ $publicaciones->total() === 1 ? 'oferta vigente' : 'ofertas vigentes' }}{{ $filtrosActivos > 0 ? ' con los filtros aplicados' : '' }}.
