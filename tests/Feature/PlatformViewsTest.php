@@ -11,6 +11,7 @@ use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
 use App\Support\CatalogosProfesionales;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 test('the landing page presents the experience-led visual direction', function () {
@@ -397,11 +398,19 @@ test('a postulante can view the opportunities screen and professional profile', 
 
     $cargos = CatalogosProfesionales::cargos();
 
+    // Sin cifra exacta: el catálogo se depura de vez en cuando y clavar el total solo
+    // obliga a actualizar el número. Lo que sí importa es que siga siendo grande, que
+    // "Otros" abra la lista, y que no haya duplicados —ni siquiera los que solo se
+    // distinguen por mayúsculas o tildes, que en MySQL/MariaDB chocan con el índice
+    // único de `terminos_catalogo` y rompen el despliegue.
+    $normalizados = array_map(fn (string $cargo): string => Str::ascii(mb_strtolower($cargo)), $cargos);
+
     expect($cargos)
-        ->toHaveCount(29958)
+        ->toHaveCount(count(array_unique($cargos)))
         ->toContain('Otros', 'Abastecedor Logístico', 'Gerente Finanza')
+        ->and(count($cargos))->toBeGreaterThan(25000)
         ->and($cargos[0])->toBe('Otros')
-        ->and(array_unique($cargos))->toHaveCount(29958);
+        ->and(array_unique($normalizados))->toHaveCount(count($cargos));
 
     // Dos juegos de secciones (paso a paso + editor de solo lectura) comparten el mismo estilo.
     expect(substr_count($ficha, 'border-l-orange-300 dark:border-l-orange-500'))->toBe(12);

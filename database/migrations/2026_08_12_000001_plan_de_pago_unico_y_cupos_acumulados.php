@@ -66,14 +66,18 @@ return new class extends Migration
      */
     private function rellenarCupos(): void
     {
-        // SQL en crudo con UPDATE ... FROM, que es la forma de PostgreSQL: el
-        // `join()->update()` del query builder genera sintaxis de MySQL y aquí falla.
+        // Subconsultas correlacionadas: ni el `join()->update()` del query builder
+        // (sintaxis de MySQL) ni `UPDATE ... FROM` (sintaxis de PostgreSQL) valen para
+        // los dos motores. Esta forma sí.
         DB::statement(<<<'SQL'
             UPDATE empresas
-               SET desbloqueos_cupo   = coalesce(planes.desbloqueos, 0),
-                   publicaciones_cupo = planes.publicaciones
-              FROM planes
-             WHERE planes.id = empresas.plan_id
+               SET desbloqueos_cupo = (
+                       SELECT coalesce(planes.desbloqueos, 0) FROM planes WHERE planes.id = empresas.plan_id
+                   ),
+                   publicaciones_cupo = (
+                       SELECT planes.publicaciones FROM planes WHERE planes.id = empresas.plan_id
+                   )
+             WHERE empresas.plan_id IS NOT NULL
         SQL);
     }
 };
