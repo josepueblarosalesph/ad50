@@ -1,6 +1,8 @@
 @foreach ($experiencias as $index => $experiencia)
     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="experiencia-{{ $index }}">
-        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Experiencia {{ $index + 1 }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+        <div class="mb-5 flex items-center justify-between gap-3">{{-- La primera es la más reciente y la que se muestra en los listados; las demás
+             van numeradas aparte para que se entienda que complementan a esa. --}}
+        <legend class="font-bold">{{ $index === 0 ? 'Última Experiencia' : 'Experiencia Adicional '.$index }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
         <div class="grid md:grid-cols-2 gap-4">
             <div>
                 <x-combobox model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" :opciones="$cargos" :valor="$experiencia['cargo'] ?? ''" error="experiencias.{{ $index }}.cargo" placeholder="Escribe para buscar" />
@@ -59,7 +61,7 @@
                 @endunless
             </div>
             <div class="md:col-span-2">
-                <flux:textarea wire:model="experiencias.{{ $index }}.responsabilidades" label="Responsabilidades y logros en el cargo *" placeholder="Describe tus principales responsabilidades, resultados y logros." rows="5" />
+                <flux:textarea wire:model="experiencias.{{ $index }}.responsabilidades" label="Responsabilidades y logros en el cargo" placeholder="Describe tus principales responsabilidades, resultados y logros." rows="5" />
                 <p class="mt-2 text-[13px] leading-relaxed text-gray-500">Prioriza logros concretos y actividades relacionadas con tu foco laboral actual.</p>
             </div>
         </div>

@@ -2,7 +2,9 @@
     @php($esEscolar = in_array($educacion['nivel'], $nivelesEscolares, true))
     @php($esChile = in_array(mb_strtolower(trim($educacion['pais'] ?? '')), ['', 'chile'], true))
     <fieldset class="rounded-[14px] border border-line-2 p-5" wire:key="educacion-{{ $index }}">
-        <div class="mb-5 flex items-center justify-between gap-3"><legend class="font-bold">Educación {{ $index + 1 }}</legend>@if (count($educaciones) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeEducacion({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
+        <div class="mb-5 flex items-center justify-between gap-3">{{-- El orden importa para el matching: de la primera salen carrera y especialidad,
+             así que la indicación va en el título de esa. --}}
+        <legend class="font-bold">{{ $index === 0 ? 'Educación (comience por su título profesional o equivalente)' : 'Educación '.($index + 1) }}</legend>@if (count($educaciones) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeEducacion({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
         <div class="grid gap-4 md:grid-cols-2">
             <flux:select wire:model.live="educaciones.{{ $index }}.nivel" label="Nivel de estudios *">
                 <flux:select.option value="">Selecciona un nivel</flux:select.option>

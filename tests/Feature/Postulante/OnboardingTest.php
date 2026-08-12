@@ -129,27 +129,28 @@ test('education mención is optional and egreso is not required while studying',
         ->assertSet('pasoActual', 4)
         ->set('educaciones', [
             [
-                'nivel' => 'Media',
-                'pais' => 'Chile',
-                'institucion' => 'Liceo de Prueba',
-                'carrera' => null,
-                'mencion' => null,
-                'modalidad' => null,
-                'situacion' => 'Estudiando',
-                'inicio_anio' => null,
-                'termino_anio' => null,
-                'egreso_anio' => null,
-            ],
-            [
-                'nivel' => 'Universitaria',
+                'nivel' => 'Título Profesional',
                 'pais' => 'Chile',
                 'institucion' => 'Universidad de Prueba',
                 'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
                 'mencion' => null,
                 'modalidad' => 'Presencial',
-                'situacion' => 'Titulado / Titulada',
+                'situacion' => 'Titulado/a',
                 'inicio_anio' => 1990,
                 'termino_anio' => 1996,
+                'egreso_anio' => null,
+            ],
+            [
+                // Estudiando: no se exige año de término.
+                'nivel' => 'Magíster',
+                'pais' => 'Chile',
+                'institucion' => 'Universidad de Prueba',
+                'carrera' => 'Ingeniería Civil / Ingeniería Comercial',
+                'mencion' => null,
+                'modalidad' => 'Online',
+                'situacion' => 'Estudiando',
+                'inicio_anio' => 2024,
+                'termino_anio' => null,
                 'egreso_anio' => null,
             ],
         ])
@@ -158,29 +159,10 @@ test('education mención is optional and egreso is not required while studying',
         ->assertSet('pasoActual', 5);
 });
 
-test('egreso is still required for a school level when not studying', function () {
-    $user = postulanteEnOnboarding(4);
-
-    Livewire::actingAs($user)
-        ->test(Ficha::class)
-        ->set('educaciones', [
-            [
-                'nivel' => 'Media',
-                'pais' => 'Chile',
-                'institucion' => 'Liceo de Prueba',
-                'carrera' => null,
-                'mencion' => null,
-                'modalidad' => null,
-                'situacion' => 'Egresado',
-                'inicio_anio' => null,
-                'termino_anio' => null,
-                'egreso_anio' => null,
-            ],
-        ])
-        ->call('avanzar')
-        ->assertHasErrors('educaciones.0.egreso_anio')
-        ->assertSet('pasoActual', 4);
-});
+// El test "egreso is still required for a school level when not studying" se eliminó:
+// los niveles escolares (básica, media, técnico medio) ya no son una opción del catálogo,
+// así que la rama que exigía año de egreso quedó inalcanzable. Ver CatalogosProfesionales
+// ::nivelesEscolares(), que ahora devuelve una lista vacía a propósito.
 
 test('a postulante can skip the curriculum and enter the panel', function () {
     $user = postulanteEnOnboarding(6);
@@ -313,4 +295,77 @@ test('el postulante entra a Oportunidades y desde ahí controla su visibilidad',
         ->assertSee('Perfil pausado');
 
     expect($postulante->fresh()->visible)->toBeFalse();
+});
+
+/** Una experiencia válida, con las responsabilidades a elección. */
+function experienciaValida(string $cargo = 'Gerente Finanza', ?string $responsabilidades = null): array
+{
+    return [
+        'cargo' => $cargo,
+        'cargo_otro' => '',
+        'tipo_trabajo' => 'Jornada completa',
+        'empresa' => 'Codelco',
+        'empresa_otro' => '',
+        'jerarquia' => 'Gerencia / Dirección',
+        'actividad_empresa' => 'Minería',
+        'inicio_mes' => 3,
+        'inicio_anio' => now()->year - 10,
+        'actualmente' => true,
+        'fin_mes' => null,
+        'fin_anio' => null,
+        'responsabilidades' => $responsabilidades ?? '',
+    ];
+}
+
+test('las responsabilidades del cargo son opcionales', function () {
+    $user = postulanteEnOnboarding(3);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->set('experiencias', [experienciaValida()])
+        ->call('avanzar')
+        ->assertHasNoErrors()
+        ->assertSet('pasoActual', 4);
+
+    expect($user->postulante->fresh()->experiencias[0]['responsabilidades'])->toBe('');
+});
+
+test('la primera experiencia se titula "Última Experiencia" y las demás van numeradas aparte', function () {
+    $user = postulanteEnOnboarding(3);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->set('experiencias', [experienciaValida(), experienciaValida('Contador'), experienciaValida('Abogado')])
+        ->assertSee('Última Experiencia')
+        ->assertSee('Experiencia Adicional 1')
+        ->assertSee('Experiencia Adicional 2')
+        // La numeración vieja arrancaba en 1 para la primera.
+        ->assertDontSee('Experiencia 1');
+});
+
+test('la primera educación indica que se empiece por el título profesional', function () {
+    $user = postulanteEnOnboarding(4);
+
+    Livewire::actingAs($user)
+        ->test(Ficha::class)
+        ->assertSee('Educación (comience por su título profesional o equivalente)')
+        ->assertDontSee('Educación 1');
+});
+
+test('los títulos nuevos también salen en el editor de "Mi perfil profesional"', function () {
+    $user = User::factory()->create(['role' => 'postulante']);
+    Postulante::query()->create([
+        'user_id' => $user->id,
+        ...fichaMinimaDelAsistente(),
+        'onboarding_completado' => true,
+        'onboarding_paso' => 6,
+    ]);
+
+    // El editor monta el formulario dentro del modal de la sección abierta.
+    Livewire::actingAs($user->fresh())
+        ->test(Ficha::class)
+        ->call('editarSeccion', 'experiencia')
+        ->assertSee('Última Experiencia')
+        ->call('editarSeccion', 'educacion')
+        ->assertSee('Educación (comience por su título profesional o equivalente)');
 });
