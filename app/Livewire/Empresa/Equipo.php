@@ -6,6 +6,7 @@ use App\Concerns\OrdenaListado;
 use App\Models\Empresa;
 use App\Models\User;
 use App\Rules\EmailCorporativo;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
@@ -62,12 +63,13 @@ class Equipo extends Component
             'acepta_ley_21719' => true,
         ]);
 
-        // TEMPORAL: verificación de correo desactivada (ver Register).
-        $user->markEmailAsVerified();
+        // Igual que en el registro: la cuenta queda inactiva hasta que la persona abra
+        // el enlace de verificación que le llega a su correo.
+        event(new Registered($user));
 
         $this->reset('nombre', 'apellidos', 'email', 'password');
 
-        session()->flash('status', 'Usuario agregado. Comparte las credenciales con la persona para que ingrese.');
+        session()->flash('status', 'Usuario agregado. Le enviamos un correo para verificar su cuenta; comparte las credenciales con la persona para que ingrese después de confirmarlo.');
     }
 
     public function eliminar(int $userId): void

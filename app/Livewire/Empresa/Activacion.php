@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Rules\EmailCorporativo;
 use App\Rules\RutValido;
 use App\Support\Rut;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -97,7 +98,10 @@ class Activacion extends Component
             'usuarios.*.password' => ['nullable', 'required_with:usuarios.*.nombre,usuarios.*.apellidos,usuarios.*.email', 'string', 'min:8'],
         ]);
 
-        DB::transaction(function () use ($validated): void {
+        /** @var list<User> $usuariosCreados */
+        $usuariosCreados = [];
+
+        DB::transaction(function () use ($validated, &$usuariosCreados): void {
             $empresa = auth()->user()->empresa;
 
             $empresa->update([
@@ -129,9 +133,16 @@ class Activacion extends Component
                     'acepta_ley_21719' => true,
                 ]);
 
-                $nuevoUsuario->markEmailAsVerified();
+                $usuariosCreados[] = $nuevoUsuario;
             }
         });
+
+        // Fuera de la transacción: el correo de verificación se envía solo si los
+        // usuarios quedaron efectivamente guardados. Sin abrir ese enlace, sus cuentas
+        // no pueden entrar (middleware `verified`).
+        foreach ($usuariosCreados as $nuevoUsuario) {
+            event(new Registered($nuevoUsuario));
+        }
 
         session()->flash('status', 'Tus datos quedaron guardados. Tu cuenta ya está activa.');
         $this->redirectRoute('empresa.panel', navigate: true);

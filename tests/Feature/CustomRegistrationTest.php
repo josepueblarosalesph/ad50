@@ -6,6 +6,7 @@ use App\Models\Empresa;
 use App\Models\Postulante;
 use App\Models\User;
 use App\Rules\EmpresaYaRegistrada;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Features\SupportTesting\Testable;
@@ -23,15 +24,13 @@ test('a postulante can create an account', function () {
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors()
-        // TEMPORAL: mientras Auth\Register omite la verificación de correo se entra
-        // directo al panel. Al restaurarla, este destino vuelve a verification.notice.
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('verification.notice'));
 
     $user = User::query()->where('email', 'maria@example.com')->firstOrFail();
 
     expect($user->role)->toBe('postulante')
         ->and($user->acepta_ley_21719)->toBeTrue()
-        ->and($user->hasVerifiedEmail())->toBeTrue();
+        ->and($user->hasVerifiedEmail())->toBeFalse();
 
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseHas('postulantes', [
@@ -39,7 +38,7 @@ test('a postulante can create an account', function () {
         'onboarding_paso' => 1,
         'onboarding_completado' => false,
     ]);
-    Notification::assertNothingSentTo($user);
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('an empresa can create an account', function () {
@@ -67,14 +66,13 @@ test('an empresa can create an account', function () {
         ->set('acepta', true)
         ->call('submit')
         ->assertHasNoErrors()
-        // TEMPORAL: ver la nota del test anterior.
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('verification.notice'));
 
     $user = User::query()->where('email', 'ana@empresa.cl')->firstOrFail();
 
     expect($user->role)->toBe('empresa')
         ->and($user->acepta_ley_21719)->toBeTrue()
-        ->and($user->hasVerifiedEmail())->toBeTrue();
+        ->and($user->hasVerifiedEmail())->toBeFalse();
 
     $this->assertAuthenticatedAs($user);
     $this->assertDatabaseHas('empresas', [
@@ -84,7 +82,7 @@ test('an empresa can create an account', function () {
         'telefono' => '+56 9 8765 4321',
         'estado_activacion' => 'inactiva',
     ]);
-    Notification::assertNothingSentTo($user);
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 test('an empresa cannot register with a free personal email', function () {
