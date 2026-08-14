@@ -281,7 +281,7 @@
                             {{ number_format((float) $plan->precio_uf, 0, ',', '.') }}
                             <small class="text-[12px] font-bold text-gray-500">UF + IVA</small>
                         </div>
-                        <p class="mt-1 text-[12px] font-semibold text-gray-500">{{ $plan->periodo === 'anual' ? 'plan anual' : 'pago único' }}</p>
+                        <p class="mt-1 text-[12px] font-semibold text-gray-500">{{ $plan->cobroLabel() }}</p>
 
                         <ul class="my-6 grid flex-1 gap-3">
                             @foreach ($plan->features ?? [] as $feature)

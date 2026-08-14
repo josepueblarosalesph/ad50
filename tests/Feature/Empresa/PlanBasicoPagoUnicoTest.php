@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Empresa\Planes;
+use App\Livewire\Landing;
 use App\Models\Empresa;
 use App\Models\Pago;
 use App\Models\Plan;
@@ -69,6 +70,40 @@ test('el plan básico se presenta como pago único y no como suscripción', func
         ->and($plan->periodoLabel())->toBe('pago único')
         // Pago único no significa sin caducidad: da acceso por un año.
         ->and($plan->vigenciaDesde()->toDateString())->toBe(now()->addYear()->toDateString());
+});
+
+test('las vistas públicas anuncian el Básico como pago único y no como plan anual', function () {
+    // `periodo` sigue siendo 'anual' porque esa es su vigencia: decidir la etiqueta solo
+    // por ese campo es justo lo que hacía que el Básico se anunciara como suscripción.
+    $basico = planBasico();
+
+    expect($basico->cobroLabel())->toBe('pago único');
+
+    Livewire::test(App\Livewire\Planes::class)
+        ->assertSee('pago único')
+        ->assertDontSee('plan anual');
+
+    Livewire::test(Landing::class)
+        ->assertSee('pago único')
+        ->assertDontSee('plan anual');
+});
+
+test('un plan que sí es suscripción anual conserva su etiqueta', function () {
+    $profesional = Plan::query()->create([
+        'codigo' => 'empresa_pro_'.str()->random(6),
+        'nombre' => 'Profesional',
+        'audiencia' => 'empresa',
+        'precio_clp' => 0,
+        'precio_uf' => 30,
+        'periodo' => 'anual',
+        'pago_unico' => false,
+        'desbloqueos' => 50,
+        'publicaciones' => 30,
+    ]);
+
+    expect($profesional->cobroLabel())->toBe('plan anual');
+
+    Livewire::test(App\Livewire\Planes::class)->assertSee('plan anual');
 });
 
 test('cada contratación suma sus cupos en vez de reemplazarlos', function () {

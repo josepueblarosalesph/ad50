@@ -55,7 +55,7 @@
                 <select id="plan-empresa" wire:model.live="planSeleccionado" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
                     <option value="">Selecciona un plan</option>
                     @foreach ($planes as $plan)
-                        <option value="{{ $plan->id }}">{{ $plan->nombre }} — {{ $plan->precio_uf }} UF / {{ $plan->periodo }}</option>
+                        <option value="{{ $plan->id }}">{{ $plan->nombre }} — {{ $plan->precio_uf }} UF · {{ $plan->cobroLabel() }}</option>
                     @endforeach
                 </select>
                 @error('planSeleccionado')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror

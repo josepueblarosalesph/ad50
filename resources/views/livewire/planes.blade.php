@@ -32,7 +32,7 @@
                     @endif
                     <h2 class="text-[19px] font-extrabold">{{ Str::after($plan->nombre, '· ') }}</h2>
                     <div class="text-[36px] font-extrabold mt-4">{{ number_format((float) $plan->precio_uf, 0, ',', '.') }} <small class="text-[13px] text-gray-500 font-semibold">UF + IVA</small></div>
-                    <p class="text-[12.5px] text-gray-500 mb-6">{{ $plan->periodo === 'anual' ? 'plan anual' : 'pago único' }}</p>
+                    <p class="text-[12.5px] text-gray-500 mb-6">{{ $plan->cobroLabel() }}</p>
                     <ul class="space-y-3 flex-1 mb-7">
                         @foreach ($plan->features ?? [] as $feature)
                             <li wire:key="empresa-plan-{{ $plan->id }}-feature-{{ $loop->index }}" class="flex gap-2.5 text-[13.5px] text-gray-700"><flux:icon.check class="size-4 text-match flex-none mt-0.5" />{{ $feature }}</li>

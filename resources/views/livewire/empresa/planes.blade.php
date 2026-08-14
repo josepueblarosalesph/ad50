@@ -3,24 +3,25 @@
     <x-slot:status>{{ $planActual?->nombre ?? 'Sin plan' }}</x-slot:status>
     <x-slot:nav><x-nav-empresa /></x-slot:nav>
 
-    {{-- Alineada a la izquierda, igual que Mi cuenta y Configuración (ver equipo.blade.php). --}}
-    <div class="max-w-5xl">
-        <div class="mb-6">
+    {{-- Centrada, igual que la página pública de planes: es la primera pantalla que ve la
+         empresa al verificar su correo y no tiene una tabla que anclar a la izquierda. --}}
+    <div class="mx-auto max-w-5xl">
+        <div class="mb-6 text-center">
             <span class="ad-eyebrow">Suscripción</span>
             <h1 class="mt-3 text-[27px] font-extrabold">Planes para tu empresa</h1>
-            <p class="mt-1.5 text-[14px] text-gray-500">Contrata un plan para desbloquear perfiles y acceder a los datos de contacto de tus candidatos.</p>
+            <p class="mx-auto mt-1.5 max-w-2xl text-[14px] text-gray-500">Contrata un plan para desbloquear perfiles y acceder a los datos de contacto de tus candidatos.</p>
         </div>
 
         @if (session('status'))
-            <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
+            <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-center text-[13px] font-bold text-match">{{ session('status') }}</div>
         @endif
         @if (session('error_pago'))
-            <div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ session('error_pago') }}</div>
+            <div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-center text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ session('error_pago') }}</div>
         @endif
-        @error('pago')<div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ $message }}</div>@enderror
+        @error('pago')<div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-center text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ $message }}</div>@enderror
 
         @unless ($planVigente)
-            <div class="mb-6 flex items-start gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 dark:bg-[#33251D]">
+            <div class="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-center dark:bg-[#33251D]">
                 <span class="grid size-9 flex-none place-items-center rounded-xl bg-orange-500 text-white"><flux:icon.credit-card class="size-5" /></span>
                 <div>
                     <p class="text-[14px] font-extrabold text-ink">Primer paso para activar tu cuenta</p>
@@ -30,8 +31,8 @@
         @endunless
 
         @if ($planVigente && $planActual)
-            <div class="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#BFE6CD] bg-match-100/60 px-5 py-4">
-                <div class="flex items-center gap-3">
+            <div class="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#BFE6CD] bg-match-100/60 px-5 py-4">
+                <div class="flex flex-wrap items-center justify-center gap-3 text-center">
                     <span class="grid size-10 flex-none place-items-center rounded-xl bg-match-100 text-match"><flux:icon.check-badge class="size-5" /></span>
                     <div>
                         <p class="text-[14px] font-extrabold text-ink">Plan activo: {{ $planActual->nombre }}</p>

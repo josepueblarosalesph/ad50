@@ -43,6 +43,22 @@ class Plan extends Model
         return $this->periodo === 'anual' ? 'al año' : 'al mes';
     }
 
+    /**
+     * Etiqueta de cobro bajo el precio en las tarjetas de planes.
+     *
+     * Vive en el modelo porque `periodo` por sí solo NO define cómo se cobra: un plan de
+     * pago único conserva `periodo = 'anual'` (esa es su vigencia, ver vigenciaDesde()).
+     * Decidirlo en la vista hacía que el plan Básico se anunciara como "plan anual".
+     */
+    public function cobroLabel(): string
+    {
+        if ($this->esPagoUnico()) {
+            return 'pago único';
+        }
+
+        return $this->periodo === 'anual' ? 'plan anual' : 'plan mensual';
+    }
+
     /** Precio del plan en CLP (UF × valor de la UF + IVA), redondeado a peso. */
     public function precioClp(float $valorUf): int
     {
