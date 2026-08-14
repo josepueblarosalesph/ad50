@@ -78,6 +78,21 @@ class User extends Authenticatable implements MustVerifyEmail
             : $initials;
     }
 
+    /**
+     * Roles asignables desde el panel de superadministración, con su etiqueta.
+     *
+     * Fuente única para el selector de la pantalla de Usuarios y para la validación:
+     * así no se puede guardar un rol que la interfaz no ofrece.
+     *
+     * @var array<string, string>
+     */
+    public const ROLES = [
+        'postulante' => 'Postulante',
+        'empresa' => 'Empresa',
+        'admin' => 'Administrador',
+        'superadmin' => 'Superadministrador',
+    ];
+
     public function dashboardRouteName(): string
     {
         return match ($this->role) {
@@ -88,7 +103,7 @@ class User extends Authenticatable implements MustVerifyEmail
                 ! $this->empresa->datosEnviados() => 'empresa.activacion',
                 default => 'empresa.panel',
             },
-            'admin' => 'admin.panel',
+            'admin', 'superadmin' => 'admin.panel',
             default => 'dashboard',
         };
     }
@@ -98,9 +113,33 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->role) {
             'postulante' => 'Mi perfil',
             'empresa' => 'Panel de Admin',
-            'admin' => 'Panel de Admin',
+            'admin', 'superadmin' => 'Panel de Admin',
             default => 'Dashboard',
         };
+    }
+
+    /**
+     * Tiene acceso a la administración de la plataforma.
+     *
+     * El superadmin es un admin con atribuciones extra, así que todo lo que hoy protege
+     * el rol `admin` se pregunta por aquí: de lo contrario el superadmin quedaría fuera
+     * de las pantallas que sí le corresponden.
+     */
+    public function esAdmin(): bool
+    {
+        return in_array($this->role, ['admin', 'superadmin'], true);
+    }
+
+    /** Puede además ver todas las cuentas y cambiarles el rol. */
+    public function esSuperadmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /** Nombre del rol para mostrar en pantalla. */
+    public function rolLabel(): string
+    {
+        return self::ROLES[$this->role] ?? $this->role;
     }
 
     /** @return HasOne<Postulante, $this> */

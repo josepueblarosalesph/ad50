@@ -45,7 +45,7 @@ class Catalogos extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         if (! CatalogosAdministrables::existe($this->catalogo)) {
             $this->catalogo = 'industria';
@@ -91,7 +91,7 @@ class Catalogos extends Component
 
     public function guardar(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $validado = $this->validate([
             'valor' => [
@@ -143,7 +143,7 @@ class Catalogos extends Component
 
     public function borrar(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $termino = $this->terminoDelCatalogo($this->borrandoId ?? 0);
 

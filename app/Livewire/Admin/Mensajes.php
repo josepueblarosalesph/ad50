@@ -35,7 +35,7 @@ class Mensajes extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         if (! in_array($this->estado, ['pendientes', 'todos', ...array_keys(MensajeContacto::ESTADOS)], true)) {
             $this->estado = 'pendientes';
@@ -93,7 +93,7 @@ class Mensajes extends Component
 
     private function mensaje(int $mensajeId): MensajeContacto
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         return MensajeContacto::query()->findOrFail($mensajeId);
     }

@@ -8,13 +8,20 @@
             <h1 class="text-[27px] font-extrabold">Postulantes</h1>
             <p class="mt-1.5 text-[14px] text-gray-500">
                 {{ $totalPostulantes }} {{ $totalPostulantes === 1 ? 'perfil registrado' : 'perfiles registrados' }} ·
-                {{ $totalVisibles }} visibles para las empresas.
+                {{ $totalVisibles }} visibles para las empresas
+                @if ($totalSinVerificar > 0)
+                    · <button type="button" wire:click="$set('verificacion', 'pendientes')" class="font-semibold text-orange-600 underline decoration-orange-200 underline-offset-4">{{ $totalSinVerificar }} sin verificar</button>
+                @endif
             </p>
         </div>
     </div>
 
+    @if (session('status'))
+        <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100 px-4 py-3 text-[13px] font-bold text-match">{{ session('status') }}</div>
+    @endif
+
     <section class="ad-card mb-5 p-4 md:p-5">
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-4">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
             <div>
@@ -32,6 +39,15 @@
                     <option value="todos">Todas</option>
                     <option value="completo">Completada</option>
                     <option value="incompleto">Sin completar</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="filtro-verificacion" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Correo</label>
+                <select id="filtro-verificacion" wire:model.live="verificacion" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
+                    <option value="todos">Todos</option>
+                    <option value="verificados">Verificados</option>
+                    <option value="pendientes">Sin verificar</option>
                 </select>
             </div>
         </div>
@@ -60,6 +76,7 @@
                             <x-th-ordenable :campo="$campo" :orden="$orden" :direccion="$direccion">{{ $etiqueta }}</x-th-ordenable>
                         @endforeach
                         <th class="p-4">Estado</th>
+                        <th class="p-4 text-right">Cuenta</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -96,10 +113,20 @@
                                     {{ $postulante->visible ? 'Visible' : 'Pausado' }}
                                 </span>
                             </td>
+                            <td class="p-4">
+                                @if ($postulante->user?->email_verified_at === null)
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                        <span class="ad-chip ad-chip-sm ad-chip-orange">Sin verificar</span>
+                                        <x-acciones-verificacion :user="$postulante->user" />
+                                    </div>
+                                @else
+                                    <span class="block text-right text-[12.5px] text-gray-400">Verificada</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-10 text-center">
+                            <td colspan="8" class="p-10 text-center">
                                 <flux:icon.users class="mx-auto size-8 text-gray-400" />
                                 <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ningún postulante cumple estos filtros' : 'Todavía no hay postulantes' }}</h2>
                                 @if ($hayFiltros)

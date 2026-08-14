@@ -9,7 +9,7 @@
     <x-slot:context>Empresa</x-slot:context>
     {{-- Mismo menú que el panel: sin sección activa, porque estas pantallas no son del panel. --}}
     <x-slot:nav><x-nav-empresa /></x-slot:nav>
-@elseif ($rolPanel === 'admin')
-    <x-slot:context>Administrador</x-slot:context>
+@elseif ($rolPanel === 'admin' || $rolPanel === 'superadmin')
+    <x-slot:context>{{ $rolPanel === 'superadmin' ? 'Superadministrador' : 'Administrador' }}</x-slot:context>
     <x-slot:nav><x-nav-admin /></x-slot:nav>
 @endif

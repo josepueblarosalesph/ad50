@@ -11,9 +11,16 @@
         'panel' => ['admin.panel', 'Resumen'],
         'empresas' => ['admin.empresas', 'Empresas'],
         'postulantes' => ['admin.postulantes', 'Postulantes'],
+        'planes' => ['admin.planes', 'Planes'],
         'catalogos' => ['admin.catalogos', 'Catálogos'],
         'mensajes' => ['admin.mensajes', 'Mensajes'],
     ];
+
+    // Gestionar cuentas ajenas es exclusivo del superadministrador: al admin común no
+    // se le muestra el enlace (y el componente igual lo rechaza con 403).
+    if (auth()->user()?->esSuperadmin()) {
+        $enlaces['usuarios'] = ['admin.usuarios', 'Usuarios'];
+    }
 @endphp
 
 @foreach ($enlaces as $clave => [$ruta, $etiqueta])

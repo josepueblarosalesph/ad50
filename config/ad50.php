@@ -30,4 +30,25 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Superadministrador
+    |--------------------------------------------------------------------------
+    |
+    | Cuenta que SuperadminSeeder crea o promueve. La credencial real vive donde la
+    | de cualquier usuario: hasheada en `users.password`. Esto es solo la semilla que
+    | se usa UNA vez, al crear la cuenta; si ya existe, el seeder respeta su clave.
+    |
+    | `password` no tiene valor por omisión a propósito: una cuenta con todos los
+    | privilegios no puede nacer con una clave adivinable porque alguien olvidó
+    | definir la variable. Sin ella, el seeder inventa una al azar y el acceso se
+    | obtiene por "olvidé mi contraseña" (ver SuperadminSeeder).
+    |
+    */
+
+    'superadmin' => [
+        'email' => env('SUPERADMIN_EMAIL', 'jose.puebla.rosales@gmail.com'),
+        'password' => env('SUPERADMIN_PASSWORD'),
+    ],
+
 ];

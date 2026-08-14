@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Concerns\OrdenaListado;
+use App\Concerns\VerificaCuentas;
 use App\Models\Postulante;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,6 +19,7 @@ use Livewire\WithPagination;
 class Postulantes extends Component
 {
     use OrdenaListado;
+    use VerificaCuentas;
     use WithPagination;
 
     #[Url(history: true)]
@@ -31,9 +33,13 @@ class Postulantes extends Component
     #[Url(history: true)]
     public string $onboarding = 'todos';
 
+    /** Verificación del correo de la cuenta: todos | verificados | pendientes. */
+    #[Url(history: true)]
+    public string $verificacion = 'todos';
+
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         if (! in_array($this->visibilidad, ['todos', 'visibles', 'ocultos'], true)) {
             $this->visibilidad = 'todos';
@@ -43,12 +49,16 @@ class Postulantes extends Component
             $this->onboarding = 'todos';
         }
 
+        if (! in_array($this->verificacion, ['todos', 'verificados', 'pendientes'], true)) {
+            $this->verificacion = 'todos';
+        }
+
         $this->hidratarOrden();
     }
 
     public function updated(string $campo): void
     {
-        if (in_array($campo, ['buscar', 'visibilidad', 'onboarding'], true)) {
+        if (in_array($campo, ['buscar', 'visibilidad', 'onboarding', 'verificacion'], true)) {
             $this->resetPage();
         }
     }
@@ -58,6 +68,7 @@ class Postulantes extends Component
         $this->buscar = '';
         $this->visibilidad = 'todos';
         $this->onboarding = 'todos';
+        $this->verificacion = 'todos';
         $this->resetPage();
     }
 
@@ -91,13 +102,20 @@ class Postulantes extends Component
             ))
             ->when($this->visibilidad !== 'todos', fn (Builder $q) => $q->where('visible', $this->visibilidad === 'visibles'))
             ->when($this->onboarding !== 'todos', fn (Builder $q) => $q->where('onboarding_completado', $this->onboarding === 'completo'))
+            ->when($this->verificacion !== 'todos', fn (Builder $q) => $q->whereHas(
+                'user',
+                fn (Builder $u) => $this->verificacion === 'verificados'
+                    ? $u->whereNotNull('email_verified_at')
+                    : $u->whereNull('email_verified_at'),
+            ))
             ->tap(fn (Builder $q) => $this->aplicarOrden($q));
 
         return view('livewire.admin.postulantes', [
             'postulantes' => $query->paginate(20),
             'totalPostulantes' => Postulante::query()->count(),
             'totalVisibles' => Postulante::query()->where('visible', true)->count(),
-            'hayFiltros' => $this->buscar !== '' || $this->visibilidad !== 'todos' || $this->onboarding !== 'todos',
+            'totalSinVerificar' => Postulante::query()->whereHas('user', fn (Builder $u) => $u->whereNull('email_verified_at'))->count(),
+            'hayFiltros' => $this->buscar !== '' || $this->visibilidad !== 'todos' || $this->onboarding !== 'todos' || $this->verificacion !== 'todos',
         ]);
     }
 }

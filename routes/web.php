@@ -7,7 +7,9 @@ use App\Livewire\Admin\Catalogos as AdminCatalogos;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
 use App\Livewire\Admin\Mensajes as AdminMensajes;
 use App\Livewire\Admin\Panel as AdminPanel;
+use App\Livewire\Admin\Planes as AdminPlanes;
 use App\Livewire\Admin\Postulantes as AdminPostulantes;
+use App\Livewire\Admin\Usuarios as AdminUsuarios;
 use App\Livewire\Auth\Register;
 use App\Livewire\Ayuda;
 use App\Livewire\Empresa\Activacion as EmpresaActivacion;
@@ -79,11 +81,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/empresa/publicaciones/{publicacion}', DetallePublicacion::class)->name('empresa.publicaciones.show');
     });
 
+    // El gating de administración lo hace cada componente en su mount() (esAdmin() /
+    // esSuperadmin()), igual que el resto del panel; Usuarios es la única exclusiva
+    // del superadministrador.
     Route::get('/admin', AdminPanel::class)->name('admin.panel');
     Route::get('/admin/empresas', AdminEmpresas::class)->name('admin.empresas');
     Route::get('/admin/postulantes', AdminPostulantes::class)->name('admin.postulantes');
+    Route::get('/admin/planes', AdminPlanes::class)->name('admin.planes');
     Route::get('/admin/catalogos', AdminCatalogos::class)->name('admin.catalogos');
     Route::get('/admin/mensajes', AdminMensajes::class)->name('admin.mensajes');
+    Route::get('/admin/usuarios', AdminUsuarios::class)->name('admin.usuarios');
 });
 
 Route::get('dashboard', function (Request $request): RedirectResponse {

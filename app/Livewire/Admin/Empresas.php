@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Concerns\VerificaCuentas;
 use App\Models\Empresa;
 use App\Models\Plan;
 use Carbon\Carbon;
@@ -13,6 +14,8 @@ use Livewire\Component;
 
 class Empresas extends Component
 {
+    use VerificaCuentas;
+
     /** Empresa cuyo formulario de plan está abierto. */
     public ?int $asignandoId = null;
 
@@ -25,7 +28,7 @@ class Empresas extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
     }
 
     /**
@@ -37,7 +40,7 @@ class Empresas extends Component
      */
     public function abrirAsignacion(int $empresaId): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $empresa = Empresa::query()->findOrFail($empresaId);
 
@@ -67,7 +70,7 @@ class Empresas extends Component
 
     public function asignarPlan(): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $validado = $this->validate([
             'planSeleccionado' => ['required', Rule::exists('planes', 'id')->where('audiencia', 'empresa')],
@@ -95,7 +98,7 @@ class Empresas extends Component
     /** Deja a la empresa sin plan vigente. */
     public function quitarPlan(int $empresaId): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $empresa = Empresa::query()->findOrFail($empresaId);
 
@@ -106,7 +109,7 @@ class Empresas extends Component
 
     public function activar(int $empresaId): void
     {
-        abort_unless(auth()->user()->role === 'admin', 403);
+        abort_unless(auth()->user()->esAdmin(), 403);
 
         $empresa = Empresa::query()->findOrFail($empresaId);
         abort_unless($empresa->estado_activacion === 'pendiente' && $empresa->datos_enviados_at !== null, 422);

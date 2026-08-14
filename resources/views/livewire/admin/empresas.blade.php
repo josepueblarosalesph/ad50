@@ -21,7 +21,15 @@
                     <span class="ad-chip ad-chip-orange">Pendiente desde {{ $empresa->datos_enviados_at?->translatedFormat('d M Y') }}</span>
                 </div>
                 <div class="grid gap-5 py-5 md:grid-cols-3">
-                    <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Cuenta</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->user->name }}</p><p class="text-[13px] text-gray-500">{{ $empresa->user->email }}</p></div>
+                    <div>
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Cuenta</p>
+                        <p class="mt-2 text-[14px] font-bold">{{ $empresa->user->name }}</p>
+                        <p class="text-[13px] text-gray-500">{{ $empresa->user->email }}</p>
+                        @if ($empresa->user->email_verified_at === null)
+                            <span class="ad-chip ad-chip-sm ad-chip-orange mt-2">Correo sin verificar</span>
+                            <div class="mt-2 flex flex-wrap gap-2"><x-acciones-verificacion :user="$empresa->user" /></div>
+                        @endif
+                    </div>
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contacto administrador</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->contacto_principal_nombre }}</p><p class="text-[13px] text-gray-500">{{ $empresa->contacto_principal_cargo }} · {{ $empresa->contacto_principal_email }} · {{ $empresa->contacto_principal_telefono }}</p></div>
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Contactos usuarios</p><p class="mt-2 text-[14px] font-bold">{{ $empresa->usuariosAdicionales()->count() }} de {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} habilitados</p></div>
                     <div><p class="text-[11px] font-extrabold uppercase tracking-wide text-gray-400">Plan</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>
@@ -36,7 +44,7 @@
     </section>
 
     <div class="mt-8 grid gap-5 lg:grid-cols-2">
-        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Aún sin antecedentes</h2><span class="ad-chip">{{ $inactivas->count() }}</span></div><div class="divide-y divide-line">@forelse ($inactivas as $empresa)<div wire:key="inactiva-{{ $empresa->id }}" class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">{{ $empresa->user->email }}</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>@empty<p class="p-6 text-[13px] text-gray-500">Todas las empresas enviaron sus datos.</p>@endforelse</div></section>
+        <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Aún sin antecedentes</h2><span class="ad-chip">{{ $inactivas->count() }}</span></div><div class="divide-y divide-line">@forelse ($inactivas as $empresa)<div wire:key="inactiva-{{ $empresa->id }}" class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">{{ $empresa->user->email }}</p>@if ($empresa->user->email_verified_at === null){{-- Sin verificar no puede ni llegar a enviar antecedentes: el middleware `verified` la deja fuera. Se queda aquí para siempre si nadie la rescata. --}}<span class="ad-chip ad-chip-sm ad-chip-orange mt-2">Correo sin verificar</span><div class="mt-2 flex flex-wrap gap-2"><x-acciones-verificacion :user="$empresa->user" /></div>@endif<div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>@empty<p class="p-6 text-[13px] text-gray-500">Todas las empresas enviaron sus datos.</p>@endforelse</div></section>
         <section class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas activas</h2><span class="ad-chip ad-chip-green">{{ $activas->count() }}</span></div><div class="divide-y divide-line">@forelse ($activas as $empresa)<div wire:key="activa-{{ $empresa->id }}" class="p-4"><b class="text-[14px]">{{ $empresa->razon_social }}</b><p class="mt-1 text-[12px] text-gray-500">Habilitada {{ $empresa->activada_at?->translatedFormat('d M Y') }}{{ $empresa->activadaPor ? ' por '.$empresa->activadaPor->name : '' }}</p><div class="mt-2"><x-plan-empresa-admin :empresa="$empresa" /></div></div>@empty<p class="p-6 text-[13px] text-gray-500">Todavía no hay empresas activas.</p>@endforelse</div></section>
     </div>
 
