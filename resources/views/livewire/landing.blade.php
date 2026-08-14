@@ -409,7 +409,7 @@
                 </div>
             </div>
             <div class="flex flex-wrap justify-between gap-3 pt-6 text-[14px]">
-                <span>© {{ date('Y') }} AD Consulting · Concepción, Chile</span>
+                <span>© {{ date('Y') }} AD Consulting · Chile</span>
                 <span>Plataforma de perfiles y matching de talento</span>
             </div>
         </div>
