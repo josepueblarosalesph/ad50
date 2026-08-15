@@ -4,6 +4,7 @@ use App\Http\Controllers\FlowController;
 use App\Http\Middleware\EnsureEmpresaActiva;
 use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
 use App\Livewire\Admin\Catalogos as AdminCatalogos;
+use App\Livewire\Admin\Cupones as AdminCupones;
 use App\Livewire\Admin\Empresas as AdminEmpresas;
 use App\Livewire\Admin\Mensajes as AdminMensajes;
 use App\Livewire\Admin\Panel as AdminPanel;
@@ -88,6 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/empresas', AdminEmpresas::class)->name('admin.empresas');
     Route::get('/admin/postulantes', AdminPostulantes::class)->name('admin.postulantes');
     Route::get('/admin/planes', AdminPlanes::class)->name('admin.planes');
+    Route::get('/admin/cupones', AdminCupones::class)->name('admin.cupones');
     Route::get('/admin/catalogos', AdminCatalogos::class)->name('admin.catalogos');
     Route::get('/admin/mensajes', AdminMensajes::class)->name('admin.mensajes');
     Route::get('/admin/usuarios', AdminUsuarios::class)->name('admin.usuarios');

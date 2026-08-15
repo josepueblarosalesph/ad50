@@ -13,6 +13,11 @@
                 @endif
             </p>
         </div>
+
+        <button type="button" wire:click="abrirCrearUsuario" class="ad-btn-primary ad-btn-sm">
+            <flux:icon.user-plus class="size-4" />
+            Crear usuario
+        </button>
     </div>
 
     @if (session('status'))
@@ -126,6 +131,8 @@
                                 <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ninguna cuenta cumple estos filtros' : 'Todavía no hay usuarios' }}</h2>
                                 @if ($hayFiltros)
                                     <button type="button" wire:click="limpiarFiltros" class="ad-btn-ghost ad-btn-sm mt-4">Limpiar filtros</button>
+                                @else
+                                    <button type="button" wire:click="abrirCrearUsuario" class="ad-btn-primary ad-btn-sm mt-4">Crear usuario</button>
                                 @endif
                             </td>
                         </tr>
@@ -138,6 +145,76 @@
     @if ($usuarios->hasPages())
         <div class="mt-6">{{ $usuarios->links() }}</div>
     @endif
+
+    <flux:modal name="crear-usuario" class="max-w-xl">
+        <form wire:submit="crearUsuario" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Crear usuario</flux:heading>
+                <flux:text class="mt-1">La cuenta queda con el correo verificado: la persona entra con estas credenciales sin pasar por el enlace de confirmación.</flux:text>
+            </div>
+
+            <div>
+                <label for="nuevo-rol" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Tipo de usuario</label>
+                <select id="nuevo-rol" wire:model.live="nuevoRol" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
+                    @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+                        <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                    @endforeach
+                </select>
+                @error('nuevoRol')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <flux:input wire:model="nuevoNombres" label="Nombres" placeholder="María José" />
+                <flux:input wire:model="nuevoApellidos" label="Apellidos" placeholder="Rojas Contreras" />
+            </div>
+
+            <flux:input wire:model="nuevoEmail" label="Correo electrónico" type="email" placeholder="persona@correo.cl" />
+
+            <div>
+                <flux:input wire:model="nuevoPassword" label="Contraseña" type="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" viewable />
+                <button type="button" wire:click="generarPassword" class="ad-btn-ghost ad-btn-sm mt-2">
+                    Generar una contraseña segura
+                </button>
+            </div>
+
+            @if ($nuevoRol === 'empresa')
+                <div class="space-y-4 rounded-lg border border-line-2 p-4">
+                    <div>
+                        <label for="nueva-empresa" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Empresa</label>
+                        <select id="nueva-empresa" wire:model.live="nuevaEmpresaId" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
+                            <option value="">Crear una empresa nueva</option>
+                            @foreach ($empresasDisponibles as $empresaDisponible)
+                                <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->razon_social }}</option>
+                            @endforeach
+                        </select>
+                        @error('nuevaEmpresaId')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
+                    </div>
+
+                    @if ($nuevaEmpresaId === '')
+                        <flux:input wire:model="nuevaRazonSocial" label="Razón social" placeholder="Consultora Ejemplo SpA" />
+
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <flux:input wire:model.blur="nuevoRut" label="RUT de la empresa" placeholder="76.123.456-7" />
+                            <flux:input wire:model="nuevoTelefono" label="Teléfono" placeholder="+56 9 1234 5678" />
+                        </div>
+
+                        <p class="text-[12.5px] text-gray-600 dark:text-gray-300">
+                            La empresa nace <b>activada</b> con estos antecedentes. El plan se asigna aparte, en la pantalla de Empresas.
+                        </p>
+                    @else
+                        <p class="text-[12.5px] text-gray-600 dark:text-gray-300">
+                            La cuenta se suma como usuario adicional de esa empresa (máximo {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }}) y hereda su plan y su estado.
+                        </p>
+                    @endif
+                </div>
+            @endif
+
+            <div class="flex justify-end gap-2 pt-2">
+                <flux:modal.close><flux:button variant="ghost" type="button">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="crearUsuario">Crear cuenta</flux:button>
+            </div>
+        </form>
+    </flux:modal>
 
     <flux:modal name="cambiar-rol" class="max-w-lg" wire:close="$set('editandoId', null)">
         <form wire:submit="cambiarRol" class="space-y-5">

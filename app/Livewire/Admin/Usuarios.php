@@ -4,9 +4,17 @@ namespace App\Livewire\Admin;
 
 use App\Concerns\OrdenaListado;
 use App\Concerns\VerificaCuentas;
+use App\Models\Empresa;
+use App\Models\Postulante;
 use App\Models\User;
+use App\Rules\RutValido;
+use App\Support\Rut;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -22,6 +30,10 @@ use Livewire\WithPagination;
  * `users.role`; la ficha de postulante o la empresa asociada se conservan intactas,
  * de modo que el cambio es reversible y no destruye información. Lo que falte lo
  * genera el onboarding del nuevo rol la próxima vez que la persona entre.
+ *
+ * Desde aquí también se crean cuentas a mano, con su contraseña y ya verificadas
+ * (ver crearUsuario()): es la vía para dar de alta al equipo interno, montar cuentas
+ * de demostración y resolver los registros que se atascan en el correo de verificación.
  */
 class Usuarios extends Component
 {
@@ -52,6 +64,27 @@ class Usuarios extends Component
 
     /** Rol elegido en el formulario. */
     public string $rolNuevo = '';
+
+    // --- Alta manual de cuentas -------------------------------------------------
+
+    public string $nuevoRol = 'postulante';
+
+    public string $nuevoNombres = '';
+
+    public string $nuevoApellidos = '';
+
+    public string $nuevoEmail = '';
+
+    public string $nuevoPassword = '';
+
+    /** Empresa a la que se suma la cuenta; '' significa crear una empresa nueva. */
+    public string $nuevaEmpresaId = '';
+
+    public string $nuevaRazonSocial = '';
+
+    public string $nuevoRut = '';
+
+    public string $nuevoTelefono = '';
 
     public function mount(): void
     {
@@ -140,6 +173,173 @@ class Usuarios extends Component
         $this->modal('cambiar-rol')->close();
     }
 
+    /** Abre el formulario de alta manual de una cuenta. */
+    public function abrirCrearUsuario(): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $this->limpiarFormularioCreacion();
+        $this->resetErrorBag();
+
+        $this->modal('crear-usuario')->show();
+    }
+
+    public function updatedNuevoRut(): void
+    {
+        $this->nuevoRut = Rut::formatear($this->nuevoRut);
+    }
+
+    /** Rellena el campo con una contraseña fuerte para entregársela a la persona. */
+    public function generarPassword(): void
+    {
+        $this->nuevoPassword = Str::password(14, symbols: false);
+        $this->resetValidation('nuevoPassword');
+    }
+
+    /**
+     * Crea una cuenta completa: usuario con su contraseña, la ficha o la empresa que le
+     * corresponde según el rol, y el correo ya dado por verificado.
+     *
+     * Se salta a propósito el correo de verificación (no se emite `Registered`): la cuenta
+     * no la pidió su titular, así que no hay nada que confirmar y mandarle un enlace solo
+     * lo confundiría. A cambio se marca `email_verified_at` y se emite `Verified`, igual
+     * que hace VerificaCuentas::marcarVerificada(), para que una cuenta creada aquí sea
+     * indistinguible de una que sí pasó por el enlace.
+     */
+    public function crearUsuario(): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $this->nuevoRut = Rut::formatear($this->nuevoRut);
+
+        $validado = $this->validate($this->reglasCreacion(), attributes: [
+            'nuevoRol' => 'tipo de usuario',
+            'nuevoNombres' => 'nombres',
+            'nuevoApellidos' => 'apellidos',
+            'nuevoEmail' => 'correo',
+            'nuevoPassword' => 'contraseña',
+            'nuevaEmpresaId' => 'empresa',
+            'nuevaRazonSocial' => 'razón social',
+            'nuevoRut' => 'RUT',
+            'nuevoTelefono' => 'teléfono',
+        ]);
+
+        // Sumarse a una empresa existente consume uno de sus cupos de usuarios adicionales:
+        // se comprueba antes de crear nada para no dejar un usuario huérfano si no cabe.
+        $empresaExistente = null;
+
+        if ($validado['nuevoRol'] === 'empresa' && $this->nuevaEmpresaId !== '') {
+            $empresaExistente = Empresa::query()->findOrFail((int) $this->nuevaEmpresaId);
+
+            if (! $empresaExistente->puedeAgregarUsuario()) {
+                $this->addError('nuevaEmpresaId', 'Esa empresa ya tiene sus '.Empresa::MAX_USUARIOS_ADICIONALES.' usuarios adicionales.');
+
+                return;
+            }
+        }
+
+        $user = DB::transaction(function () use ($validado, $empresaExistente): User {
+            $user = User::create([
+                'name' => trim($validado['nuevoNombres'].' '.$validado['nuevoApellidos']),
+                'nombres' => $validado['nuevoNombres'],
+                'apellidos' => $validado['nuevoApellidos'],
+                'email' => $validado['nuevoEmail'],
+                'password' => Hash::make($validado['nuevoPassword']),
+                'role' => $validado['nuevoRol'],
+                'empresa_id' => $empresaExistente?->id,
+                'acepta_ley_21719' => true,
+            ]);
+
+            if ($validado['nuevoRol'] === 'postulante') {
+                // Mismo punto de partida que el registro: entra directo a completar su ficha.
+                Postulante::create([
+                    'user_id' => $user->id,
+                    'completitud' => 10,
+                    'visible' => true,
+                    'onboarding_paso' => 1,
+                    'onboarding_completado' => false,
+                ]);
+            }
+
+            if ($validado['nuevoRol'] === 'empresa' && $empresaExistente === null) {
+                // Los antecedentes los aporta el superadministrador, así que la empresa nace
+                // con la activación resuelta: es lo mismo que deja Empresa/Activacion cuando
+                // los envía la propia empresa. El plan sigue siendo aparte (Admin/Empresas).
+                Empresa::create([
+                    'user_id' => $user->id,
+                    'razon_social' => $validado['nuevaRazonSocial'],
+                    'rut' => $validado['nuevoRut'],
+                    'telefono' => $validado['nuevoTelefono'],
+                    'estado_activacion' => 'activa',
+                    'datos_enviados_at' => now(),
+                    'activada_at' => now(),
+                    'activada_por' => auth()->id(),
+                    'contacto_principal_nombre' => $user->name,
+                    'contacto_principal_email' => $user->email,
+                    'contacto_principal_telefono' => $validado['nuevoTelefono'],
+                ]);
+            }
+
+            $user->markEmailAsVerified();
+
+            return $user;
+        });
+
+        event(new Verified($user));
+
+        // Una cuenta con contraseña conocida por quien no es su titular: queda quién la creó.
+        logger()->info('Cuenta creada manualmente desde la administración', [
+            'usuario_creado' => $user->id,
+            'email' => $user->email,
+            'rol' => $user->role,
+            'administrador' => auth()->id(),
+        ]);
+
+        $this->cerrarCrearUsuario();
+        $this->resetPage();
+
+        session()->flash('status', "Creamos la cuenta de {$user->name} ({$user->rolLabel()}) con el correo ya verificado. Entrégale sus credenciales: puede entrar de inmediato.");
+    }
+
+    private function cerrarCrearUsuario(): void
+    {
+        $this->limpiarFormularioCreacion();
+        $this->modal('crear-usuario')->close();
+    }
+
+    private function limpiarFormularioCreacion(): void
+    {
+        $this->reset(
+            'nuevoRol', 'nuevoNombres', 'nuevoApellidos', 'nuevoEmail', 'nuevoPassword',
+            'nuevaEmpresaId', 'nuevaRazonSocial', 'nuevoRut', 'nuevoTelefono',
+        );
+    }
+
+    /** @return array<string, list<mixed>> */
+    private function reglasCreacion(): array
+    {
+        $reglas = [
+            'nuevoRol' => ['required', Rule::in(array_keys(User::ROLES))],
+            'nuevoNombres' => ['required', 'string', 'max:80'],
+            'nuevoApellidos' => ['required', 'string', 'max:80'],
+            'nuevoEmail' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'nuevoPassword' => ['required', 'string', 'min:8'],
+        ];
+
+        if ($this->nuevoRol === 'empresa') {
+            if ($this->nuevaEmpresaId !== '') {
+                $reglas['nuevaEmpresaId'] = ['required', Rule::exists('empresas', 'id')];
+            } else {
+                // Empresa nueva: hacen falta los mismos antecedentes que pide el registro.
+                $reglas['nuevaRazonSocial'] = ['required', 'string', 'max:160'];
+                $reglas['nuevoRut'] = ['required', 'string', 'max:20', new RutValido];
+                $reglas['nuevoTelefono'] = ['required', 'string', 'max:30'];
+            }
+        }
+
+        return $reglas;
+    }
+
     /** @return array<string, string> */
     protected function columnasOrdenables(): array
     {
@@ -186,6 +386,8 @@ class Usuarios extends Component
                 ->groupBy('role')
                 ->pluck('total', 'role'),
             'hayFiltros' => $this->buscar !== '' || $this->rol !== 'todos' || $this->verificacion !== 'todos',
+            // Para el alta manual: a qué empresa ya registrada se puede sumar la cuenta nueva.
+            'empresasDisponibles' => Empresa::query()->orderBy('razon_social')->get(['id', 'razon_social']),
         ]);
     }
 }

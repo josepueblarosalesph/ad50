@@ -12,6 +12,7 @@
         'empresas' => ['admin.empresas', 'Empresas'],
         'postulantes' => ['admin.postulantes', 'Postulantes'],
         'planes' => ['admin.planes', 'Planes'],
+        'cupones' => ['admin.cupones', 'Cupones'],
         'catalogos' => ['admin.catalogos', 'Catálogos'],
         'mensajes' => ['admin.mensajes', 'Mensajes'],
     ];

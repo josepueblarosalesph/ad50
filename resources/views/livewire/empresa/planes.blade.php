@@ -42,6 +42,39 @@
             </div>
         @endif
 
+        {{-- Cupón de descuento. El campo va antes de las tarjetas porque el descuento se
+             refleja dentro de cada una: primero se aplica, después se elige plan. --}}
+        <div class="mx-auto mb-6 max-w-xl">
+            @if ($cupon === null)
+                <form wire:submit="aplicarCupon" class="flex flex-wrap items-end gap-3">
+                    <div class="min-w-[220px] flex-1">
+                        <flux:input wire:model="codigoCupon" label="¿Tienes un cupón de descuento?" placeholder="Escribe tu código" />
+                    </div>
+                    <flux:button variant="ghost" type="submit" wire:loading.attr="disabled" wire:target="aplicarCupon">Aplicar</flux:button>
+                </form>
+            @else
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#BFE6CD] bg-match-100/60 px-4 py-3">
+                    <div>
+                        <p class="text-[13.5px] font-extrabold text-ink">
+                            Cupón <span class="font-mono">{{ $cupon->codigo }}</span> aplicado · {{ $cupon->valorLabel() }} de descuento
+                        </p>
+                        <p class="mt-0.5 text-[12.5px] text-gray-600">
+                            @if ($cupon->plan_id !== null)
+                                Válido solo para el plan {{ $cupon->plan?->nombre }}.
+                            @else
+                                Válido para cualquier plan.
+                            @endif
+                        </p>
+                    </div>
+                    <button type="button" wire:click="quitarCupon" class="ad-btn-ghost ad-btn-sm">Quitar</button>
+                </div>
+            @endif
+
+            @error('codigoCupon')
+                <p class="mt-2 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>
+            @enderror
+        </div>
+
         <div class="grid gap-5 pt-3 lg:grid-cols-3">
             @foreach ($planes as $plan)
                 {{-- El badge va en un contenedor externo porque las tarjetas del panel tienen overflow:hidden. --}}
@@ -56,6 +89,31 @@
                         <p class="mb-1 text-[12.5px] font-bold text-orange-600">Pago único · acceso por un año</p>
                     @endif
                     <p class="mb-5 text-[12.5px] text-gray-500">{{ $plan->esPagoUnico() ? 'no se renueva automáticamente' : ($plan->periodo === 'anual' ? 'por año' : 'por mes') }}</p>
+
+                    {{-- Con cupón aplicado sí se muestran pesos: es el único momento en que
+                         el precio de lista no es lo que se va a cobrar. --}}
+                    @php($desglose = $preciosConCupon[$plan->id] ?? null)
+                    @if ($desglose)
+                        <div class="mb-5 rounded-xl border border-[#BFE6CD] bg-match-100/60 px-3.5 py-3">
+                            @if ($desglose['cortesia'])
+                                <p class="text-[15px] font-extrabold text-match">Gratis con tu cupón</p>
+                                <p class="mt-0.5 text-[12px] text-gray-600">
+                                    Antes <s>${{ number_format($desglose['bruto'], 0, ',', '.') }}</s> · se activa sin pasar por la pasarela.
+                                </p>
+                            @else
+                                <p class="text-[12px] text-gray-600">
+                                    Antes <s>${{ number_format($desglose['bruto'], 0, ',', '.') }}</s>
+                                    · ahorras ${{ number_format($desglose['descuento'], 0, ',', '.') }}
+                                </p>
+                                <p class="mt-0.5 text-[17px] font-extrabold text-ink">
+                                    ${{ number_format($desglose['final'], 0, ',', '.') }}
+                                    <small class="text-[11px] font-medium text-gray-500">CLP con IVA</small>
+                                </p>
+                            @endif
+                        </div>
+                    @elseif ($cupon !== null)
+                        <p class="mb-5 text-[12px] text-gray-400">Tu cupón no aplica a este plan.</p>
+                    @endif
 
                     <ul class="mb-6 flex-1 space-y-2.5">
                         @foreach ($plan->features ?? [] as $feature)
@@ -88,8 +146,16 @@
                         @disabled($restantes === 0)
                         class="ad-btn-primary ad-btn-sm ad-btn-block justify-center disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                        <span wire:loading.remove wire:target="contratar({{ $plan->id }})">{{ $restantes === 0 ? 'Sin cupos disponibles' : ($planVigente ? 'Renovar / cambiar' : 'Contratar') }}</span>
-                        <span wire:loading wire:target="contratar({{ $plan->id }})">Redirigiendo a Flow…</span>
+                        <span wire:loading.remove wire:target="contratar({{ $plan->id }})">
+                            @if ($restantes === 0)
+                                Sin cupos disponibles
+                            @elseif ($desglose['cortesia'] ?? false)
+                                Activar plan gratis
+                            @else
+                                {{ $planVigente ? 'Renovar / cambiar' : 'Contratar' }}
+                            @endif
+                        </span>
+                        <span wire:loading wire:target="contratar({{ $plan->id }})">{{ ($desglose['cortesia'] ?? false) ? 'Activando tu plan…' : 'Redirigiendo a Flow…' }}</span>
                     </button>
                 </article>
                 </div>

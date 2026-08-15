@@ -84,7 +84,7 @@ class FlowController extends Controller
         $pago = Pago::query()
             ->when($commerceOrder !== null, fn ($q) => $q->where('commerce_order', $commerceOrder))
             ->when($commerceOrder === null, fn ($q) => $q->where('flow_token', $token))
-            ->with('plan', 'empresa')
+            ->with('plan', 'empresa', 'cupon')
             ->first();
 
         if ($pago === null) {
@@ -99,6 +99,12 @@ class FlowController extends Controller
                 'pagado_at' => now(),
                 'flow_order' => $estado['flowOrder'] ?? $pago->flow_order,
             ]);
+
+            // El cupón se gasta cuando el cobro se confirma, no al iniciarlo: un intento
+            // abandonado en la pasarela no puede consumir el cupo de una promoción. Como
+            // esta rama solo corre una vez por pago (estaPagado() la cierra), los
+            // reintentos del webhook no lo cuentan de nuevo.
+            $pago->cupon?->registrarUso();
 
             // Activa (o renueva) la suscripción de la empresa. El cupo se suma, no se
             // reemplaza: un plan de pago único se puede contratar varias veces y cada

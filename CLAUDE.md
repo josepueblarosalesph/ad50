@@ -36,6 +36,8 @@ Esquema base en [database/migrations/2026_01_01_000001_create_ad50_schema.php](d
 | `busquedas` | [Busqueda](app/Models/Busqueda.php) | Configuración de filtros guardada de una empresa: `criterios` (JSON), `rubro_oculto`. **No tiene estado ni vigencia**: toda búsqueda participa del matching hasta que se elimina |
 | `publicaciones` | [Publicacion](app/Models/Publicacion.php) | Oferta laboral publicada en el portal. `estado` recorre la etapa del proceso (`publicada` → `long_list` → `short_list` → `entrevistas` → `pausada`/`cerrada`/`cancelada`); sigue visible mientras esté en `ESTADOS_VISIBLES` y dentro de `vigente_hasta` |
 | `busqueda_candidato` | [BusquedaCandidato](app/Models/BusquedaCandidato.php) | **Tabla pivote del match**: `match_score`, `criterios_cumplidos/totales`, `criterios_detalle` (JSON), `estado_match` (cumple/parcial), `favorito`, `contactado_at` |
+| `cupones` | [Cupon](app/Models/Cupon.php) | Descuento sobre el precio de un plan: `tipo` (porcentaje/monto), `valor`, vigencia, `max_usos`/`usos`, `uso_unico_por_empresa`, `plan_id` (NULL = cualquiera) |
+| `pagos` | [Pago](app/Models/Pago.php) | Cobro en Flow: `amount` es siempre **lo que se cobró** y `descuento` lo que rebajó el `cupon_id`; el precio de lista se reconstruye con `montoBruto()` |
 
 Relaciones clave: `Empresa hasMany Busqueda hasMany BusquedaCandidato belongsTo Postulante`. La pareja `(busqueda_id, postulante_id)` es única.
 
@@ -88,7 +90,13 @@ El middleware [EnsureEmpresaActiva](app/Http/Middleware/EnsureEmpresaActiva.php)
 Empresa activa → crea búsqueda con criterios ([NuevaBusqueda](app/Livewire/Empresa/NuevaBusqueda.php)) → el sistema calza candidatos → revisa [Resultados](app/Livewire/Empresa/Resultados.php) (paginados, filtrables por criterio y por favoritos, marcables como favorito) → ve el detalle de un candidato en [Candidato](app/Livewire/Empresa/Candidato.php). El `rubro_oculto` de la búsqueda controla qué información ve el postulante hasta ser contactado.
 
 ### Planes / monetización
-[Planes](app/Livewire/Planes.php) (empresas) y [Postulante/Planes](app/Livewire/Postulante/Planes.php) muestran los planes de suscripción. Precios en CLP y UF (migraciones recientes). El cobro real / pasarela de pago no está implementado en el código revisado.
+Los precios se definen en UF (+ IVA) y viven en el código: [PlanSeeder](database/seeders/PlanSeeder.php) es la fuente, y [Admin/Planes](app/Livewire/Admin/Planes.php) solo los muestra. El cobro se hace en CLP con la UF del día ([ValorUf](app/Services/ValorUf.php), cacheada 24 h) a través de **Flow** ([FlowService](app/Services/FlowService.php) + [FlowController](app/Http/Controllers/FlowController.php)). El único checkout es [Empresa/Planes::contratar()](app/Livewire/Empresa/Planes.php); el plan se activa en el webhook de confirmación, nunca en el retorno del navegador. Hoy solo pagan las empresas.
+
+**Cupones de descuento.** Los crea cualquier admin desde [Admin/Cupones](app/Livewire/Admin/Cupones.php) y la empresa los escribe en la pantalla de planes. Todas las condiciones (vigencia, tope de usos, uso único por empresa, plan al que aplica) las resuelve [Cupon::motivoRechazo()](app/Models/Cupon.php) — **juez único**: el checkout y la pantalla tienen que dar el mismo veredicto, si no un cupón se validaría en pantalla y se caería al cobrar. Tres reglas que conviene no romper:
+
+- El descuento se calcula sobre el **CLP con IVA**, que es lo que se cobra, y nunca deja el monto en negativo.
+- Los usos se anotan **cuando el cobro se confirma** (en `FlowController::procesar()`), no al iniciarlo: un pago abandonado no gasta cupo. `Cupon::registrarUso()` lleva la condición dentro del `UPDATE` para que dos webhooks simultáneos no se pasen del tope.
+- Si el descuento deja el monto bajo el mínimo de Flow (350 CLP), no hay pasarela: se activa el plan de inmediato y se guarda igualmente un `Pago` en estado `pagado` con `amount = 0` y el cupón asociado. Ese `Pago` es lo que cuenta el tope anual de contrataciones, así que **saltárselo permitiría burlar el tope con un cupón del 100%**.
 
 ## Rutas
 
