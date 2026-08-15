@@ -4,8 +4,11 @@ namespace App\Livewire\Admin;
 
 use App\Concerns\OrdenaListado;
 use App\Concerns\VerificaCuentas;
+use App\Models\Busqueda;
 use App\Models\Empresa;
+use App\Models\Pago;
 use App\Models\Postulante;
+use App\Models\Publicacion;
 use App\Models\User;
 use App\Rules\RutValido;
 use App\Support\Rut;
@@ -34,6 +37,16 @@ use Livewire\WithPagination;
  * Desde aquí también se crean cuentas a mano, con su contraseña y ya verificadas
  * (ver crearUsuario()): es la vía para dar de alta al equipo interno, montar cuentas
  * de demostración y resolver los registros que se atascan en el correo de verificación.
+ *
+ * Y se editan (guardarDatos()) y se borran (eliminar()). Cuidado con el borrado: no es
+ * solo una fila de `users`. `empresas.user_id` es `cascadeOnDelete`, así que eliminar al
+ * contacto administrador de una empresa arrastra la empresa y, tras ella, sus búsquedas,
+ * publicaciones, desbloqueos y pagos. De ahí las tres defensas de esta pantalla:
+ *
+ * 1. La confirmación enumera lo que se va a perder, con las cuentas reales.
+ * 2. Si queda otro miembro del equipo, la empresa se le traspasa en vez de morir.
+ * 3. Si no hay heredero y la empresa tiene pagos confirmados, el borrado se rechaza:
+ *    destruir un historial contable no cabe en un botón de una lista de usuarios.
  */
 class Usuarios extends Component
 {
@@ -85,6 +98,43 @@ class Usuarios extends Component
     public string $nuevoRut = '';
 
     public string $nuevoTelefono = '';
+
+    // --- Edición de los datos de una cuenta ------------------------------------
+
+    public ?int $editandoDatosId = null;
+
+    public string $editNombres = '';
+
+    public string $editApellidos = '';
+
+    public string $editEmail = '';
+
+    /** Vacío = se conserva la contraseña actual. */
+    public string $editPassword = '';
+
+    /** Correo con el que se abrió el formulario, para saber si cambió. */
+    public string $editEmailOriginal = '';
+
+    // --- Eliminación de una cuenta ---------------------------------------------
+
+    public ?int $eliminandoId = null;
+
+    public string $eliminandoNombre = '';
+
+    public string $eliminandoEmail = '';
+
+    /** Qué se borra junto con la cuenta, ya redactado para la confirmación. */
+    /** @var list<string> */
+    public array $eliminandoArrastra = [];
+
+    /** Motivo por el que no se puede borrar, o null si sí se puede. */
+    public ?string $eliminandoBloqueo = null;
+
+    /** A quién pasaría la empresa para salvarla, si procede. */
+    public ?string $eliminandoTraspaso = null;
+
+    /** Misma confirmación escrita que usa el borrado de publicaciones. */
+    public string $confirmacionTexto = '';
 
     public function mount(): void
     {
@@ -171,6 +221,113 @@ class Usuarios extends Component
     {
         $this->reset('editandoId', 'editandoNombre', 'editandoEmail', 'rolActual', 'rolNuevo');
         $this->modal('cambiar-rol')->close();
+    }
+
+    /** Abre el formulario con los datos básicos de una cuenta. */
+    public function abrirEdicionDatos(int $userId): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $user = User::query()->findOrFail($userId);
+
+        // La propia cuenta se edita en Mi cuenta, que además pide la contraseña actual
+        // para cambiarla. Duplicarlo aquí solo abriría una vía más floja para lo mismo.
+        abort_if($user->id === auth()->id(), 403);
+
+        $this->editandoDatosId = $user->id;
+        $this->editNombres = (string) ($user->nombres ?? $user->name);
+        $this->editApellidos = (string) $user->apellidos;
+        $this->editEmail = $user->email;
+        $this->editEmailOriginal = $user->email;
+        $this->editPassword = '';
+        $this->resetErrorBag();
+
+        $this->modal('editar-datos')->show();
+    }
+
+    /** Propone una contraseña fuerte para entregársela a la persona. */
+    public function generarPasswordEdicion(): void
+    {
+        $this->editPassword = Str::password(14, symbols: false);
+        $this->resetValidation('editPassword');
+    }
+
+    /**
+     * Guarda nombre, correo y —solo si se escribió una— contraseña nueva.
+     *
+     * Dejar la contraseña en blanco conserva la actual: el caso corriente es corregir
+     * una errata del correo, y obligar a teclear una contraseña para eso significaría
+     * cambiársela a alguien sin necesidad.
+     */
+    public function guardarDatos(): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $user = User::query()->findOrFail($this->editandoDatosId);
+
+        abort_if($user->id === auth()->id(), 403);
+
+        $validado = $this->validate([
+            'editNombres' => ['required', 'string', 'max:80'],
+            'editApellidos' => ['nullable', 'string', 'max:80'],
+            // La columna va explícita: la propiedad se llama `editEmail` y, sin decirlo,
+            // Rule::unique la deduciría del nombre del campo y buscaría una columna
+            // `editEmail` que no existe.
+            'editEmail' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'editPassword' => ['nullable', 'string', 'min:8'],
+        ], attributes: [
+            'editNombres' => 'nombres',
+            'editApellidos' => 'apellidos',
+            'editEmail' => 'correo',
+            'editPassword' => 'contraseña',
+        ]);
+
+        $cambioCorreo = mb_strtolower($validado['editEmail']) !== mb_strtolower($this->editEmailOriginal);
+        $cambioPassword = $validado['editPassword'] !== '';
+
+        $user->fill([
+            'nombres' => $validado['editNombres'],
+            'apellidos' => $validado['editApellidos'],
+            'name' => trim($validado['editNombres'].' '.$validado['editApellidos']),
+            'email' => $validado['editEmail'],
+        ]);
+
+        // Misma regla que en Mi cuenta: la dirección nueva no la ha demostrado nadie,
+        // así que la cuenta vuelve a quedar sin verificar. Desde esta misma pantalla se
+        // puede reenviar el enlace o darla por verificada a mano.
+        if ($cambioCorreo) {
+            $user->email_verified_at = null;
+        }
+
+        if ($cambioPassword) {
+            $user->password = Hash::make($validado['editPassword']);
+        }
+
+        $user->save();
+
+        // Cambiar la contraseña de otra persona deja a un tercero conociéndola: queda
+        // registrado, igual que el alta manual y la verificación a mano.
+        if ($cambioPassword) {
+            logger()->info('Contraseña cambiada desde la administración', [
+                'usuario' => $user->id,
+                'administrador' => auth()->id(),
+            ]);
+        }
+
+        $this->cerrarEdicionDatos();
+
+        session()->flash('status', match (true) {
+            $cambioCorreo && $cambioPassword => "Actualizamos los datos de {$user->name}. El correo cambió, así que la cuenta quedó sin verificar; entrégale también su contraseña nueva.",
+            $cambioCorreo => "Actualizamos los datos de {$user->name}. Al cambiar el correo, la cuenta quedó sin verificar.",
+            $cambioPassword => "Actualizamos los datos de {$user->name}. Entrégale su contraseña nueva.",
+            default => "Actualizamos los datos de {$user->name}.",
+        });
+    }
+
+    private function cerrarEdicionDatos(): void
+    {
+        $this->reset('editandoDatosId', 'editNombres', 'editApellidos', 'editEmail', 'editPassword', 'editEmailOriginal');
+        $this->modal('editar-datos')->close();
     }
 
     /** Abre el formulario de alta manual de una cuenta. */
@@ -338,6 +495,176 @@ class Usuarios extends Component
         }
 
         return $reglas;
+    }
+
+    /**
+     * Abre la confirmación de borrado, ya con el detalle de qué se lleva por delante.
+     *
+     * El resumen se calcula aquí y no en la vista porque el alcance real de un borrado
+     * no se ve en la pantalla: `empresas.user_id` es `cascadeOnDelete`, así que eliminar
+     * al contacto administrador de una empresa arrastra la empresa entera y, con ella,
+     * sus búsquedas, publicaciones, desbloqueos y pagos. Una confirmación genérica de
+     * «¿seguro?» no da la menor pista de eso.
+     */
+    public function abrirEliminar(int $userId): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $user = User::query()->findOrFail($userId);
+
+        abort_if($user->id === auth()->id(), 403);
+
+        $this->eliminandoId = $user->id;
+        $this->eliminandoNombre = $user->name;
+        $this->eliminandoEmail = $user->email;
+        $this->eliminandoBloqueo = $this->motivoNoEliminable($user);
+        $this->eliminandoTraspaso = $this->herederoDeEmpresa($user)?->name;
+        $this->eliminandoArrastra = $this->queArrastra($user);
+        $this->confirmacionTexto = '';
+        $this->resetErrorBag('confirmacionTexto');
+
+        $this->modal('eliminar-usuario')->show();
+    }
+
+    public function eliminar(): void
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $user = User::query()->findOrFail($this->eliminandoId);
+
+        // No hace falta comprobar que quede algún superadministrador: a esta pantalla
+        // solo llega uno y no puede borrarse a sí mismo, así que siempre sobrevive él.
+        abort_if($user->id === auth()->id(), 403);
+
+        if (($motivo = $this->motivoNoEliminable($user)) !== null) {
+            $this->eliminandoBloqueo = $motivo;
+
+            return;
+        }
+
+        // Se teclea ELIMINAR, igual que al borrar una publicación. Aquí pesa más: esto
+        // no tiene papelera ni deshacer.
+        if (mb_strtoupper(trim($this->confirmacionTexto)) !== 'ELIMINAR') {
+            $this->addError('confirmacionTexto', 'Escribe ELIMINAR para confirmar.');
+
+            return;
+        }
+
+        $nombre = $user->name;
+        $heredero = $this->herederoDeEmpresa($user);
+
+        DB::transaction(function () use ($user, $heredero): void {
+            // La empresa se salva pasándosela a otro miembro del equipo. Sin este
+            // traspaso, el cascade se la llevaría por delante solo porque su contacto
+            // administrador dejó la organización, que es justo lo que no se quiere.
+            if ($heredero !== null) {
+                Empresa::query()
+                    ->where('user_id', $user->id)
+                    ->update(['user_id' => $heredero->id]);
+            }
+
+            $user->delete();
+        });
+
+        logger()->info('Cuenta eliminada desde la administración', [
+            'usuario' => $this->eliminandoId,
+            'email' => $this->eliminandoEmail,
+            'administrador' => auth()->id(),
+            'empresa_traspasada_a' => $heredero?->id,
+        ]);
+
+        $this->cerrarEliminar();
+        $this->resetPage();
+
+        session()->flash('status', $heredero === null
+            ? "Eliminamos la cuenta de {$nombre}."
+            : "Eliminamos la cuenta de {$nombre}. Su empresa quedó a cargo de {$heredero->name}.");
+    }
+
+    private function cerrarEliminar(): void
+    {
+        $this->reset('eliminandoId', 'eliminandoNombre', 'eliminandoEmail', 'eliminandoArrastra', 'eliminandoBloqueo', 'eliminandoTraspaso', 'confirmacionTexto');
+        $this->modal('eliminar-usuario')->close();
+    }
+
+    /**
+     * Por qué esta cuenta no se puede borrar, o null si sí.
+     *
+     * El único freno duro son los pagos confirmados: borrar al dueño de una empresa que
+     * ya pagó destruiría el registro contable de esas transacciones, y eso no es una
+     * decisión que deba caber en un botón de la lista de usuarios. Lo demás se advierte
+     * y se deja pasar.
+     */
+    private function motivoNoEliminable(User $user): ?string
+    {
+        $empresa = $this->empresaQueAdministra($user);
+
+        if ($empresa === null || $this->herederoDeEmpresa($user) !== null) {
+            return null;
+        }
+
+        $pagos = Pago::query()->where('empresa_id', $empresa->id)->where('estado', 'pagado')->count();
+
+        if ($pagos > 0) {
+            return "Es el único contacto de {$empresa->razon_social}, que tiene {$pagos} ".
+                ($pagos === 1 ? 'pago confirmado' : 'pagos confirmados').
+                '. Borrar la cuenta eliminaría la empresa y ese historial de pagos. Agrega otro usuario a la empresa y vuelve a intentarlo.';
+        }
+
+        return null;
+    }
+
+    /** La empresa de la que este usuario es contacto administrador (dueño). */
+    private function empresaQueAdministra(User $user): ?Empresa
+    {
+        return Empresa::query()->where('user_id', $user->id)->first();
+    }
+
+    /** Otro miembro del equipo que pueda quedarse con la empresa. */
+    private function herederoDeEmpresa(User $user): ?User
+    {
+        $empresa = $this->empresaQueAdministra($user);
+
+        if ($empresa === null) {
+            return null;
+        }
+
+        return User::query()
+            ->where('empresa_id', $empresa->id)
+            ->whereKeyNot($user->id)
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * Lo que desaparece junto con la cuenta, en frases sueltas para la confirmación.
+     *
+     * @return list<string>
+     */
+    private function queArrastra(User $user): array
+    {
+        $arrastra = [];
+
+        if ($user->postulante !== null) {
+            $arrastra[] = 'Su ficha de postulante y las coincidencias que tenga con búsquedas de empresas.';
+        }
+
+        $empresa = $this->empresaQueAdministra($user);
+
+        if ($empresa !== null && $this->herederoDeEmpresa($user) === null) {
+            $busquedas = Busqueda::query()->where('empresa_id', $empresa->id)->count();
+            $publicaciones = Publicacion::query()->where('empresa_id', $empresa->id)->count();
+            $pagos = Pago::query()->where('empresa_id', $empresa->id)->count();
+
+            $arrastra[] = "La empresa {$empresa->razon_social} completa: {$busquedas} ".
+                ($busquedas === 1 ? 'búsqueda' : 'búsquedas').
+                ", {$publicaciones} ".($publicaciones === 1 ? 'publicación' : 'publicaciones').
+                " y {$pagos} ".($pagos === 1 ? 'pago' : 'pagos').'.';
+        }
+
+        $arrastra[] = 'Sus notas privadas sobre candidatos (las compartidas se conservan).';
+
+        return $arrastra;
     }
 
     /** @return array<string, string> */

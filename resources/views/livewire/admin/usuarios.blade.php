@@ -108,13 +108,24 @@
                                     <x-acciones-verificacion :user="$usuario" />
 
                                     @if ($usuario->id === auth()->id())
-                                        {{-- Degradarse a uno mismo deja la plataforma sin quién revierta el cambio. --}}
-                                        <flux:tooltip content="No puedes cambiar el tipo de tu propia cuenta">
-                                            <span class="ad-btn-icon cursor-not-allowed opacity-40" aria-label="No puedes cambiar el tipo de tu propia cuenta">
+                                        {{-- La propia cuenta se gestiona en Mi cuenta: allí el cambio de
+                                             contraseña pide la actual, y degradarse el rol dejaría a la
+                                             plataforma sin quién revierta el cambio. --}}
+                                        <flux:tooltip content="Tu propia cuenta se edita en Mi cuenta">
+                                            <span class="ad-btn-icon cursor-not-allowed opacity-40" aria-label="Tu propia cuenta se edita en Mi cuenta">
                                                 <flux:icon.lock-closed class="size-[18px]" />
                                             </span>
                                         </flux:tooltip>
                                     @else
+                                        <flux:tooltip content="Editar nombre, correo y contraseña">
+                                            <button
+                                                type="button"
+                                                wire:click="abrirEdicionDatos({{ $usuario->id }})"
+                                                class="ad-btn-icon"
+                                                aria-label="Editar los datos de {{ $usuario->name }}"
+                                            ><flux:icon.pencil-square class="size-[18px]" /></button>
+                                        </flux:tooltip>
+
                                         <flux:tooltip content="Cambiar tipo de usuario">
                                             <button
                                                 type="button"
@@ -122,6 +133,15 @@
                                                 class="ad-btn-icon"
                                                 aria-label="Cambiar el tipo de usuario de {{ $usuario->name }}"
                                             ><flux:icon.arrows-right-left class="size-[18px]" /></button>
+                                        </flux:tooltip>
+
+                                        <flux:tooltip content="Eliminar cuenta">
+                                            <button
+                                                type="button"
+                                                wire:click="abrirEliminar({{ $usuario->id }})"
+                                                class="ad-btn-icon ad-btn-icon-danger"
+                                                aria-label="Eliminar la cuenta de {{ $usuario->name }}"
+                                            ><flux:icon.trash class="size-[18px]" /></button>
                                         </flux:tooltip>
                                     @endif
                                 </div>
@@ -148,6 +168,101 @@
     @if ($usuarios->hasPages())
         <div class="mt-6">{{ $usuarios->links() }}</div>
     @endif
+
+    <flux:modal name="editar-datos" class="max-w-lg" wire:close="$set('editandoDatosId', null)">
+        <form wire:submit="guardarDatos" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Editar cuenta</flux:heading>
+                @if ($editEmailOriginal !== '')
+                    <flux:text class="mt-1 truncate">{{ $editEmailOriginal }}</flux:text>
+                @endif
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <flux:input wire:model="editNombres" label="Nombres" />
+                <flux:input wire:model="editApellidos" label="Apellidos" />
+            </div>
+
+            <flux:input wire:model="editEmail" label="Correo electrónico" type="email" />
+
+            <div>
+                <flux:input
+                    wire:model="editPassword"
+                    label="Contraseña nueva"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="Déjalo en blanco para no cambiarla"
+                    viewable
+                />
+                <button type="button" wire:click="generarPasswordEdicion" class="ad-btn-ghost ad-btn-sm mt-2">
+                    Generar una contraseña segura
+                </button>
+            </div>
+
+            <div class="rounded-lg border border-line-2 bg-gray-50 p-3.5 text-[12.5px] text-gray-600 dark:bg-[#2A2D30] dark:text-gray-300">
+                Si cambias el correo, la cuenta <b>vuelve a quedar sin verificar</b>: nadie ha
+                demostrado aún controlar la dirección nueva. Desde la lista puedes reenviarle el
+                enlace o darla por verificada.
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <flux:modal.close><flux:button variant="ghost" type="button">Cancelar</flux:button></flux:modal.close>
+                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="guardarDatos">Guardar cambios</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="eliminar-usuario" class="max-w-lg" wire:close="$set('eliminandoId', null)">
+        <div class="space-y-5">
+            <div>
+                <flux:heading size="lg">Eliminar cuenta</flux:heading>
+                @if ($eliminandoNombre !== '')
+                    <flux:text class="mt-1 truncate">{{ $eliminandoNombre }} · {{ $eliminandoEmail }}</flux:text>
+                @endif
+            </div>
+
+            @if ($eliminandoBloqueo !== null)
+                <div class="rounded-lg border border-[#E7B6AE] bg-[#FBEDEA] p-3.5 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+                    {{ $eliminandoBloqueo }}
+                </div>
+            @else
+                <div class="rounded-lg border border-line-2 bg-gray-50 p-3.5 dark:bg-[#2A2D30]">
+                    <p class="text-[12.5px] font-bold text-ink">Esto no se puede deshacer. Se elimina también:</p>
+                    <ul class="mt-2 space-y-1.5">
+                        @foreach ($eliminandoArrastra as $consecuencia)
+                            <li class="flex gap-2 text-[12.5px] text-gray-600 dark:text-gray-300">
+                                <flux:icon.minus class="mt-0.5 size-4 flex-none" />{{ $consecuencia }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+
+                @if ($eliminandoTraspaso !== null)
+                    <div class="rounded-lg border border-[#BFE6CD] bg-match-100/60 p-3.5 text-[12.5px] text-gray-700 dark:text-gray-200">
+                        Su empresa <b>no se borra</b>: queda a cargo de {{ $eliminandoTraspaso }}, del mismo equipo.
+                    </div>
+                @endif
+
+                <flux:text>Para confirmar, escribe <strong class="font-bold text-ink">ELIMINAR</strong> en el siguiente cuadro.</flux:text>
+
+                <flux:input wire:model.live.debounce.200ms="confirmacionTexto" placeholder="ELIMINAR" autocomplete="off" />
+                @error('confirmacionTexto')<flux:text class="text-[#A93226] dark:text-red-400">{{ $message }}</flux:text>@enderror
+            @endif
+
+            <div class="flex justify-end gap-2 pt-2">
+                <flux:modal.close><flux:button variant="ghost" type="button">Cancelar</flux:button></flux:modal.close>
+                @if ($eliminandoBloqueo === null)
+                    <flux:button
+                        variant="danger"
+                        wire:click="eliminar"
+                        wire:loading.attr="disabled"
+                        wire:target="eliminar"
+                        :disabled="mb_strtoupper(trim($confirmacionTexto)) !== 'ELIMINAR'"
+                    >Eliminar definitivamente</flux:button>
+                @endif
+            </div>
+        </div>
+    </flux:modal>
 
     <flux:modal name="crear-usuario" class="max-w-xl">
         <form wire:submit="crearUsuario" class="space-y-5">
