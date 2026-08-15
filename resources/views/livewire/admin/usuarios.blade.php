@@ -221,11 +221,17 @@
                 @endif
             </div>
 
-            @if ($eliminandoBloqueo !== null)
+            {{-- El borrado no se bloquea nunca: el superadministrador puede llevarse por
+                 delante una empresa y su contabilidad si eso es lo que quiere. Lo que no
+                 puede es hacerlo sin enterarse, y de eso se encarga este bloque. --}}
+            @if ($eliminandoPagosConfirmados > 0)
                 <div class="rounded-lg border border-[#E7B6AE] bg-[#FBEDEA] p-3.5 text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
-                    {{ $eliminandoBloqueo }}
+                    Se borrarán también
+                    {{ $eliminandoPagosConfirmados === 1 ? '1 pago confirmado' : $eliminandoPagosConfirmados.' pagos confirmados' }}
+                    de esta empresa. Ese historial de cobros no se puede recuperar.
                 </div>
-            @else
+            @endif
+
                 <div class="rounded-lg border border-line-2 bg-gray-50 p-3.5 dark:bg-[#2A2D30]">
                     <p class="text-[12.5px] font-bold text-ink">Esto no se puede deshacer. Se elimina también:</p>
                     <ul class="mt-2 space-y-1.5">
@@ -247,19 +253,16 @@
 
                 <flux:input wire:model.live.debounce.200ms="confirmacionTexto" placeholder="ELIMINAR" autocomplete="off" />
                 @error('confirmacionTexto')<flux:text class="text-[#A93226] dark:text-red-400">{{ $message }}</flux:text>@enderror
-            @endif
 
             <div class="flex justify-end gap-2 pt-2">
                 <flux:modal.close><flux:button variant="ghost" type="button">Cancelar</flux:button></flux:modal.close>
-                @if ($eliminandoBloqueo === null)
-                    <flux:button
-                        variant="danger"
-                        wire:click="eliminar"
-                        wire:loading.attr="disabled"
-                        wire:target="eliminar"
-                        :disabled="mb_strtoupper(trim($confirmacionTexto)) !== 'ELIMINAR'"
-                    >Eliminar definitivamente</flux:button>
-                @endif
+                <flux:button
+                    variant="danger"
+                    wire:click="eliminar"
+                    wire:loading.attr="disabled"
+                    wire:target="eliminar"
+                    :disabled="mb_strtoupper(trim($confirmacionTexto)) !== 'ELIMINAR'"
+                >Eliminar definitivamente</flux:button>
             </div>
         </div>
     </flux:modal>

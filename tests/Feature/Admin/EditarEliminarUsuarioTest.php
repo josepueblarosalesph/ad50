@@ -165,7 +165,6 @@ test('the superadmin deletes a postulante account and its ficha goes with it', f
     Livewire::actingAs($superadmin)
         ->test(AdminUsuarios::class)
         ->call('abrirEliminar', $usuario->id)
-        ->assertSet('eliminandoBloqueo', null)
         ->set('confirmacionTexto', 'ELIMINAR')
         ->call('eliminar')
         ->assertHasNoErrors();
@@ -222,7 +221,6 @@ test('deleting the only contact of a company deletes the company with it', funct
     Livewire::actingAs($superadmin)
         ->test(AdminUsuarios::class)
         ->call('abrirEliminar', $duenio->id)
-        ->assertSet('eliminandoBloqueo', null)
         ->set('confirmacionTexto', 'ELIMINAR')
         ->call('eliminar');
 
@@ -255,7 +253,7 @@ test('a company with another member survives: it changes hands instead of dying'
         ->and(User::query()->find($companiero->id))->not->toBeNull();
 });
 
-test('a lone owner whose company already paid cannot be deleted', function () {
+test('a lone owner is deleted along with the company and its payment history', function () {
     $superadmin = User::factory()->create(['role' => 'superadmin']);
     [$duenio, $empresa] = empresaConDuenio('Retail Andes SpA');
 
@@ -281,14 +279,41 @@ test('a lone owner whose company already paid cannot be deleted', function () {
     Livewire::actingAs($superadmin)
         ->test(AdminUsuarios::class)
         ->call('abrirEliminar', $duenio->id)
-        // Se explica por qué, no solo que no se puede.
-        ->assertSet('eliminandoBloqueo', fn (?string $m) => $m !== null && str_contains($m, 'Retail Andes SpA'))
+        // Nada bloquea el borrado, pero los pagos que se pierden se anuncian aparte.
+        ->assertSet('eliminandoPagosConfirmados', 1)
+        ->assertSee('1 pago confirmado')
         ->set('confirmacionTexto', 'ELIMINAR')
-        ->call('eliminar');
+        ->call('eliminar')
+        ->assertHasNoErrors();
 
-    expect(User::query()->find($duenio->id))->not->toBeNull()
-        ->and(Empresa::query()->find($empresa->id))->not->toBeNull()
-        ->and(Pago::query()->count())->toBe(1);
+    expect(User::query()->find($duenio->id))->toBeNull()
+        ->and(Empresa::query()->find($empresa->id))->toBeNull()
+        // El historial de cobros se va con la empresa, que es lo pedido.
+        ->and(Pago::query()->count())->toBe(0);
+});
+
+test('no payment warning is shown when the company survives the deletion', function () {
+    $superadmin = User::factory()->create(['role' => 'superadmin']);
+    [$duenio, $empresa] = empresaConDuenio();
+    $plan = Plan::query()->create([
+        'codigo' => 'empresa_pago_'.str()->random(6),
+        'nombre' => 'AD+50 · Pro', 'audiencia' => 'empresa',
+        'precio_clp' => 0, 'precio_uf' => '30.00', 'periodo' => 'mensual', 'desbloqueos' => 10,
+    ]);
+    Pago::query()->create([
+        'empresa_id' => $empresa->id, 'plan_id' => $plan->id,
+        'commerce_order' => 'AD50-VIVE', 'amount' => 1000, 'estado' => 'pagado', 'pagado_at' => now(),
+    ]);
+
+    User::factory()->create(['role' => 'empresa', 'name' => 'Paula Díaz', 'empresa_id' => $empresa->id]);
+
+    // Con heredero la empresa no se va, así que tampoco se van sus pagos: avisar de
+    // una pérdida que no ocurre solo entrena a ignorar el aviso.
+    Livewire::actingAs($superadmin)
+        ->test(AdminUsuarios::class)
+        ->call('abrirEliminar', $duenio->id)
+        ->assertSet('eliminandoPagosConfirmados', 0)
+        ->assertDontSee('pago confirmado');
 });
 
 test('a paid company can lose its owner once someone else can take over', function () {
@@ -309,7 +334,6 @@ test('a paid company can lose its owner once someone else can take over', functi
     Livewire::actingAs($superadmin)
         ->test(AdminUsuarios::class)
         ->call('abrirEliminar', $duenio->id)
-        ->assertSet('eliminandoBloqueo', null)
         ->set('confirmacionTexto', 'ELIMINAR')
         ->call('eliminar');
 

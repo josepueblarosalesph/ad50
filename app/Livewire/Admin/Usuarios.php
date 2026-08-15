@@ -41,12 +41,19 @@ use Livewire\WithPagination;
  * Y se editan (guardarDatos()) y se borran (eliminar()). Cuidado con el borrado: no es
  * solo una fila de `users`. `empresas.user_id` es `cascadeOnDelete`, así que eliminar al
  * contacto administrador de una empresa arrastra la empresa y, tras ella, sus búsquedas,
- * publicaciones, desbloqueos y pagos. De ahí las tres defensas de esta pantalla:
+ * publicaciones, desbloqueos y pagos.
  *
- * 1. La confirmación enumera lo que se va a perder, con las cuentas reales.
- * 2. Si queda otro miembro del equipo, la empresa se le traspasa en vez de morir.
- * 3. Si no hay heredero y la empresa tiene pagos confirmados, el borrado se rechaza:
- *    destruir un historial contable no cabe en un botón de una lista de usuarios.
+ * El borrado no se bloquea por ello: el superadministrador puede llevarse una empresa y
+ * su contabilidad por delante si eso es lo que quiere. Lo que la pantalla garantiza es
+ * que no ocurra sin saberlo:
+ *
+ * 1. La confirmación enumera lo que se va a perder, con las cuentas reales, y destaca
+ *    aparte los pagos ya cobrados, que son lo único irrecuperable de verdad.
+ * 2. Hay que teclear ELIMINAR, como en el borrado de publicaciones.
+ * 3. Si queda otro miembro del equipo, la empresa se le traspasa en vez de morir: que
+ *    alguien deje la organización no es motivo para borrarla.
+ * 4. Lo eliminado queda en el log —empresa, razón social y cuántos pagos confirmados se
+ *    fueron con ella—, que pasa a ser el único rastro de que existió.
  */
 class Usuarios extends Component
 {
@@ -127,8 +134,8 @@ class Usuarios extends Component
     /** @var list<string> */
     public array $eliminandoArrastra = [];
 
-    /** Motivo por el que no se puede borrar, o null si sí se puede. */
-    public ?string $eliminandoBloqueo = null;
+    /** Pagos ya cobrados que se perderían con el borrado; 0 si no se pierde ninguno. */
+    public int $eliminandoPagosConfirmados = 0;
 
     /** A quién pasaría la empresa para salvarla, si procede. */
     public ?string $eliminandoTraspaso = null;
@@ -517,9 +524,9 @@ class Usuarios extends Component
         $this->eliminandoId = $user->id;
         $this->eliminandoNombre = $user->name;
         $this->eliminandoEmail = $user->email;
-        $this->eliminandoBloqueo = $this->motivoNoEliminable($user);
         $this->eliminandoTraspaso = $this->herederoDeEmpresa($user)?->name;
         $this->eliminandoArrastra = $this->queArrastra($user);
+        $this->eliminandoPagosConfirmados = $this->pagosConfirmadosQueSeVan($user);
         $this->confirmacionTexto = '';
         $this->resetErrorBag('confirmacionTexto');
 
@@ -536,12 +543,6 @@ class Usuarios extends Component
         // solo llega uno y no puede borrarse a sí mismo, así que siempre sobrevive él.
         abort_if($user->id === auth()->id(), 403);
 
-        if (($motivo = $this->motivoNoEliminable($user)) !== null) {
-            $this->eliminandoBloqueo = $motivo;
-
-            return;
-        }
-
         // Se teclea ELIMINAR, igual que al borrar una publicación. Aquí pesa más: esto
         // no tiene papelera ni deshacer.
         if (mb_strtoupper(trim($this->confirmacionTexto)) !== 'ELIMINAR') {
@@ -552,6 +553,8 @@ class Usuarios extends Component
 
         $nombre = $user->name;
         $heredero = $this->herederoDeEmpresa($user);
+        $empresa = $this->empresaQueAdministra($user);
+        $pagosQueSeVan = $heredero === null ? $this->pagosConfirmadosQueSeVan($user) : 0;
 
         DB::transaction(function () use ($user, $heredero): void {
             // La empresa se salva pasándosela a otro miembro del equipo. Sin este
@@ -566,11 +569,16 @@ class Usuarios extends Component
             $user->delete();
         });
 
+        // El log es lo único que queda de una empresa borrada: si se llevó pagos
+        // confirmados por delante, ese número tiene que constar en alguna parte.
         logger()->info('Cuenta eliminada desde la administración', [
             'usuario' => $this->eliminandoId,
             'email' => $this->eliminandoEmail,
             'administrador' => auth()->id(),
             'empresa_traspasada_a' => $heredero?->id,
+            'empresa_eliminada' => $heredero === null ? $empresa?->id : null,
+            'razon_social_eliminada' => $heredero === null ? $empresa?->razon_social : null,
+            'pagos_confirmados_eliminados' => $pagosQueSeVan,
         ]);
 
         $this->cerrarEliminar();
@@ -583,35 +591,30 @@ class Usuarios extends Component
 
     private function cerrarEliminar(): void
     {
-        $this->reset('eliminandoId', 'eliminandoNombre', 'eliminandoEmail', 'eliminandoArrastra', 'eliminandoBloqueo', 'eliminandoTraspaso', 'confirmacionTexto');
+        $this->reset('eliminandoId', 'eliminandoNombre', 'eliminandoEmail', 'eliminandoArrastra', 'eliminandoPagosConfirmados', 'eliminandoTraspaso', 'confirmacionTexto');
         $this->modal('eliminar-usuario')->close();
     }
 
     /**
-     * Por qué esta cuenta no se puede borrar, o null si sí.
+     * Pagos ya cobrados que desaparecerían con este borrado.
      *
-     * El único freno duro son los pagos confirmados: borrar al dueño de una empresa que
-     * ya pagó destruiría el registro contable de esas transacciones, y eso no es una
-     * decisión que deba caber en un botón de la lista de usuarios. Lo demás se advierte
-     * y se deja pasar.
+     * Ninguna cuenta se bloquea por esto: el superadministrador puede borrar aunque se
+     * lleve por delante la contabilidad de una empresa. Lo que hace este número es que
+     * nadie lo haga sin saberlo — se anuncia en la confirmación y queda en el log, que
+     * es lo único que sobrevive al borrado.
+     *
+     * Devuelve 0 si no administra ninguna empresa o si hay heredero, porque entonces la
+     * empresa (y sus pagos con ella) no se van a ninguna parte.
      */
-    private function motivoNoEliminable(User $user): ?string
+    private function pagosConfirmadosQueSeVan(User $user): int
     {
         $empresa = $this->empresaQueAdministra($user);
 
         if ($empresa === null || $this->herederoDeEmpresa($user) !== null) {
-            return null;
+            return 0;
         }
 
-        $pagos = Pago::query()->where('empresa_id', $empresa->id)->where('estado', 'pagado')->count();
-
-        if ($pagos > 0) {
-            return "Es el único contacto de {$empresa->razon_social}, que tiene {$pagos} ".
-                ($pagos === 1 ? 'pago confirmado' : 'pagos confirmados').
-                '. Borrar la cuenta eliminaría la empresa y ese historial de pagos. Agrega otro usuario a la empresa y vuelve a intentarlo.';
-        }
-
-        return null;
+        return Pago::query()->where('empresa_id', $empresa->id)->where('estado', 'pagado')->count();
     }
 
     /** La empresa de la que este usuario es contacto administrador (dueño). */
