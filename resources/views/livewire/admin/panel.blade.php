@@ -2,12 +2,11 @@
     <x-slot:context>Administración</x-slot:context>
     <x-slot:status>Acceso interno</x-slot:status>
     <x-slot:nav><x-nav-admin activo="panel" /></x-slot:nav>
-    <x-slot:sidebar>
-        <div class="text-[10.5px] tracking-[0.12em] uppercase text-gray-400 font-bold px-2.5 mb-2">Administración</div>
-        @foreach ([['squares-2x2','Resumen', route('admin.panel')], ['building-office-2','Empresas', route('admin.empresas')], ['user','Postulantes', '#'], ['bars-3','Catálogos', '#'], ['credit-card','Suscripciones', '#'], ['shield-check','Seguridad y auditoría', '#']] as [$icon, $label, $href])
-            <a href="{{ $href }}" @class(['flex items-center gap-3 text-[14px] font-semibold px-3 py-2.5 rounded-[10px]', 'bg-orange-100 text-orange-600' => $loop->first, 'text-gray-700 hover:bg-paper' => !$loop->first])><flux:icon :name="$icon" class="size-[18px]" />{{ $label }}</a>
-        @endforeach
-    </x-slot:sidebar>
+
+    {{-- Sin <x-slot:sidebar>: repetía el menú superior y cuatro de sus seis enlaces no
+         iban a ninguna parte (href="#"), incluidas dos secciones que no existen. En el
+         resto del panel la barra lateral es contextual —filtros de una pantalla—, nunca
+         una segunda navegación; aquí la navegación la lleva <x-nav-admin>, y punto. --}}
 
     <div class="mb-6"><h1 class="text-[27px] font-extrabold">Resumen de la plataforma</h1><p class="text-[14px] text-gray-500 mt-1.5">Estado general de AD+50.</p></div>
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
@@ -17,7 +16,7 @@
     </div>
 
     <div class="grid xl:grid-cols-[1.4fr_0.8fr] gap-5 items-start">
-        <section id="empresas" class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas recientes</h2><span class="text-[12.5px] font-semibold text-orange-600">Ver todas</span></div><div class="overflow-x-auto"><table class="w-full text-[13.5px]"><thead><tr class="ad-thead-row">
+        <section id="empresas" class="ad-card overflow-hidden"><div class="ad-card-head"><h2 class="text-[16px] font-bold">Empresas recientes</h2><a href="{{ route('admin.empresas') }}" wire:navigate class="text-[12.5px] font-semibold text-orange-600 hover:text-orange-500">Ver todas</a></div><div class="overflow-x-auto"><table class="w-full text-[13.5px]"><thead><tr class="ad-thead-row">
                             <x-th-ordenable campo="razon_social" :orden="$orden" :direccion="$direccion">Empresa</x-th-ordenable>
                             <x-th-ordenable campo="plan" :orden="$orden" :direccion="$direccion">Plan</x-th-ordenable>
                             <x-th-ordenable campo="estado" :orden="$orden" :direccion="$direccion">Estado</x-th-ordenable>
@@ -28,6 +27,32 @@
                 <tr><td colspan="3" class="p-8 text-center text-gray-500">No hay empresas registradas.</td></tr>
             @endforelse
         </tbody></table></div></section>
-        <aside class="space-y-5"><div class="ad-card p-5"><h2 class="font-bold">Catálogos</h2><p class="text-[13px] text-gray-500 mt-2">Industrias, cargos, ciudades y criterios disponibles para el motor de búsqueda.</p><button class="ad-btn-ghost ad-btn-sm ad-btn-block mt-4">Administrar catálogos</button></div><div class="rounded-[14px] bg-ink text-white p-5"><flux:icon.shield-check class="size-6 text-orange-500" /><h2 class="font-bold mt-3">Seguridad y auditoría</h2><p class="text-[12.5px] text-[#cbc7c2] mt-2">Revisa accesos a datos personales y eventos sensibles de la plataforma.</p></div></aside>
+        <aside class="space-y-5">
+            <div class="ad-card p-5">
+                <h2 class="font-bold">Catálogos</h2>
+                <p class="mt-2 text-[13px] text-gray-500">Industrias, cargos, ciudades y criterios disponibles para el motor de búsqueda.</p>
+                <a href="{{ route('admin.catalogos') }}" wire:navigate class="ad-btn-ghost ad-btn-sm ad-btn-block mt-4">Administrar catálogos</a>
+            </div>
+
+            {{-- Antes había aquí una tarjeta de «Seguridad y auditoría» que no llevaba a
+                 ninguna parte porque esa pantalla no existe. En su lugar va la bandeja de
+                 mensajes, que sí existe y sí necesita atención. --}}
+            <a href="{{ route('admin.mensajes') }}" wire:navigate class="block rounded-[14px] bg-ink p-5 text-white transition hover:-translate-y-0.5">
+                <div class="flex items-start justify-between gap-3">
+                    <flux:icon.inbox class="size-6 text-orange-500" />
+                    @if ($mensajesPendientes > 0)
+                        <span class="rounded-full bg-orange-600 px-2.5 py-0.5 text-[12px] font-extrabold text-white">{{ $mensajesPendientes }}</span>
+                    @endif
+                </div>
+                <h2 class="mt-3 font-bold">Mensajes de contacto</h2>
+                <p class="mt-2 text-[12.5px] text-[#cbc7c2]">
+                    @if ($mensajesPendientes > 0)
+                        {{ $mensajesPendientes === 1 ? 'Hay 1 mensaje sin responder.' : "Hay {$mensajesPendientes} mensajes sin responder." }}
+                    @else
+                        No hay mensajes pendientes de respuesta.
+                    @endif
+                </p>
+            </a>
+        </aside>
     </div>
 </div>

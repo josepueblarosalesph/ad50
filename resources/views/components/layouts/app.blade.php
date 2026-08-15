@@ -33,6 +33,10 @@
             </nav>
 
             <div class="ml-auto flex shrink-0 items-center gap-3">
+                {{-- Visible también en móvil: enterarse de que llegó un mensaje no puede
+                     depender del ancho de la pantalla. --}}
+                <x-avisos-admin />
+
                 <div class="hidden md:block">
                     <flux:dropdown align="end">
                         <flux:profile :name="auth()->user()?->name ?? 'MF'"

@@ -6,6 +6,7 @@ use App\Concerns\OrdenaListado;
 use App\Models\Busqueda;
 use App\Models\BusquedaCandidato;
 use App\Models\Empresa;
+use App\Models\MensajeContacto;
 use App\Models\Postulante;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -54,6 +55,7 @@ class Panel extends Component
             'totalPostulantes' => Postulante::query()->count(),
             'totalBusquedas' => Busqueda::query()->count(),
             'totalCoincidencias' => BusquedaCandidato::query()->confirmados()->whereHas('busqueda')->count(),
+            'mensajesPendientes' => MensajeContacto::query()->pendientes()->count(),
         ]);
     }
 }
