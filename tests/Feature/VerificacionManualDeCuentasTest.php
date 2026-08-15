@@ -133,3 +133,32 @@ test('the users list can be filtered down to the unverified accounts', function 
         ->assertSee('Marta Rojas')
         ->assertDontSee('Carlos Vega');
 });
+
+/**
+ * Las acciones de la tabla son iconos sin texto visible. Lo que las nombra es el
+ * aria-label, y es justo lo que se pierde sin que nada se vea roto: la pantalla sigue
+ * pintándose igual mientras un lector de pantalla anuncia "botón" a secas.
+ */
+test('the icon-only row actions keep an accessible name', function () {
+    $superadmin = User::factory()->create(['role' => 'superadmin', 'name' => 'Jose Puebla']);
+    $atascado = User::factory()->unverified()->create(['name' => 'Marta Rojas']);
+
+    Livewire::actingAs($superadmin)
+        ->test(AdminUsuarios::class)
+        ->assertSeeHtml('aria-label="Reenviar el correo de verificación a Marta Rojas"')
+        ->assertSeeHtml('aria-label="Marcar la cuenta de Marta Rojas como verificada"')
+        ->assertSeeHtml('aria-label="Cambiar el tipo de usuario de Marta Rojas"')
+        // La propia cuenta no se puede degradar: el candado también se anuncia.
+        ->assertSeeHtml('aria-label="No puedes cambiar el tipo de tu propia cuenta"');
+});
+
+test('a verified account shows no verification actions at all', function () {
+    $superadmin = User::factory()->create(['role' => 'superadmin']);
+    User::factory()->create(['name' => 'Carlos Vega']);
+
+    Livewire::actingAs($superadmin)
+        ->test(AdminUsuarios::class)
+        ->assertSee('Carlos Vega')
+        ->assertDontSeeHtml('aria-label="Reenviar el correo de verificación a Carlos Vega"')
+        ->assertDontSeeHtml('aria-label="Marcar la cuenta de Carlos Vega como verificada"');
+});

@@ -26,16 +26,13 @@
         <div class="grid gap-4 md:grid-cols-2">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Código o descripción" icon="magnifying-glass" />
 
-            <div>
-                <label for="filtro-estado" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Estado</label>
-                <select id="filtro-estado" wire:model.live="estado" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todos</option>
-                    <option value="vigentes">Vigentes hoy</option>
-                    <option value="agotados">Agotados</option>
-                    <option value="vencidos">Vencidos</option>
-                    <option value="inactivos">Desactivados</option>
-                </select>
-            </div>
+            <x-campo-select id="filtro-estado" label="Estado" wire:model.live="estado">
+                <option value="todos">Todos</option>
+                <option value="vigentes">Vigentes hoy</option>
+                <option value="agotados">Agotados</option>
+                <option value="vencidos">Vencidos</option>
+                <option value="inactivos">Desactivados</option>
+            </x-campo-select>
         </div>
 
         @if ($hayFiltros)
@@ -161,15 +158,11 @@
             <flux:input wire:model="descripcion" label="Descripción (opcional)" placeholder="Campaña de lanzamiento, convenio CCS…" />
 
             <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <label for="cupon-tipo" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Tipo de descuento</label>
-                    <select id="cupon-tipo" wire:model.live="tipo" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                        @foreach (\App\Models\Cupon::TIPOS as $clave => $etiqueta)
-                            <option value="{{ $clave }}">{{ $etiqueta }}</option>
-                        @endforeach
-                    </select>
-                    @error('tipo')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
-                </div>
+                <x-campo-select id="cupon-tipo" label="Tipo de descuento" error="tipo" wire:model.live="tipo">
+                    @foreach (\App\Models\Cupon::TIPOS as $clave => $etiqueta)
+                        <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                    @endforeach
+                </x-campo-select>
 
                 <flux:input
                     wire:model="valor"
@@ -187,16 +180,12 @@
             @endif
 
             <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <label for="cupon-plan" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Plan al que aplica</label>
-                    <select id="cupon-plan" wire:model="planId" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                        <option value="">Cualquier plan</option>
-                        @foreach ($planes as $plan)
-                            <option value="{{ $plan->id }}">{{ $plan->nombre }}</option>
-                        @endforeach
-                    </select>
-                    @error('planId')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
-                </div>
+                <x-campo-select id="cupon-plan" label="Plan al que aplica" error="planId" wire:model="planId">
+                    <option value="">Cualquier plan</option>
+                    @foreach ($planes as $plan)
+                        <option value="{{ $plan->id }}">{{ $plan->nombre }}</option>
+                    @endforeach
+                </x-campo-select>
 
                 <flux:input wire:model="maxUsos" type="number" label="Máximo de usos" placeholder="Sin límite" />
             </div>

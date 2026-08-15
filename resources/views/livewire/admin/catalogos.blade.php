@@ -17,14 +17,11 @@
 
     <section class="ad-card mb-5 p-4 md:p-5">
         <div class="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-            <div>
-                <label for="catalogo" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Catálogo</label>
-                <select id="catalogo" wire:model.live="catalogo" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    @foreach ($catalogos as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-campo-select id="catalogo" label="Catálogo" wire:model.live="catalogo">
+                @foreach ($catalogos as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                @endforeach
+            </x-campo-select>
 
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar término" placeholder="Escribe para filtrar" icon="magnifying-glass" />
 

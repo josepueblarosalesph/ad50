@@ -25,7 +25,7 @@
             <div class="w-full lg:p-8">
                 <div class="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
                     <a href="{{ route('home') }}" class="z-20 flex flex-col items-center gap-2 font-medium lg:hidden" wire:navigate>
-                        <span class="inline-flex rounded-[12px] bg-ink px-3 py-2 ring-1 ring-line-2"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-12 w-auto"></span>
+                        <span class="ad-logo"><img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-12 w-auto"></span>
 
                         <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
                     </a>

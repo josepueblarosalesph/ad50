@@ -221,6 +221,21 @@ body [class~="text-[15px]"] {
   .ad-btn-sm      { @apply px-4 py-2.5 text-[16px]; }
   .ad-btn-block   { @apply w-full; }
 
+  /* Botón cuadrado de solo icono, para columnas de acciones donde el texto no cabe.
+     Siempre dentro de un <flux:tooltip> y con aria-label: sin etiqueta visible, el
+     nombre de la acción tiene que llegar igual al lector de pantalla. */
+  .ad-btn-icon {
+    @apply grid size-9 flex-none place-items-center rounded-[10px] border-[1.5px] border-line-2
+           bg-white text-gray-500 transition duration-200
+           hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600
+           focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500
+           disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#2A2D30];
+  }
+  /* Acciones destructivas o irreversibles: el hover avisa antes del clic. */
+  .ad-btn-icon-danger {
+    @apply hover:border-[#E7B6AE] hover:bg-[#FBEDEA] hover:text-[#A93226];
+  }
+
   .ad-auth-back {
     @apply inline-flex items-center gap-2 rounded-xl border border-line-2 bg-white px-3.5 py-2
            text-[15px] font-bold text-gray-700 shadow-sm transition duration-200
@@ -281,7 +296,10 @@ body [class~="text-[15px]"] {
   .ad-range-dual:focus-visible::-webkit-slider-thumb { @apply ring-2 ring-orange-400 ring-offset-1; }
   .ad-range-dual:focus-visible::-moz-range-thumb { @apply ring-2 ring-orange-400 ring-offset-1; }
 
-  .ad-chip        { @apply inline-flex items-center gap-2 text-[15px] font-semibold px-3 py-1.5 rounded-full
+  /* whitespace-nowrap: una pastilla partida en dos líneas deja de leerse como pastilla
+     (el borde redondeado se estira y descuadra la fila). Si no cabe, que empuje la
+     columna, no que se rompa. */
+  .ad-chip        { @apply inline-flex items-center gap-2 whitespace-nowrap text-[15px] font-semibold px-3 py-1.5 rounded-full
                           bg-paper border border-line-2 text-gray-700; }
   .ad-chip-orange { @apply bg-orange-100 border-orange-200 text-orange-600; }
   .ad-chip-green  { @apply bg-match-100 border-[#BFE6CD] text-match; }

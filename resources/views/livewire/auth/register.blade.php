@@ -32,7 +32,7 @@
         <flux:icon.arrow-left class="size-4" />
         Volver al inicio
     </a>
-    <a href="{{ route('home') }}" class="mb-8 inline-flex w-fit rounded-[12px] bg-ink px-3 py-2 lg:hidden" aria-label="AD+50 Talento Senior">
+    <a href="{{ route('home') }}" class="ad-logo mb-8 w-fit lg:hidden" aria-label="AD+50 Talento Senior">
         <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-14 w-auto">
     </a>
     <form wire:submit="submit" class="mx-auto w-full max-w-[470px] rounded-[24px] border border-line-2 bg-white p-6 shadow-[var(--shadow-card-lg)] dark:bg-[#222528] sm:p-9">

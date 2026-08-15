@@ -45,7 +45,7 @@
 
             <div class="w-full max-w-[470px] pt-14 lg:pt-0">
                 <div class="mb-8 flex justify-center lg:hidden">
-                    <a href="{{ route('home') }}" class="rounded-[16px] bg-ink px-4" aria-label="Volver al inicio de AD+50">
+                    <a href="{{ route('home') }}" class="ad-logo px-4" aria-label="Volver al inicio de AD+50">
                         <img src="/images/ad50-logo.png" alt="AD+50 Talento Senior" class="h-[72px] w-auto">
                     </a>
                 </div>

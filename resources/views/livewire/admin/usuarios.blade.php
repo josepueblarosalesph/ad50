@@ -30,24 +30,18 @@
         <div class="grid gap-4 md:grid-cols-3">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
-            <div>
-                <label for="filtro-rol" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Tipo de usuario</label>
-                <select id="filtro-rol" wire:model.live="rol" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todos</option>
-                    @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }} ({{ $conteoPorRol[$clave] ?? 0 }})</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-campo-select id="filtro-rol" label="Tipo de usuario" wire:model.live="rol">
+                <option value="todos">Todos</option>
+                @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }} ({{ $conteoPorRol[$clave] ?? 0 }})</option>
+                @endforeach
+            </x-campo-select>
 
-            <div>
-                <label for="filtro-verificacion" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Correo</label>
-                <select id="filtro-verificacion" wire:model.live="verificacion" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todos</option>
-                    <option value="verificados">Verificados</option>
-                    <option value="pendientes">Sin verificar</option>
-                </select>
-            </div>
+            <x-campo-select id="filtro-verificacion" label="Correo" wire:model.live="verificacion">
+                <option value="todos">Todos</option>
+                <option value="verificados">Verificados</option>
+                <option value="pendientes">Sin verificar</option>
+            </x-campo-select>
         </div>
 
         @if ($hayFiltros)
@@ -104,22 +98,31 @@
                                 @endif
                             </td>
                             <td class="p-4">
-                                <span @class(['ad-chip ad-chip-sm', 'ad-chip-green' => $usuario->email_verified_at !== null])>
-                                    {{ $usuario->email_verified_at !== null ? 'Verificado' : 'Sin verificar' }}
-                                </span>
+                                <span @class(['ad-chip ad-chip-sm', 'ad-chip-green' => $usuario->email_verified_at !== null])>{{ $usuario->email_verified_at !== null ? 'Verificado' : 'Sin verificar' }}</span>
                             </td>
                             <td class="p-4 text-gray-600">{{ $usuario->created_at?->translatedFormat('d M Y') ?? '—' }}</td>
                             <td class="p-4">
-                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                {{-- flex-nowrap: las acciones son iconos y caben todas en una fila;
+                                     dejarlas envolver es lo que rompía el alto de la fila. --}}
+                                <div class="flex flex-nowrap items-center justify-end gap-1.5">
                                     <x-acciones-verificacion :user="$usuario" />
 
                                     @if ($usuario->id === auth()->id())
                                         {{-- Degradarse a uno mismo deja la plataforma sin quién revierta el cambio. --}}
-                                        <span class="text-[12.5px] text-gray-400">No editable</span>
+                                        <flux:tooltip content="No puedes cambiar el tipo de tu propia cuenta">
+                                            <span class="ad-btn-icon cursor-not-allowed opacity-40" aria-label="No puedes cambiar el tipo de tu propia cuenta">
+                                                <flux:icon.lock-closed class="size-[18px]" />
+                                            </span>
+                                        </flux:tooltip>
                                     @else
-                                        <button type="button" wire:click="abrirCambioRol({{ $usuario->id }})" class="ad-btn-ghost ad-btn-sm">
-                                            Cambiar tipo
-                                        </button>
+                                        <flux:tooltip content="Cambiar tipo de usuario">
+                                            <button
+                                                type="button"
+                                                wire:click="abrirCambioRol({{ $usuario->id }})"
+                                                class="ad-btn-icon"
+                                                aria-label="Cambiar el tipo de usuario de {{ $usuario->name }}"
+                                            ><flux:icon.arrows-right-left class="size-[18px]" /></button>
+                                        </flux:tooltip>
                                     @endif
                                 </div>
                             </td>
@@ -153,15 +156,11 @@
                 <flux:text class="mt-1">La cuenta queda con el correo verificado: la persona entra con estas credenciales sin pasar por el enlace de confirmación.</flux:text>
             </div>
 
-            <div>
-                <label for="nuevo-rol" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Tipo de usuario</label>
-                <select id="nuevo-rol" wire:model.live="nuevoRol" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-                @error('nuevoRol')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
-            </div>
+            <x-campo-select id="nuevo-rol" label="Tipo de usuario" error="nuevoRol" wire:model.live="nuevoRol">
+                @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                @endforeach
+            </x-campo-select>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <flux:input wire:model="nuevoNombres" label="Nombres" placeholder="María José" />
@@ -179,16 +178,12 @@
 
             @if ($nuevoRol === 'empresa')
                 <div class="space-y-4 rounded-lg border border-line-2 p-4">
-                    <div>
-                        <label for="nueva-empresa" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Empresa</label>
-                        <select id="nueva-empresa" wire:model.live="nuevaEmpresaId" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                            <option value="">Crear una empresa nueva</option>
-                            @foreach ($empresasDisponibles as $empresaDisponible)
-                                <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->razon_social }}</option>
-                            @endforeach
-                        </select>
-                        @error('nuevaEmpresaId')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
-                    </div>
+                    <x-campo-select id="nueva-empresa" label="Empresa" error="nuevaEmpresaId" wire:model.live="nuevaEmpresaId">
+                        <option value="">Crear una empresa nueva</option>
+                        @foreach ($empresasDisponibles as $empresaDisponible)
+                            <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->razon_social }}</option>
+                        @endforeach
+                    </x-campo-select>
 
                     @if ($nuevaEmpresaId === '')
                         <flux:input wire:model="nuevaRazonSocial" label="Razón social" placeholder="Consultora Ejemplo SpA" />
@@ -225,15 +220,11 @@
                 @endif
             </div>
 
-            <div>
-                <label for="rol-nuevo" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Tipo de usuario</label>
-                <select id="rol-nuevo" wire:model="rolNuevo" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }}{{ $clave === $rolActual ? ' (actual)' : '' }}</option>
-                    @endforeach
-                </select>
-                @error('rolNuevo')<p class="mt-1.5 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>@enderror
-            </div>
+            <x-campo-select id="rol-nuevo" label="Tipo de usuario" error="rolNuevo" wire:model="rolNuevo">
+                @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }}{{ $clave === $rolActual ? ' (actual)' : '' }}</option>
+                @endforeach
+            </x-campo-select>
 
             <div class="rounded-lg border border-line-2 bg-gray-50 p-3.5 text-[12.5px] text-gray-600 dark:bg-[#2A2D30] dark:text-gray-300">
                 Solo cambia el tipo de cuenta. La ficha de postulante o la empresa asociada

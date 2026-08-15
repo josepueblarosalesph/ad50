@@ -24,32 +24,23 @@
         <div class="grid gap-4 md:grid-cols-4">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
-            <div>
-                <label for="filtro-visibilidad" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Visibilidad</label>
-                <select id="filtro-visibilidad" wire:model.live="visibilidad" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todos</option>
-                    <option value="visibles">Visibles</option>
-                    <option value="ocultos">Pausados</option>
-                </select>
-            </div>
+            <x-campo-select id="filtro-visibilidad" label="Visibilidad" wire:model.live="visibilidad">
+                <option value="todos">Todos</option>
+                <option value="visibles">Visibles</option>
+                <option value="ocultos">Pausados</option>
+            </x-campo-select>
 
-            <div>
-                <label for="filtro-onboarding" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Ficha</label>
-                <select id="filtro-onboarding" wire:model.live="onboarding" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todas</option>
-                    <option value="completo">Completada</option>
-                    <option value="incompleto">Sin completar</option>
-                </select>
-            </div>
+            <x-campo-select id="filtro-onboarding" label="Ficha" wire:model.live="onboarding">
+                <option value="todos">Todas</option>
+                <option value="completo">Completada</option>
+                <option value="incompleto">Sin completar</option>
+            </x-campo-select>
 
-            <div>
-                <label for="filtro-verificacion" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Correo</label>
-                <select id="filtro-verificacion" wire:model.live="verificacion" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 dark:bg-[#2A2D30]">
-                    <option value="todos">Todos</option>
-                    <option value="verificados">Verificados</option>
-                    <option value="pendientes">Sin verificar</option>
-                </select>
-            </div>
+            <x-campo-select id="filtro-verificacion" label="Correo" wire:model.live="verificacion">
+                <option value="todos">Todos</option>
+                <option value="verificados">Verificados</option>
+                <option value="pendientes">Sin verificar</option>
+            </x-campo-select>
         </div>
 
         @if ($hayFiltros)

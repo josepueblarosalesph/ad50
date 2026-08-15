@@ -11,25 +11,20 @@
 
     <section class="ad-card mb-5 p-4 md:p-5">
         <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <label for="filtro-estado" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Estado</label>
-                <select id="filtro-estado" wire:model.live="estado" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink dark:bg-[#2A2D30]">
-                    <option value="pendientes">Pendientes</option>
-                    <option value="todos">Todos</option>
-                    @foreach ($estados as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label for="filtro-motivo" class="mb-1.5 block text-[12px] font-bold text-gray-600 dark:text-gray-300">Motivo</label>
-                <select id="filtro-motivo" wire:model.live="motivo" class="w-full rounded-lg border border-line-2 bg-white px-3 py-2 text-[13.5px] font-semibold text-ink dark:bg-[#2A2D30]">
-                    <option value="todos">Todos los motivos</option>
-                    @foreach ($motivos as $clave => $etiqueta)
-                        <option value="{{ $clave }}">{{ $etiqueta }}@if (($pendientesPorMotivo[$clave] ?? 0) > 0) ({{ $pendientesPorMotivo[$clave] }} pendientes)@endif</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-campo-select id="filtro-estado" label="Estado" wire:model.live="estado">
+                <option value="pendientes">Pendientes</option>
+                <option value="todos">Todos</option>
+                @foreach ($estados as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }}</option>
+                @endforeach
+            </x-campo-select>
+
+            <x-campo-select id="filtro-motivo" label="Motivo" wire:model.live="motivo">
+                <option value="todos">Todos los motivos</option>
+                @foreach ($motivos as $clave => $etiqueta)
+                    <option value="{{ $clave }}">{{ $etiqueta }}@if (($pendientesPorMotivo[$clave] ?? 0) > 0) ({{ $pendientesPorMotivo[$clave] }} pendientes)@endif</option>
+                @endforeach
+            </x-campo-select>
         </div>
     </section>
 
