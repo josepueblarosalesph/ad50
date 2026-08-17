@@ -21,7 +21,15 @@ new class extends Component {
 
         tap(Auth::user(), $logout(...))->delete();
 
-        $this->redirect('/', navigate: true);
+        // El aviso se anota después del logout a propósito: `Logout` invalida la sesión y
+        // regenera su ID, así que cualquier flash puesto antes se perdería por el camino.
+        // Por lo mismo la redirección es dura (sin `navigate`): la portada tiene que
+        // cargarse con la cookie de la sesión nueva para poder leer el mensaje.
+        // Llave propia y no el `status` genérico: las pantallas de Fortify (login, recuperar
+        // contraseña) ya usan esa llave y mostrarían el aviso donde no corresponde.
+        session()->flash('cuenta_eliminada', 'Tus datos han sido eliminados exitosamente.');
+
+        $this->redirect(route('home'));
     }
 }; ?>
 

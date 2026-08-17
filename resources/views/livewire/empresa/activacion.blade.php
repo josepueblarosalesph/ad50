@@ -15,9 +15,28 @@
         </div>
 
         @if ($empresa->estado_activacion === 'inactiva')
-            <div class="mb-6 overflow-hidden rounded-[20px] border border-orange-200 bg-gradient-to-br from-orange-50 to-paper p-6 sm:p-8">
-                <h2 class="text-[22px] font-extrabold">¡Bienvenido! 👋</h2>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-600">Ya completaste el pago. Solo falta ingresar los datos de tu empresa:</p>
+            {{-- La bienvenida se lee una vez y después estorba, así que se puede cerrar. El
+                 cierre se recuerda en localStorage (mismo criterio que el sidebar plegado:
+                 es una preferencia de vista, no vale un viaje al servidor) y va colgado del
+                 id de la empresa, para que otra cuenta en el mismo navegador sí la vea.
+                 x-cloak evita que asome un instante cuando ya estaba cerrada. --}}
+            <div
+                x-data="{ visible: localStorage.getItem('ad-bienvenida-activacion-{{ $empresa->id }}') !== '1' }"
+                x-show="visible"
+                x-cloak
+                class="relative mb-6 overflow-hidden rounded-[20px] border border-orange-200 bg-gradient-to-br from-orange-50 to-paper p-6 sm:p-8"
+            >
+                <button
+                    type="button"
+                    x-on:click="visible = false; localStorage.setItem('ad-bienvenida-activacion-{{ $empresa->id }}', '1')"
+                    class="absolute right-4 top-4 grid size-9 place-items-center rounded-full text-gray-400 transition hover:bg-white/70 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500"
+                    aria-label="Cerrar la bienvenida"
+                >
+                    <flux:icon.x-mark class="size-5" />
+                </button>
+
+                <h2 class="pr-10 text-[22px] font-extrabold">¡Bienvenido! 👋</h2>
+                <p class="mt-2 max-w-2xl pr-10 text-[14px] leading-relaxed text-gray-600">Ya completaste el pago. Solo falta ingresar los datos de tu empresa:</p>
 
                 <div class="mt-6 flex flex-col items-stretch gap-4 sm:flex-row">
                     <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
@@ -77,15 +96,19 @@
                     @foreach ($usuarios as $index => $usuario)
                         <fieldset wire:key="usuario-{{ $index }}" class="rounded-[16px] border border-line-2 p-5">
                             <legend class="px-2 text-[14px] font-extrabold text-ink">Usuario {{ $index + 1 }}</legend>
+                            {{-- Estas fichas son opcionales y describen a terceros, no a quien
+                                 llena el formulario: el autocompletado del navegador aquí solo
+                                 mete datos que nadie pidió. `new-password` es lo que frena a los
+                                 gestores de contraseñas, que ignoran `off` en campos de clave. --}}
                             <div class="grid gap-4 md:grid-cols-2">
-                                <flux:input wire:model="usuarios.{{ $index }}.nombre" label="Nombres" />
-                                <flux:input wire:model="usuarios.{{ $index }}.apellidos" label="Apellidos" />
-                                <flux:input wire:model="usuarios.{{ $index }}.email" type="email" label="Email corporativo" />
-                                <flux:input wire:model="usuarios.{{ $index }}.password" type="password" label="Contraseña temporal" viewable />
+                                <flux:input wire:model="usuarios.{{ $index }}.nombre" label="Nombres" autocomplete="off" />
+                                <flux:input wire:model="usuarios.{{ $index }}.apellidos" label="Apellidos" autocomplete="off" />
+                                <flux:input wire:model="usuarios.{{ $index }}.email" type="email" label="Email corporativo" autocomplete="off" />
+                                <flux:input wire:model="usuarios.{{ $index }}.password" type="password" label="Contraseña temporal" autocomplete="new-password" viewable />
                             </div>
                         </fieldset>
                     @endforeach
-                    <p class="text-[13px] leading-relaxed text-gray-500">Completa todos los campos de cada usuario que quieras habilitar. Luego podrás agregarlos o eliminarlos desde la sección Equipo.</p>
+                    <p class="text-[13px] leading-relaxed text-gray-500">Completa todos los campos de cada usuario que quieras habilitar, o deja esta sección en blanco si no quieres agregar a nadie ahora. Luego podrás agregarlos o eliminarlos desde la sección Equipo.</p>
                 </div>
             </section>
 

@@ -5,6 +5,7 @@ use App\Models\Postulante;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\URL;
 use Laravel\Fortify\Features;
 
@@ -85,6 +86,58 @@ test('a newly verified empresa is redirected to choose and pay for a plan', func
     $this->actingAs($user)
         ->get($verificationUrl)
         ->assertRedirect(route('empresa.planes', ['verified' => 1]));
+});
+
+test('opening the verification link without a session verifies the email after logging in', function () {
+    // Caso real: la persona se registra en el computador y abre el correo en el teléfono,
+    // donde no tiene sesión. El middleware `auth` la manda al login; si al entrar no la
+    // devolvemos al enlace firmado, el gating `verified` la deja rebotando en "confirma
+    // tu correo" sin verificarse nunca.
+    $user = User::factory()->unverified()->create([
+        'role' => 'postulante',
+        'password' => Hash::make('clave-de-prueba'),
+    ]);
+    Postulante::query()->create([
+        'user_id' => $user->id,
+        'onboarding_paso' => 1,
+        'onboarding_completado' => false,
+    ]);
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $user->id, 'hash' => sha1($user->email)],
+    );
+
+    $this->get($verificationUrl)->assertRedirect(route('login'));
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'clave-de-prueba',
+    ])->assertRedirect($verificationUrl);
+
+    $this->get($verificationUrl)
+        ->assertRedirect(route('postulante.ficha', ['verified' => 1]));
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+test('logging in without a pending destination still lands on the role dashboard', function () {
+    $user = User::factory()->create([
+        'role' => 'postulante',
+        'email_verified_at' => now(),
+        'password' => Hash::make('clave-de-prueba'),
+    ]);
+    Postulante::query()->create([
+        'user_id' => $user->id,
+        'onboarding_paso' => 5,
+        'onboarding_completado' => true,
+    ]);
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'clave-de-prueba',
+    ])->assertRedirect(route('postulante.busquedas', absolute: false));
 });
 
 test('email is not verified with invalid hash', function () {

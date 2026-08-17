@@ -104,10 +104,34 @@ test('user can delete their account', function () {
 
     $response
         ->assertHasNoErrors()
-        ->assertRedirect('/');
+        ->assertRedirect(route('home'));
 
     expect($user->fresh())->toBeNull();
     expect(auth()->check())->toBeFalse();
+    expect(session('cuenta_eliminada'))->toBe('Tus datos han sido eliminados exitosamente.');
+});
+
+test('the landing greets the deleted account with a confirmation notice', function () {
+    // El aviso tiene que sobrevivir a la invalidación de sesión que hace el logout: es la
+    // única constancia que recibe la persona de que sus datos ya no están.
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::settings.delete-user-modal')
+        ->set('password', 'password')
+        ->call('deleteUser')
+        ->assertRedirect(route('home'));
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('Tus datos han sido eliminados exitosamente.');
+});
+
+test('the landing shows no deletion notice on an ordinary visit', function () {
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertDontSee('Tus datos han sido eliminados exitosamente.');
 });
 
 test('correct password must be provided to delete account', function () {

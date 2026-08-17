@@ -9,7 +9,16 @@
         <div class="mb-6 text-center">
             <span class="ad-eyebrow">Suscripción</span>
             <h1 class="mt-3 text-[27px] font-extrabold">Planes para tu empresa</h1>
-            <p class="mx-auto mt-1.5 max-w-2xl text-[14px] text-gray-500">Contrata un plan para desbloquear perfiles y acceder a los datos de contacto de tus candidatos.</p>
+            {{-- Un solo texto bajo el título: quien todavía no tiene plan necesita saber que
+                 este es un paso obligatorio y qué viene después del pago; quien ya lo tiene
+                 llega aquí solo a renovar o cambiarse. --}}
+            <p class="mx-auto mt-1.5 max-w-3xl text-[14px] leading-relaxed text-gray-500">
+                @if ($planVigente)
+                    Contrata un plan para desbloquear perfiles y acceder a los datos de contacto de tus candidatos.
+                @else
+                    Debes seleccionar un plan para continuar. Una vez realizado el pago, deberás completar algunos datos de tu empresa y podrás comenzar a prospectar candidatos y realizar publicaciones de oportunidades laborales!
+                @endif
+            </p>
         </div>
 
         @if (session('status'))
@@ -19,16 +28,6 @@
             <div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-center text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ session('error_pago') }}</div>
         @endif
         @error('pago')<div class="mb-5 rounded-xl border border-[#E7B6AE] bg-[#FBEDEA] px-4 py-3 text-center text-[13px] font-semibold text-[#A93226] dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">{{ $message }}</div>@enderror
-
-        @unless ($planVigente)
-            <div class="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-orange-200 bg-orange-50 px-5 py-4 text-center dark:bg-[#33251D]">
-                <span class="grid size-9 flex-none place-items-center rounded-xl bg-orange-500 text-white"><flux:icon.credit-card class="size-5" /></span>
-                <div>
-                    <p class="text-[14px] font-extrabold text-ink">Primer paso para activar tu cuenta</p>
-                    <p class="mt-0.5 text-[13px] leading-relaxed text-gray-600 dark:text-gray-300">Elige un plan y realiza el pago. Después completarás los datos restantes de tu empresa.</p>
-                </div>
-            </div>
-        @endunless
 
         @if ($planVigente && $planActual)
             <div class="mb-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-[#BFE6CD] bg-match-100/60 px-5 py-4">
@@ -41,39 +40,6 @@
                 </div>
             </div>
         @endif
-
-        {{-- Cupón de descuento. El campo va antes de las tarjetas porque el descuento se
-             refleja dentro de cada una: primero se aplica, después se elige plan. --}}
-        <div class="mx-auto mb-6 max-w-xl">
-            @if ($cupon === null)
-                <form wire:submit="aplicarCupon" class="flex flex-wrap items-end gap-3">
-                    <div class="min-w-[220px] flex-1">
-                        <flux:input wire:model="codigoCupon" label="¿Tienes un cupón de descuento?" placeholder="Escribe tu código" />
-                    </div>
-                    <flux:button variant="ghost" type="submit" wire:loading.attr="disabled" wire:target="aplicarCupon">Aplicar</flux:button>
-                </form>
-            @else
-                <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#BFE6CD] bg-match-100/60 px-4 py-3">
-                    <div>
-                        <p class="text-[13.5px] font-extrabold text-ink">
-                            Cupón <span class="font-mono">{{ $cupon->codigo }}</span> aplicado · {{ $cupon->valorLabel() }} de descuento
-                        </p>
-                        <p class="mt-0.5 text-[12.5px] text-gray-600">
-                            @if ($cupon->plan_id !== null)
-                                Válido solo para el plan {{ $cupon->plan?->nombre }}.
-                            @else
-                                Válido para cualquier plan.
-                            @endif
-                        </p>
-                    </div>
-                    <button type="button" wire:click="quitarCupon" class="ad-btn-ghost ad-btn-sm">Quitar</button>
-                </div>
-            @endif
-
-            @error('codigoCupon')
-                <p class="mt-2 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>
-            @enderror
-        </div>
 
         <div class="grid gap-5 pt-3 lg:grid-cols-3">
             @foreach ($planes as $plan)
@@ -160,6 +126,41 @@
                 </article>
                 </div>
             @endforeach
+        </div>
+
+        {{-- Cupón de descuento. Va después de las tarjetas para no interponer un formulario
+             entre la persona y los planes; al aplicarlo, el descuento aparece dentro de cada
+             tarjeta, así que conviene mirar hacia arriba para comparar. --}}
+        <div class="mx-auto mt-8 max-w-xl border-t border-line-2 pt-6">
+            @if ($cupon === null)
+                <form wire:submit="aplicarCupon" class="flex flex-wrap items-end gap-3">
+                    <div class="min-w-[220px] flex-1">
+                        <flux:input wire:model="codigoCupon" label="¿Tienes un cupón de descuento?" placeholder="Escribe tu código" />
+                    </div>
+                    <flux:button variant="ghost" type="submit" wire:loading.attr="disabled" wire:target="aplicarCupon">Aplicar</flux:button>
+                </form>
+            @else
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#BFE6CD] bg-match-100/60 px-4 py-3">
+                    <div>
+                        <p class="text-[13.5px] font-extrabold text-ink">
+                            Cupón <span class="font-mono">{{ $cupon->codigo }}</span> aplicado · {{ $cupon->valorLabel() }} de descuento
+                        </p>
+                        <p class="mt-0.5 text-[12.5px] text-gray-600">
+                            @if ($cupon->plan_id !== null)
+                                Válido solo para el plan {{ $cupon->plan?->nombre }}.
+                            @else
+                                Válido para cualquier plan.
+                            @endif
+                            El descuento queda reflejado en cada plan de arriba.
+                        </p>
+                    </div>
+                    <button type="button" wire:click="quitarCupon" class="ad-btn-ghost ad-btn-sm">Quitar</button>
+                </div>
+            @endif
+
+            @error('codigoCupon')
+                <p class="mt-2 text-[12.5px] font-semibold text-[#A93226] dark:text-red-400">{{ $message }}</p>
+            @enderror
         </div>
 
         <p class="mt-6 flex items-center justify-center gap-2 text-[12px] text-gray-400">

@@ -1,4 +1,24 @@
 <div class="ad-welcome-light">
+    {{-- Confirmación de que la cuenta se eliminó. Aterriza aquí porque al borrarla se cierra
+         la sesión y no queda ninguna pantalla propia donde avisarlo. Va flotante sobre el
+         hero (z-50, por encima de la barra fija) y no se cierra sola: es la única
+         constancia que recibe la persona de que sus datos ya no están. --}}
+    @if (session('cuenta_eliminada'))
+        <div
+            x-data="{ visible: true }"
+            x-show="visible"
+            x-transition
+            role="status"
+            class="fixed inset-x-0 top-24 z-50 mx-auto flex w-[min(92%,560px)] items-center gap-3 rounded-2xl border border-[#BFE6CD] bg-match-100 px-5 py-4 shadow-[var(--shadow-card-lg)]"
+        >
+            <flux:icon.check-circle class="size-6 flex-none text-match" />
+            <p class="flex-1 text-[14px] font-extrabold text-match">{{ session('cuenta_eliminada') }}</p>
+            <button type="button" x-on:click="visible = false" class="flex-none rounded-lg p-1 text-match transition hover:bg-white/60" aria-label="Cerrar aviso">
+                <flux:icon.x-mark class="size-4" />
+            </button>
+        </div>
+    @endif
+
     {{-- Hero editorial: la imagen y el mensaje fueron las preferencias más consistentes del test. --}}
     <section class="ad-light-surface relative min-h-[100svh] overflow-hidden border-b border-line bg-paper"
         style="background-image: linear-gradient(90deg, #F6F6F4 0%, rgba(246,246,244,.98) 38%, rgba(246,246,244,.68) 57%, rgba(246,246,244,.05) 78%), url('/images/ad50-hero-profesionales-trabajando-v2.webp'); background-position: center, 68% center; background-size: cover;">

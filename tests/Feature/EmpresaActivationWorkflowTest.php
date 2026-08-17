@@ -23,10 +23,34 @@ test('an empresa without a paid plan is redirected to choose a plan before enter
         ->get(route('empresa.activacion'))
         ->assertRedirect(route('empresa.planes'));
 
+    // Un solo texto explica que elegir plan es obligatorio y qué viene después del pago.
     $this->actingAs($user)
         ->get(route('empresa.planes'))
         ->assertOk()
-        ->assertSee('Primer paso para activar tu cuenta');
+        ->assertSee('Debes seleccionar un plan para continuar.')
+        ->assertSee('deberás completar algunos datos de tu empresa');
+});
+
+test('the welcome banner can be dismissed and remembers it per empresa', function () {
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Recién Pagada SpA',
+        'estado_activacion' => 'inactiva',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+
+    // La llave de localStorage cuelga del id de la empresa: cerrar la bienvenida en una
+    // cuenta no debe ocultársela a otra que use el mismo navegador.
+    $this->actingAs($user)
+        ->get(route('empresa.activacion'))
+        ->assertOk()
+        ->assertSee('¡Bienvenido!')
+        ->assertSee('aria-label="Cerrar la bienvenida"', false)
+        ->assertSee("ad-bienvenida-activacion-{$empresa->id}", false);
 });
 
 test('an empresa completes its data after paying and is sent to the panel', function () {
@@ -102,6 +126,68 @@ test('the administrator can enable all three contact users during onboarding', f
     ]);
 
     expect($empresa->fresh()->usuariosAdicionales()->count())->toBe(3);
+});
+
+test('an autofilled password alone does not block the onboarding', function () {
+    // Caso reportado: el gestor de contraseñas del navegador rellenó la «contraseña
+    // temporal» del Usuario 1 mientras la persona autocompletaba los campos de más
+    // arriba. La empresa no quería agregar usuarios, pero el formulario le exigía nombre,
+    // apellidos y correo para ese usuario fantasma y no la dejaba avanzar.
+    $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Sin Usuarios SpA',
+        'telefono' => '+56 9 1111 1111',
+        'estado_activacion' => 'inactiva',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+
+    Livewire::actingAs($user)
+        ->test(Activacion::class)
+        ->set('rut', '98421157')
+        ->set('rubro', 'Servicios profesionales')
+        ->set('contactoPrincipalCargo', 'Gerenta de Personas')
+        ->set('usuarios.0.password', 'clave-que-metio-el-navegador')
+        ->call('guardar')
+        ->assertHasNoErrors()
+        ->assertRedirect(route('empresa.panel'));
+
+    // La empresa queda activa y sin usuarios adicionales: la contraseña fantasma se ignora.
+    expect($empresa->fresh()->estaActiva())->toBeTrue();
+    expect($empresa->fresh()->usuariosAdicionales()->count())->toBe(0);
+});
+
+test('a half-filled user is still rejected, with a message that names the way out', function () {
+    // El descarte anterior no puede tapar el error legítimo: si la persona sí empezó a
+    // describir a un usuario, faltarle datos tiene que seguir deteniendo el envío.
+    $user = User::factory()->create(['name' => 'Ana Silva', 'email' => 'ana@empresa.cl', 'role' => 'empresa']);
+    Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Medio Llena SpA',
+        'telefono' => '+56 9 1111 1111',
+        'estado_activacion' => 'inactiva',
+        'plan_id' => Plan::query()->create([
+            'codigo' => 'p_'.str()->random(6), 'nombre' => 'P', 'audiencia' => 'empresa', 'precio_clp' => 1, 'periodo' => 'mensual', 'desbloqueos' => 1,
+        ])->id,
+        'plan_hasta' => now()->addMonth(),
+    ]);
+
+    $componente = Livewire::actingAs($user)
+        ->test(Activacion::class)
+        ->set('rut', '98421157')
+        ->set('rubro', 'Servicios profesionales')
+        ->set('contactoPrincipalCargo', 'Gerenta de Personas')
+        ->set('usuarios.0.nombre', 'Tomás')
+        ->set('usuarios.0.password', 'secreto123')
+        ->call('guardar')
+        ->assertHasErrors(['usuarios.0.apellidos', 'usuarios.0.email']);
+
+    // El mensaje ya no enumera llaves crudas del arreglo («usuarios.0.apellidos …»).
+    $mensaje = $componente->errors()->first('usuarios.0.email');
+    expect($mensaje)->toBe('Escribe el correo de este usuario, o deja su ficha completamente en blanco si no quieres crearlo.');
 });
 
 test('an empresa with data but without a paid plan is sent to choose a plan', function () {
