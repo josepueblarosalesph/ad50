@@ -16,6 +16,11 @@ use Livewire\WithPagination;
 /**
  * Administración de los catálogos: industrias, cargos, regiones, habilidades, etc.
  *
+ * Exclusiva del superadministrador. Los catálogos son la fuente de verdad contra la que
+ * validan la ficha del postulante y el formulario de búsqueda, y el matching compara por
+ * igualdad exacta: tocar un término aquí repercute en toda la plataforma, así que se
+ * gobierna con el mismo criterio que la gestión de cuentas ajenas (ver Admin\Usuarios).
+ *
  * Antes de editar o eliminar se comprueba si el término ya quedó guardado en fichas,
  * publicaciones o criterios de búsqueda. Si está en uso no se deja tocar: renombrarlo
  * dejaría esos registros apuntando a un valor inexistente.
@@ -45,7 +50,7 @@ class Catalogos extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->esAdmin(), 403);
+        abort_unless(auth()->user()->esSuperadmin(), 403);
 
         if (! CatalogosAdministrables::existe($this->catalogo)) {
             $this->catalogo = 'industria';
@@ -91,7 +96,7 @@ class Catalogos extends Component
 
     public function guardar(): void
     {
-        abort_unless(auth()->user()->esAdmin(), 403);
+        abort_unless(auth()->user()->esSuperadmin(), 403);
 
         $validado = $this->validate([
             'valor' => [
@@ -143,7 +148,7 @@ class Catalogos extends Component
 
     public function borrar(): void
     {
-        abort_unless(auth()->user()->esAdmin(), 403);
+        abort_unless(auth()->user()->esSuperadmin(), 403);
 
         $termino = $this->terminoDelCatalogo($this->borrandoId ?? 0);
 

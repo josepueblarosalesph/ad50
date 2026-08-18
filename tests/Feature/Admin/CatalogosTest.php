@@ -9,9 +9,14 @@ use App\Services\UsoDeTerminos;
 use App\Support\CatalogosProfesionales;
 use Livewire\Livewire;
 
+/**
+ * Los catálogos los administra solo el superadministrador: son la fuente de verdad contra
+ * la que validan la ficha y el formulario de búsqueda, y el matching compara por igualdad
+ * exacta (ver Admin\Catalogos).
+ */
 function adminDeCatalogos(): User
 {
-    return User::factory()->create(['role' => 'admin']);
+    return User::factory()->create(['role' => 'superadmin']);
 }
 
 function termino(string $catalogo, string $valor): TerminoCatalogo
@@ -160,10 +165,15 @@ test('la verificación de uso reconoce los distintos lugares donde queda guardad
         ->and($postulante->exists)->toBeTrue();
 });
 
-test('un usuario que no es admin no entra a los catálogos', function () {
-    foreach (['postulante', 'empresa'] as $rol) {
+test('solo el superadministrador entra a los catálogos', function () {
+    // El admin común entra en la lista: administrar catálogos dejó de estar a su alcance.
+    foreach (['postulante', 'empresa', 'admin'] as $rol) {
         $this->actingAs(User::factory()->create(['role' => $rol]))
             ->get(route('admin.catalogos'))
             ->assertForbidden();
     }
+
+    $this->actingAs(User::factory()->create(['role' => 'superadmin']))
+        ->get(route('admin.catalogos'))
+        ->assertOk();
 });

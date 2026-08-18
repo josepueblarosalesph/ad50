@@ -28,11 +28,16 @@
             @endforelse
         </tbody></table></div></section>
         <aside class="space-y-5">
-            <div class="ad-card p-5">
-                <h2 class="font-bold">Catálogos</h2>
-                <p class="mt-2 text-[13px] text-gray-500">Industrias, cargos, ciudades y criterios disponibles para el motor de búsqueda.</p>
-                <a href="{{ route('admin.catalogos') }}" wire:navigate class="ad-btn-ghost ad-btn-sm ad-btn-block mt-4">Administrar catálogos</a>
-            </div>
+            {{-- Igual que el enlace del menú (ver <x-nav-admin>): administrar catálogos es
+                 exclusivo del superadministrador, así que al admin común tampoco se le
+                 ofrece el atajo desde aquí. --}}
+            @if (auth()->user()?->esSuperadmin())
+                <div class="ad-card p-5">
+                    <h2 class="font-bold">Catálogos</h2>
+                    <p class="mt-2 text-[13px] text-gray-500">Industrias, cargos, ciudades y criterios disponibles para el motor de búsqueda.</p>
+                    <a href="{{ route('admin.catalogos') }}" wire:navigate class="ad-btn-ghost ad-btn-sm ad-btn-block mt-4">Administrar catálogos</a>
+                </div>
+            @endif
 
             {{-- Antes había aquí una tarjeta de «Seguridad y auditoría» que no llevaba a
                  ninguna parte porque esa pantalla no existe. En su lugar va la bandeja de

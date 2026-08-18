@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\Catalogos as AdminCatalogos;
 use App\Livewire\Admin\Planes as AdminPlanes;
 use App\Livewire\Admin\Usuarios as AdminUsuarios;
 use App\Models\Postulante;
@@ -18,16 +19,44 @@ test('the superadmin reaches every admin screen, including the ones reserved for
     }
 });
 
-test('a plain admin keeps the shared screens but is refused the user management one', function () {
+test('a plain admin keeps the shared screens but is refused the reserved ones', function () {
     $admin = User::factory()->create(['role' => 'admin']);
 
     $this->actingAs($admin);
 
-    foreach (['admin.panel', 'admin.empresas', 'admin.postulantes', 'admin.planes', 'admin.catalogos', 'admin.mensajes'] as $ruta) {
+    foreach (['admin.panel', 'admin.empresas', 'admin.postulantes', 'admin.planes', 'admin.mensajes'] as $ruta) {
         $this->get(route($ruta))->assertOk();
     }
 
+    // Cuentas ajenas y catálogos quedan fuera del alcance del admin común.
     $this->get(route('admin.usuarios'))->assertForbidden();
+    $this->get(route('admin.catalogos'))->assertForbidden();
+});
+
+test('the admin nav offers the reserved sections only to the superadmin', function () {
+    $superadmin = User::factory()->create(['role' => 'superadmin']);
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    $this->actingAs($superadmin)->get(route('admin.panel'))
+        ->assertOk()
+        ->assertSee('href="'.route('admin.catalogos').'"', false)
+        ->assertSee('href="'.route('admin.usuarios').'"', false);
+
+    // Al admin común no se le ofrece un enlace que terminaría en 403.
+    $this->actingAs($admin)->get(route('admin.panel'))
+        ->assertOk()
+        ->assertDontSee('href="'.route('admin.catalogos').'"', false)
+        ->assertDontSee('href="'.route('admin.usuarios').'"', false);
+});
+
+test('a plain admin cannot even mount the catalogs component directly', function () {
+    // El gating no puede vivir solo en la ruta: las acciones que escriben se comprueban
+    // por su cuenta, igual que en Admin\Usuarios.
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    Livewire::actingAs($admin)
+        ->test(AdminCatalogos::class)
+        ->assertForbidden();
 });
 
 test('a postulante cannot reach the admin screens', function () {

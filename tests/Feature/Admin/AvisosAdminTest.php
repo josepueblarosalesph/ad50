@@ -130,9 +130,11 @@ test('the admin panel no longer carries the duplicated sidebar menu', function (
 });
 
 test('the panel shortcuts point to the real screens', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
+    // Con el superadministrador porque el atajo a catálogos es exclusivo suyo; que al
+    // admin común no se le ofrezca está cubierto en SuperadminPanelTest.
+    $superadmin = User::factory()->create(['role' => 'superadmin']);
 
-    $this->actingAs($admin)
+    $this->actingAs($superadmin)
         ->get(route('admin.panel'))
         ->assertOk()
         ->assertSeeHtml('href="'.route('admin.empresas').'"')
