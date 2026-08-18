@@ -87,7 +87,7 @@ class FiltrosBusqueda extends Component
 
     public function mount(Busqueda $busqueda, string $actualizacion = 'todas'): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;

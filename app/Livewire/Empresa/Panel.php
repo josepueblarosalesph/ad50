@@ -15,7 +15,7 @@ class Panel extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         $this->hidratarOrden();
     }

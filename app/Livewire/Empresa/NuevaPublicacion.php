@@ -65,7 +65,7 @@ class NuevaPublicacion extends Component
 
     public function mount(?Publicacion $publicacion = null): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         if ($publicacion === null || ! $publicacion->exists) {
             // El cupo del plan solo limita crear publicaciones nuevas; editar una

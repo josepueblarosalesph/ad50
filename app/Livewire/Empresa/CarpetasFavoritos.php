@@ -31,7 +31,7 @@ class CarpetasFavoritos extends Component
 
     public function mount(string $activa = 'todas'): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         $this->activa = $activa;
     }

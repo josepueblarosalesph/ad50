@@ -66,7 +66,7 @@ class Favoritos extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         // Se valida contra todas las publicaciones (incluidas las cerradas): filtrar por
         // una cerrada es legítimo, aunque no se pueda asociar candidatos nuevos a ella.
@@ -291,7 +291,7 @@ class Favoritos extends Component
     {
         $empresa = auth()->user()->empresa;
 
-        abort_unless(auth()->user()->role === 'empresa' && $empresa !== null, 403);
+        abort_unless(auth()->user()->esEmpresa() && $empresa !== null, 403);
         abort_unless($this->favoritosDeLaEmpresa()->where('postulante_id', $postulanteId)->exists(), 404);
 
         if ($empresa->haDesbloqueado($postulanteId)) {
@@ -358,7 +358,7 @@ class Favoritos extends Component
     /** Solo se asocian candidatos que sean favoritos vigentes de esta empresa. */
     protected function candidatoAsociable(int $postulanteId): bool
     {
-        return auth()->user()->role === 'empresa'
+        return auth()->user()->esEmpresa()
             && $this->empresaId() !== null
             && $this->favoritosDeLaEmpresa()->where('postulante_id', $postulanteId)->exists();
     }

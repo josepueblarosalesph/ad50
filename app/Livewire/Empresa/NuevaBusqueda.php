@@ -71,7 +71,7 @@ class NuevaBusqueda extends Component
 
     public function mount(?Busqueda $busqueda = null): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         if ($busqueda === null) {
             $this->hidratarEdad([]);

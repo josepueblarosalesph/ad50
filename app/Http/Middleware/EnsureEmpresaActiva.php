@@ -15,7 +15,7 @@ class EnsureEmpresaActiva
      */
     public function handle(Request $request, Closure $next): Response
     {
-        abort_unless($request->user()?->role === 'empresa', 403);
+        abort_unless($request->user()?->esEmpresa(), 403);
 
         $empresa = $request->user()->empresa;
 

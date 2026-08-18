@@ -98,13 +98,24 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->role) {
             // Sin panel propio, el postulante entra directo a Oportunidades.
             'postulante' => $this->postulante && ! $this->postulante->onboarding_completado ? 'postulante.ficha' : 'postulante.busquedas',
-            'empresa' => match (true) {
-                ! ($this->empresa?->planVigente()) => 'empresa.planes',
-                ! $this->empresa->datosEnviados() => 'empresa.activacion',
-                default => 'empresa.panel',
-            },
+            'empresa' => $this->rutaPanelEmpresa(),
             'admin', 'superadmin' => 'admin.panel',
             default => 'dashboard',
+        };
+    }
+
+    /**
+     * Entrada al panel de empresa según lo que le falte por hacer: pagar el plan, enviar
+     * los antecedentes o nada. La comparten el destino tras el login y el conmutador de
+     * paneles, para que ambos lleven al mismo sitio y respeten el mismo gating que
+     * EnsureEmpresaActiva.
+     */
+    public function rutaPanelEmpresa(): string
+    {
+        return match (true) {
+            ! ($this->empresa?->planVigente()) => 'empresa.planes',
+            ! $this->empresa->datosEnviados() => 'empresa.activacion',
+            default => 'empresa.panel',
         };
     }
 
@@ -183,10 +194,28 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->getRelation('empresa');
     }
 
+    /**
+     * Puede operar el panel de empresa.
+     *
+     * Además del rol `empresa`, lo puede un administrador de la plataforma que tenga una
+     * empresa asociada. Ese caso nace de promover a admin a un contacto de empresa: el
+     * cambio de rol conserva la empresa intacta (ver Admin\Usuarios::cambiarRol) y la
+     * persona sigue necesitando administrarla. Su identidad principal sigue siendo la de
+     * admin —ahí lo deja el login, ver dashboardRouteName()—; el panel de empresa es un
+     * acceso adicional que alcanza por el conmutador del encabezado.
+     *
+     * El orden importa: quien es empresa a secas resuelve sin consultar la relación.
+     */
+    public function esEmpresa(): bool
+    {
+        return $this->role === 'empresa'
+            || ($this->esAdmin() && $this->empresa !== null);
+    }
+
     /** Es el contacto administrador (dueño) de su empresa. */
     public function esPrincipalEmpresa(): bool
     {
-        return $this->role === 'empresa'
+        return $this->esEmpresa()
             && $this->empresa !== null
             && $this->empresa->user_id === $this->id;
     }

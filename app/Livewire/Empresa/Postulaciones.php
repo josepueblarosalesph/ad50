@@ -144,7 +144,7 @@ class Postulaciones extends Component
 
     protected function candidatoAsociable(int $postulanteId): bool
     {
-        return auth()->user()->role === 'empresa'
+        return auth()->user()->esEmpresa()
             && auth()->user()->empresa?->id === $this->publicacion->empresa_id
             && $this->esCandidatoDeLaPublicacion($postulanteId);
     }
@@ -176,7 +176,7 @@ class Postulaciones extends Component
 
     public function mount(Publicacion $publicacion): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($publicacion->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->publicacion = $publicacion;

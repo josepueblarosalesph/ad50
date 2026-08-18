@@ -30,7 +30,7 @@ class Planes extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         // Tras pagar, el siguiente paso del onboarding es completar los datos.
         $empresa = auth()->user()->empresa;

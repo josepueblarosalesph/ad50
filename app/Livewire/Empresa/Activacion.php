@@ -39,7 +39,7 @@ class Activacion extends Component
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         $empresa = auth()->user()->empresa;
 

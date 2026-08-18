@@ -65,7 +65,7 @@ class Resultados extends Component
 
     public function mount(Busqueda $busqueda): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($busqueda->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->busqueda = $busqueda;
@@ -208,7 +208,7 @@ class Resultados extends Component
     {
         $empresa = auth()->user()->empresa;
 
-        abort_unless(auth()->user()->role === 'empresa' && $empresa?->id === $this->busqueda->empresa_id, 403);
+        abort_unless(auth()->user()->esEmpresa() && $empresa?->id === $this->busqueda->empresa_id, 403);
 
         $match = $this->busqueda->candidatos()->where('postulante_id', $postulanteId)->first();
 
@@ -245,7 +245,7 @@ class Resultados extends Component
     {
         $empresa = auth()->user()->empresa;
 
-        abort_unless(auth()->user()->role === 'empresa' && $empresa?->id === $this->busqueda->empresa_id, 403);
+        abort_unless(auth()->user()->esEmpresa() && $empresa?->id === $this->busqueda->empresa_id, 403);
         abort_unless($empresa->haDesbloqueado($postulanteId), 403);
 
         $match = $this->busqueda->candidatos()
@@ -283,7 +283,7 @@ class Resultados extends Component
      */
     protected function candidatoAsociable(int $postulanteId): bool
     {
-        return auth()->user()->role === 'empresa'
+        return auth()->user()->esEmpresa()
             && auth()->user()->empresa?->id === $this->busqueda->empresa_id
             && $this->busqueda->candidatos()
                 ->where('postulante_id', $postulanteId)

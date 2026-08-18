@@ -33,6 +33,9 @@
             </nav>
 
             <div class="ml-auto flex shrink-0 items-center gap-3">
+                {{-- Solo se dibuja para quien tiene los dos accesos (admin con empresa). --}}
+                <x-conmutador-paneles />
+
                 {{-- Visible también en móvil: enterarse de que llegó un mensaje no puede
                      depender del ancho de la pantalla. --}}
                 <x-avisos-admin />
@@ -44,7 +47,7 @@
                                       :avatar="false" />
                         <flux:menu>
                             <flux:menu.item :href="route('profile.edit')" icon="user">Mi cuenta</flux:menu.item>
-                            @if (auth()->user()?->role === 'empresa')
+                            @if (auth()->user()?->esEmpresa())
                                 @if (auth()->user()->esPrincipalEmpresa())
                                     <flux:menu.item :href="route('empresa.equipo')" icon="users">Administración de usuarios</flux:menu.item>
                                 @endif
@@ -76,8 +79,9 @@
                         </div>
                         {{ $nav }}
                         <div class="my-2 h-px bg-line"></div>
+                        <x-conmutador-paneles variante="menu" />
                         <a href="{{ route('profile.edit') }}"><flux:icon.user class="mr-2 size-4" />Mi cuenta</a>
-                        @if (auth()->user()?->role === 'empresa')
+                        @if (auth()->user()?->esEmpresa())
                             @if (auth()->user()->esPrincipalEmpresa())
                                 <a href="{{ route('empresa.equipo') }}"><flux:icon.users class="mr-2 size-4" />Administración de usuarios</a>
                             @endif

@@ -72,7 +72,7 @@ class FiltrosPostulaciones extends Component
 
     public function mount(?int $publicacionId = null): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
 
         $this->publicacionId = $publicacionId;
 

@@ -70,7 +70,7 @@ class Candidato extends Component
 
     public function mount(BusquedaCandidato $match): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($match->busqueda->empresa_id === auth()->user()->empresa?->id, 403);
         abort_unless($match->postulante->visible, 404);
 
@@ -178,7 +178,7 @@ class Candidato extends Component
     /** Desde el detalle solo se asocia al candidato que se está viendo. */
     protected function candidatoAsociable(int $postulanteId): bool
     {
-        return auth()->user()->role === 'empresa'
+        return auth()->user()->esEmpresa()
             && auth()->user()->empresa?->id === $this->match->busqueda->empresa_id
             && $postulanteId === $this->match->postulante_id
             && $this->match->postulante->visible;
@@ -249,7 +249,7 @@ class Candidato extends Component
 
     public function descargarCv(): StreamedResponse
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($this->match->busqueda->empresa_id === auth()->user()->empresa?->id, 403);
         abort_unless($this->match->postulante->visible, 404);
         abort_unless(auth()->user()->empresa?->haDesbloqueado($this->match->postulante_id), 403);

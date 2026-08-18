@@ -15,7 +15,7 @@ class DetallePublicacion extends Component
 
     public function mount(Publicacion $publicacion): void
     {
-        abort_unless(auth()->user()->role === 'empresa', 403);
+        abort_unless(auth()->user()->esEmpresa(), 403);
         abort_unless($publicacion->empresa_id === auth()->user()->empresa?->id, 403);
 
         $this->publicacion = $publicacion;
