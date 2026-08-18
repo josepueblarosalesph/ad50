@@ -51,4 +51,23 @@ return [
         'password' => env('SUPERADMIN_PASSWORD'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contacto
+    |--------------------------------------------------------------------------
+    |
+    | Casilla que atiende el soporte técnico. Los mensajes del formulario de Ayuda
+    | con ese motivo se le envían solo a ella; el resto de los motivos van a todas
+    | las cuentas con rol admin o superadmin (ver Ayuda::destinatarios).
+    |
+    | Va aquí y no incrustada en el código para poder cambiarla por entorno sin
+    | desplegar: si mañana el soporte se atiende desde otra casilla, basta la
+    | variable. El valor por omisión es la casilla en uso hoy.
+    |
+    */
+
+    'contacto' => [
+        'soporte' => env('AD50_EMAIL_SOPORTE', 'contacto.ad50.portal@gmail.com'),
+    ],
+
 ];

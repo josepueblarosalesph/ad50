@@ -2,9 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Mail\MensajeContactoRecibido;
 use App\Models\MensajeContacto;
+use App\Models\User;
 use App\Support\PreguntasFrecuentes;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -53,7 +57,7 @@ class Ayuda extends Component
             'mensaje' => 'mensaje',
         ]);
 
-        MensajeContacto::query()->create([
+        $mensaje = MensajeContacto::query()->create([
             'user_id' => $usuario->id,
             'motivo' => $validado['motivo'],
             // Copia del contacto al momento de escribir: si la cuenta cambia de correo o
@@ -63,10 +67,76 @@ class Ayuda extends Component
             'mensaje' => trim($validado['mensaje']),
         ]);
 
+        $this->avisarPorCorreo($mensaje);
+
         $this->reset('mensaje');
         $this->motivo = array_key_first(MensajeContacto::MOTIVOS);
 
         session()->flash('status', 'Recibimos tu mensaje. Te responderemos al correo de tu cuenta.');
+    }
+
+    /**
+     * Avisa por correo del mensaje recién guardado.
+     *
+     * Nunca hace fracasar el envío del formulario: el mensaje YA está en la bandeja, que
+     * es la fuente de verdad, y el correo es solo el aviso para no depender de que
+     * alguien entre a mirar. Si el servidor de correo está caído, se deja constancia en
+     * el log y la persona igual recibe su confirmación en pantalla; lo contrario sería
+     * mostrarle un error por algo que sí se guardó.
+     */
+    private function avisarPorCorreo(MensajeContacto $mensaje): void
+    {
+        $destinatarios = $this->destinatarios($mensaje);
+
+        if ($destinatarios === []) {
+            Log::warning('Mensaje de contacto sin destinatarios de correo.', [
+                'mensaje_id' => $mensaje->id,
+                'motivo' => $mensaje->motivo,
+            ]);
+
+            return;
+        }
+
+        try {
+            Mail::to($destinatarios)->send(new MensajeContactoRecibido($mensaje));
+        } catch (\Throwable $e) {
+            Log::error('No se pudo avisar por correo de un mensaje de contacto.', [
+                'mensaje_id' => $mensaje->id,
+                'motivo' => $mensaje->motivo,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * A quién le llega el aviso, según el motivo.
+     *
+     * El soporte técnico tiene casilla propia y va solo ahí. Todo lo demás —consultas de
+     * servicios y otras— va a las cuentas de administración, en plural: la bandeja ya
+     * está modelada como una sola para toda la administración (el estado de un mensaje no
+     * es de cada admin), así que el aviso sigue el mismo criterio y no depende de que una
+     * persona concreta siga teniendo cuenta.
+     *
+     * @return list<string>
+     */
+    private function destinatarios(MensajeContacto $mensaje): array
+    {
+        if ($mensaje->motivo === 'soporte') {
+            $soporte = config('ad50.contacto.soporte');
+
+            return is_string($soporte) && $soporte !== '' ? [$soporte] : [];
+        }
+
+        $administracion = User::query()
+            ->whereIn('role', ['admin', 'superadmin'])
+            ->orderBy('id')
+            ->get(['id', 'email'])
+            ->all();
+
+        return array_values(array_map(
+            static fn (User $admin): string => $admin->email,
+            $administracion,
+        ));
     }
 
     /** @return array<string, string> */

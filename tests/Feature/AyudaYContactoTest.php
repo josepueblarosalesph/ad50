@@ -2,10 +2,13 @@
 
 use App\Livewire\Admin\Mensajes as AdminMensajes;
 use App\Livewire\Ayuda;
+use App\Mail\MensajeContactoRecibido;
 use App\Models\Empresa;
 use App\Models\MensajeContacto;
 use App\Models\Postulante;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 
 // Nombres con sufijo -ParaAyuda: las funciones de un archivo de test son globales al
@@ -202,4 +205,114 @@ test('el menú de perfil enlaza a la ayuda', function () {
         ->assertOk()
         ->assertSee('href="'.route('ayuda').'"', false)
         ->assertSee('Ayuda y contacto');
+});
+
+test('un mensaje de soporte técnico se avisa solo a la casilla de soporte', function () {
+    Mail::fake();
+
+    // Hay administración con cuenta, y aun así el soporte no le llega: tiene casilla propia.
+    User::factory()->create(['role' => 'admin', 'email' => 'admin@ad50.cl']);
+    config()->set('ad50.contacto.soporte', 'contacto.ad50.portal@gmail.com');
+
+    Livewire::actingAs(postulanteParaAyuda())
+        ->test(Ayuda::class)
+        ->set('motivo', 'soporte')
+        ->set('mensaje', 'No puedo subir mi currículum, la pantalla se queda cargando.')
+        ->call('enviar')
+        ->assertHasNoErrors();
+
+    Mail::assertSent(MensajeContactoRecibido::class, function (MensajeContactoRecibido $mail) {
+        return $mail->hasTo('contacto.ad50.portal@gmail.com')
+            && ! $mail->hasTo('admin@ad50.cl')
+            && $mail->mensajeContacto->motivo === 'soporte';
+    });
+
+    Mail::assertSentCount(1);
+});
+
+test('los demás motivos se avisan a todas las cuentas de administración', function () {
+    Mail::fake();
+
+    User::factory()->create(['role' => 'admin', 'email' => 'admin.uno@ad50.cl']);
+    User::factory()->create(['role' => 'superadmin', 'email' => 'jefe@ad50.cl']);
+    // Ruido: ni postulantes ni empresas reciben el aviso.
+    User::factory()->create(['role' => 'empresa', 'email' => 'ajena@empresa.cl']);
+    config()->set('ad50.contacto.soporte', 'contacto.ad50.portal@gmail.com');
+
+    foreach (['servicios', 'otras'] as $motivo) {
+        Livewire::actingAs(postulanteParaAyuda())
+            ->test(Ayuda::class)
+            ->set('motivo', $motivo)
+            ->set('mensaje', 'Quisiera saber qué incluye cada plan antes de decidirme.')
+            ->call('enviar')
+            ->assertHasNoErrors();
+    }
+
+    Mail::assertSent(MensajeContactoRecibido::class, function (MensajeContactoRecibido $mail) {
+        return $mail->hasTo('admin.uno@ad50.cl')
+            && $mail->hasTo('jefe@ad50.cl')
+            && ! $mail->hasTo('ajena@empresa.cl')
+            && ! $mail->hasTo('contacto.ad50.portal@gmail.com');
+    });
+
+    Mail::assertSentCount(2);
+});
+
+test('el aviso responde a quien escribió y lleva el mensaje', function () {
+    Mail::fake();
+
+    User::factory()->create(['role' => 'admin', 'email' => 'admin@ad50.cl']);
+    $autor = postulanteParaAyuda();
+
+    Livewire::actingAs($autor)
+        ->test(Ayuda::class)
+        ->set('motivo', 'servicios')
+        ->set('mensaje', 'Me interesa saber si el plan Premium incluye publicaciones.')
+        ->call('enviar');
+
+    Mail::assertSent(MensajeContactoRecibido::class, function (MensajeContactoRecibido $mail) use ($autor) {
+        // Responder desde el cliente de correo contesta a la persona, no a la casilla.
+        return $mail->hasReplyTo($autor->email)
+            && str_contains($mail->envelope()->subject, 'Consultas sobre los servicios')
+            && str_contains($mail->envelope()->subject, $autor->name);
+    });
+});
+
+test('el mensaje queda guardado aunque el correo falle', function () {
+    // La bandeja es la fuente de verdad; el correo es solo el aviso. Un servidor caído no
+    // puede hacer que la persona vea un error por algo que sí se guardó.
+    Mail::shouldReceive('to')->andThrow(new RuntimeException('SMTP caído'));
+    Log::spy();
+
+    User::factory()->create(['role' => 'admin', 'email' => 'admin@ad50.cl']);
+
+    Livewire::actingAs(postulanteParaAyuda())
+        ->test(Ayuda::class)
+        ->set('motivo', 'otras')
+        ->set('mensaje', 'Tengo una duda que no aparece en las preguntas frecuentes.')
+        ->call('enviar')
+        ->assertHasNoErrors()
+        ->assertSet('mensaje', '');
+
+    expect(MensajeContacto::query()->where('motivo', 'otras')->exists())->toBeTrue();
+
+    // El fallo no se traga en silencio: queda constancia para poder responder igual.
+    Log::shouldHaveReceived('error')
+        ->withArgs(fn (string $texto): bool => str_contains($texto, 'No se pudo avisar por correo'))
+        ->once();
+});
+
+test('sin cuentas de administración el mensaje se guarda igual', function () {
+    Mail::fake();
+
+    // Base sin admins: no hay a quién avisar, pero la bandeja conserva el mensaje.
+    Livewire::actingAs(postulanteParaAyuda())
+        ->test(Ayuda::class)
+        ->set('motivo', 'servicios')
+        ->set('mensaje', 'Quisiera cotizar el servicio para una empresa mediana.')
+        ->call('enviar')
+        ->assertHasNoErrors();
+
+    Mail::assertNothingSent();
+    expect(MensajeContacto::query()->where('motivo', 'servicios')->exists())->toBeTrue();
 });
