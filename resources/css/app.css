@@ -244,6 +244,12 @@ body [class~="text-[15px]"] {
   }
 
   .ad-card        { @apply bg-white border border-line-2 rounded-[18px] shadow-[var(--shadow-card)]; }
+
+  /* Tarjeta de contraste: fondo oscuro fijo y texto claro, para destacar una llamada a
+     la acción sobre el resto. El color va literal y no como `bg-ink` porque ese token se
+     invierte en modo oscuro: la tarjeta salía blanca con el texto blanco encima, ilegible.
+     En oscuro adopta la misma superficie que las demás tarjetas (ver `.dark` más abajo). */
+  .ad-card-contraste { @apply rounded-[14px] border border-transparent bg-[#343638] text-white; }
   .ad-card-pad    { @apply p-6; }
   .ad-card-head   { @apply flex items-center justify-between px-6 py-4 border-b border-line; }
 
@@ -373,6 +379,7 @@ body [class~="text-[15px]"] {
   }
 
   .dark .ad-card,
+  .dark .ad-card-contraste,
   .dark .ad-toggle-row {
     @apply bg-[#222528] border-line-2;
   }

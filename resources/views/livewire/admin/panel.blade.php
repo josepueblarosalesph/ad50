@@ -42,7 +42,7 @@
             {{-- Antes había aquí una tarjeta de «Seguridad y auditoría» que no llevaba a
                  ninguna parte porque esa pantalla no existe. En su lugar va la bandeja de
                  mensajes, que sí existe y sí necesita atención. --}}
-            <a href="{{ route('admin.mensajes') }}" wire:navigate class="block rounded-[14px] bg-ink p-5 text-white transition hover:-translate-y-0.5">
+            <a href="{{ route('admin.mensajes') }}" wire:navigate class="ad-card-contraste block p-5 transition hover:-translate-y-0.5">
                 <div class="flex items-start justify-between gap-3">
                     <flux:icon.inbox class="size-6 text-orange-500" />
                     @if ($mensajesPendientes > 0)
