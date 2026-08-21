@@ -8,6 +8,17 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
+ * Estas pruebas son de un mecanismo propio de PostgreSQL (las secuencias de las que sale
+ * el id autoincremental). Producción corre MariaDB, donde `SecuenciasPostgres` no hace
+ * nada y este SQL ni siquiera se parsea, así que ahí no aplican.
+ */
+beforeEach(function (): void {
+    if (DB::getDriverName() !== 'pgsql') {
+        $this->markTestSkipped('Las secuencias son propias de PostgreSQL.');
+    }
+});
+
+/**
  * Deja la secuencia como en una base recién migrada.
  *
  * Hace falta fijarla a mano porque las secuencias de Postgres NO son transaccionales:

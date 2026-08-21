@@ -36,7 +36,7 @@ class Postulacion extends Model
     protected function casts(): array
     {
         return [
-            'respuestas' => 'array',
+            'respuestas' => 'json:unicode',
         ];
     }
 

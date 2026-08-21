@@ -10,11 +10,27 @@ Plataforma web (Chile) que conecta **postulantes mayores de 50 años** con **emp
 - **Livewire 4 + Flux UI (free)** — toda la UI dinámica es server-side en PHP; sin framework JS de front. Alpine.js para interacciones puntuales.
 - **Laravel Fortify** — autenticación (login, registro, verificación de email, 2FA)
 - **Tailwind CSS 4** + **Vite** (bundling de `resources/css` y `resources/js`)
-- **PostgreSQL** como motor de base de datos. La conexión (`DB_CONNECTION=pgsql`, host, base, usuario y contraseña) se define en `.env` y apunta a la instancia gestionada en **Laravel Cloud**.
+- **Dos motores de base de datos**: producción corre **MariaDB**; **Laravel Cloud** sigue en pie como entorno de pruebas con **PostgreSQL**, igual que el desarrollo local y la suite. Ambos tienen que funcionar (ver *Dos motores de base de datos* más abajo).
 - **Pest 4** para tests; **Pint** para formateo; **Larastan/PHPStan** para análisis estático
 - **Gemini** (Google AI Studio) o **anthropic-ai/sdk** para leer el CV del postulante y prellenar su ficha; el proveedor se elige por configuración (ver *Autocompletado de la ficha desde el CV*)
 
 Comandos útiles: `composer dev` (levanta servidor + vite + cola), `composer setup` (instalación inicial), `php artisan test --compact`, `vendor/bin/pint --dirty`.
+
+## Dos motores de base de datos
+
+Producción migró a **MariaDB**. **Laravel Cloud** sigue vivo como entorno de pruebas con **PostgreSQL**, que es también lo que se usa en local y en la suite. **Todo cambio tiene que funcionar en los dos**, y hay diferencias que no se ven leyendo: se ven ejecutando.
+
+```
+php artisan test                           # PostgreSQL (phpunit.xml)
+vendor/bin/pest -c phpunit.mariadb.xml     # MariaDB, el motor de producción
+```
+
+Lo que ya nos mordió, para no repetirlo:
+
+- **DDL con SQL crudo.** `ALTER COLUMN ... TYPE ... USING` es exclusivo de Postgres; MySQL/MariaDB usan `MODIFY`. Ramifica con `DB::getDriverName() === 'pgsql'`, como hacen [2026_07_16_000005](database/migrations/2026_07_16_000005_convertir_estado_busquedas_a_procesos.php) y [2026_08_20_000001](database/migrations/2026_08_20_000001_modalidad_trabajo_a_json.php). `ALTER COLUMN ... SET DEFAULT` sí sirve en ambos.
+- **El tipo `json` de MariaDB es `longtext` con `CHECK (json_valid(...))`.** Una fila con contenido no-JSON aborta el `ALTER` al convertir una columna: normaliza los datos antes. Y el esquema reporta `longtext`, no `json`, si lo consultas.
+- **Acentos dentro de JSON.** `json_encode` los escapa por defecto (`"Inglés"` → `"Inglés"`). Postgres interpreta el JSON y encuentra la fila igual; **MariaDB compara el texto tal cual y no la encuentra**, así que `whereJsonContains` fallaba en silencio para cualquier valor con tilde. Por eso los modelos castean sus columnas JSON con **`json:unicode`** y no con `array`. Si agregas una columna JSON, usa ese cast. Lo cubre [CompatibilidadDeMotoresTest](tests/Feature/CompatibilidadDeMotoresTest.php).
+- **Las secuencias son de Postgres.** [SecuenciasPostgres](app/Support/SecuenciasPostgres.php) no hace nada en otros motores y sus tests se saltan solos.
 
 ## Roles y actores
 
@@ -170,8 +186,8 @@ Los flujos críticos están cubiertos en `tests/Feature/`: [PhaseOneMatchingTest
 
 ### Base de datos en las pruebas
 
-Los tests corren sobre **PostgreSQL local** (mismo motor que producción), en la base **`ad50testdb`**. La conexión está fijada en [phpunit.xml](phpunit.xml) con `force="true"` (`DB_CONNECTION=pgsql`, host `127.0.0.1`, base `ad50testdb`), de modo que la suite **nunca** hereda la conexión productiva del `.env` ni del shell. Los tests usan `RefreshDatabase`. Setup local: PostgreSQL como servicio de Homebrew + `createdb ad50testdb`.
+Los tests corren sobre **PostgreSQL local**, en la base **`ad50testdb`**; para ejecutarlos contra MariaDB, que es el motor de producción, está `phpunit.mariadb.xml`. La conexión está fijada en [phpunit.xml](phpunit.xml) con `force="true"` (`DB_CONNECTION=pgsql`, host `127.0.0.1`, base `ad50testdb`), de modo que la suite **nunca** hereda la conexión productiva del `.env` ni del shell. Los tests usan `RefreshDatabase`. Setup local: PostgreSQL como servicio de Homebrew + `createdb ad50testdb`.
 
 > ⚠️ **Nunca apuntes la suite a la base productiva** de `.env` (host `...pg.laravel.cloud`, base `ad50`): `RefreshDatabase` **elimina y recrea el esquema** y borraría los datos reales.
 
-**Ojo con las columnas `json` en PostgreSQL** (`experiencias`, `educaciones`, `idiomas`, `regiones_interes`, `industrias_interes`, `modalidad_trabajo`, `habilidades`, `criterios`, etc.): el tipo `json` de Postgres **no admite `=` ni `distinct`** (a diferencia de SQLite). No las compares por igualdad en `assertDatabaseHas(...)` ni uses `distinct()->count(...)` sobre ellas; verifícalas a través del modelo (`expect($postulante->fresh())->industrias_interes->toBe([...])`).
+**Ojo con las columnas `json` en PostgreSQL** (`experiencias`, `educaciones`, `idiomas`, `regiones_interes`, `industrias_interes`, `modalidad_trabajo`, `habilidades`, `criterios`, etc.): el tipo `json` de Postgres **no admite `=` ni `distinct`**. En MariaDB son `longtext` y sí los admiten, así que es fácil escribir una comparación que funciona contra producción y revienta en la suite. No las compares por igualdad en `assertDatabaseHas(...)` ni uses `distinct()->count(...)` sobre ellas; verifícalas a través del modelo (`expect($postulante->fresh())->industrias_interes->toBe([...])`).

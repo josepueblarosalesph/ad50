@@ -23,7 +23,7 @@ class Busqueda extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['criterios' => 'array'];
+    protected $casts = ['criterios' => 'json:unicode'];
 
     /** @return BelongsTo<Empresa, $this> */
     public function empresa(): BelongsTo

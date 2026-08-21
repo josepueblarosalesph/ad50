@@ -15,7 +15,7 @@ class BusquedaCandidato extends Model
     protected $casts = [
         'contactado_at' => 'datetime',
         'temporal' => 'boolean',
-        'criterios_detalle' => 'array',
+        'criterios_detalle' => 'json:unicode',
     ];
 
     /**

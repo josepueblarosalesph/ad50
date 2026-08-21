@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    La misma suite, pero contra MariaDB: el motor de producción.
+
+    `phpunit.xml` apunta a PostgreSQL, que es lo que corre en Laravel Cloud y en local.
+    Los dos tienen que seguir funcionando, y hay diferencias que solo aparecen
+    ejecutando (ver "Dos motores de base de datos" en CLAUDE.md).
+
+        brew services start mariadb
+        mariadb -u "$(whoami)" -e "create database ad50testdb_maria character set utf8mb4 collate utf8mb4_unicode_ci; \
+            create user if not exists 'ad50t'@'127.0.0.1' identified by 'ad50t'; \
+            grant all privileges on ad50testdb_maria.* to 'ad50t'@'127.0.0.1';"
+        vendor/bin/pest -c phpunit.mariadb.xml
+
+    Los tres tests de secuencias se saltan solos: son propios de Postgres.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <!-- El test que cubre el tope de 10 MB del CV construye un archivo de ese tamaño,
+             y con los 128 MB por defecto de PHP la suite se cae a la mitad. -->
+        <ini name="memory_limit" value="512M"/>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_LOCALE" value="es"/>
+        <env name="APP_FALLBACK_LOCALE" value="es"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array"/>
+        <!-- PostgreSQL local de pruebas. force="true" evita heredar la conexión productiva del shell/.env. -->
+        <env name="DB_URL" value="" force="true"/>
+        <env name="DB_CONNECTION" value="mariadb" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1" force="true"/>
+        <env name="DB_PORT" value="3306" force="true"/>
+        <env name="DB_DATABASE" value="ad50testdb_maria" force="true"/>
+        <env name="DB_USERNAME" value="ad50t" force="true"/>
+        <env name="DB_PASSWORD" value="ad50t" force="true"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

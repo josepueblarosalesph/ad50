@@ -113,9 +113,9 @@ class Publicacion extends Model
     protected function casts(): array
     {
         return [
-            'competencias' => 'array',
-            'idiomas' => 'array',
-            'preguntas' => 'array',
+            'competencias' => 'json:unicode',
+            'idiomas' => 'json:unicode',
+            'preguntas' => 'json:unicode',
             'empleo_inclusivo' => 'boolean',
             'postulacion_facil' => 'boolean',
             'notificar_postulaciones' => 'boolean',

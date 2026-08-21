@@ -69,7 +69,9 @@ it('no guarda ninguna columna de arreglo en un varchar', function (): void {
                 [$modelo->getTable(), $columna],
             );
 
-            if ($info !== null && ! in_array($info->data_type, ['json', 'jsonb', 'text'], true)) {
+            // MariaDB implementa `json` como longtext con un CHECK de json_valid, así que
+            // el tipo que reporta el esquema es ese, no "json".
+            if ($info !== null && ! in_array($info->data_type, ['json', 'jsonb', 'text', 'longtext'], true)) {
                 $sospechosas[] = "{$modelo->getTable()}.$columna ({$info->data_type})";
             }
         }

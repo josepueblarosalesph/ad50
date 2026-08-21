@@ -15,7 +15,7 @@ class Plan extends Model
     public const IVA = 0.19;
 
     protected $casts = [
-        'features' => 'array',
+        'features' => 'json:unicode',
         'destacado' => 'bool',
         'pago_unico' => 'bool',
         'max_contrataciones_anuales' => 'integer',
