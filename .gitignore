@@ -1,3 +1,6 @@
+# Basura de macOS: el Finder los crea en cada carpeta que abres.
+.DS_Store
+
 /.phpunit.cache
 /node_modules
 /public/build
