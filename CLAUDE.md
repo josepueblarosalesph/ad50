@@ -107,6 +107,8 @@ Tres reglas que sostienen el diseño:
 - **Solo se rellena lo que la persona todavía no ha guardado**, comparando contra la BD y no contra el formulario: en pantalla hay valores por defecto (nacionalidad "Chilena", tipo de documento "rut") que no son respuestas suyas.
 - **Los catálogos mandan.** Los de lista corta viajan como `enum` en el esquema; los grandes (30.000 cargos, 12.000 empresas) se calzan en PHP por texto normalizado, y lo que no calza cae en "Otros"/"Otra" con el texto original. No hay calce difuso a propósito: un cargo aproximado envenena el matching, y un campo en blanco no.
 
+**Dónde vive el archivo.** El CV se guarda siempre en el disco `local` (`storage/app/private/cvs`), con el nombre del disco fijo en el código —los 16 puntos que lo tocan: guardado, descargas para empresas, comprobación de existencia y el job de lectura—. **`FILESYSTEM_DISK` no lo mueve**: cambiar esa variable a `s3` no lleva los CV a S3, solo hace que Livewire intente subir ahí sus archivos temporales, y adjuntar un CV falla hasta que se define `LIVEWIRE_TEMPORARY_FILE_UPLOAD_DISK=local`. Consecuencia a tener presente: los CV viven en el disco del servidor, así que reemplazarlo o escalarlo se los lleva.
+
 **Proveedor intercambiable.** Quién lee el PDF se elige con `EXTRACTOR_CV_PROVEEDOR` (`gemini` por defecto, o `claude`). Los dos implementan [LectorDeCv](app/Services/LectorDeCv.php) y comparten instrucciones y esquema en [EsquemaCv](app/Support/EsquemaCv.php), así que devuelven la misma estructura y nada aguas abajo sabe cuál está activo:
 
 | Proveedor | Clase | API | Credencial |
@@ -122,6 +124,15 @@ Dos cosas que costaron encontrarse y conviene no volver a romper:
 Ese script hace **una sola petición** contra el proveedor configurado y muestra qué quedaría propuesto en la ficha; sirve para verificar sin gastar la cuota. Sin la api_key del proveedor elegido el bloque no se ofrece y todo el flujo manual sigue igual.
 
 **La lectura corre en la cola, y eso no es opcional.** Medida contra la API real, una extracción tarda entre 4 y 80 segundos según la carga del proveedor, y nginx corta la petición a los 60 (en local, Herd no define `fastcgi_read_timeout`, así que rige el default). Hacerlo dentro de la petición daba un 502 y una pantalla en negro. Por eso [autocompletarDesdeCv()](app/Livewire/Postulante/Ficha.php) guarda el archivo, despacha [LeerCvDelPostulante](app/Jobs/LeerCvDelPostulante.php) y la pantalla consulta el resultado con `wire:poll`; el estado intermedio vive en caché ([EstadoLecturaCv](app/Support/EstadoLecturaCv.php)), no en la base, porque solo sirve durante esos segundos.
+
+Para saber si todo eso está en pie en un servidor —sin ir adivinando pieza por pieza, que es lo difícil aquí porque **todas fallan en silencio**— está [cv:verificar](app/Console/Commands/VerificarExtractorCv.php):
+
+```
+php artisan cv:verificar          # credencial, migraciones, cola y disco
+php artisan cv:verificar --leer   # además encola una lectura real y la espera
+```
+
+El modo `--leer` es el único que demuestra que hay un worker vivo y que el proveedor responde, porque recorre el mismo camino que un CV de verdad. Gasta una petición de cuota.
 
 Consecuencia práctica: **necesitas un worker corriendo** (`php artisan queue:work`, o `composer dev` que ya lo levanta). Sin él la rueda gira sin avanzar; a los 3 minutos la propia pantalla lo advierte.
 
