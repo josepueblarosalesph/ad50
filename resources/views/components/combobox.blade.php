@@ -1,6 +1,7 @@
 @props([
     'model',
     'label',
+    'catalogo' => null,
     'opciones' => [],
     'valor' => '',
     'placeholder' => 'Escribe para buscar',
@@ -8,17 +9,38 @@
     'hideLabel' => false,
 ])
 
+{{-- Con `catalogo` las opciones se descargan de su propia URL en vez de viajar dentro
+     del HTML. Importa: cargos son 30.000 valores, o sea 733 KB por instancia, repetidos
+     en cada respuesta de Livewire. Así se baja a una descarga que el navegador cachea.
+     `opciones` sigue existiendo para listas cortas, donde incrustarlas no duele. --}}
+@php($urlCatalogo = $catalogo === null ? null : route('catalogos.mostrar', $catalogo).'?v='.\App\Support\CatalogosProfesionales::version($catalogo))
+
 {{-- wire:ignore.self: si el morph reescribe x-data (porque $valor cambió), Alpine reinicia el scope
      y las directivas hijas quedan apuntando al scope viejo. Los hijos sí se siguen morfeando. --}}
 <div
     wire:ignore.self
     wire:key="combobox-{{ $model }}"
+    @if ($catalogo !== null) data-catalogo="{{ $catalogo }}" @endif
     class="relative"
     x-data="{
         abierto: false,
         indice: -1,
         consulta: @js($valor),
         opciones: @js(array_values($opciones)),
+        cargando: @js($urlCatalogo !== null),
+        async init() {
+            if (@js($urlCatalogo) === null) return
+
+            // Una sola descarga por catálogo y por página, compartida por todas las
+            // instancias: sin esto, cinco experiencias pedirían cinco veces lo mismo.
+            window.catalogosAd50 ??= {}
+            window.catalogosAd50[@js($urlCatalogo)] ??= fetch(@js($urlCatalogo), { headers: { Accept: 'application/json' } })
+                .then((respuesta) => respuesta.ok ? respuesta.json() : [])
+                .catch(() => [])
+
+            this.opciones = await window.catalogosAd50[@js($urlCatalogo)]
+            this.cargando = false
+        },
         normalizar(texto) {
             return texto.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
         },
@@ -50,6 +72,11 @@
     }"
     x-on:click.outside="abierto = false"
     x-on:keydown.escape="abierto = false"
+    {{-- El texto visible vive en Alpine y el x-data no se vuelve a evaluar (wire:ignore.self
+         lo impide a propósito), así que un valor puesto desde el servidor —el autollenado
+         desde el CV, por ejemplo— no se vería. Con este evento el componente se resincroniza
+         cuando el servidor avisa que cambió algo. --}}
+    x-on:sincronizar-comboboxes.window="consulta = $wire.get(@js($model)) ?? ''"
 >
     <flux:field>
         @unless ($hideLabel)<flux:label>{{ $label }}</flux:label>@endunless
@@ -114,6 +141,7 @@
                 ></button>
             </li>
         </template>
-        <li x-show="filtradas.length === 0" class="px-3 py-2 text-[13px] text-gray-500">Sin coincidencias.</li>
+        <li x-show="cargando" class="px-3 py-2 text-[13px] text-gray-500">Cargando opciones…</li>
+        <li x-show="! cargando && filtradas.length === 0" class="px-3 py-2 text-[13px] text-gray-500">Sin coincidencias.</li>
     </ul>
 </div>

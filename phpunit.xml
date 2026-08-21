@@ -18,6 +18,9 @@
         </include>
     </source>
     <php>
+        <!-- El test que cubre el tope de 10 MB del CV construye un archivo de ese tamaño,
+             y con los 128 MB por defecto de PHP la suite se cae a la mitad. -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_LOCALE" value="es"/>
         <env name="APP_FALLBACK_LOCALE" value="es"/>

@@ -420,7 +420,9 @@ test('a company can modify search filters from the results sidebar', function ()
         ->assertSee('Filtros de la búsqueda')
         ->assertSee('Guardar búsqueda')
         ->assertSee('Institución de estudio')
-        ->assertSee('Universidad de Concepción ( UDEC )')
+        // El catálogo ya no viaja dentro del HTML: el combobox lo descarga de su URL.
+        ->assertSee('data-catalogo="institucion"', escape: false)
+        ->assertDontSee('Universidad de Concepción ( UDEC )')
         ->assertDontSee('Actualizar Filtro');
 
     Livewire::actingAs($empresaUser)

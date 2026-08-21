@@ -2,16 +2,20 @@
 
 namespace App\Livewire\Postulante;
 
+use App\Jobs\LeerCvDelPostulante;
 use App\Models\Postulante;
 use App\Rules\RutValido;
 use App\Services\CompletitudPerfil;
+use App\Services\ExtractorCv;
 use App\Services\MatchingService;
 use App\Support\CatalogosProfesionales;
+use App\Support\EstadoLecturaCv;
 use App\Support\Funcionalidades;
 use App\Support\RecomendacionPerfil;
 use App\Support\Rut;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -23,6 +27,45 @@ use Livewire\WithFileUploads;
 class Ficha extends Component
 {
     use WithFileUploads;
+
+    /**
+     * Versión del texto de consentimiento que se muestra al subir el CV. Súbela cuando
+     * cambie la redacción del bloque en `partials/autocompletar-cv.blade.php`: es lo que
+     * queda registrado y lo que permite saber qué autorizó cada persona.
+     */
+    public const VERSION_CONSENTIMIENTO_CV = '2026-08-19';
+
+    /**
+     * Qué sección de la ficha ocupa cada campo que el CV puede prellenar.
+     *
+     * Es también la lista blanca de lo que el autocompletado puede tocar: un campo que
+     * no esté aquí no se escribe, aunque el lector lo devuelva. El correo queda fuera a
+     * propósito, porque el de la cuenta es el que manda.
+     */
+    private const SECCION_POR_CAMPO = [
+        'nombres' => 'datos',
+        'apellidos' => 'datos',
+        'tipoDocumento' => 'datos',
+        'rut' => 'datos',
+        'telefono' => 'datos',
+        'linkedin' => 'datos',
+        'sitioWeb' => 'datos',
+        'anioNacimiento' => 'datos',
+        'aniosExperiencia' => 'datos',
+        'genero' => 'datos',
+        'nacionalidad' => 'datos',
+        'ciudad' => 'datos',
+        'titular' => 'acerca',
+        'resumenProfesional' => 'acerca',
+        'situacionLaboral' => 'acerca',
+        'expectativaRenta' => 'acerca',
+        'habilidades' => 'acerca',
+        'industriasInteres' => 'acerca',
+        'regionesInteres' => 'acerca',
+        'experiencias' => 'experiencia',
+        'educaciones' => 'educacion',
+        'idiomas' => 'idiomas',
+    ];
 
     public string $nombres = '';
 
@@ -110,6 +153,36 @@ class Ficha extends Component
 
     public ?string $cvRutaExistente = null;
 
+    /** PDF que se lee para prellenar la ficha (distinto del CV que se adjunta al final). */
+    public mixed $cvAutocompletar = null;
+
+    /** Consentimiento explícito para procesar el documento (Ley 21.719). */
+    public bool $aceptaProcesarCv = false;
+
+    /**
+     * Secciones que quedaron prellenadas en la última lectura, para señalarlas en pantalla.
+     *
+     * @var array<int, string>
+     */
+    public array $seccionesDesdeCv = [];
+
+    /**
+     * Avisos de la lectura (fechas ilegibles, campos descartados) para que la persona
+     * los revise antes de guardar.
+     *
+     * @var array<int, string>
+     */
+    public array $avisosCv = [];
+
+    /** La lectura salió con poca confianza o con señales de manipulación del documento. */
+    public bool $revisarLoLeido = false;
+
+    /** Hay una lectura en curso: la pantalla consulta por su resultado cada pocos segundos. */
+    public bool $leyendoCv = false;
+
+    /** Cuándo empezó, para avisar si se está demorando más de lo razonable. */
+    public ?int $lecturaIniciadaEn = null;
+
     public bool $modoOnboarding = false;
 
     public int $pasoActual = 1;
@@ -124,6 +197,29 @@ class Ficha extends Component
         $this->pasoActual = min(6, max(1, $postulante?->onboarding_paso ?? 1));
 
         $this->hidratar();
+        $this->retomarLecturaPendiente();
+    }
+
+    /**
+     * Retoma una lectura que quedó a medias.
+     *
+     * El estado de Livewire se pierde al recargar la página, pero el resultado vive en
+     * caché: sin esto, quien recarga —o vuelve más tarde— deja su lectura huérfana y no
+     * ve nunca los campos que ya se leyeron.
+     */
+    private function retomarLecturaPendiente(): void
+    {
+        $postulante = auth()->user()->postulante;
+
+        if ($postulante === null || EstadoLecturaCv::leer($postulante->id) === null) {
+            return;
+        }
+
+        $this->leyendoCv = true;
+        $this->lecturaIniciadaEn = (int) now()->timestamp;
+
+        // Si ya terminó, se aplica de inmediato; si no, la pantalla sigue consultando.
+        $this->revisarLecturaDeCv();
     }
 
     /** Carga (o recarga) todos los campos del formulario desde la BD. */
@@ -842,6 +938,236 @@ class Ficha extends Component
         return true;
     }
 
+    /**
+     * Encola la lectura del CV para prellenar la ficha.
+     *
+     * La lectura tarda del orden de un minuto y medio, así que no puede ocurrir dentro
+     * de la petición: se despacha a la cola y la pantalla consulta el resultado con
+     * `revisarLecturaDeCv()`. **Requiere un worker corriendo** (`php artisan queue:work`).
+     *
+     * Del perfil no persiste nada: los campos quedan en el formulario para que la
+     * persona los revise y los confirme paso a paso, y es esa confirmación la que
+     * convierte un error de lectura en algo corregible en vez de en un dato falso en la
+     * base. Lo único que sí se guarda es el archivo, para no volver a pedirlo al final.
+     */
+    public function autocompletarDesdeCv(): void
+    {
+        abort_unless(auth()->user()->role === 'postulante', 403);
+        abort_unless(ExtractorCv::disponible(), 404);
+
+        $this->resetErrorBag();
+        $this->validate([
+            'aceptaProcesarCv' => ['accepted'],
+            'cvAutocompletar' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+        ], [
+            'aceptaProcesarCv.accepted' => 'Necesitamos tu autorización para leer el documento.',
+            'cvAutocompletar.required' => 'Elige tu CV en PDF.',
+            'cvAutocompletar.mimes' => 'El archivo debe ser un PDF.',
+            'cvAutocompletar.max' => 'El archivo no puede pesar más de 10 MB.',
+        ]);
+
+        $postulante = Postulante::query()->where('user_id', auth()->id())->firstOrFail();
+
+        // Queda constancia de cuándo, desde dónde y qué texto se autorizó (Ley 21.719).
+        Log::info('consentimiento_cv', [
+            'postulante_id' => $postulante->id,
+            'ip' => request()->ip(),
+            'version_texto' => self::VERSION_CONSENTIMIENTO_CV,
+        ]);
+
+        // El archivo se guarda primero: es lo que lee el trabajo en segundo plano, y
+        // así tampoco hay que volver a pedirlo en el último paso del asistente.
+        if (! $this->guardarArchivoDelCv($postulante)) {
+            $this->addError('cvAutocompletar', 'No pudimos guardar el archivo. Inténtalo nuevamente.');
+
+            return;
+        }
+
+        $this->seccionesDesdeCv = [];
+        $this->avisosCv = [];
+        $this->revisarLoLeido = false;
+
+        EstadoLecturaCv::marcarEnCurso($postulante->id);
+        LeerCvDelPostulante::dispatch($postulante->id, $postulante->cv_ruta);
+
+        $this->leyendoCv = true;
+        $this->lecturaIniciadaEn = (int) now()->timestamp;
+        $this->aceptaProcesarCv = false;
+        $this->reset('cvAutocompletar');
+    }
+
+    /**
+     * Consulta si la lectura ya terminó. La pantalla la llama cada pocos segundos
+     * mientras `$leyendoCv` esté activo.
+     */
+    public function revisarLecturaDeCv(): void
+    {
+        if (! $this->leyendoCv) {
+            return;
+        }
+
+        $postulante = Postulante::query()->where('user_id', auth()->id())->firstOrFail();
+        $estado = EstadoLecturaCv::leer($postulante->id);
+
+        // Sin rastro del trabajo: o nunca se encoló o la caché ya lo olvidó.
+        if ($estado === null) {
+            $this->terminarLectura();
+            $this->addError('cvAutocompletar', 'Se perdió el resultado de la lectura. Vuelve a subir el archivo.');
+
+            return;
+        }
+
+        if (($estado['estado'] ?? null) === 'en_curso') {
+            return;
+        }
+
+        $this->terminarLectura();
+        EstadoLecturaCv::olvidar($postulante->id);
+
+        if (($estado['estado'] ?? null) === 'error') {
+            $this->addError('cvAutocompletar', (string) ($estado['mensaje'] ?? ''));
+
+            return;
+        }
+
+        $this->seccionesDesdeCv = $this->aplicarDatosDelCv($estado['datos'] ?? []);
+        $this->avisosCv = $estado['notas'] ?? [];
+        $this->revisarLoLeido = ($estado['flags'] ?? []) !== [] || ($estado['confianza'] ?? null) === 'baja';
+
+        // Los comboboxes (cargo, empresa, institución, carrera) guardan su texto visible
+        // en Alpine y no se enteran de un valor puesto desde el servidor: hay que avisarles.
+        $this->dispatch('sincronizar-comboboxes');
+    }
+
+    /**
+     * Segundos que lleva esperando la lectura en curso, para que la vista pueda avisar
+     * cuando se demora más de lo normal (típicamente, que no hay worker de cola).
+     */
+    public function segundosEsperando(): int
+    {
+        return $this->lecturaIniciadaEn === null ? 0 : max(0, (int) now()->timestamp - $this->lecturaIniciadaEn);
+    }
+
+    private function terminarLectura(): void
+    {
+        $this->leyendoCv = false;
+        $this->lecturaIniciadaEn = null;
+    }
+
+    /**
+     * Vuelca lo leído sobre los campos que la persona todavía no ha guardado. Lo que ya
+     * está en su ficha no se toca: el CV complementa, no reemplaza.
+     *
+     * @param  array<string, mixed>  $datos
+     * @return array<int, string> Secciones que quedaron prellenadas.
+     */
+    private function aplicarDatosDelCv(array $datos): array
+    {
+        $guardado = $this->valoresGuardados();
+        $secciones = [];
+
+        foreach (self::SECCION_POR_CAMPO as $campo => $seccion) {
+            $valor = $datos[$campo] ?? null;
+
+            if (blank($valor) || $this->yaRespondido($guardado[$campo] ?? null)) {
+                continue;
+            }
+
+            $this->{$campo} = match ($campo) {
+                // Se pasan por el normalizador de la ficha para garantizar que traen
+                // todas las claves que esperan el formulario y la validación.
+                'experiencias' => array_map(fn (array $e): array => $this->normalizarExperiencia($e), $valor),
+                'educaciones' => array_map(fn (array $e): array => $this->normalizarEducacion($e), $valor),
+                default => $valor,
+            };
+
+            if (! in_array($seccion, $secciones, true)) {
+                $secciones[] = $seccion;
+            }
+        }
+
+        return $secciones;
+    }
+
+    /**
+     * Si la persona ya respondió este campo.
+     *
+     * El cero no cuenta: `anios_experiencia` es `smallint not null default 0`, así que
+     * una ficha recién creada ya trae 0 y con `filled()` a secas el CV nunca habría
+     * podido rellenarlo.
+     */
+    private function yaRespondido(mixed $valor): bool
+    {
+        return filled($valor) && $valor !== 0;
+    }
+
+    /**
+     * Lo que la ficha ya tiene persistido, para no pisarlo.
+     *
+     * Se mira la BD y no el formulario porque en pantalla hay valores por defecto
+     * (nacionalidad "Chilena", tipo de documento "rut", una fila vacía de experiencia)
+     * que no son respuestas de la persona y sí se pueden reemplazar.
+     *
+     * @return array<string, mixed>
+     */
+    private function valoresGuardados(): array
+    {
+        $user = auth()->user();
+        $postulante = $user->postulante;
+
+        return [
+            'nombres' => $user->nombres,
+            'apellidos' => $user->apellidos,
+            // El tipo de documento solo cuenta como elegido si hay un documento cargado.
+            'tipoDocumento' => filled($postulante?->rut) ? $postulante->tipo_documento : null,
+            'rut' => $postulante?->rut,
+            'telefono' => $postulante?->telefono,
+            'linkedin' => $postulante?->linkedin,
+            'sitioWeb' => $postulante?->sitio_web,
+            'anioNacimiento' => $postulante?->anio_nacimiento,
+            'aniosExperiencia' => $postulante?->anios_experiencia,
+            'genero' => $postulante?->genero,
+            'nacionalidad' => $postulante?->nacionalidad,
+            'ciudad' => $postulante?->ciudad,
+            'titular' => $postulante?->titular,
+            'resumenProfesional' => $postulante?->resumen_profesional,
+            'situacionLaboral' => $postulante?->situacion_laboral,
+            'expectativaRenta' => $postulante?->expectativa_renta,
+            'habilidades' => $postulante?->habilidades,
+            'industriasInteres' => $postulante?->industrias_interes,
+            'regionesInteres' => $postulante?->regiones_interes,
+            'experiencias' => $postulante?->experiencias,
+            'educaciones' => $postulante?->educaciones,
+            'idiomas' => $postulante?->idiomas,
+        ];
+    }
+
+    /**
+     * Guarda el PDF leído como CV del perfil, para no pedirlo otra vez en su sección.
+     *
+     * Si el disco falla no se interrumpe nada: el prellenado ya cumplió su función y el
+     * archivo se puede volver a subir desde "Currículum Vitae".
+     */
+    private function guardarArchivoDelCv(Postulante $postulante): bool
+    {
+        $rutaAnterior = $postulante->cv_ruta;
+        $ruta = $this->cvAutocompletar->store('cvs', 'local');
+
+        if ($ruta === false) {
+            return false;
+        }
+
+        $postulante->update(['cv_ruta' => $ruta]);
+        $postulante->refresh();
+        $this->cvRutaExistente = $ruta;
+
+        if ($rutaAnterior !== null) {
+            Storage::disk('local')->delete($rutaAnterior);
+        }
+
+        return true;
+    }
+
     private function guardarCurriculum(): bool
     {
         $validated = $this->validate([
@@ -1217,6 +1543,7 @@ class Ficha extends Component
             // guardada, así que no se muestra a mitad del asistente. Se relee de la BD
             // para no quedar desfasado respecto de la barra tras guardar una sección.
             'recomendaciones' => $this->recomendacionesPendientes(),
+            'autocompletadoDisponible' => ExtractorCv::disponible(),
             'industrias' => CatalogosProfesionales::industrias(),
             'generos' => CatalogosProfesionales::generos(),
             'nacionalidades' => CatalogosProfesionales::nacionalidades(),

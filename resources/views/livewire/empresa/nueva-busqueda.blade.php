@@ -51,8 +51,8 @@
                     <div class="rounded-xl border border-line-2 p-4">
                         <livewire:empresa.selector-criterio :criterios="$criteriosActuales" wire:model="actividadEconomica" campo="actividad_economica" etiqueta="Actividad económica" wire:key="sel-actividad-economica" />
                     </div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" /></div>
-                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" /></div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="empresa" label="Empresa" catalogo="empresa" :valor="$empresa" placeholder="Escribe para buscar" /></div>
+                    <div class="space-y-2 rounded-xl border border-line-2 p-4"><x-combobox model="institucion" label="Institución de estudio" catalogo="institucion" :valor="$institucion" placeholder="Escribe para buscar" /></div>
                     <div class="self-start rounded-xl border border-line-2 p-4">
                         <label for="renta-max-form" class="flex items-center justify-between gap-2 text-[13px] font-bold text-ink">
                             Expectativa de renta

@@ -5,7 +5,7 @@
         <legend class="font-bold">{{ $index === 0 ? 'Última Experiencia' : 'Experiencia Adicional '.$index }}</legend>@if (count($experiencias) === 1)<span class="ad-chip ad-chip-orange">Obligatoria</span>@else<button type="button" wire:click="removeExperiencia({{ $index }})" class="inline-flex items-center gap-1 text-[13px] font-bold text-[#A93226] dark:text-red-400"><flux:icon.trash class="size-4" />Quitar</button>@endif</div>
         <div class="grid md:grid-cols-2 gap-4">
             <div>
-                <x-combobox model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" :opciones="$cargos" :valor="$experiencia['cargo'] ?? ''" error="experiencias.{{ $index }}.cargo" placeholder="Escribe para buscar" />
+                <x-combobox model="experiencias.{{ $index }}.cargo" label="Cargo u ocupación *" catalogo="cargo" :valor="$experiencia['cargo'] ?? ''" error="experiencias.{{ $index }}.cargo" placeholder="Escribe para buscar" />
                 @if (($experiencia['cargo'] ?? '') === 'Otros')
                     <div class="mt-3">
                         <flux:input wire:model.blur="experiencias.{{ $index }}.cargo_otro" label="Especifica el cargo u ocupación *" placeholder="Escribe el cargo u ocupación" />
@@ -16,7 +16,7 @@
                 @foreach ($tiposTrabajo as $opcion)<flux:select.option :value="$opcion">{{ $opcion }}</flux:select.option>@endforeach
             </flux:select>
             <div>
-                <x-combobox model="experiencias.{{ $index }}.empresa" label="Empresa *" :opciones="$empresas" :valor="$experiencia['empresa'] ?? ''" error="experiencias.{{ $index }}.empresa" placeholder="Escribe para buscar" />
+                <x-combobox model="experiencias.{{ $index }}.empresa" label="Empresa *" catalogo="empresa" :valor="$experiencia['empresa'] ?? ''" error="experiencias.{{ $index }}.empresa" placeholder="Escribe para buscar" />
                 @if (in_array(($experiencia['empresa'] ?? ''), ['Otra', 'Otros'], true))
                     <div class="mt-3">
                         <flux:input wire:model.blur="experiencias.{{ $index }}.empresa_otro" label="Especifica el nombre de la empresa *" placeholder="Escribe el nombre de la empresa" />

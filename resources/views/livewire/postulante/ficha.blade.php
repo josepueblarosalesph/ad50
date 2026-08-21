@@ -128,38 +128,53 @@
 
         @if ($modoOnboarding)
         {{-- Flujo paso a paso: secciones editables en línea --}}
+        @if ($autocompletadoDisponible && $pasoActual === 1)
+            <div class="mb-5">@include('livewire.postulante.partials.autocompletar-cv')</div>
+        @endif
         <div class="flex flex-col">
-            <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 1 ? 'hidden' : '' }}">
+            @if ($pasoActual === 1)
+            <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Mis datos</h2><p class="mt-1 text-[13px] text-gray-500">Tu identificación, tus formas de contacto y tu información personal.</p></div></div>
                 <div class="space-y-7 p-6">@include('livewire.postulante.partials.form-datos')</div>
                 <div class="flex gap-2 px-6 pb-6 text-[13px] leading-relaxed text-gray-500"><flux:icon.lock-closed class="mt-0.5 size-4 flex-none" />Tu RUT o pasaporte, teléfono y email solo se muestran a empresas con una suscripción activa.</div>
             </section>
+            @endif
 
-            <section id="acerca-de-mi" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 2 ? 'hidden' : '' }}">
+            @if ($pasoActual === 2)
+            <section id="acerca-de-mi" class="ad-card order-2 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Acerca de mí</h2><p class="mt-1 text-[13px] text-gray-500">Tu titular es la primera información que verán las empresas de ti.</p></div></div>
                 <div class="space-y-7 p-6">@include('livewire.postulante.partials.form-acerca')</div>
             </section>
+            @endif
 
-            <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 3 ? 'hidden' : '' }}">
+            @if ($pasoActual === 3)
+            <section id="experiencia" class="ad-card order-3 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Experiencia laboral</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una experiencia para aparecer en las búsquedas. Puedes agregar hasta 5.</p></div><button type="button" wire:click="addExperiencia" @disabled(count($experiencias) >= 5) class="ad-btn-ghost ad-btn-sm disabled:cursor-not-allowed disabled:opacity-50"><flux:icon.plus class="size-4" />Agregar experiencia</button></div>
                 <div class="p-6 space-y-5">@include('livewire.postulante.partials.form-experiencia')</div>
             </section>
+            @endif
 
-            <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 4 ? 'hidden' : '' }}">
+            @if ($pasoActual === 4)
+            <section id="educacion" class="ad-card order-4 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Formación académica</h2><p class="mt-1 text-[13px] text-gray-500">Obligatoria: necesitas al menos una formación para aparecer en las búsquedas.</p></div><button type="button" wire:click="addEducacion" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar educación</button></div>
                 <div class="space-y-5 p-6">@include('livewire.postulante.partials.form-educacion')</div>
             </section>
+            @endif
 
-            <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 5 ? 'hidden' : '' }}">
+            @if ($pasoActual === 5)
+            <section id="idiomas" class="ad-card order-5 mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head flex-wrap gap-4 bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[20px] font-extrabold text-orange-700 dark:text-orange-500">Idiomas</h2><p class="mt-1 text-[13px] text-gray-500">Opcional. Agrega los idiomas que manejas y su nivel.</p></div><button type="button" wire:click="addIdioma" class="ad-btn-ghost ad-btn-sm"><flux:icon.plus class="size-4" />Agregar idioma</button></div>
                 <div class="space-y-4 p-6">@include('livewire.postulante.partials.form-idiomas')</div>
             </section>
+            @endif
         </div>
 
-        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500 {{ $pasoActual !== 6 ? 'hidden' : '' }}">
+        @if ($pasoActual === 6)
+        <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Complementa tu perfil profesional con un documento actualizado.</p></div></div>
             <div class="space-y-4 p-6">@include('livewire.postulante.partials.form-curriculum')</div>
         </section>
+        @endif
 
         <div class="ad-card mt-5 flex flex-wrap items-center justify-between gap-3 p-5">
             <button type="button" wire:click="anterior" class="ad-btn-ghost ad-btn-sm {{ $pasoActual === 1 ? 'invisible' : '' }}" wire:loading.attr="disabled">Anterior</button>
@@ -251,11 +266,15 @@
 
         <section id="curriculum" class="ad-card mt-5 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Currículum Vitae</h2><p class="mt-1 text-[13px] text-gray-500">Tu CV en PDF.</p></div><button type="button" wire:click="editarSeccion('curriculum')" class="ad-btn-ghost ad-btn-sm"><flux:icon.pencil-square class="size-4" />Editar</button></div>
-            <div class="p-6">
+            <div class="space-y-5 p-6">
                 @if ($cvRutaExistente)
                     <div class="flex items-center gap-3 rounded-[10px] border border-[#BFE6CD] bg-match-100 p-3"><flux:icon.document class="size-5 flex-none text-match" /><div><b class="block text-[13px] text-match">CV cargado</b><span class="text-[12px] text-gray-600">Disponible para empresas con acceso autorizado.</span></div></div>
                 @else
                     <p class="text-[13px] text-gray-500">Aún no has subido tu CV.</p>
+                @endif
+
+                @if ($autocompletadoDisponible)
+                    @include('livewire.postulante.partials.autocompletar-cv')
                 @endif
             </div>
         </section>

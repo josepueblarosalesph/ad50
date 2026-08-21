@@ -377,7 +377,7 @@ test('a postulante can view the opportunities screen and professional profile', 
     expect($formAcerca)->toContain('Escribe una breve presentación');
     expect($formExperiencia)
         ->toContain('model="experiencias.{{ $index }}.cargo"')
-        ->toContain(':opciones="$cargos"')
+        ->toContain('catalogo="cargo"')
         ->toContain('error="experiencias.{{ $index }}.cargo"');
     expect($formCv)
         ->toContain('border-dashed border-orange-200 bg-orange-50/60')

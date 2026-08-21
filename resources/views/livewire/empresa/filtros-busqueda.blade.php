@@ -15,11 +15,11 @@
         </x-filtro-acordeon>
 
         <x-filtro-acordeon titulo="Institución de estudio" :count="filled($institucion) ? 1 : 0">
-            <x-combobox model="institucion" label="Institución de estudio" :hide-label="true" :opciones="$instituciones" :valor="$institucion" placeholder="Escribe para buscar" />
+            <x-combobox model="institucion" label="Institución de estudio" :hide-label="true" catalogo="institucion" :valor="$institucion" placeholder="Escribe para buscar" />
         </x-filtro-acordeon>
 
         <x-filtro-acordeon titulo="Empresa" :count="filled($empresa) ? 1 : 0">
-            <x-combobox model="empresa" label="Empresa" :hide-label="true" :opciones="$empresas" :valor="$empresa" placeholder="Escribe para buscar" />
+            <x-combobox model="empresa" label="Empresa" :hide-label="true" catalogo="empresa" :valor="$empresa" placeholder="Escribe para buscar" />
         </x-filtro-acordeon>
 
         <x-filtro-acordeon titulo="Años de experiencia" :count="($expMin > $limitesExperiencia['min'] || $expMax < $limitesExperiencia['max']) ? 1 : 0">

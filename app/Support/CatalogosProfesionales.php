@@ -10,6 +10,8 @@ class CatalogosProfesionales
 {
     private const CACHE_PREFIJO = 'catalogo_terminos:';
 
+    private const CACHE_PREFIJO_VERSION = 'catalogo_version:';
+
     /**
      * Valores vigentes de un catálogo administrable.
      *
@@ -59,7 +61,32 @@ class CatalogosProfesionales
     {
         foreach ($catalogo !== null ? [$catalogo] : CatalogosAdministrables::claves() as $clave) {
             Cache::forget(self::CACHE_PREFIJO.$clave);
+            Cache::forget(self::CACHE_PREFIJO_VERSION.$clave);
         }
+    }
+
+    /**
+     * Huella corta del contenido de un catálogo.
+     *
+     * Va en la URL con que el combobox lo descarga: mientras no cambie, el navegador
+     * reutiliza su copia; si un admin edita los términos, la URL cambia y la caché se
+     * invalida sola. Se cachea junto al catálogo para no rehacer el hash en cada render.
+     */
+    public static function version(string $catalogo): string
+    {
+        return Cache::remember(
+            self::CACHE_PREFIJO_VERSION.$catalogo,
+            now()->addHour(),
+            function () use ($catalogo): string {
+                $origen = CatalogosAdministrables::existe($catalogo)
+                    ? CatalogosAdministrables::definicion($catalogo)['origen']
+                    : null;
+
+                $valores = $origen === null ? [] : self::$origen();
+
+                return substr(md5((string) json_encode($valores)), 0, 12);
+            },
+        );
     }
 
     /** @return array<string, array<int, string>> */

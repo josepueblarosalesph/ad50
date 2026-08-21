@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\FlowController;
 use App\Http\Middleware\EnsureEmpresaActiva;
 use App\Http\Middleware\EnsurePostulanteOnboardingComplete;
@@ -47,6 +48,11 @@ Route::post('/pagos/flow/confirmar', [FlowController::class, 'confirmar'])->name
 Route::match(['get', 'post'], '/pagos/flow/retorno', [FlowController::class, 'retorno'])->name('pagos.flow.retorno');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Catálogos que los comboboxes descargan aparte en vez de llevarlos incrustados.
+    // Queda tras `auth` para no ampliar a quién se exponen: hoy solo viajan dentro de
+    // pantallas autenticadas.
+    Route::get('/catalogos/{catalogo}', CatalogoController::class)->name('catalogos.mostrar');
+
     // Ayuda va fuera de los grupos por rol: la usan postulantes, empresas y admin, y
     // queda antes del gating de onboarding y de activación a propósito, porque quien
     // está atascado en esos pasos es justamente quien necesita escribirnos.

@@ -35,6 +35,24 @@ return [
         ],
     ],
 
+    // Extractor de CV: convierte el PDF que sube el postulante en campos de su ficha
+    // (app/Services/ExtractorCv.php). `proveedor` elige quién lee el documento; sin la
+    // api_key de ese proveedor la funcionalidad queda oculta y el flujo manual sigue igual.
+    'extractor_cv' => [
+        'proveedor' => env('EXTRACTOR_CV_PROVEEDOR', 'gemini'),
+    ],
+
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        'modelo' => env('ANTHROPIC_MODELO', 'claude-opus-5'),
+    ],
+
+    // Gemini vía Google AI Studio (Interactions API).
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'modelo' => env('GEMINI_MODELO', 'gemini-3.7-flash'),
+    ],
+
     // Pasarela de pago Flow (https://www.flow.cl/docs/api.html).
     // Sandbox: https://sandbox.flow.cl/api — Producción: https://www.flow.cl/api
     'flow' => [

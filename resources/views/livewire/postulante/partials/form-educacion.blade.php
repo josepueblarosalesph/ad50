@@ -17,7 +17,7 @@
             @if ($esChile)
                 <div x-data="{ otro: false }" wire:key="institucion-wrap-{{ $index }}">
                     <div x-show="!otro">
-                        <x-combobox model="educaciones.{{ $index }}.institucion" label="Institución de educación *" :opciones="$instituciones" :valor="$educacion['institucion'] ?? ''" error="educaciones.{{ $index }}.institucion" placeholder="Escribe para buscar" />
+                        <x-combobox model="educaciones.{{ $index }}.institucion" label="Institución de educación *" catalogo="institucion" :valor="$educacion['institucion'] ?? ''" error="educaciones.{{ $index }}.institucion" placeholder="Escribe para buscar" />
                         <button type="button" x-on:click="otro = true" class="mt-1.5 text-[12px] font-semibold text-orange-600 transition hover:text-orange-500">¿No encuentras tu institución? Regístrala aquí</button>
                     </div>
                     <div x-show="otro" x-cloak>
@@ -42,7 +42,7 @@
                 @if ($esChile)
                     <div x-data="{ otro: false }" wire:key="carrera-wrap-{{ $index }}">
                         <div x-show="!otro">
-                            <x-combobox model="educaciones.{{ $index }}.carrera" label="Carrera *" :opciones="$carrerasEstudio" :valor="$educacion['carrera'] ?? ''" error="educaciones.{{ $index }}.carrera" placeholder="Escribe para buscar" />
+                            <x-combobox model="educaciones.{{ $index }}.carrera" label="Carrera *" catalogo="carrera" :valor="$educacion['carrera'] ?? ''" error="educaciones.{{ $index }}.carrera" placeholder="Escribe para buscar" />
                             <button type="button" x-on:click="otro = true" class="mt-1.5 text-[12px] font-semibold text-orange-600 transition hover:text-orange-500">¿No encuentras tu carrera? Regístrala aquí</button>
                         </div>
                         <div x-show="otro" x-cloak>

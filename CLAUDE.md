@@ -12,6 +12,7 @@ Plataforma web (Chile) que conecta **postulantes mayores de 50 años** con **emp
 - **Tailwind CSS 4** + **Vite** (bundling de `resources/css` y `resources/js`)
 - **PostgreSQL** como motor de base de datos. La conexión (`DB_CONNECTION=pgsql`, host, base, usuario y contraseña) se define en `.env` y apunta a la instancia gestionada en **Laravel Cloud**.
 - **Pest 4** para tests; **Pint** para formateo; **Larastan/PHPStan** para análisis estático
+- **Gemini** (Google AI Studio) o **anthropic-ai/sdk** para leer el CV del postulante y prellenar su ficha; el proveedor se elige por configuración (ver *Autocompletado de la ficha desde el CV*)
 
 Comandos útiles: `composer dev` (levanta servidor + vite + cola), `composer setup` (instalación inicial), `php artisan test --compact`, `vendor/bin/pint --dirty`.
 
@@ -68,6 +69,8 @@ El matching es **eager/precalculado**: se materializa en la tabla pivote en cada
 
 ## Catálogos profesionales
 
+**Los catálogos grandes no se incrustan en el HTML.** El de cargos son 30.000 valores: llevarlos dentro del `x-data` del combobox costaba 733 KB *por instancia*, reenviados en cada respuesta de Livewire (la ficha en onboarding pesaba 1,8 MB, y hasta 9,4 MB con todo lleno). Hoy el combobox recibe `catalogo="cargo"` y lo descarga de [CatalogoController](app/Http/Controllers/CatalogoController.php), una vez por página y cacheado por el navegador; la URL lleva `CatalogosProfesionales::version()` para invalidarla cuando un admin edita los términos. Si agregas un combobox, usa `catalogo=`; `:opciones=` queda solo para listas cortas.
+
 [app/Support/CatalogosProfesionales.php](app/Support/CatalogosProfesionales.php) es la **fuente de verdad** de valores permitidos: carreras (con sus especialidades anidadas), industrias, ciudades/regiones y cargos/áreas. Tanto la ficha del postulante como el formulario de búsqueda validan sus campos contra estos catálogos (`Rule::in(...)`), garantizando que el matching por igualdad exacta funcione. Al añadir opciones, hazlo aquí.
 
 ## Flujos de negocio
@@ -77,6 +80,34 @@ Un único formulario con selector de tipo (`?tipo=postulante|empresa`). Crea el 
 
 ### Onboarding del postulante
 Tras verificar email, el postulante es forzado a completar su ficha antes de acceder al panel: middleware [EnsurePostulanteOnboardingComplete](app/Http/Middleware/EnsurePostulanteOnboardingComplete.php) redirige a `postulante.ficha` mientras `onboarding_completado = false`. La ficha ([Postulante/Ficha](app/Livewire/Postulante/Ficha.php)) captura perfil profesional completo (experiencias, educación, idiomas, CV subido) y al guardar dispara el matching.
+
+### Autocompletado de la ficha desde el CV
+
+El postulante puede subir su CV en PDF y que la ficha se prellene sola: bloque "¿Tienes tu CV en PDF?" en el paso 1 del onboarding y en la sección Currículum del editor. Vive en [ExtractorCv](app/Services/ExtractorCv.php), que orquesta cinco pasos: validación del archivo (magic bytes, 10 MB, 15 páginas, rechazo de PDF con `/JS`, `/Launch`, `/EmbeddedFile`, `/AA` o un `/OpenAction` que sea una acción); lectura con [LectorDeCvClaude](app/Services/LectorDeCvClaude.php), que manda el PDF entero a Claude con salida forzada por JSON Schema; saneamiento de la salida (normalización Unicode, barrido de patrones de inyección, rechazo de HTML, marcadores de rol y URL fuera de lugar); mapeo a los catálogos con [FichaDesdeCv](app/Support/FichaDesdeCv.php); y un registro de auditoría que nunca incluye el contenido del documento.
+
+Tres reglas que sostienen el diseño:
+
+- **Nada del perfil se persiste automáticamente.** La extracción solo escribe en las propiedades del componente Livewire; la persona revisa cada paso y guarda. Lo único que sí se guarda es el archivo en `cv_ruta`. Esa confirmación es lo que convierte un error de lectura en algo corregible y no en un dato falso en la base.
+- **Solo se rellena lo que la persona todavía no ha guardado**, comparando contra la BD y no contra el formulario: en pantalla hay valores por defecto (nacionalidad "Chilena", tipo de documento "rut") que no son respuestas suyas.
+- **Los catálogos mandan.** Los de lista corta viajan como `enum` en el esquema; los grandes (30.000 cargos, 12.000 empresas) se calzan en PHP por texto normalizado, y lo que no calza cae en "Otros"/"Otra" con el texto original. No hay calce difuso a propósito: un cargo aproximado envenena el matching, y un campo en blanco no.
+
+**Proveedor intercambiable.** Quién lee el PDF se elige con `EXTRACTOR_CV_PROVEEDOR` (`gemini` por defecto, o `claude`). Los dos implementan [LectorDeCv](app/Services/LectorDeCv.php) y comparten instrucciones y esquema en [EsquemaCv](app/Support/EsquemaCv.php), así que devuelven la misma estructura y nada aguas abajo sabe cuál está activo:
+
+| Proveedor | Clase | API | Credencial |
+|---|---|---|---|
+| `gemini` | [LectorDeCvGemini](app/Services/LectorDeCvGemini.php) | Interactions API de Google AI Studio, vía `Http::` | `GEMINI_API_KEY` |
+| `claude` | [LectorDeCvClaude](app/Services/LectorDeCvClaude.php) | Messages API, vía `anthropic-ai/sdk` | `ANTHROPIC_API_KEY` |
+
+Dos cosas que costaron encontrarse y conviene no volver a romper:
+
+- La Interactions API **no devuelve `candidates`** como el antiguo `generateContent`, sino una lista `steps` con el turno completo; el texto está en el último paso `model_output`.
+- **Gemini rechaza el esquema completo (400) si trae un `enum` muy grande.** El de países (~190 valores) tumbaba toda la petición, con el mensaje inútil "Request contains an invalid argument". Por eso `pais` viaja como texto libre y se calza en PHP, igual que cargos y empresas. Si agregas un catálogo largo al esquema, compruébalo antes con `php scripts/probar-extractor-cv.php`.
+
+Ese script hace **una sola petición** contra el proveedor configurado y muestra qué quedaría propuesto en la ficha; sirve para verificar sin gastar la cuota. Sin la api_key del proveedor elegido el bloque no se ofrece y todo el flujo manual sigue igual.
+
+**La lectura corre en la cola, y eso no es opcional.** Medida contra la API real, una extracción tarda entre 4 y 80 segundos según la carga del proveedor, y nginx corta la petición a los 60 (en local, Herd no define `fastcgi_read_timeout`, así que rige el default). Hacerlo dentro de la petición daba un 502 y una pantalla en negro. Por eso [autocompletarDesdeCv()](app/Livewire/Postulante/Ficha.php) guarda el archivo, despacha [LeerCvDelPostulante](app/Jobs/LeerCvDelPostulante.php) y la pantalla consulta el resultado con `wire:poll`; el estado intermedio vive en caché ([EstadoLecturaCv](app/Support/EstadoLecturaCv.php)), no en la base, porque solo sirve durante esos segundos.
+
+Consecuencia práctica: **necesitas un worker corriendo** (`php artisan queue:work`, o `composer dev` que ya lo levanta). Sin él la rueda gira sin avanzar; a los 3 minutos la propia pantalla lo advierte.
 
 ### Activación de empresa (aprobación manual por admin)
 Las empresas **no se autoactivan**. Máquina de estados `estado_activacion`:
@@ -112,8 +143,8 @@ Definidas en [routes/web.php](routes/web.php). Estructura:
 app/
   Livewire/          # Componentes de UI por rol: Auth/, Postulante/, Empresa/, Admin/
   Models/            # Eloquent: User, Postulante, Empresa, Busqueda, BusquedaCandidato, Plan
-  Services/          # MatchingService (lógica de calce)
-  Support/           # CatalogosProfesionales, Rut (utilidades de dominio)
+  Services/          # MatchingService (lógica de calce), ExtractorCv (CV → ficha)
+  Support/           # CatalogosProfesionales, Rut, EsquemaCv, FichaDesdeCv
   Http/Middleware/   # Gating de onboarding y activación
   Rules/             # RutValido (validación RUT chileno)
   Concerns/          # Traits de validación reutilizables (perfil, password)
