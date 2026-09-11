@@ -7,7 +7,16 @@
     'placeholder' => 'Escribe para buscar',
     'error' => null,
     'hideLabel' => false,
+    'fijo' => null,
+    'fijoAyuda' => null,
 ])
+
+{{-- `fijo` es la opción de escape del catálogo («Otros» en cargos, «Otra» en empresas).
+     Se muestra siempre, al pie de la lista, aunque lo escrito no coincida con nada: con
+     30.000 cargos es normal que el propio no esté, y sin esto la lista respondía «Sin
+     coincidencias» y la persona quedaba sin salida, teniendo que adivinar que hay que
+     borrar y escribir «Otros» para que aparezca el campo de texto libre. Ponerlo solo
+     donde existe ese campo: si no, se elige un valor que nadie recoge. --}}
 
 {{-- Con `catalogo` las opciones se descargan de su propia URL en vez de viajar dentro
      del HTML. Importa: cargos son 30.000 valores, o sea 733 KB por instancia, repetidos
@@ -27,6 +36,7 @@
         indice: -1,
         consulta: @js($valor),
         opciones: @js(array_values($opciones)),
+        fijo: @js($fijo),
         cargando: @js($urlCatalogo !== null),
         async init() {
             if (@js($urlCatalogo) === null) return
@@ -47,9 +57,16 @@
         get filtradas() {
             const consulta = this.normalizar(this.consulta)
 
-            if (consulta === '') return this.opciones.slice(0, 50)
+            const coincidencias = consulta === ''
+                ? this.opciones
+                : this.opciones.filter((opcion) => this.normalizar(opcion).includes(consulta))
 
-            return this.opciones.filter((opcion) => this.normalizar(opcion).includes(consulta)).slice(0, 50)
+            // La fijada se dibuja aparte, al pie: fuera de aquí para no listarla dos veces.
+            return coincidencias.filter((opcion) => opcion !== this.fijo).slice(0, 50)
+        },
+        /** Lo que se ve, en orden: las coincidencias y, al final, la opción de escape. */
+        get visibles() {
+            return this.fijo === null ? this.filtradas : [...this.filtradas, this.fijo]
         },
         elegir(opcion) {
             this.consulta = opcion
@@ -64,7 +81,7 @@
             $wire.set('{{ $model }}', '')
         },
         mover(paso) {
-            const total = this.filtradas.length
+            const total = this.visibles.length
             if (total === 0) return
             this.abierto = true
             this.indice = (this.indice + paso + total) % total
@@ -88,7 +105,7 @@
                 x-on:input="abierto = true; indice = -1"
                 x-on:keydown.arrow-down.prevent="mover(1)"
                 x-on:keydown.arrow-up.prevent="mover(-1)"
-                x-on:keydown.enter.prevent="indice >= 0 ? elegir(filtradas[indice]) : (filtradas.length === 1 && elegir(filtradas[0]))"
+                x-on:keydown.enter.prevent="indice >= 0 ? elegir(visibles[indice]) : (filtradas.length === 1 && elegir(filtradas[0]))"
                 data-flux-control
                 placeholder="{{ $placeholder }}"
                 autocomplete="off"
@@ -143,5 +160,32 @@
         </template>
         <li x-show="cargando" class="px-3 py-2 text-[13px] text-gray-500">Cargando opciones…</li>
         <li x-show="! cargando && filtradas.length === 0" class="px-3 py-2 text-[13px] text-gray-500">Sin coincidencias.</li>
+
+        {{-- La opción de escape, siempre al pie y separada, para que no se pierda entre
+             las coincidencias ni desaparezca cuando no hay ninguna. Va dentro de
+             `visibles`, así que el teclado la alcanza como a cualquier otra. --}}
+        @if ($fijo !== null)
+            {{-- `sticky`: la lista muestra hasta 50 coincidencias con scroll, así que al pie
+                 «normal» habría que bajar para verla. Pegada al borde inferior está a la
+                 vista siempre, que es de lo que se trata. --}}
+            <li x-show="! cargando" class="sticky bottom-0 z-10 mt-1 border-t border-line bg-white pt-1 dark:border-[#5A5F64] dark:bg-[#222528]">
+                <button
+                    type="button"
+                    x-on:click="elegir(fijo)"
+                    x-on:mouseenter="indice = filtradas.length"
+                    x-bind:class="indice === filtradas.length
+                        ? 'bg-orange-100 text-orange-700 dark:bg-white/10 dark:text-[#F7C59E]'
+                        : 'text-ink dark:text-gray-200'"
+                    class="block w-full break-words px-3 py-2 text-left text-[13px] leading-snug transition"
+                    role="option"
+                    x-bind:aria-selected="indice === filtradas.length"
+                >
+                    <span class="font-semibold" x-text="fijo"></span>
+                    @if ($fijoAyuda !== null)
+                        <span class="mt-0.5 block text-[12px] font-normal text-gray-500">{{ $fijoAyuda }}</span>
+                    @endif
+                </button>
+            </li>
+        @endif
     </ul>
 </div>
