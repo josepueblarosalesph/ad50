@@ -11,7 +11,10 @@ use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
 use App\Rules\RutValido;
+use App\Support\InformeDeUsuarios;
 use App\Support\Rut;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DocumentoPdf;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -24,6 +27,7 @@ use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Todas las cuentas de la plataforma, con su rol, para el superadministrador.
@@ -690,6 +694,66 @@ class Usuarios extends Component
     protected function ordenPorDefecto(): string
     {
         return 'created_at';
+    }
+
+    /**
+     * Informe en PDF de las cuentas registradas, agrupadas por tipo y con su fecha de
+     * registro. El alcance elige si van postulantes y empresas juntos o uno solo.
+     *
+     * Va siempre sobre el registro completo y NO sobre lo que haya filtrado la pantalla:
+     * es un informe del padrón, y dos descargas hechas el mismo día con el mismo alcance
+     * tienen que entregar el mismo documento. Por eso no mira $buscar, $rol ni
+     * $verificacion. Las cuentas internas (admin y superadmin) nunca aparecen.
+     *
+     * Se arma en memoria y se envía sin tocar el disco: contiene datos personales de
+     * todas las personas registradas y no hay razón para dejar copias en el servidor.
+     */
+    public function descargarInforme(string $alcance = 'todos'): StreamedResponse
+    {
+        abort_unless(auth()->user()->esSuperadmin(), 403);
+
+        $pdf = Pdf::loadView('pdf.informe-usuarios', [
+            ...InformeDeUsuarios::armar($alcance),
+            'generadoEn' => now(),
+            'generadoPor' => auth()->user()->name,
+        ])->setPaper('a4');
+
+        $this->numerarPaginas($pdf);
+
+        $nombre = 'ad50-'.InformeDeUsuarios::ALCANCES[$alcance]['archivo'].'-'.now()->format('Y-m-d').'.pdf';
+
+        return response()->streamDownload(
+            fn () => print ($pdf->output()),
+            $nombre,
+            ['Content-Type' => 'application/pdf'],
+        );
+    }
+
+    /**
+     * Escribe «Página N de M» al pie de cada hoja.
+     *
+     * Va aquí y no en la plantilla porque el total de páginas no se conoce hasta que
+     * el documento está maquetado: `counter(pages)` en el CSS devuelve 0. Los
+     * marcadores {PAGE_NUM} y {PAGE_COUNT} sí los sustituye dompdf al cerrar cada
+     * página. La otra salida sería un <script type="text/php"> en la plantilla, pero
+     * eso exige encender isPhpEnabled, es decir permitir que una vista ejecute PHP
+     * dentro del renderizador.
+     */
+    private function numerarPaginas(DocumentoPdf $pdf): void
+    {
+        $pdf->render();
+
+        $dompdf = $pdf->getDomPDF();
+        $lienzo = $dompdf->getCanvas();
+
+        $lienzo->page_text(
+            $lienzo->get_width() - 130,
+            $lienzo->get_height() - 38,
+            'Página {PAGE_NUM} de {PAGE_COUNT}',
+            $dompdf->getFontMetrics()->getFont('DejaVu Sans'),
+            7.5,
+            [0.46, 0.47, 0.48],
+        );
     }
 
     #[Title('Usuarios · Administración AD+50')]

@@ -14,10 +14,37 @@
             </p>
         </div>
 
-        <button type="button" wire:click="abrirCrearUsuario" class="ad-btn-primary ad-btn-sm">
-            <flux:icon.user-plus class="size-4" />
-            Crear usuario
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+            {{-- El informe va sobre el padrón completo, no sobre lo filtrado en pantalla,
+                 y nunca incluye las cuentas internas (admin y superadmin). --}}
+            <flux:dropdown position="bottom" align="end">
+                <button type="button" class="ad-btn-ghost ad-btn-sm" aria-label="Elegir qué informe descargar"
+                        wire:loading.attr="disabled" wire:target="descargarInforme">
+                    <flux:icon.arrow-down-tray class="size-4" wire:loading.remove wire:target="descargarInforme" />
+                    <flux:icon.arrow-path class="size-4 animate-spin" wire:loading wire:target="descargarInforme" />
+                    <span wire:loading.remove wire:target="descargarInforme">Descargar informe</span>
+                    <span wire:loading wire:target="descargarInforme">Generando…</span>
+                    <flux:icon.chevron-down class="size-4" wire:loading.remove wire:target="descargarInforme" />
+                </button>
+
+                <flux:menu>
+                    <flux:menu.item wire:click="descargarInforme('todos')" icon="users">
+                        Postulantes y empresas
+                    </flux:menu.item>
+                    <flux:menu.item wire:click="descargarInforme('postulante')" icon="user">
+                        Solo postulantes
+                    </flux:menu.item>
+                    <flux:menu.item wire:click="descargarInforme('empresa')" icon="building-office-2">
+                        Solo empresas
+                    </flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+
+            <button type="button" wire:click="abrirCrearUsuario" class="ad-btn-primary ad-btn-sm">
+                <flux:icon.user-plus class="size-4" />
+                Crear usuario
+            </button>
+        </div>
     </div>
 
     @if (session('status'))
