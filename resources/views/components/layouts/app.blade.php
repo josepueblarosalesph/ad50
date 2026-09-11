@@ -12,6 +12,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @fluxAppearance
+
+    @include('partials.clarity')
 </head>
 <body class="min-h-screen bg-paper text-ink transition-colors duration-200">
 

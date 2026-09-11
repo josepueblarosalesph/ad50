@@ -121,7 +121,8 @@
             {{-- Misma tarjeta que Prospección de Candidatos: franja lateral, ficha a la
                  izquierda y columna de acciones a la derecha. Se repite el diseño para que
                  revisar candidatos se sienta igual en las dos pantallas. --}}
-            <article wire:key="favorito-{{ $candidato->id }}" class="ad-card relative overflow-hidden p-4 md:p-5">
+            {{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+            <article wire:key="favorito-{{ $candidato->id }}" data-clarity-mask="true" class="ad-card relative overflow-hidden p-4 md:p-5">
                 <div class="absolute inset-y-0 left-0 w-1 bg-orange-500"></div>
                 <div class="grid items-stretch gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-0">
                     <div class="flex min-w-0 items-center gap-4 md:pr-6">

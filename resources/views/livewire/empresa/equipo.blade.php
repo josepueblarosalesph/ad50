@@ -32,7 +32,8 @@
                             <th class="p-4"></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    {{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+                    <tbody data-clarity-mask="true">
                         <tr class="border-b border-line">
                             <td class="p-4 font-semibold">{{ $principal->name }}</td>
                             <td class="p-4 text-gray-500">{{ $principal->email }}</td>

@@ -131,7 +131,7 @@
         @if ($autocompletadoDisponible && $pasoActual === 1)
             <div class="mb-5">@include('livewire.postulante.partials.autocompletar-cv')</div>
         @endif
-        <div class="flex flex-col">
+        <div class="flex flex-col" data-clarity-mask="true">
             @if ($pasoActual === 1)
             <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
                 <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Mis datos</h2><p class="mt-1 text-[13px] text-gray-500">Tu identificación, tus formas de contacto y tu información personal.</p></div></div>
@@ -191,7 +191,7 @@
 
         @else
         {{-- Editor: resumen de solo lectura; "Editar" abre el modal de la sección. --}}
-        <div class="flex flex-col">
+        <div class="flex flex-col" data-clarity-mask="true">
         <section id="datos-personales" class="ad-card order-1 scroll-mt-24 border-l-[3px] border-l-orange-300 dark:border-l-orange-500">
             <div class="ad-card-head bg-orange-50/60 dark:bg-orange-50"><div><h2 class="text-[18px] font-extrabold text-orange-700 dark:text-orange-500">Mis datos</h2><p class="mt-1 text-[13px] text-gray-500">Identificación, contacto e información personal.</p></div><button type="button" wire:click="editarSeccion('datos')" class="ad-btn-ghost ad-btn-sm"><flux:icon.pencil-square class="size-4" />Editar</button></div>
                 <dl class="grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2">

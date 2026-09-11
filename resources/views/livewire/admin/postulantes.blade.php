@@ -70,7 +70,8 @@
                         <th class="p-4 text-right">Cuenta</th>
                     </tr>
                 </thead>
-                <tbody>
+                {{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+                    <tbody data-clarity-mask="true">
                     @forelse ($postulantes as $postulante)
                         <tr wire:key="postulante-{{ $postulante->id }}" class="border-b border-line last:border-0">
                             <td class="p-4">

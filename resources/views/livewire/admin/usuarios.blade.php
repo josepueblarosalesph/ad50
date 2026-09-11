@@ -96,7 +96,8 @@
                         <th class="p-4 text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody>
+                {{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+                    <tbody data-clarity-mask="true">
                     @forelse ($usuarios as $usuario)
                         <tr wire:key="usuario-{{ $usuario->id }}" class="border-b border-line last:border-0">
                             <td class="p-4">

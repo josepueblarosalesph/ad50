@@ -30,7 +30,8 @@
 
     <div class="space-y-3">
         @forelse ($mensajes as $mensaje)
-            <article wire:key="mensaje-{{ $mensaje->id }}" @class(['ad-card p-4 md:p-5', 'border-l-[3px] border-l-orange-500' => $mensaje->estado === 'nuevo'])>
+            {{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+            <article wire:key="mensaje-{{ $mensaje->id }}" data-clarity-mask="true" @class(['ad-card p-4 md:p-5', 'border-l-[3px] border-l-orange-500' => $mensaje->estado === 'nuevo'])>
                 <div class="flex flex-wrap items-start justify-between gap-4">
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center gap-2">

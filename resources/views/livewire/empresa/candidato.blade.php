@@ -1,4 +1,5 @@
-<div>
+{{-- Datos personales: fuera de las grabaciones de Clarity (ver partials/clarity). --}}
+<div data-clarity-mask="true">
     <x-slot:context>Empresa</x-slot:context>
     <x-slot:nav><x-nav-empresa activo="busquedas" /></x-slot:nav>
     <x-slot:sidebar>
