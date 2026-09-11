@@ -5,6 +5,7 @@ use App\Livewire\Empresa\Activacion;
 use App\Models\Empresa;
 use App\Models\Plan;
 use App\Models\User;
+use Carbon\Carbon;
 use Livewire\Livewire;
 
 test('an empresa without a paid plan is redirected to choose a plan before entering data', function () {
@@ -266,4 +267,108 @@ test('non admins cannot access empresa activation reviews', function () {
     $this->actingAs($user)
         ->get(route('admin.empresas'))
         ->assertForbidden();
+});
+
+test('the admin empresa lists are paginated and their counters stay global', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    // Fechas fijas y lejos de los cambios de hora de Chile. Con marcas relativas a
+    // now() basta con que una caiga en la hora que el país se salta al entrar el
+    // horario de verano para que MariaDB la rechace (error 1292): valida contra su
+    // zona horaria y esa hora no existe. Postgres la acepta, así que el test pasaría
+    // en un motor y no en el otro según el día en que se corra.
+    $base = Carbon::parse('2026-06-15 12:00:00');
+
+    // Una página entera de pendientes más una que sobra, para que haya segunda página.
+    foreach (range(1, 11) as $i) {
+        Empresa::query()->create([
+            'user_id' => User::factory()->create(['role' => 'empresa'])->id,
+            'razon_social' => "Pendiente {$i} SpA",
+            'estado_activacion' => 'pendiente',
+            'datos_enviados_at' => $base->copy()->subDays($i),
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(AdminEmpresas::class)
+        // La más antigua queda en la segunda página: el orden es por fecha de envío.
+        ->assertSee('Pendiente 1 SpA')
+        ->assertDontSee('Pendiente 11 SpA')
+        // El contador es del total, no de lo que cabe en la página.
+        ->assertSee('11 pendientes')
+        ->assertSee('11 solicitudes')
+        ->set('paginators.pendientes', 2)
+        ->assertSee('Pendiente 11 SpA')
+        ->assertDontSee('Pendiente 1 SpA');
+});
+
+test('each admin empresa list paginates on its own', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    // Fechas fijas y lejos de los cambios de hora de Chile. Con marcas relativas a
+    // now() basta con que una caiga en la hora que el país se salta al entrar el
+    // horario de verano para que MariaDB la rechace (error 1292): valida contra su
+    // zona horaria y esa hora no existe. Postgres la acepta, así que el test pasaría
+    // en un motor y no en el otro según el día en que se corra.
+    $base = Carbon::parse('2026-06-15 12:00:00');
+
+    foreach (range(1, 16) as $i) {
+        Empresa::query()->create([
+            'user_id' => User::factory()->create(['role' => 'empresa'])->id,
+            'razon_social' => "Inactiva {$i} SpA",
+            'estado_activacion' => 'inactiva',
+            'created_at' => $base->copy()->subDays($i),
+        ]);
+    }
+
+    Empresa::query()->create([
+        'user_id' => User::factory()->create(['role' => 'empresa'])->id,
+        'razon_social' => 'Pendiente Única SpA',
+        'estado_activacion' => 'pendiente',
+        'datos_enviados_at' => now(),
+    ]);
+
+    // Avanzar en «inactivas» no puede arrastrar a «pendientes»: son paginadores
+    // distintos y cada uno lleva su propio parámetro en la URL.
+    Livewire::actingAs($admin)
+        ->test(AdminEmpresas::class)
+        ->set('paginators.inactivas', 2)
+        ->assertSee('Inactiva 16 SpA')
+        ->assertDontSee('Inactiva 1 SpA')
+        ->assertSee('Pendiente Única SpA');
+});
+
+test('activating the last empresa on a page steps back instead of leaving it empty', function () {
+    $admin = User::factory()->create(['role' => 'admin']);
+
+    // Fechas fijas y lejos de los cambios de hora de Chile. Con marcas relativas a
+    // now() basta con que una caiga en la hora que el país se salta al entrar el
+    // horario de verano para que MariaDB la rechace (error 1292): valida contra su
+    // zona horaria y esa hora no existe. Postgres la acepta, así que el test pasaría
+    // en un motor y no en el otro según el día en que se corra.
+    $base = Carbon::parse('2026-06-15 12:00:00');
+
+    // Once pendientes: diez en la primera página y una sola en la segunda.
+    $empresas = collect(range(1, 11))->map(fn (int $i) => Empresa::query()->create([
+        'user_id' => User::factory()->create(['role' => 'empresa'])->id,
+        'razon_social' => "Pendiente {$i} SpA",
+        'estado_activacion' => 'pendiente',
+        'datos_enviados_at' => $base->copy()->subDays($i),
+    ]));
+
+    $ultima = $empresas->last();
+
+    $componente = Livewire::actingAs($admin)
+        ->test(AdminEmpresas::class)
+        ->set('paginators.pendientes', 2)
+        ->assertSee($ultima->razon_social)
+        ->call('activar', $ultima->id)
+        ->assertHasNoErrors();
+
+    // Habilitarla dejó la segunda página sin filas, así que se vuelve a la primera.
+    expect($componente->get('paginators.pendientes'))->toBe(1);
+
+    $componente
+        ->assertSee('Pendiente 1 SpA')
+        ->assertSee('10 pendientes');
 });

@@ -5,6 +5,14 @@
 @source '../views';
 @source '../../app/Livewire';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+/* La paginación la dibuja una vista que vive en el paquete de Livewire, no en
+   resources/views, así que sin esta línea Tailwind no ve sus clases y no las genera.
+   El bloque con los números de página es `hidden sm:flex-1 sm:flex ...`, y ninguna
+   vista propia usa `sm:flex` a secas: al no generarse, `hidden` no se revierte nunca.
+   En móvil quedaban « Anterior / Siguiente » y en escritorio nada en absoluto, porque
+   ahí `sm:hidden` sí existe y esconde ese otro bloque. Falla en silencio: el HTML trae
+   los botones, solo que el CSS los deja invisibles. */
+@source '../../vendor/livewire/livewire/src/Features/SupportPagination/views';
 
 [x-cloak] { display: none !important; }
 

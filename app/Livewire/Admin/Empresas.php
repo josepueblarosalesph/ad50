@@ -11,10 +11,23 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Empresas extends Component
 {
     use VerificaCuentas;
+    use WithPagination;
+
+    /**
+     * Tarjeta completa con los antecedentes de cada empresa: la revisión es de a pocas.
+     */
+    private const POR_PAGINA_PENDIENTES = 10;
+
+    /**
+     * Los dos listados de abajo son filas compactas, lado a lado. Comparten tamaño
+     * para que las dos columnas queden parejas.
+     */
+    private const POR_PAGINA_LISTAS = 15;
 
     /** Empresa cuyo formulario de plan está abierto. */
     public ?int $asignandoId = null;
@@ -120,7 +133,25 @@ class Empresas extends Component
             'activada_por' => auth()->id(),
         ]);
 
+        $this->ajustarPaginaPendientes();
+
         session()->flash('status', "La empresa {$empresa->razon_social} fue habilitada correctamente.");
+    }
+
+    /**
+     * Habilitar saca a la empresa de «pendientes». Si era la última de la página en la
+     * que estabas, esa página deja de existir y el listado se vería vacío: se retrocede
+     * a la última que sí tiene filas.
+     */
+    private function ajustarPaginaPendientes(): void
+    {
+        $paginas = max(1, (int) ceil(
+            Empresa::query()->where('estado_activacion', 'pendiente')->count() / self::POR_PAGINA_PENDIENTES,
+        ));
+
+        if ($this->getPage('pendientes') > $paginas) {
+            $this->setPage($paginas, 'pendientes');
+        }
     }
 
     #[Title('Empresas · Administración AD+50')]
@@ -128,9 +159,14 @@ class Empresas extends Component
     public function render(): View
     {
         return view('livewire.admin.empresas', [
-            'pendientes' => Empresa::query()->with('user', 'plan')->where('estado_activacion', 'pendiente')->latest('datos_enviados_at')->get(),
-            'inactivas' => Empresa::query()->with('user', 'plan')->where('estado_activacion', 'inactiva')->latest()->get(),
-            'activas' => Empresa::query()->with('user', 'activadaPor', 'plan')->where('estado_activacion', 'activa')->latest('activada_at')->get(),
+            // Un paginador por listado, cada uno con su propio parámetro en la URL: si
+            // compartieran `page`, avanzar en uno movería también a los otros dos.
+            'pendientes' => Empresa::query()->with('user', 'plan')->where('estado_activacion', 'pendiente')
+                ->latest('datos_enviados_at')->paginate(self::POR_PAGINA_PENDIENTES, pageName: 'pendientes'),
+            'inactivas' => Empresa::query()->with('user', 'plan')->where('estado_activacion', 'inactiva')
+                ->latest()->paginate(self::POR_PAGINA_LISTAS, pageName: 'inactivas'),
+            'activas' => Empresa::query()->with('user', 'activadaPor', 'plan')->where('estado_activacion', 'activa')
+                ->latest('activada_at')->paginate(self::POR_PAGINA_LISTAS, pageName: 'activas'),
             'planes' => Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get(),
         ]);
     }

@@ -725,3 +725,20 @@ test('users cannot open dashboards for another role', function () {
     $this->actingAs($postulante)->get(route('empresa.busquedas.index'))->assertForbidden();
     $this->actingAs($postulante)->get(route('admin.panel'))->assertForbidden();
 });
+
+test('tailwind scans the livewire pagination view so the page numbers are generated', function () {
+    // La paginación no la dibuja una vista nuestra: vive dentro del paquete de Livewire.
+    // El bloque con los números de página es `hidden sm:flex-1 sm:flex ...`, de modo que
+    // depende de que Tailwind genere esas variantes. Como ninguna vista propia usa
+    // `sm:flex` a secas, si el directorio del paquete no está entre los @source la clase
+    // no se genera, `hidden` no se revierte nunca y el listado queda sin números en todos
+    // los anchos: pagina bien, pero no puedes ver ni elegir la página. Falla en silencio,
+    // porque el HTML sí trae los botones.
+    $vista = base_path('vendor/livewire/livewire/src/Features/SupportPagination/views/tailwind.blade.php');
+
+    expect($vista)->toBeReadableFile();
+    expect(file_get_contents($vista))->toContain('sm:flex');
+
+    expect(file_get_contents(resource_path('css/app.css')))
+        ->toContain("@source '../../vendor/livewire/livewire/src/Features/SupportPagination/views';");
+});
