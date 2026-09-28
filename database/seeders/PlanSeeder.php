@@ -18,6 +18,10 @@ class PlanSeeder extends Seeder
     private function planes(): array
     {
         return [
+            // El único que la plataforma concede sola, al registrarse una empresa. Los
+            // demás quedan para asignación manual desde el panel de admin: hoy no se
+            // contratan (ver App\Livewire\Empresa\Planes).
+            ['codigo' => Plan::CODIGO_ILIMITADO] + Plan::definicionIlimitado(),
             [
                 'codigo' => 'empresa_basic',
                 'nombre' => 'Básico',

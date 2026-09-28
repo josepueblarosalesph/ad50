@@ -170,7 +170,7 @@
                 <span class="mx-auto grid size-12 place-items-center rounded-full bg-orange-100 text-orange-600"><flux:icon.lock-closed class="size-6" /></span>
                 <p class="mt-3 text-[13px] leading-relaxed text-gray-600">Desbloquea este perfil para ver el nombre completo, los datos de contacto (RUT, teléfono, correo, LinkedIn) y descargar su CV.</p>
                 @if ($planVigente)
-                    <p class="mt-3 text-[12px] font-bold text-orange-600">{{ $desbloqueosDisponibles }} {{ $desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles' }}</p>
+                    <p class="mt-3 text-[12px] font-bold text-orange-600">{{ $desbloqueosIlimitados ? 'Desbloqueos ilimitados' : $desbloqueosDisponibles.' '.($desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles') }}</p>
                     <button type="button" wire:click="desbloquear" wire:confirm="Desbloquear este perfil descontará 1 desbloqueo de tu plan. ¿Continuar?" @disabled($desbloqueosDisponibles < 1) class="ad-btn-primary ad-btn-sm mt-3 w-full justify-center disabled:opacity-60"><flux:icon.lock-open class="size-4" />Desbloquear perfil</button>
                     @if ($desbloqueosDisponibles < 1)
                         <p class="mt-2 text-[12px] text-gray-500">No te quedan desbloqueos en tu plan. Revisa tus planes para ampliar el cupo.</p>

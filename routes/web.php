@@ -40,6 +40,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', Landing::class)->name('home');
 Route::get('/registro', Register::class)->name('registro');
+// Mientras el cobro a empresas esté apagado, esta página se redirige al inicio desde el
+// propio componente (ver App\Livewire\Planes::mount()); la ruta se mantiene para que
+// vuelva sola al encender AD50_COBRO_EMPRESAS.
 Route::get('/planes', Planes::class)->name('planes');
 Route::get('/quienes-somos', QuienesSomos::class)->name('quienes-somos');
 

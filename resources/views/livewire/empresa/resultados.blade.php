@@ -59,7 +59,7 @@
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:justify-end">
             <p class="text-[13px] text-gray-500">@if ($criterios !== [])Mostrando {{ $candidatos->total() }} que cumplen los filtros seleccionados.@else Marca perfiles para construir tu selección sin salir del listado.@endif</p>
             @if ($planVigente)
-                <p class="inline-flex items-center gap-1 text-[12px] font-bold text-orange-600"><flux:icon.lock-open class="size-3.5" />{{ $desbloqueosDisponibles }} {{ $desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles' }}</p>
+                <p class="inline-flex items-center gap-1 text-[12px] font-bold text-orange-600"><flux:icon.lock-open class="size-3.5" />{{ $desbloqueosIlimitados ? 'Desbloqueos ilimitados' : $desbloqueosDisponibles.' '.($desbloqueosDisponibles === 1 ? 'desbloqueo disponible' : 'desbloqueos disponibles') }}</p>
             @endif
         </div>
     </div>

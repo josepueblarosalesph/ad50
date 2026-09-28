@@ -12,7 +12,9 @@
             </div>
             <x-mobile-menu id="quienes-somos-mobile-navigation">
                 <a href="{{ route('home') }}"><flux:icon.arrow-left class="mr-2 size-4" />Volver al inicio</a>
-                <a href="{{ route('planes') }}">Planes</a>
+                @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                    <a href="{{ route('planes') }}">Planes</a>
+                @endif
                 <a href="{{ route('registro', ['tipo' => 'empresa']) }}">Crear cuenta</a>
             </x-mobile-menu>
         </div>
@@ -167,7 +169,9 @@
                             Crear cuenta
                             <flux:icon.arrow-right class="size-4" />
                         </a>
-                        <a href="{{ route('planes') }}" class="inline-flex items-center gap-2 rounded-[12px] border border-white/70 px-6 py-3 font-bold text-white transition hover:bg-white/10">Ver planes</a>
+                        @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                            <a href="{{ route('planes') }}" class="inline-flex items-center gap-2 rounded-[12px] border border-white/70 px-6 py-3 font-bold text-white transition hover:bg-white/10">Ver planes</a>
+                        @endif
                     </div>
                 </div>
 
@@ -208,7 +212,9 @@
                 </div>
                 <div class="grid grid-cols-2 gap-x-12 gap-y-3 text-[15px] font-bold sm:grid-cols-2">
                     <a href="{{ route('home') }}" class="hover:text-white">Inicio</a>
-                    <a href="{{ route('planes') }}" class="hover:text-white">Planes</a>
+                    @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                        <a href="{{ route('planes') }}" class="hover:text-white">Planes</a>
+                    @endif
                     <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="hover:text-white">Crear cuenta</a>
                     <a href="mailto:contacto@adconsulting.cl" class="hover:text-white">Contacto</a>
                 </div>

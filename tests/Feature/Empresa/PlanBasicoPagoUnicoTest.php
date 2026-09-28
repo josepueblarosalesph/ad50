@@ -9,6 +9,11 @@ use App\Models\User;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 
+// El cobro a empresas está apagado en producción (config/ad50.php): estas pruebas lo
+// encienden porque cubren justamente la máquina que quedó dormida —planes, cupones y
+// pasarela— y que vuelve entera al encender el interruptor.
+beforeEach(fn () => config()->set('ad50.funcionalidades.cobro_empresas', true));
+
 /** Plan Básico tal como lo deja el seeder: pago único, hasta 3 al año. */
 function planBasico(): Plan
 {

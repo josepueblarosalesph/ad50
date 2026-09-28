@@ -25,7 +25,9 @@ test('database seeders create diverse and filterable demo data', function () {
         ->and(Publicacion::query()->distinct()->count('modalidad'))->toBe(3)
         ->and(Publicacion::query()->distinct()->count('comuna'))->toBeGreaterThanOrEqual(6)
         ->and(Publicacion::query()->where('estado', 'publicada')->count())->toBe(8)
-        ->and(Plan::query()->where('audiencia', 'empresa')->count())->toBe(3)
+        // Tres planes de pago más el ilimitado sin costo que reciben las empresas hoy.
+        ->and(Plan::query()->where('audiencia', 'empresa')->count())->toBe(4)
+        ->and(Plan::query()->where('codigo', Plan::CODIGO_ILIMITADO)->firstOrFail()->precio_uf)->toBe('0.00')
         ->and(Plan::query()->where('codigo', 'empresa_basic')->firstOrFail()->precio_uf)->toBe('5.00')
         ->and(Plan::query()->where('codigo', 'empresa_pro')->firstOrFail()->precio_uf)->toBe('30.00')
         ->and(Plan::query()->where('codigo', 'empresa_premium')->firstOrFail()->precio_uf)->toBe('45.00')

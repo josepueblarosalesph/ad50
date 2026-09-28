@@ -114,7 +114,7 @@ test('la administración de usuarios se ofrece solo al contacto administrador', 
         route('empresa.panel'),
         route('empresa.busquedas.index'),
         route('empresa.publicaciones.index'),
-        route('empresa.planes'),
+        route('empresa.favoritos'),
     ];
 
     foreach ($vistas as $url) {

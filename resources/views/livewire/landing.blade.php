@@ -46,7 +46,9 @@
                             <flux:menu.item href="#como-postulantes" icon="user">Postulantes</flux:menu.item>
                         </flux:menu>
                     </flux:dropdown>
-                    <a href="#planes" class="rounded-[14px] border border-white/70 bg-white/75 px-4 py-2.5 shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Planes</a>
+                    @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                        <a href="#planes" class="rounded-[14px] border border-white/70 bg-white/75 px-4 py-2.5 shadow-[0_8px_30px_rgba(52,54,56,.08)] backdrop-blur-md transition duration-200 hover:bg-orange-100 hover:text-orange-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500">Planes</a>
+                    @endif
                 </div>
 
                 @auth
@@ -80,7 +82,9 @@
                     <a href="#quienes-somos">Quiénes somos</a>
                     <a href="#como-empresas"><flux:icon.building-office-2 class="mr-2 size-4" />Cómo funciona para empresas</a>
                     <a href="#como-postulantes"><flux:icon.user class="mr-2 size-4" />Cómo funciona para postulantes</a>
-                    <a href="#planes">Planes</a>
+                    @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                        <a href="#planes">Planes</a>
+                    @endif
                     <div class="my-2 h-px bg-line"></div>
                     @auth
                         <a href="{{ route(auth()->user()->dashboardRouteName()) }}">{{ auth()->user()->dashboardLabel() }}</a>
@@ -198,7 +202,7 @@
                     @foreach ([
                         ['adjustments-horizontal', '01', 'Configura la búsqueda', 'Define cargo, experiencia, industria y ubicación según las necesidades reales del desafío.'],
                         ['user-group', '02', 'Recibe una lista relevante', 'AD+50 muestra profesionales que cumplen los criterios, reduciendo revisión manual y ruido.'],
-                        ['check-badge', '03', 'Evalúa y contacta', 'Compara perfiles profesionales, guarda favoritos y accede a sus datos de contacto con un plan activo.'],
+                        ['check-badge', '03', 'Evalúa y contacta', 'Compara perfiles profesionales, guarda favoritos y accede a sus datos de contacto.'],
                     ] as [$icon, $number, $title, $description])
                         <li class="group relative grid grid-cols-[64px_1fr] gap-6 pb-9 last:pb-0">
                             @unless ($loop->last)
@@ -218,6 +222,12 @@
                     @endforeach
                 </ol>
             </div>
+
+            {{-- Vive aquí y no en la sección de planes porque no habla de precios: describe
+                 el proceso de selección, y sigue en pie con el cobro apagado. --}}
+            @unless (\App\Support\Funcionalidades::cobroAEmpresas())
+                <x-plan-benefits class="mt-20" />
+            @endunless
         </div>
     </section>
 
@@ -261,6 +271,9 @@
         </div>
     </section>
 
+    {{-- Planes. Ocultos mientras la plataforma no le cobre a las empresas; la sección
+         entera vuelve con AD50_COBRO_EMPRESAS=true (ver config/ad50.php). --}}
+    @if (\App\Support\Funcionalidades::cobroAEmpresas())
     {{-- Planes --}}
     <section id="planes" class="scroll-mt-24 border-t border-line bg-white">
         <div class="mx-auto max-w-[1240px] px-6 py-24 lg:px-10 lg:py-28">
@@ -330,6 +343,7 @@
             <x-plan-benefits class="mt-10" />
         </div>
     </section>
+    @endif
 
     {{--
         Sección "Confiaron en nosotros", oculta.
@@ -415,7 +429,9 @@
                 <div class="grid grid-cols-2 gap-x-12 gap-y-3 text-[15px] font-bold sm:grid-cols-3">
                     <div class="flex flex-col gap-3">
                         <a href="#quienes-somos" class="hover:text-white">Quiénes somos</a>
-                        <a href="#planes" class="hover:text-white">Nuestros planes</a>
+                        @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                            <a href="#planes" class="hover:text-white">Nuestros planes</a>
+                        @endif
                         <a href="mailto:contacto@adconsulting.cl" class="hover:text-white">Contáctanos</a>
                     </div>
                     <div class="flex flex-col gap-3">

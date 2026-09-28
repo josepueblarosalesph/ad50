@@ -53,7 +53,9 @@
                                 @if (auth()->user()->esPrincipalEmpresa())
                                     <flux:menu.item :href="route('empresa.equipo')" icon="users">Administración de usuarios</flux:menu.item>
                                 @endif
-                                <flux:menu.item :href="route('empresa.planes')" icon="credit-card">Mi suscripción</flux:menu.item>
+                                @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                                    <flux:menu.item :href="route('empresa.planes')" icon="credit-card">Mi suscripción</flux:menu.item>
+                                @endif
                             @endif
                             <flux:menu.item :href="route('appearance.edit')" icon="cog-6-tooth">Configuración</flux:menu.item>
                             {{-- Ayuda vive aquí y no en el menú superior: se busca cuando
@@ -87,7 +89,9 @@
                             @if (auth()->user()->esPrincipalEmpresa())
                                 <a href="{{ route('empresa.equipo') }}"><flux:icon.users class="mr-2 size-4" />Administración de usuarios</a>
                             @endif
-                            <a href="{{ route('empresa.planes') }}"><flux:icon.credit-card class="mr-2 size-4" />Mi suscripción</a>
+                            @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                                <a href="{{ route('empresa.planes') }}"><flux:icon.credit-card class="mr-2 size-4" />Mi suscripción</a>
+                            @endif
                         @endif
                         <a href="{{ route('appearance.edit') }}"><flux:icon.cog-6-tooth class="mr-2 size-4" />Configuración</a>
                         <form method="POST" action="{{ route('logout') }}">

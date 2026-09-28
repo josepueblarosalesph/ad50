@@ -10,7 +10,12 @@
             <div>
                 <span class="ad-eyebrow">Activación de empresa</span>
                 <h1 class="mt-3 text-[30px] font-extrabold">Completa los datos de tu empresa</h1>
-                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">Tu pago ya fue confirmado. Completa los datos restantes para terminar de activar tu cuenta y acceder a los perfiles.</p>
+                <p class="mt-2 max-w-2xl text-[14px] leading-relaxed text-gray-500">
+                    @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                        Tu pago ya fue confirmado.
+                    @endif
+                    Completa los datos restantes para terminar de activar tu cuenta y acceder a los perfiles.
+                </p>
             </div>
         </div>
 
@@ -36,14 +41,27 @@
                 </button>
 
                 <h2 class="pr-10 text-[22px] font-extrabold">¡Bienvenido! 👋</h2>
-                <p class="mt-2 max-w-2xl pr-10 text-[14px] leading-relaxed text-gray-600">Ya completaste el pago. Solo falta ingresar los datos de tu empresa:</p>
+                <p class="mt-2 max-w-2xl pr-10 text-[14px] leading-relaxed text-gray-600">
+                    @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                        Ya completaste el pago.
+                    @endif
+                    Solo falta ingresar los datos de tu empresa:
+                </p>
 
                 <div class="mt-6 flex flex-col items-stretch gap-4 sm:flex-row">
                     <div class="flex flex-1 items-start gap-4 rounded-[16px] border border-line-2 bg-white p-5 shadow-[var(--shadow-card)] dark:bg-[#222528]">
                         <span class="grid size-11 flex-none place-items-center rounded-full bg-orange-500 text-[18px] font-black text-white">1</span>
                         <div>
-                            <div class="flex items-center gap-2"><flux:icon.check class="size-5 flex-none text-match" /><h3 class="text-[15px] font-extrabold text-ink">Plan pagado</h3></div>
-                            <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Tu suscripción ya se encuentra activa.</p>
+                            {{-- Mientras no se le cobre a las empresas no hay pago que anunciar:
+                                 el paso 1 es simplemente tener la cuenta. El texto original
+                                 vuelve solo al encender AD50_COBRO_EMPRESAS. --}}
+                            @if (\App\Support\Funcionalidades::cobroAEmpresas())
+                                <div class="flex items-center gap-2"><flux:icon.check class="size-5 flex-none text-match" /><h3 class="text-[15px] font-extrabold text-ink">Plan pagado</h3></div>
+                                <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Tu suscripción ya se encuentra activa.</p>
+                            @else
+                                <div class="flex items-center gap-2"><flux:icon.check class="size-5 flex-none text-match" /><h3 class="text-[15px] font-extrabold text-ink">Cuenta creada</h3></div>
+                                <p class="mt-1 text-[13px] leading-relaxed text-gray-500">Tu acceso ya está activo.</p>
+                            @endif
                         </div>
                     </div>
 

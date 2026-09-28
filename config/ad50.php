@@ -28,6 +28,16 @@ return [
         // Carpetas para agrupar los favoritos de la empresa.
         'carpetas_favoritos' => (bool) env('AD50_CARPETAS_FAVORITOS', true),
 
+        // Cobro a las empresas. APAGADO: hoy la plataforma es gratis para ellas.
+        //
+        // Este no es un interruptor de funcionalidad nueva, sino de una que se apagó: con
+        // él en false, los planes desaparecen de la web y de la cuenta, el registro de
+        // empresa no pasa por caja y cada empresa nueva recibe el plan ilimitado (sin
+        // cupos ni vencimiento, ver Empresa::activarPlanIlimitado()). Nada se eliminó:
+        // las pantallas de planes, los cupones y el cobro por Flow siguen en su sitio y
+        // vuelven todos definiendo la variable en true.
+        'cobro_empresas' => (bool) env('AD50_COBRO_EMPRESAS', false),
+
     ],
 
     /*

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Rules\EmailCorporativo;
 use App\Rules\EmpresaYaRegistrada;
 use App\Rules\RutValido;
+use App\Support\Funcionalidades;
 use App\Support\Rut;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\View\View;
@@ -108,7 +109,7 @@ class Register extends Component
         } else {
             // El contacto administrador queda enlazado a su empresa por el evento
             // `created` de Empresa (que fija users.empresa_id).
-            Empresa::create([
+            $empresa = Empresa::create([
                 'user_id' => $user->id,
                 'razon_social' => $this->razon_social,
                 'rut' => $this->rut,
@@ -118,6 +119,13 @@ class Register extends Component
                 'contacto_principal_email' => $user->email,
                 'contacto_principal_telefono' => $this->telefono,
             ]);
+
+            // Mientras el cobro esté apagado, registrarse es gratis: la empresa queda con
+            // el plan ilimitado ya activado y solo le falta enviar sus antecedentes. Con el
+            // cobro encendido, en cambio, pasa antes por la pantalla de planes.
+            if (! Funcionalidades::cobroAEmpresas()) {
+                $empresa->activarPlanIlimitado();
+            }
         }
 
         // `Registered` dispara el correo con el enlace de verificación. Hasta que la

@@ -22,4 +22,14 @@ final class Funcionalidades
     {
         return (bool) config('ad50.funcionalidades.carpetas_favoritos', false);
     }
+
+    /**
+     * La plataforma le cobra a las empresas: se muestran los planes, el registro exige
+     * pagar uno y los cupos los define lo contratado. Apagado, todo eso desaparece de la
+     * vista y cada empresa recibe el plan ilimitado al registrarse.
+     */
+    public static function cobroAEmpresas(): bool
+    {
+        return (bool) config('ad50.funcionalidades.cobro_empresas', false);
+    }
 }

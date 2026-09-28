@@ -53,7 +53,13 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('id="como-postulantes"', false)
         ->assertSee('id="como-empresas"', false)
         ->assertSee('id="quienes-somos"', false)
-        ->assertSee('id="planes"', false)
+        // Los planes están ocultos mientras no se le cobre a las empresas; el bloque de
+        // beneficios, que no habla de precios, se quedó dentro de «para empresas».
+        ->assertDontSee('id="planes"', false)
+        ->assertDontSee('Planes para empresas')
+        ->assertDontSee('Elige el alcance de tu búsqueda.')
+        ->assertDontSee('UF + IVA')
+        ->assertDontSee('Más elegido')
         ->assertSee('Cómo funciona para postulantes')
         ->assertSee('Cómo funciona para empresas')
         ->assertSee('bg-[#252729]', false)
@@ -61,15 +67,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('Quiénes somos')
         ->assertSee('href="#quienes-somos"', false)
         ->assertDontSee('Acerca de')
-        ->assertSee('href="#planes"', false)
-        ->assertSee('Planes para empresas')
-        ->assertSee('Elige el alcance de tu búsqueda.')
-        ->assertSee('2')
-        ->assertSee('UF + IVA')
-        ->assertSee('Premium')
-        ->assertSee('45')
-        ->assertSee('Publicaciones ilimitadas')
-        ->assertSee('Más elegido')
+        ->assertDontSee('href="#planes"', false)
         ->assertSee('Beneficios para tu proceso de selección')
         // La sección "Confiaron en nosotros" está oculta: sus logos eran marcas de
         // ejemplo, así que ni la frase ni las imágenes deben llegar al HTML servido.
@@ -104,9 +102,6 @@ test('the landing page presents the experience-led visual direction', function (
         ->assertSee('href="#como-empresas"', false)
         ->assertSee('Cómo funciona');
 
-    expect(strpos($response->getContent(), '$20.000'))
-        ->toBeLessThan(strpos($response->getContent(), 'id="planes"'));
-
     $landing = file_get_contents(resource_path('views/livewire/landing.blade.php'));
 
     expect($landing)
@@ -117,6 +112,7 @@ test('the landing page presents the experience-led visual direction', function (
         ->and(strpos($landing, "route('registro', ['tipo' => 'empresa'])"))->toBeLessThan(strpos($landing, "route('registro', ['tipo' => 'postulante'])"))
         ->and(strpos($landing, 'id="quienes-somos"'))->toBeLessThan(strpos($landing, 'id="como-empresas"'))
         ->and(strpos($landing, 'id="como-empresas"'))->toBeLessThan(strpos($landing, 'id="como-postulantes"'))
+        // La sección sigue en el archivo, tras el interruptor: se oculta, no se borró.
         ->and(strpos($landing, 'id="como-postulantes"'))->toBeLessThan(strpos($landing, 'id="planes"'));
 });
 
@@ -230,7 +226,9 @@ test('authenticated empresas see panel de admin on the home page', function () {
         ->assertDontSee('Register');
 });
 
-test('the plans page can be viewed', function () {
+test('the plans page can be viewed when companies are charged again', function () {
+    config()->set('ad50.funcionalidades.cobro_empresas', true);
+
     Plan::query()->create([
         'codigo' => 'empresa_basic',
         'nombre' => 'Básico',

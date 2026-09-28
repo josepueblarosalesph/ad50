@@ -194,6 +194,18 @@ class Empresa extends Model
     }
 
     /**
+     * Deja a la empresa con el plan ilimitado, sin pasar por caja. Lo usa el registro
+     * mientras el cobro a empresas esté apagado (ver Funcionalidades::cobroAEmpresas()).
+     *
+     * La vigencia se estira 50 años en vez de dejarse abierta porque `planVigente()` pide
+     * una fecha futura: así no hace falta un caso especial en el gating ni en los cupos.
+     */
+    public function activarPlanIlimitado(): void
+    {
+        $this->activarPlan(Plan::ilimitado(), now()->addYears(Plan::ANIOS_ILIMITADO));
+    }
+
+    /**
      * Suma a los cupos lo que concede el plan recién pagado. Publicaciones ilimitadas
      * (NULL en el plan) dejan a la empresa ilimitada para siempre: no hay vuelta atrás
      * a un número, porque sería quitarle algo que ya compró.
@@ -265,6 +277,15 @@ class Empresa extends Model
     public function desbloqueosUsados(): int
     {
         return $this->desbloqueos()->count();
+    }
+
+    /**
+     * El cupo es el del plan ilimitado: en pantalla se dice «ilimitados» en vez de mostrar
+     * el número, que es grande a propósito (ver Plan::CUPO_ILIMITADO).
+     */
+    public function desbloqueosIlimitados(): bool
+    {
+        return $this->desbloqueosTotales() >= Plan::CUPO_ILIMITADO;
     }
 
     public function desbloqueosDisponibles(): int

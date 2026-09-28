@@ -14,6 +14,9 @@ use Livewire\Livewire;
  * El cupón visto desde el checkout: cuánto rebaja, cuándo se gasta y cuándo se rechaza.
  */
 beforeEach(function () {
+    // El cobro a empresas está apagado en producción (config/ad50.php); estas pruebas lo
+    // encienden porque cubren la máquina que quedó dormida y que vuelve con el interruptor.
+    config()->set('ad50.funcionalidades.cobro_empresas', true);
     config()->set('services.flow.api_key', 'APIKEY');
     config()->set('services.flow.secret_key', 'SECRET');
     config()->set('services.flow.base_url', 'https://sandbox.flow.cl/api');

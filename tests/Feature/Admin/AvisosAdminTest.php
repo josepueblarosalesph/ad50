@@ -85,15 +85,15 @@ test('the bell never reaches a postulante or a company', function () {
         ->assertDontSee('Ver la bandeja');
 
     $empresaUser = User::factory()->create(['role' => 'empresa']);
-    Empresa::query()->create([
+    hacerEmpresaOperativa(Empresa::query()->create([
         'user_id' => $empresaUser->id,
         'razon_social' => 'Retail Andes SpA',
         'estado_activacion' => 'activa',
         'datos_enviados_at' => now(),
-    ]);
+    ]));
 
     $this->actingAs($empresaUser)
-        ->get(route('empresa.planes'))
+        ->get(route('empresa.panel'))
         ->assertOk()
         ->assertDontSee('Avisos:');
 });

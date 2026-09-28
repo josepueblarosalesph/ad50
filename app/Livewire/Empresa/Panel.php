@@ -70,6 +70,7 @@ class Panel extends Component
             'publicacionesTotales' => $empresa?->publicacionesTotales(),
             'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,
             'desbloqueosTotales' => $empresa?->desbloqueosTotales() ?? 0,
+            'desbloqueosIlimitados' => $empresa?->desbloqueosIlimitados() ?? false,
             'totalFavoritos' => $empresa?->favoritos()->count() ?? 0,
             'tienePlan' => $empresa?->plan !== null,
             'puedePublicar' => $empresa?->puedePublicar() ?? false,

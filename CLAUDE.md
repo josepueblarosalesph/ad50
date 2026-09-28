@@ -92,7 +92,7 @@ El matching es **eager/precalculado**: se materializa en la tabla pivote en cada
 ## Flujos de negocio
 
 ### Registro ([Auth/Register](app/Livewire/Auth/Register.php))
-Un único formulario con selector de tipo (`?tipo=postulante|empresa`). Crea el `User` + su `Postulante` (onboarding_paso 1) o `Empresa` (estado inactiva). Requiere consentimiento Ley 21.719. Tras registro → verificación de email (Fortify).
+Un único formulario con selector de tipo (`?tipo=postulante|empresa`). Crea el `User` + su `Postulante` (onboarding_paso 1) o `Empresa` (estado inactiva). Requiere consentimiento Ley 21.719. Tras registro → verificación de email (Fortify). A la empresa se le activa además el **plan ilimitado** ahí mismo, porque hoy no se le cobra (ver *Planes / monetización*).
 
 ### Onboarding del postulante
 Tras verificar email, el postulante es forzado a completar su ficha antes de acceder al panel: middleware [EnsurePostulanteOnboardingComplete](app/Http/Middleware/EnsurePostulanteOnboardingComplete.php) redirige a `postulante.ficha` mientras `onboarding_completado = false`. La ficha ([Postulante/Ficha](app/Livewire/Postulante/Ficha.php)) captura perfil profesional completo (experiencias, educación, idiomas, CV subido) y al guardar dispara el matching.
@@ -148,7 +148,16 @@ El middleware [EnsureEmpresaActiva](app/Http/Middleware/EnsureEmpresaActiva.php)
 Empresa activa → crea búsqueda con criterios ([NuevaBusqueda](app/Livewire/Empresa/NuevaBusqueda.php)) → el sistema calza candidatos → revisa [Resultados](app/Livewire/Empresa/Resultados.php) (paginados, filtrables por criterio y por favoritos, marcables como favorito) → ve el detalle de un candidato en [Candidato](app/Livewire/Empresa/Candidato.php). El `rubro_oculto` de la búsqueda controla qué información ve el postulante hasta ser contactado.
 
 ### Planes / monetización
-Los precios se definen en UF (+ IVA) y viven en el código: [PlanSeeder](database/seeders/PlanSeeder.php) es la fuente, y [Admin/Planes](app/Livewire/Admin/Planes.php) solo los muestra. El cobro se hace en CLP con la UF del día ([ValorUf](app/Services/ValorUf.php), cacheada 24 h) a través de **Flow** ([FlowService](app/Services/FlowService.php) + [FlowController](app/Http/Controllers/FlowController.php)). El único checkout es [Empresa/Planes::contratar()](app/Livewire/Empresa/Planes.php); el plan se activa en el webhook de confirmación, nunca en el retorno del navegador. Hoy solo pagan las empresas.
+
+> **Hoy no se le cobra a ninguna empresa.** El interruptor `cobro_empresas` de [config/ad50.php](config/ad50.php) (`AD50_COBRO_EMPRESAS`, apagado por omisión) es el único sitio donde se decide: apagado, los planes desaparecen de la web y de la administración de la cuenta, y cada empresa recibe al registrarse el plan **Ilimitado** —sin costo, con [Plan::CUPO_ILIMITADO](app/Models/Plan.php) desbloqueos, publicaciones sin tope y 50 años de vigencia— vía [Empresa::activarPlanIlimitado()](app/Models/Empresa.php).
+>
+> **Nada se eliminó**: las pantallas de planes (pública y de la cuenta), los cupones y el cobro por Flow siguen enteros y vuelven encendiendo el interruptor; los tests que los cubren lo encienden a propósito. Tres cosas que sostienen el diseño:
+>
+> - El gating no cambió: [EnsureEmpresaActiva](app/Http/Middleware/EnsureEmpresaActiva.php) sigue exigiendo plan vigente, y por eso el plan se concede al registrarse. A quien llegue sin plan (cuenta anterior, o un admin se lo quitó) se lo concede [Empresa/Planes::mount()](app/Livewire/Empresa/Planes.php) al pasar: sin eso quedaría rebotando entre el middleware y una pantalla oculta.
+> - El plan ilimitado **no se ofrece** entre los contratables (`Plan::scopeContratables()`), o al volver a cobrar se estaría regalando la plataforma.
+> - La migración [2026_09_28_000001](database/migrations/2026_09_28_000001_plan_ilimitado_sin_pago.php) se lo asignó a todas las empresas que ya existían.
+
+Los precios se definen en UF (+ IVA) y viven en el código: [PlanSeeder](database/seeders/PlanSeeder.php) es la fuente, y [Admin/Planes](app/Livewire/Admin/Planes.php) solo los muestra. El cobro se hace en CLP con la UF del día ([ValorUf](app/Services/ValorUf.php), cacheada 24 h) a través de **Flow** ([FlowService](app/Services/FlowService.php) + [FlowController](app/Http/Controllers/FlowController.php)). El único checkout es [Empresa/Planes::contratar()](app/Livewire/Empresa/Planes.php); el plan se activa en el webhook de confirmación, nunca en el retorno del navegador. Cuando se cobra, solo pagan las empresas.
 
 **Cupones de descuento.** Los crea cualquier admin desde [Admin/Cupones](app/Livewire/Admin/Cupones.php) y la empresa los escribe en la pantalla de planes. Todas las condiciones (vigencia, tope de usos, uso único por empresa, plan al que aplica) las resuelve [Cupon::motivoRechazo()](app/Models/Cupon.php) — **juez único**: el checkout y la pantalla tienen que dar el mismo veredicto, si no un cupón se validaría en pantalla y se caería al cobrar. Tres reglas que conviene no romper:
 

@@ -48,6 +48,8 @@ class Candidato extends Component
 
     public int $desbloqueosDisponibles = 0;
 
+    public bool $desbloqueosIlimitados = false;
+
     public bool $cvDisponible = false;
 
     public ?int $anteriorId = null;
@@ -163,6 +165,7 @@ class Candidato extends Component
         $this->puedeVerContacto = $this->desbloqueado;
         $this->planVigente = $empresa !== null && $empresa->planVigente();
         $this->desbloqueosDisponibles = $empresa?->desbloqueosDisponibles() ?? 0;
+        $this->desbloqueosIlimitados = $empresa?->desbloqueosIlimitados() ?? false;
     }
 
     protected function empresaDeAsociacion(): ?Empresa

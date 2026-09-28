@@ -8,6 +8,7 @@ use App\Models\Pago;
 use App\Models\Plan;
 use App\Services\FlowService;
 use App\Services\ValorUf;
+use App\Support\Funcionalidades;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
@@ -32,9 +33,26 @@ class Planes extends Component
     {
         abort_unless(auth()->user()->esEmpresa(), 403);
 
-        // Tras pagar, el siguiente paso del onboarding es completar los datos.
         $empresa = auth()->user()->empresa;
 
+        // Con el cobro apagado esta pantalla queda oculta: no hay nada que contratar. La
+        // pantalla, los cupones y el cobro por Flow siguen enteros; vuelven con
+        // AD50_COBRO_EMPRESAS=true.
+        //
+        // A quien llegue sin plan vigente se le concede el ilimitado aquí mismo (se
+        // registró cuando se cobraba, o un admin le quitó el plan). Sin eso quedaría
+        // rebotando: EnsureEmpresaActiva exige plan vigente y manda justo a esta pantalla.
+        if (! Funcionalidades::cobroAEmpresas()) {
+            if ($empresa !== null && ! $empresa->planVigente()) {
+                $empresa->activarPlanIlimitado();
+            }
+
+            $this->redirectRoute(auth()->user()->fresh()->rutaPanelEmpresa(), navigate: true);
+
+            return;
+        }
+
+        // Tras pagar, el siguiente paso del onboarding es completar los datos.
         if (($empresa?->planVigente() ?? false) && ! $empresa->datosEnviados()) {
             $this->redirectRoute('empresa.activacion', navigate: true);
         }
@@ -97,7 +115,7 @@ class Planes extends Component
         $empresa = auth()->user()->empresa;
         abort_unless($empresa !== null, 403);
 
-        $plan = Plan::query()->where('audiencia', 'empresa')->find($planId);
+        $plan = Plan::query()->contratables()->where('audiencia', 'empresa')->find($planId);
         abort_if($plan === null, 404);
 
         // El tope se comprueba aquí y no solo al pintar los botones: el id del plan llega
@@ -264,7 +282,7 @@ class Planes extends Component
         $empresa = auth()->user()->empresa;
 
         // Los precios se muestran en UF; la conversión a CLP se hace al pagar (contratar).
-        $planes = Plan::query()->where('audiencia', 'empresa')->orderBy('precio_uf')->get();
+        $planes = Plan::query()->contratables()->where('audiencia', 'empresa')->orderBy('precio_uf')->get();
 
         $cupon = $this->cuponAplicadoId === null
             ? null

@@ -28,7 +28,11 @@
         <div class="ad-card p-5">
             <span class="text-[13px] font-semibold text-gray-500">Desbloqueos disponibles (candidatos)</span>
             <div class="mt-3 truncate text-[25px] font-extrabold">
-                {{ $desbloqueosDisponibles }} <span class="text-[16px] font-bold text-gray-400">de {{ $desbloqueosTotales }}</span>
+                @if ($desbloqueosIlimitados)
+                    Ilimitados
+                @else
+                    {{ $desbloqueosDisponibles }} <span class="text-[16px] font-bold text-gray-400">de {{ $desbloqueosTotales }}</span>
+                @endif
             </div>
         </div>
 

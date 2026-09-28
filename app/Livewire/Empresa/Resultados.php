@@ -372,6 +372,7 @@ class Resultados extends Component
             'postulantesConCv' => $postulantesConCv,
             'planVigente' => $empresa?->planVigente() ?? false,
             'desbloqueosDisponibles' => $empresa?->desbloqueosDisponibles() ?? 0,
+            'desbloqueosIlimitados' => $empresa?->desbloqueosIlimitados() ?? false,
             'totalCandidatos' => $totalCandidatos,
             'totalFavoritos' => $totalFavoritos,
             'previsualizando' => $this->previsualizacion !== null,

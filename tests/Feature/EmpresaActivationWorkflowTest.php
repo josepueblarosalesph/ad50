@@ -8,7 +8,32 @@ use App\Models\User;
 use Carbon\Carbon;
 use Livewire\Livewire;
 
-test('an empresa without a paid plan is redirected to choose a plan before entering data', function () {
+test('an empresa without a plan gets the unlimited one instead of a plans screen', function () {
+    // Caso de las cuentas anteriores a que la plataforma fuera gratis, y de aquellas a las
+    // que un admin les quitó el plan: el gating sigue mandándolas a la pantalla de planes,
+    // que está oculta y les concede el ilimitado al pasar. Sin eso quedarían rebotando.
+    $user = User::factory()->create(['role' => 'empresa']);
+    $empresa = Empresa::query()->create([
+        'user_id' => $user->id,
+        'razon_social' => 'Empresa Pendiente SpA',
+        'estado_activacion' => 'inactiva',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('empresa.panel'))
+        ->assertRedirect(route('empresa.planes'));
+
+    $this->actingAs($user)
+        ->get(route('empresa.planes'))
+        ->assertRedirect(route('empresa.activacion'));
+
+    expect($empresa->fresh()->planVigente())->toBeTrue()
+        ->and($empresa->fresh()->plan->codigo)->toBe(Plan::CODIGO_ILIMITADO);
+});
+
+test('with charging switched back on, the empresa has to choose and pay a plan first', function () {
+    config()->set('ad50.funcionalidades.cobro_empresas', true);
+
     $user = User::factory()->create(['role' => 'empresa']);
     Empresa::query()->create([
         'user_id' => $user->id,
@@ -51,7 +76,23 @@ test('the welcome banner can be dismissed and remembers it per empresa', functio
         ->assertOk()
         ->assertSee('¡Bienvenido!')
         ->assertSee('aria-label="Cerrar la bienvenida"', false)
-        ->assertSee("ad-bienvenida-activacion-{$empresa->id}", false);
+        ->assertSee("ad-bienvenida-activacion-{$empresa->id}", false)
+        // Sin cobro no hay pago que anunciar en ninguna parte de la pantalla.
+        ->assertSee('Cuenta creada')
+        ->assertDontSee('Plan pagado')
+        ->assertDontSee('Ya completaste el pago')
+        ->assertDontSee('Tu pago ya fue confirmado')
+        ->assertSee('Solo falta ingresar los datos de tu empresa');
+
+    config()->set('ad50.funcionalidades.cobro_empresas', true);
+
+    $this->actingAs($user)
+        ->get(route('empresa.activacion'))
+        ->assertOk()
+        ->assertSee('Plan pagado')
+        ->assertDontSee('Cuenta creada')
+        ->assertSee('Ya completaste el pago')
+        ->assertSee('Tu pago ya fue confirmado');
 });
 
 test('an empresa completes its data after paying and is sent to the panel', function () {
