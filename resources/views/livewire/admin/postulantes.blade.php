@@ -21,7 +21,7 @@
     @endif
 
     <section class="ad-card mb-5 p-4 md:p-5">
-        <div class="grid gap-4 md:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-5">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
             <x-campo-select id="filtro-visibilidad" label="Visibilidad" wire:model.live="visibilidad">
@@ -41,6 +41,13 @@
                 <option value="verificados">Verificados</option>
                 <option value="pendientes">Sin verificar</option>
             </x-campo-select>
+
+            <x-campo-select id="filtro-region" label="Región" wire:model.live="region">
+                <option value="todos">Todas</option>
+                @foreach (\App\Support\CatalogosProfesionales::regiones() as $nombreRegion)
+                    <option value="{{ $nombreRegion }}">{{ $nombreRegion }} ({{ $conteoPorRegion[$nombreRegion] ?? 0 }})</option>
+                @endforeach
+            </x-campo-select>
         </div>
 
         @if ($hayFiltros)
@@ -58,6 +65,7 @@
                     <tr class="ad-thead-row">
                         <th class="p-4">Postulante</th>
                         @foreach ([
+                            'region' => 'Región',
                             'cargo_actual' => 'Cargo actual',
                             'anios_experiencia' => 'Experiencia',
                             'completitud' => 'Ficha',
@@ -80,6 +88,7 @@
                                     {{ $postulante->user?->email }}
                                 </a>
                             </td>
+                            <td class="p-4 text-gray-600">{{ $postulante->ciudad ?: '—' }}</td>
                             <td class="p-4 text-gray-600">
                                 {{ $postulante->cargo_actual ?: '—' }}
                                 @if ($postulante->carrera)
@@ -118,7 +127,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="p-10 text-center">
+                            <td colspan="9" class="p-10 text-center">
                                 <flux:icon.users class="mx-auto size-8 text-gray-400" />
                                 <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ningún postulante cumple estos filtros' : 'Todavía no hay postulantes' }}</h2>
                                 @if ($hayFiltros)

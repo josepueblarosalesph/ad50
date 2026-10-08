@@ -154,6 +154,25 @@ function candidatoEnBusqueda(Busqueda $busqueda, bool $favorito = true, string $
 }
 
 /**
+ * Postulante con cuenta y región de residencia, para los filtros del admin.
+ *
+ * La región vive en `postulantes.ciudad`: la columna conserva el nombre pero guarda
+ * regiones desde la migración 2026_07_09_000005.
+ */
+function postulanteEnRegion(string $nombre, string $region): User
+{
+    $user = User::factory()->create(['role' => 'postulante', 'name' => $nombre]);
+
+    Postulante::factory()->create([
+        'user_id' => $user->id,
+        'ciudad' => $region,
+        'onboarding_completado' => true,
+    ]);
+
+    return $user;
+}
+
+/**
  * Deja a la empresa con exactamente este plan y sus cupos.
  *
  * Fija los cupos en lugar de acumularlos (que es lo que hace `activarPlan()` al comprar):

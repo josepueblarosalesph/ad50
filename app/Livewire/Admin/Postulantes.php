@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Concerns\OrdenaListado;
 use App\Concerns\VerificaCuentas;
 use App\Models\Postulante;
+use App\Support\CatalogosProfesionales;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
@@ -37,6 +38,15 @@ class Postulantes extends Component
     #[Url(history: true)]
     public string $verificacion = 'todos';
 
+    /**
+     * Región de residencia: todos | una de CatalogosProfesionales::regiones().
+     *
+     * Vive en `postulantes.ciudad`: la columna conserva el nombre pero guarda
+     * regiones desde la migración 2026_07_09_000005.
+     */
+    #[Url(history: true)]
+    public string $region = 'todos';
+
     public function mount(): void
     {
         abort_unless(auth()->user()->esAdmin(), 403);
@@ -53,12 +63,16 @@ class Postulantes extends Component
             $this->verificacion = 'todos';
         }
 
+        if ($this->region !== 'todos' && ! in_array($this->region, CatalogosProfesionales::regiones(), true)) {
+            $this->region = 'todos';
+        }
+
         $this->hidratarOrden();
     }
 
     public function updated(string $campo): void
     {
-        if (in_array($campo, ['buscar', 'visibilidad', 'onboarding', 'verificacion'], true)) {
+        if (in_array($campo, ['buscar', 'visibilidad', 'onboarding', 'verificacion', 'region'], true)) {
             $this->resetPage();
         }
     }
@@ -69,6 +83,7 @@ class Postulantes extends Component
         $this->visibilidad = 'todos';
         $this->onboarding = 'todos';
         $this->verificacion = 'todos';
+        $this->region = 'todos';
         $this->resetPage();
     }
 
@@ -78,6 +93,7 @@ class Postulantes extends Component
         return [
             'created_at' => 'postulantes.created_at',
             'cargo_actual' => 'postulantes.cargo_actual',
+            'region' => 'postulantes.ciudad',
             'completitud' => 'postulantes.completitud',
             'anios_experiencia' => 'postulantes.anios_experiencia',
             'actualizacion' => 'postulantes.updated_at',
@@ -108,6 +124,7 @@ class Postulantes extends Component
                     ? $u->whereNotNull('email_verified_at')
                     : $u->whereNull('email_verified_at'),
             ))
+            ->when($this->region !== 'todos', fn (Builder $q) => $q->where('ciudad', $this->region))
             ->tap(fn (Builder $q) => $this->aplicarOrden($q));
 
         return view('livewire.admin.postulantes', [
@@ -115,7 +132,14 @@ class Postulantes extends Component
             'totalPostulantes' => Postulante::query()->count(),
             'totalVisibles' => Postulante::query()->where('visible', true)->count(),
             'totalSinVerificar' => Postulante::query()->whereHas('user', fn (Builder $u) => $u->whereNull('email_verified_at'))->count(),
-            'hayFiltros' => $this->buscar !== '' || $this->visibilidad !== 'todos' || $this->onboarding !== 'todos' || $this->verificacion !== 'todos',
+            // Cuántos perfiles hay por región, para las etiquetas del filtro.
+            'conteoPorRegion' => Postulante::query()->getQuery()
+                ->whereNotNull('ciudad')
+                ->selectRaw('ciudad, count(*) as total')
+                ->groupBy('ciudad')
+                ->pluck('total', 'ciudad'),
+            'hayFiltros' => $this->buscar !== '' || $this->visibilidad !== 'todos' || $this->onboarding !== 'todos'
+                || $this->verificacion !== 'todos' || $this->region !== 'todos',
         ]);
     }
 }

@@ -54,7 +54,7 @@
     @endif
 
     <section class="ad-card mb-5 p-4 md:p-5">
-        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-4">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
             <x-campo-select id="filtro-rol" label="Tipo de usuario" wire:model.live="rol">
