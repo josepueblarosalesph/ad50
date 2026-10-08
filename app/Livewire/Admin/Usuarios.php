@@ -11,6 +11,7 @@ use App\Models\Postulante;
 use App\Models\Publicacion;
 use App\Models\User;
 use App\Rules\RutValido;
+use App\Support\CatalogosProfesionales;
 use App\Support\InformeDeUsuarios;
 use App\Support\Rut;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -75,6 +76,16 @@ class Usuarios extends Component
     /** Verificación del correo: todos | verificados | pendientes. */
     #[Url(history: true)]
     public string $verificacion = 'todos';
+
+    /**
+     * Región de residencia de la ficha del postulante: todos | una de CatalogosProfesionales::regiones().
+     *
+     * La región vive en `postulantes.ciudad` (la columna conserva el nombre pero
+     * guarda regiones desde la migración 2026_07_09_000005), así que filtrar por ella
+     * deja fuera a las cuentas sin ficha de postulante: empresas y equipo interno.
+     */
+    #[Url(history: true)]
+    public string $region = 'todos';
 
     /** Usuario cuyo formulario de rol está abierto. */
     public ?int $editandoId = null;
@@ -159,12 +170,16 @@ class Usuarios extends Component
             $this->verificacion = 'todos';
         }
 
+        if ($this->region !== 'todos' && ! in_array($this->region, CatalogosProfesionales::regiones(), true)) {
+            $this->region = 'todos';
+        }
+
         $this->hidratarOrden();
     }
 
     public function updated(string $campo): void
     {
-        if (in_array($campo, ['buscar', 'rol', 'verificacion'], true)) {
+        if (in_array($campo, ['buscar', 'rol', 'verificacion', 'region'], true)) {
             $this->resetPage();
         }
     }
@@ -174,6 +189,7 @@ class Usuarios extends Component
         $this->buscar = '';
         $this->rol = 'todos';
         $this->verificacion = 'todos';
+        $this->region = 'todos';
         $this->resetPage();
     }
 
@@ -768,6 +784,12 @@ class Usuarios extends Component
             ->when($this->verificacion !== 'todos', fn (Builder $q) => $this->verificacion === 'verificados'
                 ? $q->whereNotNull('email_verified_at')
                 : $q->whereNull('email_verified_at'))
+            ->when($this->region !== 'todos', fn (Builder $q) => $q->whereHas(
+                'postulante',
+                fn (Builder $p) => $p->where('ciudad', $this->region),
+            ))
+            // La tabla muestra la ficha asociada y la región de cada cuenta.
+            ->with(['postulante:id,user_id,ciudad', 'empresa:id,user_id,razon_social'])
             ->tap(fn (Builder $q) => $this->aplicarOrden($q));
 
         return view('livewire.admin.usuarios', [
@@ -779,7 +801,13 @@ class Usuarios extends Component
                 ->selectRaw('role, count(*) as total')
                 ->groupBy('role')
                 ->pluck('total', 'role'),
-            'hayFiltros' => $this->buscar !== '' || $this->rol !== 'todos' || $this->verificacion !== 'todos',
+            // Cuántos postulantes hay por región, para las etiquetas del filtro.
+            'conteoPorRegion' => Postulante::query()->getQuery()
+                ->whereNotNull('ciudad')
+                ->selectRaw('ciudad, count(*) as total')
+                ->groupBy('ciudad')
+                ->pluck('total', 'ciudad'),
+            'hayFiltros' => $this->buscar !== '' || $this->rol !== 'todos' || $this->verificacion !== 'todos' || $this->region !== 'todos',
             // Para el alta manual: a qué empresa ya registrada se puede sumar la cuenta nueva.
             'empresasDisponibles' => Empresa::query()->orderBy('razon_social')->get(['id', 'razon_social']),
         ]);

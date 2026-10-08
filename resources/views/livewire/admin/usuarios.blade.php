@@ -54,7 +54,7 @@
     @endif
 
     <section class="ad-card mb-5 p-4 md:p-5">
-        <div class="grid gap-4 md:grid-cols-3">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <flux:input wire:model.live.debounce.300ms="buscar" label="Buscar" placeholder="Nombre o correo" icon="magnifying-glass" />
 
             <x-campo-select id="filtro-rol" label="Tipo de usuario" wire:model.live="rol">
@@ -68,6 +68,15 @@
                 <option value="todos">Todos</option>
                 <option value="verificados">Verificados</option>
                 <option value="pendientes">Sin verificar</option>
+            </x-campo-select>
+
+            {{-- La región solo la tiene la ficha del postulante: elegir una deja fuera
+                 a las empresas y al equipo interno. --}}
+            <x-campo-select id="filtro-region" label="Región del postulante" wire:model.live="region">
+                <option value="todos">Todas</option>
+                @foreach (\App\Support\CatalogosProfesionales::regiones() as $nombreRegion)
+                    <option value="{{ $nombreRegion }}">{{ $nombreRegion }} ({{ $conteoPorRegion[$nombreRegion] ?? 0 }})</option>
+                @endforeach
             </x-campo-select>
         </div>
 
@@ -91,6 +100,7 @@
                             <x-th-ordenable :campo="$campo" :orden="$orden" :direccion="$direccion">{{ $etiqueta }}</x-th-ordenable>
                         @endforeach
                         <th class="p-4">Ficha asociada</th>
+                        <th class="p-4">Región</th>
                         <th class="p-4">Correo</th>
                         <x-th-ordenable campo="created_at" :orden="$orden" :direccion="$direccion">Registro</x-th-ordenable>
                         <th class="p-4 text-right">Acciones</th>
@@ -121,6 +131,13 @@
                                     Postulante
                                 @elseif ($usuario->empresa)
                                     <span class="truncate">{{ $usuario->empresa->razon_social }}</span>
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
+                            </td>
+                            <td class="p-4 text-gray-600">
+                                @if (filled($usuario->postulante?->ciudad))
+                                    {{ $usuario->postulante->ciudad }}
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif
@@ -177,7 +194,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-10 text-center">
+                            <td colspan="7" class="p-10 text-center">
                                 <flux:icon.users class="mx-auto size-8 text-gray-400" />
                                 <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ninguna cuenta cumple estos filtros' : 'Todavía no hay usuarios' }}</h2>
                                 @if ($hayFiltros)
