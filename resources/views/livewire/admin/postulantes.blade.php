@@ -64,6 +64,7 @@
                 <thead>
                     <tr class="ad-thead-row">
                         <th class="p-4">Postulante</th>
+                        <th class="p-4">Teléfono</th>
                         @foreach ([
                             'region' => 'Región',
                             'cargo_actual' => 'Cargo actual',
@@ -87,6 +88,13 @@
                                 <a href="mailto:{{ $postulante->user?->email }}" class="text-[13px] text-gray-500 underline decoration-orange-200 underline-offset-4 hover:text-orange-600">
                                     {{ $postulante->user?->email }}
                                 </a>
+                            </td>
+                            <td class="whitespace-nowrap p-4 text-gray-600">
+                                @if ($postulante->telefono)
+                                    <a href="tel:{{ preg_replace('/[^\d+]/', '', $postulante->telefono) }}" class="underline decoration-orange-200 underline-offset-4 hover:text-orange-600">{{ $postulante->telefono }}</a>
+                                @else
+                                    —
+                                @endif
                             </td>
                             <td class="p-4 text-gray-600">{{ $postulante->ciudad ?: '—' }}</td>
                             <td class="p-4 text-gray-600">
@@ -127,7 +135,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="p-10 text-center">
+                            <td colspan="10" class="p-10 text-center">
                                 <flux:icon.users class="mx-auto size-8 text-gray-400" />
                                 <h2 class="mt-3 font-bold">{{ $hayFiltros ? 'Ningún postulante cumple estos filtros' : 'Todavía no hay postulantes' }}</h2>
                                 @if ($hayFiltros)
