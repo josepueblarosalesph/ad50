@@ -121,7 +121,7 @@
                                     'ad-chip ad-chip-sm',
                                     'ad-chip-orange' => $usuario->esSuperadmin(),
                                     'ad-chip-gray' => ! $usuario->esSuperadmin(),
-                                ])>{{ $usuario->rolLabel() }}</span>
+                                ])>{{ $usuario->role === 'admin' && ($usuario->empresa ?? $usuario->empresaMembresia) ? 'Administrador + Empresa' : $usuario->rolLabel() }}</span>
                                 @if ($usuario->id === auth()->id())
                                     <span class="mt-1 block text-[12px] text-gray-400">Tu cuenta</span>
                                 @endif
@@ -129,8 +129,8 @@
                             <td class="p-4 text-gray-600">
                                 @if ($usuario->postulante)
                                     Postulante
-                                @elseif ($usuario->empresa)
-                                    <span class="truncate">{{ $usuario->empresa->razon_social }}</span>
+                                @elseif ($empresaDeUsuario = $usuario->empresa ?? $usuario->empresaMembresia)
+                                    <span class="truncate">{{ $empresaDeUsuario->razon_social }}</span>
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif
@@ -320,7 +320,7 @@
             </div>
 
             <x-campo-select id="nuevo-rol" label="Tipo de usuario" error="nuevoRol" wire:model.live="nuevoRol">
-                @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+                @foreach (\App\Livewire\Admin\Usuarios::opcionesDeTipo() as $clave => $etiqueta)
                     <option value="{{ $clave }}">{{ $etiqueta }}</option>
                 @endforeach
             </x-campo-select>
@@ -339,12 +339,12 @@
                 </button>
             </div>
 
-            @if ($nuevoRol === 'empresa')
+            @if (in_array($nuevoRol, ['empresa', \App\Livewire\Admin\Usuarios::ADMIN_EMPRESA], true))
                 <div class="space-y-4 rounded-lg border border-line-2 p-4">
                     <x-campo-select id="nueva-empresa" label="Empresa" error="nuevaEmpresaId" wire:model.live="nuevaEmpresaId">
                         <option value="">Crear una empresa nueva</option>
                         @foreach ($empresasDisponibles as $empresaDisponible)
-                            <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->razon_social }}</option>
+                            <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->etiquetaParaSelector() }}</option>
                         @endforeach
                     </x-campo-select>
 
@@ -383,11 +383,48 @@
                 @endif
             </div>
 
-            <x-campo-select id="rol-nuevo" label="Tipo de usuario" error="rolNuevo" wire:model="rolNuevo">
-                @foreach (\App\Models\User::ROLES as $clave => $etiqueta)
+            <x-campo-select id="rol-nuevo" label="Tipo de usuario" error="rolNuevo" wire:model.live="rolNuevo">
+                @foreach (\App\Livewire\Admin\Usuarios::opcionesDeTipo() as $clave => $etiqueta)
                     <option value="{{ $clave }}">{{ $etiqueta }}{{ $clave === $rolActual ? ' (actual)' : '' }}</option>
                 @endforeach
             </x-campo-select>
+
+            @if ($empresaPropia !== null && $rolNuevo !== 'postulante')
+                <div class="rounded-lg border border-line-2 p-3.5 text-[12.5px] text-gray-600 dark:text-gray-300">
+                    Administra la empresa <b>{{ $empresaPropia }}</b> como contacto principal y la conserva
+                    {{ $rolNuevo === 'empresa' ? '' : 'también como administrador' }}.
+                </div>
+            @elseif (in_array($rolNuevo, ['empresa', \App\Livewire\Admin\Usuarios::ADMIN_EMPRESA], true))
+                <div class="space-y-2">
+                    <x-campo-select id="empresa-asociada" label="Empresa" error="empresaAsociadaId" wire:model.live="empresaAsociadaId">
+                        <option value="">{{ $rolNuevo === 'empresa' ? 'Sin empresa' : 'Elige una empresa' }}</option>
+                        <option value="{{ \App\Livewire\Admin\Usuarios::EMPRESA_NUEVA }}">+ Crear una empresa nueva</option>
+                        @foreach ($empresasDisponibles as $empresaDisponible)
+                            <option value="{{ $empresaDisponible->id }}">{{ $empresaDisponible->etiquetaParaSelector() }}</option>
+                        @endforeach
+                    </x-campo-select>
+                    @if ($empresaAsociadaId === \App\Livewire\Admin\Usuarios::EMPRESA_NUEVA)
+                        <div class="space-y-4 rounded-lg border border-line-2 p-4">
+                            <flux:input wire:model="cambioRazonSocial" label="Razón social" placeholder="Consultora Ejemplo SpA" />
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <flux:input wire:model.blur="cambioRut" label="RUT de la empresa" placeholder="76.123.456-7" />
+                                <flux:input wire:model="cambioTelefono" label="Teléfono" placeholder="+56 9 1234 5678" />
+                            </div>
+                            <p class="text-[12.5px] text-gray-600 dark:text-gray-300">
+                                La empresa nace <b>activada</b> y esta cuenta queda como su contacto principal.
+                            </p>
+                        </div>
+                    @else
+                        <p class="text-[12.5px] text-gray-600 dark:text-gray-300">
+                            @if ($rolNuevo === 'empresa')
+                                La cuenta opera esa empresa como usuario adicional (máximo {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }}).
+                            @else
+                                Entra a la administración y también al panel de esta empresa, y se mueve entre ambos con el conmutador del encabezado. Ocupa uno de sus {{ \App\Models\Empresa::MAX_USUARIOS_ADICIONALES }} cupos de usuarios adicionales.
+                            @endif
+                        </p>
+                    @endif
+                </div>
+            @endif
 
             <div class="rounded-lg border border-line-2 bg-gray-50 p-3.5 text-[12.5px] text-gray-600 dark:bg-[#2A2D30] dark:text-gray-300">
                 Solo cambia el tipo de cuenta. La ficha de postulante o la empresa asociada

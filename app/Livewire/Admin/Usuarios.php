@@ -62,6 +62,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class Usuarios extends Component
 {
+    /**
+     * Opción del selector de tipo que no es un rol propio: se guarda como `admin` con una
+     * empresa asociada, que es lo que le da acceso a los dos paneles (ver User::esEmpresa()).
+     */
+    public const ADMIN_EMPRESA = 'admin_empresa';
+
+    /** Valor del selector de empresa que pide crear una en vez de elegir una existente. */
+    public const EMPRESA_NUEVA = 'nueva';
+
     use OrdenaListado;
     use VerificaCuentas;
     use WithPagination;
@@ -99,6 +108,24 @@ class Usuarios extends Component
 
     /** Rol elegido en el formulario. */
     public string $rolNuevo = '';
+
+    /**
+     * Empresa de la que la cuenta es miembro (users.empresa_id); '' = ninguna.
+     *
+     * Es lo que permite dejar a alguien como administrador y a la vez como empresa: un
+     * admin con empresa asociada alcanza los dos paneles (ver User::esEmpresa()).
+     */
+    public string $empresaAsociadaId = '';
+
+    /** Razón social de la empresa que la cuenta administra como dueña, si la tiene. */
+    public ?string $empresaPropia = null;
+
+    /** Antecedentes de la empresa que se crea al cambiar el tipo (EMPRESA_NUEVA). */
+    public string $cambioRazonSocial = '';
+
+    public string $cambioRut = '';
+
+    public string $cambioTelefono = '';
 
     // --- Alta manual de cuentas -------------------------------------------------
 
@@ -207,8 +234,10 @@ class Usuarios extends Component
         $this->editandoId = $user->id;
         $this->editandoNombre = $user->name;
         $this->editandoEmail = $user->email;
-        $this->rolActual = $user->role;
-        $this->rolNuevo = $user->role;
+        $this->rolActual = $user->role === 'admin' && $user->esEmpresa() ? self::ADMIN_EMPRESA : $user->role;
+        $this->rolNuevo = $this->rolActual;
+        $this->empresaPropia = $this->empresaQueAdministra($user)?->razon_social;
+        $this->empresaAsociadaId = $user->empresa_id !== null ? (string) $user->empresa_id : '';
         $this->resetErrorBag();
 
         $this->modal('cambiar-rol')->show();
@@ -218,35 +247,202 @@ class Usuarios extends Component
     {
         abort_unless(auth()->user()->esSuperadmin(), 403);
 
-        $validado = $this->validate([
-            'rolNuevo' => ['required', Rule::in(array_keys(User::ROLES))],
-        ], attributes: [
+        $this->cambioRut = Rut::formatear($this->cambioRut);
+
+        $creaEmpresa = $this->empresaAsociadaId === self::EMPRESA_NUEVA
+            && $this->empresaPropia === null
+            && in_array($this->rolNuevo, ['empresa', self::ADMIN_EMPRESA], true);
+
+        $reglas = [
+            'rolNuevo' => ['required', Rule::in(array_keys(self::opcionesDeTipo()))],
+            'empresaAsociadaId' => [
+                // Administrador + Empresa sin empresa sería un administrador a secas. Al
+                // dueño no se le pide: su empresa ya cuelga de su cuenta.
+                Rule::requiredIf(fn () => $this->rolNuevo === self::ADMIN_EMPRESA && $this->empresaPropia === null),
+                'nullable',
+                ...($creaEmpresa ? [] : [Rule::exists('empresas', 'id')]),
+            ],
+        ];
+
+        if ($creaEmpresa) {
+            // Los mismos antecedentes que pide el alta manual de una cuenta de empresa.
+            $reglas['cambioRazonSocial'] = ['required', 'string', 'max:160'];
+            $reglas['cambioRut'] = ['required', 'string', 'max:20', new RutValido];
+            $reglas['cambioTelefono'] = ['required', 'string', 'max:30'];
+        }
+
+        $validado = $this->validate($reglas, attributes: [
             'rolNuevo' => 'rol',
+            'empresaAsociadaId' => 'empresa',
+            'cambioRazonSocial' => 'razón social',
+            'cambioRut' => 'RUT',
+            'cambioTelefono' => 'teléfono',
         ]);
 
         $user = User::query()->findOrFail($this->editandoId);
 
         abort_if($user->id === auth()->id(), 403);
 
-        if ($user->role === $validado['rolNuevo']) {
+        $rol = self::rolDeTipo($validado['rolNuevo']);
+
+        if ($creaEmpresa) {
+            $empresa = DB::transaction(function () use ($user, $rol, $validado): Empresa {
+                $user->update(['role' => $rol]);
+
+                $empresa = $this->crearEmpresaPara($user, $validado['cambioRazonSocial'], $validado['cambioRut'], $validado['cambioTelefono']);
+
+                // Pasa a ser dueño de la empresa nueva. Si era miembro de otra, deja de
+                // serlo: una cuenta pertenece a una sola empresa.
+                $user->empresaMembresia()->associate($empresa)->save();
+
+                return $empresa;
+            });
+
+            $this->cerrarCambioRol();
+
+            session()->flash('status', "{$user->name} quedó como {$this->etiquetaDeTipo($validado['rolNuevo'])} de la empresa nueva {$empresa->razon_social}.");
+
+            return;
+        }
+        $empresaNueva = $this->empresaDeMembresiaElegida($user, $validado['rolNuevo']);
+
+        // false = el formulario no la ofrece (o no cambia): la membresía queda como está.
+        $cambiaEmpresa = $empresaNueva !== false && $empresaNueva?->id !== $user->empresa_id;
+
+        if ($cambiaEmpresa && $empresaNueva !== null && ! $empresaNueva->puedeAgregarUsuario()) {
+            $this->addError('empresaAsociadaId', 'Esa empresa ya tiene sus '.Empresa::MAX_USUARIOS_ADICIONALES.' usuarios adicionales.');
+
+            return;
+        }
+
+        if ($user->role === $rol && ! $cambiaEmpresa) {
             $this->cerrarCambioRol();
 
             return;
         }
 
         $anterior = $user->rolLabel();
+        $cambiaRol = $user->role !== $rol;
 
-        // Solo el rol: la ficha de postulante y la empresa asociada quedan donde están.
-        $user->update(['role' => $validado['rolNuevo']]);
+        // El rol y, si se eligió, la empresa de la que es miembro. La ficha de postulante y
+        // la empresa que administra como dueña quedan donde están.
+        $user->role = $rol;
+
+        if ($cambiaEmpresa) {
+            $empresaNueva !== null
+                ? $user->empresaMembresia()->associate($empresaNueva)
+                : $user->empresaMembresia()->dissociate();
+        }
+
+        $user->save();
 
         $this->cerrarCambioRol();
 
-        session()->flash('status', "{$user->name} pasó de {$anterior} a {$user->fresh()->rolLabel()}.");
+        $partes = [];
+
+        if ($cambiaRol) {
+            $partes[] = "pasó de {$anterior} a {$user->rolLabel()}";
+        }
+
+        if ($cambiaEmpresa) {
+            $partes[] = $empresaNueva !== null
+                ? "quedó asociado a la empresa {$empresaNueva->razon_social}"
+                : 'ya no está asociado a ninguna empresa';
+        }
+
+        session()->flash('status', "{$user->name} ".implode(' y ', $partes).'.');
+    }
+
+    /**
+     * La empresa de la que la cuenta quedará como miembro según el formulario.
+     *
+     * Devuelve false cuando la membresía no se toca: al dueño de una empresa no se le
+     * mueve (su empresa cuelga de empresas.user_id, no de la membresía), y a un postulante
+     * o un superadministrador no se le pregunta. Elegir Administrador a secas sí la quita:
+     * es justamente la diferencia con Administrador + Empresa.
+     */
+    private function empresaDeMembresiaElegida(User $user, string $tipo): Empresa|false|null
+    {
+        if ($this->empresaQueAdministra($user) !== null) {
+            return false;
+        }
+
+        return match ($tipo) {
+            'empresa', self::ADMIN_EMPRESA => $this->empresaAsociadaId === ''
+                ? null
+                : Empresa::query()->findOrFail((int) $this->empresaAsociadaId),
+            'admin' => null,
+            default => false,
+        };
+    }
+
+    /**
+     * Opciones del selector de tipo de usuario: los roles más Administrador + Empresa,
+     * que va justo después de Administrador.
+     *
+     * @return array<string, string>
+     */
+    public static function opcionesDeTipo(): array
+    {
+        $opciones = [];
+
+        foreach (User::ROLES as $clave => $etiqueta) {
+            $opciones[$clave] = $etiqueta;
+
+            if ($clave === 'admin') {
+                $opciones[self::ADMIN_EMPRESA] = 'Administrador + Empresa';
+            }
+        }
+
+        return $opciones;
+    }
+
+    private function etiquetaDeTipo(string $tipo): string
+    {
+        return self::opcionesDeTipo()[$tipo] ?? $tipo;
+    }
+
+    public function updatedCambioRut(): void
+    {
+        $this->cambioRut = Rut::formatear($this->cambioRut);
+    }
+
+    /**
+     * Crea una empresa con $user como contacto principal (dueño).
+     *
+     * Los antecedentes los aporta el superadministrador, así que la empresa nace con la
+     * activación resuelta: es lo mismo que deja Empresa/Activacion cuando los envía la
+     * propia empresa. El plan sigue siendo aparte (Admin/Empresas).
+     */
+    private function crearEmpresaPara(User $user, string $razonSocial, string $rut, string $telefono): Empresa
+    {
+        return Empresa::create([
+            'user_id' => $user->id,
+            'razon_social' => $razonSocial,
+            'rut' => $rut,
+            'telefono' => $telefono,
+            'estado_activacion' => 'activa',
+            'datos_enviados_at' => now(),
+            'activada_at' => now(),
+            'activada_por' => auth()->id(),
+            'contacto_principal_nombre' => $user->name,
+            'contacto_principal_email' => $user->email,
+            'contacto_principal_telefono' => $telefono,
+        ]);
+    }
+
+    /** El rol que se guarda en users.role para una opción del selector. */
+    private static function rolDeTipo(string $tipo): string
+    {
+        return $tipo === self::ADMIN_EMPRESA ? 'admin' : $tipo;
     }
 
     private function cerrarCambioRol(): void
     {
-        $this->reset('editandoId', 'editandoNombre', 'editandoEmail', 'rolActual', 'rolNuevo');
+        $this->reset(
+            'editandoId', 'editandoNombre', 'editandoEmail', 'rolActual', 'rolNuevo',
+            'empresaAsociadaId', 'empresaPropia', 'cambioRazonSocial', 'cambioRut', 'cambioTelefono',
+        );
         $this->modal('cambiar-rol')->close();
     }
 
@@ -411,8 +607,9 @@ class Usuarios extends Component
         // Sumarse a una empresa existente consume uno de sus cupos de usuarios adicionales:
         // se comprueba antes de crear nada para no dejar un usuario huérfano si no cabe.
         $empresaExistente = null;
+        $llevaEmpresa = $this->nuevaCuentaLlevaEmpresa();
 
-        if ($validado['nuevoRol'] === 'empresa' && $this->nuevaEmpresaId !== '') {
+        if ($llevaEmpresa && $this->nuevaEmpresaId !== '') {
             $empresaExistente = Empresa::query()->findOrFail((int) $this->nuevaEmpresaId);
 
             if (! $empresaExistente->puedeAgregarUsuario()) {
@@ -422,14 +619,14 @@ class Usuarios extends Component
             }
         }
 
-        $user = DB::transaction(function () use ($validado, $empresaExistente): User {
+        $user = DB::transaction(function () use ($validado, $empresaExistente, $llevaEmpresa): User {
             $user = User::create([
                 'name' => trim($validado['nuevoNombres'].' '.$validado['nuevoApellidos']),
                 'nombres' => $validado['nuevoNombres'],
                 'apellidos' => $validado['nuevoApellidos'],
                 'email' => $validado['nuevoEmail'],
                 'password' => Hash::make($validado['nuevoPassword']),
-                'role' => $validado['nuevoRol'],
+                'role' => self::rolDeTipo($validado['nuevoRol']),
                 'empresa_id' => $empresaExistente?->id,
                 'acepta_ley_21719' => true,
             ]);
@@ -445,23 +642,8 @@ class Usuarios extends Component
                 ]);
             }
 
-            if ($validado['nuevoRol'] === 'empresa' && $empresaExistente === null) {
-                // Los antecedentes los aporta el superadministrador, así que la empresa nace
-                // con la activación resuelta: es lo mismo que deja Empresa/Activacion cuando
-                // los envía la propia empresa. El plan sigue siendo aparte (Admin/Empresas).
-                Empresa::create([
-                    'user_id' => $user->id,
-                    'razon_social' => $validado['nuevaRazonSocial'],
-                    'rut' => $validado['nuevoRut'],
-                    'telefono' => $validado['nuevoTelefono'],
-                    'estado_activacion' => 'activa',
-                    'datos_enviados_at' => now(),
-                    'activada_at' => now(),
-                    'activada_por' => auth()->id(),
-                    'contacto_principal_nombre' => $user->name,
-                    'contacto_principal_email' => $user->email,
-                    'contacto_principal_telefono' => $validado['nuevoTelefono'],
-                ]);
+            if ($llevaEmpresa && $empresaExistente === null) {
+                $this->crearEmpresaPara($user, $validado['nuevaRazonSocial'], $validado['nuevoRut'], $validado['nuevoTelefono']);
             }
 
             $user->markEmailAsVerified();
@@ -503,14 +685,14 @@ class Usuarios extends Component
     private function reglasCreacion(): array
     {
         $reglas = [
-            'nuevoRol' => ['required', Rule::in(array_keys(User::ROLES))],
+            'nuevoRol' => ['required', Rule::in(array_keys(self::opcionesDeTipo()))],
             'nuevoNombres' => ['required', 'string', 'max:80'],
             'nuevoApellidos' => ['required', 'string', 'max:80'],
             'nuevoEmail' => ['required', 'email', 'max:255', 'unique:users,email'],
             'nuevoPassword' => ['required', 'string', 'min:8'],
         ];
 
-        if ($this->nuevoRol === 'empresa') {
+        if ($this->nuevaCuentaLlevaEmpresa()) {
             if ($this->nuevaEmpresaId !== '') {
                 $reglas['nuevaEmpresaId'] = ['required', Rule::exists('empresas', 'id')];
             } else {
@@ -522,6 +704,12 @@ class Usuarios extends Component
         }
 
         return $reglas;
+    }
+
+    /** La cuenta que se está creando opera una empresa. */
+    private function nuevaCuentaLlevaEmpresa(): bool
+    {
+        return in_array($this->nuevoRol, ['empresa', self::ADMIN_EMPRESA], true);
     }
 
     /**
@@ -789,7 +977,7 @@ class Usuarios extends Component
                 fn (Builder $p) => $p->where('ciudad', $this->region),
             ))
             // La tabla muestra la ficha asociada y la región de cada cuenta.
-            ->with(['postulante:id,user_id,ciudad', 'empresa:id,user_id,razon_social'])
+            ->with(['postulante:id,user_id,ciudad', 'empresa:id,user_id,razon_social', 'empresaMembresia:id,razon_social'])
             ->tap(fn (Builder $q) => $this->aplicarOrden($q));
 
         return view('livewire.admin.usuarios', [
@@ -809,7 +997,12 @@ class Usuarios extends Component
                 ->pluck('total', 'ciudad'),
             'hayFiltros' => $this->buscar !== '' || $this->rol !== 'todos' || $this->verificacion !== 'todos' || $this->region !== 'todos',
             // Para el alta manual: a qué empresa ya registrada se puede sumar la cuenta nueva.
-            'empresasDisponibles' => Empresa::query()->orderBy('razon_social')->get(['id', 'razon_social']),
+            // Va con el RUT y el correo del dueño porque la razón social sola no basta para
+            // distinguirlas: puede haber dos empresas registradas con el mismo nombre.
+            'empresasDisponibles' => Empresa::query()
+                ->with('user:id,email')
+                ->orderBy('razon_social')
+                ->get(['id', 'razon_social', 'rut', 'user_id']),
         ]);
     }
 }

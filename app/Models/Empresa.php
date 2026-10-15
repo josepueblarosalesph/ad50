@@ -36,6 +36,17 @@ class Empresa extends Model
         });
     }
 
+    /**
+     * Cómo se nombra en los selectores de la administración: razón social, RUT y correo
+     * del dueño, porque puede haber dos empresas registradas con la misma razón social.
+     */
+    public function etiquetaParaSelector(): string
+    {
+        return collect([$this->razon_social, $this->rut, $this->user?->email])
+            ->filter()
+            ->implode(' · ');
+    }
+
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {

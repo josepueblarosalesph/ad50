@@ -47,7 +47,17 @@ class LoginResponse implements LoginResponseContract, TwoFactorLoginResponseCont
             return $intencion;
         }
 
-        return route($request->user()->dashboardRouteName(), absolute: false);
+        $user = $request->user();
+
+        // Quien es administrador y además opera una empresa entra por el login general a
+        // su panel de empresa: es el que usa en el día a día. Para llegar a la
+        // administración entra por /admin, que el middleware `auth` deja anotada como
+        // página pretendida y ya se resolvió arriba.
+        if ($user->esAdmin() && $user->esEmpresa()) {
+            return route($user->rutaPanelEmpresa(), absolute: false);
+        }
+
+        return route($user->dashboardRouteName(), absolute: false);
     }
 
     /** Resguardo contra redirecciones a otro dominio si algo dejara una URL externa en sesión. */
