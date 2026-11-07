@@ -180,7 +180,7 @@
                         <flux:icon.envelope class="mt-0.5 size-6 flex-none text-white" />
                         <div>
                             <p class="text-[12px] font-extrabold uppercase tracking-[.14em] text-white/70">Correo</p>
-                            <a href="mailto:contacto@adconsulting.cl" class="mt-1 block font-bold hover:underline">contacto@adconsulting.cl</a>
+                            <a href="mailto:ariela.dymensztain@adconsulting.cl" class="mt-1 block font-bold hover:underline">ariela.dymensztain@adconsulting.cl</a>
                         </div>
                     </li>
                     <li class="flex items-start gap-4 rounded-[16px] bg-white/10 p-5">
@@ -216,7 +216,7 @@
                         <a href="{{ route('planes') }}" class="hover:text-white">Planes</a>
                     @endif
                     <a href="{{ route('registro', ['tipo' => 'empresa']) }}" class="hover:text-white">Crear cuenta</a>
-                    <a href="mailto:contacto@adconsulting.cl" class="hover:text-white">Contacto</a>
+                    <a href="mailto:ariela.dymensztain@adconsulting.cl" class="hover:text-white">Contacto</a>
                 </div>
             </div>
             <div class="flex flex-wrap justify-between gap-3 pt-6 text-[14px]">

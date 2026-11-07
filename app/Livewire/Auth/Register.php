@@ -163,7 +163,7 @@ class Register extends Component
         $administrador = $empresa->user?->email;
 
         if ($administrador === null) {
-            $this->addError('email', 'Esa cuenta no tiene un administrador con correo registrado. Escríbenos a contacto@adconsulting.cl y te ayudamos.');
+            $this->addError('email', 'Esa cuenta no tiene un administrador con correo registrado. Escríbenos a ariela.dymensztain@adconsulting.cl y te ayudamos.');
 
             return;
         }

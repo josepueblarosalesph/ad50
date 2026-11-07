@@ -432,7 +432,7 @@
                         @if (\App\Support\Funcionalidades::cobroAEmpresas())
                             <a href="#planes" class="hover:text-white">Nuestros planes</a>
                         @endif
-                        <a href="mailto:contacto@adconsulting.cl" class="hover:text-white">Contáctanos</a>
+                        <a href="mailto:ariela.dymensztain@adconsulting.cl" class="hover:text-white">Contáctanos</a>
                     </div>
                     <div class="flex flex-col gap-3">
                         <a href="#como-postulantes" class="hover:text-white">Cómo funciona</a>
